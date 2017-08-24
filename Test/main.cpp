@@ -189,7 +189,7 @@ std::function<void(const float &x, const float &y, float *A)> place_cell_activat
 
 
 static const float RADIUS_THRESHOLD = 0.2f;
-static const float JITTER_ABS = 0.0f;
+static const float JITTER_ABS = 0.05f;
 
 
 inline float
@@ -202,17 +202,22 @@ BilinearInterpolation(float q11, float q12, float q21, float q22, float x1, floa
 	y2y = y2 - y;
 	yy1 = y - y1;
 	xx1 = x - x1;
-	return 1.0f / (x2x1 * y2y1) * (
+
+	float interpolated = 1.0f / (x2x1 * y2y1) * (
 		q11 * x2x * y2y +
 		q21 * xx1 * y2y +
 		q12 * x2x * yy1 +
 		q22 * xx1 * yy1
 		);
+	assert(!isnan(interpolated));
+	return interpolated;
 }
 std::size_t stimulus_size;
 
 void activation_pattern(const std::size_t &pc_rows, const std::size_t &pc_cols, const std::pair<float, float> &X, const std::pair<float, float> &Y, const float &x, const float &y, float *A)
 {
+
+
 	const auto stride = pc_cols * pc_rows;
 	const auto x_range = X.second - X.first;
 	const auto y_range = Y.second - Y.first;
@@ -221,24 +226,44 @@ void activation_pattern(const std::size_t &pc_rows, const std::size_t &pc_cols, 
 
 	const auto ix1 = (std::size_t)((pc_cols - 1) * ((x - X.first) / x_range));
 	const auto iy1 = (std::size_t)((pc_rows - 1) * ((y - Y.first) / y_range));
-	const auto ix2 = (ix1 == pc_cols - 1) ? ix1 : ix1 + 1;
-	const auto iy2 = (iy1 == pc_rows - 1) ? iy1 : iy1 + 1;
-	const auto x1 = ix1 * x_step + X.first;
-	const auto x2 = ix2 * x_step + X.first;
-	const auto y1 = iy1 * y_step + Y.first;
-	const auto y2 = iy2 * y_step + Y.first;
+	if (ix1 <= 0 || ix1 >= pc_cols || iy1 <= 0 || iy1 >= pc_rows)
+	{
+		std::fill(A, A + stimulus_size, 0.0f);
+	}
+	else
+	{
+		/*if (ix1 == pc_cols - 1 || iy1 == pc_rows - 1)
+		{*/
+#pragma omp parallel for
+			for (int k = 0; k < stimulus_size; k++)
+			{
+				A[k] = place_cells_response[k*stride + iy1 * pc_cols + ix1];
+			}
+		/*}
+		else
+		{
+			const auto ix2 = ix1 + 1;
+			const auto iy2 = iy1 + 1;
+			const auto x1 = ix1;
+			const auto y1 = y;
+			const auto x2 = x1 + x_step;
+			const auto y2 = y1 + y_step;
 
 #pragma omp parallel for
-	for (int k = 0; k < stimulus_size; k++)
-	{
-		const auto Q = &place_cells_response[k*stride];
-		const auto q11 = Q[iy1 * pc_cols + ix1];
-		const auto q12 = Q[iy2 * pc_cols + ix1];
-		const auto q21 = Q[iy1 * pc_cols + ix2];
-		const auto q22 = Q[iy2 * pc_cols + ix2];
-		const auto q = BilinearInterpolation(q11, q12, q21, q22, x1, x2, y1, y2, x, y);
-		A[k] = q;
+				for (int k = 0; k < stimulus_size; k++)
+				{
+					const auto Q = &place_cells_response[k*stride];
+					const auto q11 = Q[iy1 * pc_cols + ix1];
+					const auto q12 = Q[iy2 * pc_cols + ix1];
+					const auto q21 = Q[iy1 * pc_cols + ix2];
+					const auto q22 = Q[iy2 * pc_cols + ix2];
+					const auto q = BilinearInterpolation(q11, q12, q21, q22, x1, x2, y1, y2, x, y);
+					A[k] = q;
+				}
+		}*/
 	}
+	
+	assert(std::any_of(A,A + stimulus_size, isnan<float>) == false);
 }
 
 static void robot_predicted_stimulus(const unsigned int &id, const std::vector<float> &predicted_stimulus, const std::size_t &rows, const std::size_t &cols)
@@ -487,7 +512,7 @@ static void initialize_place_cells_response(const std::size_t &rows, const std::
 		{
 			auto y_range = y.second - y.first;
 			for (std::size_t row = 0; row < rows; row++)
-				g_y[row] = ((float)row / ((float)(rows - 1))) * y_range + y.first;
+				g_y[row] = ((float)(row) / ((float)(rows - 1))) * y_range + y.first;
 		}
 #pragma omp section
 		{
@@ -514,7 +539,7 @@ static void initialize_place_cells_response(const std::size_t &rows, const std::
 			const auto offset = k * (cols*rows);
 			for (std::size_t col = 0; col < cols; col++)
 			{
-				response[offset + row * cols + col] = expf(dx2[col] + dy2);
+				response[offset + (row) * cols + col] = expf(dx2[col] + dy2);
 			}
 		}
 	}
@@ -529,15 +554,80 @@ static void position_frechet(const unsigned int &id, const std::vector<float> &v
 {
 
 }
+#define GRID_ROWS 100
+#define GRID_COLS 100
+#define GRID_X_MIN -1.0f
+#define GRID_Y_MIN -1.0f
+#define GRID_X_MAX 1.0f
+#define GRID_Y_MAX 1.0f
 
-static void position_custom(const unsigned int &id, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &rows, const std::size_t &cols)
+
+#define X_TO_COL(x) ((((x) - GRID_X_MIN) / (GRID_X_MAX - GRID_X_MIN)) * (GRID_COLS - 1))
+#define Y_TO_ROW(y) (GRID_ROWS - 1 - (((y) - GRID_Y_MIN) / (GRID_Y_MAX - GRID_Y_MIN)) * (GRID_ROWS - 1))
+
+cv::Mat cv_accumulator(GRID_ROWS, GRID_COLS, CV_32F);
+cv::Mat cv_overall(GRID_ROWS, GRID_COLS, CV_32F);
+
+static void position_custom(const unsigned int &id, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)
 {
+	cv::Mat cv_expected(GRID_ROWS, GRID_COLS, CV_8UC3);
+	cv::Mat cv_predicted(GRID_ROWS, GRID_COLS, CV_32F);
+
+	cv_expected = 0.0f;
+	for (std::size_t row = 1; row < rows; row++)
+	{
+		float x0 = expected[(row - 1)* cols + 0];
+		float y0 = expected[(row - 1)* cols + 1];
+		float x1 = expected[row * cols + 0];
+		float y1 = expected[row * cols + 1];
+
+		cv::Point2d pt0(X_TO_COL(x0), Y_TO_ROW(y0));
+		cv::Point2d pt1(X_TO_COL(x1), Y_TO_ROW(y1));
+		cv::line(cv_expected, pt0, pt1, cv::Scalar(255, 100, 100));
+	}
+	to_display.enqueue(std::make_pair("expected", cv_expected));
+
+	cv_predicted = 0.0f;
+	for (std::size_t page = 0; page < pages; page++)
+	{
+		cv::Mat cv_temp(GRID_ROWS, GRID_COLS, CV_32F);
+		cv_temp = 0.0f;
+		for (std::size_t row = 1; row < rows; row++)
+		{
+			float x0 = predicted[page * rows * cols + (row - 1)* cols + 0];
+			float y0 = predicted[page * rows * cols + (row - 1)* cols + 1];
+			float x1 = predicted[page * rows * cols + row * cols + 0];
+			float y1 = predicted[page * rows * cols + row * cols + 1];
+
+			cv::Point2d pt0(X_TO_COL(x0), Y_TO_ROW(y0));
+			cv::Point2d pt1(X_TO_COL(x1), Y_TO_ROW(y1));
+			cv::line(cv_temp, pt0, pt1, cv::Scalar(1.0f));
+		}
+
+		cv_predicted += cv_temp;
+	}
+	cv::normalize(cv_predicted, cv_predicted, cv::NORM_MINMAX, 0.0f, 1.0f);
+	to_display.enqueue(std::make_pair("predcited", cv_predicted));
+
+	{
+		std::unique_lock<std::mutex> lock;
+
+		cv_accumulator += cv_predicted;
+		cv::normalize(cv_accumulator, cv_overall, cv::NORM_MINMAX, 0.0f, 1.0f);
+		to_display.enqueue(std::make_pair("accumulated", cv_overall));
+	}
 
 }
 
 static void readout_mse(const unsigned int &id, const std::vector<float> &value, const std::size_t &rows, const std::size_t &cols)
 {
-	std::cout << id << " readout rmse " << sqrtf(std::accumulate(value.begin(), value.end(), 0.0f) / value.size())  << std::endl;
+	auto mse = sqrtf(std::accumulate(value.begin(), value.end(), 0.0f) / value.size());
+	if (isnan(mse))
+	{
+		
+		std::cout << "NAN" << std::endl;
+	}
+	std::cout << id << " readout rmse " << mse << std::endl;
 
 }
 
@@ -555,7 +645,8 @@ int main(int argc, char *argv[])
 	try
 	{
 	
-		/*std::thread display([]() {
+		cv_accumulator = 0.0f;
+		std::thread display([]() {
 
 			//std::cout << "waiting for q stroke" << std::endl;
 			//while (cvWaitKey(100) != 'q');
@@ -580,21 +671,16 @@ int main(int argc, char *argv[])
 				}
 			}
 			to_display.invalidate();
-		});*/
-
-		/*auto backend = TRN::Remote::Backend::create("127.0.0.1", 12345);
-		auto server = TRN::Network::Server::create("127.0.0.1", "12345");
-		server->run();
-
-		return 0;*/
-
-		auto pc_rows = 100;
-		auto pc_cols = 100;
-		auto sigma = 1;
+		});
 
 
-		auto x = std::make_pair(-1.0f, 1.0f);
-		auto y = std::make_pair(-1.0f, 1.0f);
+		auto pc_rows = GRID_ROWS;
+		auto pc_cols = GRID_COLS;
+		auto sigma = 1.0f;
+
+
+		auto x = std::make_pair(GRID_X_MIN, GRID_X_MAX);
+		auto y = std::make_pair(GRID_Y_MIN, GRID_Y_MAX);
 
 		initialize_place_cells_response(pc_rows, pc_cols, "placecells.csv", place_cells_response, stimulus_size);
 
@@ -612,38 +698,38 @@ int main(int argc, char *argv[])
 		TRN4CPP::install_processor(on_processor);
 		TRN4CPP::install_allocation(on_allocation);
 	
-		TRN4CPP::initialize_distributed(argc, argv);
+		//TRN4CPP::initialize_distributed(argc, argv);
 
 
-		/*TRN4CPP::initialize_local(
+		TRN4CPP::initialize_local(
 		{
-			1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4
+			0
 			
-		});*/
+		});
 		//TRN4CPP::initialize_local();
 
-		auto epochs = 1;
+		const auto epochs = 100;
 		
-		auto reservoir_size = 1024;
-		auto prediction_size = stimulus_size;
-		auto leak_rate = 0.85f;
-		auto learning_rate = 1e-5f;
-		auto initial_state_scale = 0.01f;
-		auto radius = 0.5f;
+		const auto reservoir_size = 1024;
+		const auto prediction_size = stimulus_size;
+		const auto leak_rate = 0.85f;
+		const auto learning_rate = 1e-4f;
+		const auto initial_state_scale = 0.01f;
+		const auto radius = 0.05f;
 		//	auto observations = 130*5;
-		auto snippet_size = 10;
-		auto snippet_number = 20;
-		auto time_budget = epochs * snippet_size * snippet_number;
-		auto preamble = 10;
-		auto batch_size = 100;
+		const auto snippet_size = 10;
+		const auto snippet_number = 20;
+		const auto time_budget = epochs * snippet_size * snippet_number;
+		const auto preamble = 10;
+		const auto batch_size = 1;
 
 		/*	for (int row = stimulus_size, col = 0; row < stimulus_size*2; row++, col++)
 			{
 				stimulus[row * stimulus_size + stimulus_size - col-1] = 1.0f;
 			}*/
-		const size_t ID = 400;
-		const size_t TRIALS = 10;
-		const size_t WALKS = 0;
+		const size_t ID = 100;
+		const size_t TRIALS = 1;
+		const size_t WALKS = 0;// 100;
 		std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
 		
 
@@ -656,13 +742,15 @@ int main(int argc, char *argv[])
 				TRN4CPP::allocate(id);
 
 				TRN4CPP::configure_begin(id);
-				//TRN4CPP::configure_scheduler_snippets(id,snippet_size, time_budget);
+				//TRN4CPP::configure_scheduler_snippets(id,snippet_size, time_budget, "REW");
+				//TRN4CPP::configure_scheduler_snippets(id, snippet_size, time_budget);
 				TRN4CPP::configure_scheduler_tiled(id, epochs);
 
-				TRN4CPP::configure_loop_copy(id, batch_size, stimulus_size);
+				//TRN4CPP::configure_loop_copy(id, batch_size, stimulus_size);
 				//TRN4CPP::configure_loop_custom(id, stimulus_size, robot_action, robot_perception);
-				//TRN4CPP::configure_loop_spatial_filter(id, batch_size, stimulus_size, robot_predicted_position, robot_estimated_position[id], robot_predicted_stimulus, robot_perceived_stimulus[id], pc_rows, pc_cols, x, y, place_cells_response, sigma, radius, "POS");
+				TRN4CPP::configure_loop_spatial_filter(id, batch_size, stimulus_size, robot_predicted_position, robot_estimated_position[id], robot_predicted_stimulus, robot_perceived_stimulus[id], pc_rows, pc_cols, x, y, place_cells_response, sigma, radius, "POS");
 				TRN4CPP::configure_measurement_position_mean_square_error(id, batch_size, position_mse);
+				TRN4CPP::configure_measurement_position_custom(id, batch_size, position_custom);
 				TRN4CPP::configure_measurement_readout_mean_square_error(id, batch_size, readout_mse);
 				//TRN4CPP::configure_measurement_position_frechet_distance(id, position_frechet);
 				//TRN4CPP::configure_measurement_position_custom(id, position_custom);
@@ -670,25 +758,26 @@ int main(int argc, char *argv[])
 				//TRN4CPP::configure_measurement_readout_frechet_distance(id, readout_frechet);
 				//TRN4CPP::configure_measurement_readout_custom(id, readout_custom);
 				TRN4CPP::configure_reservoir_widrow_hoff(id, stimulus_size, prediction_size, reservoir_size, leak_rate, initial_state_scale, learning_rate, seed, batch_size);
-				TRN4CPP::setup_performances(id, on_performances, true, true, true);
+				TRN4CPP::setup_performances(id, on_performances, true, false, true);
 				//TRN4CPP::setup_weights(id, on_weights);
-				//TRN4CPP::setup_states(id, on_states, true, false, true);
+				//TRN4CPP::setup_states(id, on_states, false, false, true);
 
 
 
 				TRN4CPP::configure_feedforward_uniform(id, -1.0f, 1.0f, 0.0f);
 				TRN4CPP::configure_feedback_uniform(id, -1.0f, 1.0f, 0.0f);
-				TRN4CPP::configure_recurrent_gaussian(id, 0.0f, 1.0f / sqrtf(reservoir_size));
-				TRN4CPP::configure_readout_uniform(id, -1.0e-2f, 1.0e-2f, 0.0f);
+				//TRN4CPP::configure_recurrent_uniform(id, -1.0f/ sqrtf(reservoir_size), 1.0f/ sqrtf(reservoir_size), 0.0f);
+				TRN4CPP::configure_recurrent_gaussian(id, 0.0f, 0.5f / sqrtf(reservoir_size));
+				TRN4CPP::configure_readout_uniform(id, -1.0e-3f, 1.0e-3f, 0.0f);
 				TRN4CPP::configure_end(id);
 				//initialize_place_cell_pattern(id, "test");
 				initialize_trajectory(id, "abcde", x, y, pc_rows, pc_cols);
-				/*initialize_trajectory(id, "ebcda", x, y, pc_rows, pc_cols);
+				initialize_trajectory(id, "ebcda", x, y, pc_rows, pc_cols);
 				initialize_trajectory(id, "bacde", x, y, pc_rows, pc_cols);
-				initialize_trajectory(id, "abced", x, y, pc_rows, pc_cols);*/
+				initialize_trajectory(id, "abced", x, y, pc_rows, pc_cols);
 
-					//const std::vector<std::string> training_sequences = {  "ebcda", "bacde", "abced"};
-				const std::vector<std::string> training_sequences = { "abcde" };
+					const std::vector<std::string> training_sequences = {  "ebcda", "bacde", "abced"};
+				//const std::vector<std::string> training_sequences = { "abcde" };
 				TRN4CPP::declare_set(id, "training", "INC", training_sequences);
 				TRN4CPP::declare_set(id, "training", "EXP", training_sequences);
 				TRN4CPP::declare_set(id, "training", "POS", training_sequences);
@@ -745,10 +834,10 @@ int main(int argc, char *argv[])
 		}
 	
 
-		/*if (expose.joinable())
+		if (expose.joinable())
 			expose.join();
 		if (display.joinable())
-			display.join();*/
+			display.join();
 
 		return 0;
 	}

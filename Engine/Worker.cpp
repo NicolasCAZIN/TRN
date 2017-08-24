@@ -339,7 +339,7 @@ void TRN::Engine::Worker::receive()
 									measurement.id = message.id;
 									measurement.elements = predicted;
 									measurement.expected = expected;
-									measurement.pages = pages;
+									measurement.matrices = pages;
 									measurement.rows = rows;
 									measurement.cols = cols;
 
@@ -410,7 +410,7 @@ void TRN::Engine::Worker::receive()
 									measurement.id = message.id;
 									measurement.elements = predicted;
 									measurement.expected = expected;
-									measurement.pages = pages;
+									measurement.matrices = pages;
 									measurement.rows = rows;
 									measurement.cols = cols;
 

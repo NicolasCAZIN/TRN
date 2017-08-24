@@ -45,20 +45,20 @@ TRN::Core::Reservoir::Reservoir(
 	handle->batched_W_fbck = TRN::Core::Batch::create(driver, batch_size);
 	for (std::size_t batch = 0; batch < batch_size; batch++)
 	{
-		auto p = TRN::Core::Matrix::create(driver, reservoir, 1);
-		auto u = TRN::Core::Matrix::create(driver, reservoir, 1);
-		auto error = TRN::Core::Matrix::create(driver, prediction, 1);
+		auto p = TRN::Core::Matrix::create(driver, 1, reservoir);
+		auto u = TRN::Core::Matrix::create(driver, 1, reservoir);
+		auto error = TRN::Core::Matrix::create(driver, 1, prediction);
 
-		auto W_ffwd = TRN::Core::Matrix::create(driver,  reservoir, stimulus, false);
-		auto W_in = TRN::Core::Matrix::create(driver, x_in_cols, reservoir, true);
+		auto W_ffwd = TRN::Core::Matrix::create(driver,   reservoir, stimulus, false);
+		auto W_in = TRN::Core::Matrix::create(driver, reservoir, x_in_cols, true);
 		auto W_rec = TRN::Core::Matrix::create(driver, W_in, 0, 0, reservoir, reservoir);
-		auto W_fbck = TRN::Core::Matrix::create(driver, W_in, handle->reservoir_stride, 0,  prediction, reservoir);
+		auto W_fbck = TRN::Core::Matrix::create(driver, W_in, 0, handle->reservoir_stride, reservoir, prediction);
 
 
-		auto W_ro = TRN::Core::Matrix::create(driver, reservoir, prediction, true);
-		auto X_in = TRN::Core::Matrix::create(driver, x_in_cols, 1);
-		auto X_res = TRN::Core::Matrix::create(driver, X_in, 0 ,0, reservoir, 1);
-		auto X_ro = TRN::Core::Matrix::create(driver, X_in,   handle->reservoir_stride, 0,  prediction, 1);
+		auto W_ro = TRN::Core::Matrix::create(driver, prediction, reservoir, true);
+		auto X_in = TRN::Core::Matrix::create(driver,  1, x_in_cols, true);
+		auto X_res = TRN::Core::Matrix::create(driver, X_in, 0 ,0, 1, reservoir);
+		auto X_ro = TRN::Core::Matrix::create(driver, X_in,  0, handle->reservoir_stride,  1, prediction);
 	
 
 		/*handle->_W_ffwd.push_back(W_ffwd);
@@ -80,6 +80,7 @@ TRN::Core::Reservoir::Reservoir(
 		handle->batched_W_fbck->update(batch, W_fbck);
 	}
 		
+	
 	handle->states = TRN::Core::Message::Payload<TRN::Core::Message::STATES>::create();
 	handle->states->set_global(TRN::Core::Matrix::create(driver, 0, 0, false));
 	
@@ -127,6 +128,7 @@ void TRN::Core::Reservoir::initialize(const std::shared_ptr<TRN::Core::Initializ
 										const std::shared_ptr<TRN::Core::Initializer> &readout)
 {
 	implementor->toggle();
+
 	if (!feedforward)
 		throw std::invalid_argument("Feedforward initializer is not initialized");
 	if (!recurrent)
@@ -138,13 +140,7 @@ void TRN::Core::Reservoir::initialize(const std::shared_ptr<TRN::Core::Initializ
 
 
 	feedforward->initialize(handle->seed, handle->batched_W_ffwd);
-	recurrent->initialize(handle->seed, handle->batched_W_rec);
-
-		/*std::vector<float> elements;
-		std::size_t rows, cols;
-		handle->batched_W_ffwd->get_matrices(batch)->to(elements, rows, cols);
-		cv::Mat mat(rows, cols, CV_32F, elements.data());*/
-		
+	recurrent->initialize(handle->seed, handle->batched_W_rec);	
 	feedback->initialize(handle->seed, handle->batched_W_fbck);
 	readout->initialize(handle->seed, handle->batched_W_ro);
 }
@@ -158,8 +154,6 @@ void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incomi
 	if (preamble > expected->get_rows())
 		throw std::invalid_argument("preamble (" + std::to_string(preamble) + ") is longer than the target sequence duration");
 
-
-
 	auto sub_states = TRN::Core::Matrix::create(implementor, handle->states->get_global(), 0, 0, preamble, handle->states->get_global()->get_cols());
 	auto sub_scheduling = TRN::Core::Scheduling::create(implementor, { (unsigned int)0 }, { (unsigned int)preamble });
 	auto sub_incoming = TRN::Core::Matrix::create(implementor, incoming, 0, 0, preamble, incoming->get_cols());
@@ -167,7 +161,7 @@ void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incomi
 
 	for (std::size_t batch = 0; batch < handle->batch_size; batch++)
 	{
-		auto sub_u_ffwd = TRN::Core::Matrix::create(implementor,  preamble, 1);
+		auto sub_u_ffwd = TRN::Core::Matrix::create(implementor,  preamble, handle->reservoir_size);
 		handle->batched_incoming->update(batch, sub_incoming);
 		handle->batched_expected->update(batch, sub_expected);
 		handle->batched_u_ffwd->update(batch, sub_u_ffwd);
@@ -196,7 +190,7 @@ void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incomi
 
 			sub_scheduling->get_offsets(), sub_scheduling->get_durations(), sub_scheduling->get_repetitions(),
 			sub_states->get_elements(), sub_states->get_rows(), sub_states->get_cols(), sub_states->get_stride());
-	synchronize();
+	
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>());
 
 	handle->target_expected = expected;
@@ -246,12 +240,13 @@ void TRN::Core::Reservoir::update(const TRN::Core::Message::Payload<TRN::Core::M
 			sub_scheduling->get_offsets(), sub_scheduling->get_durations(), sub_scheduling->get_repetitions(),
 			sub_states->get_elements(), sub_states->get_rows(), sub_states->get_cols(), sub_states->get_stride());
 		handle->cycle++;
+	
 		handle->prediction.enqueue(handle->batched_X_ro);
 	
 	}
 	else
 	{
-		synchronize();
+	
 		handle->target_expected.reset();
 		handle->max_cycle = 0;
 		handle->cycle = 0;
@@ -261,27 +256,17 @@ void TRN::Core::Reservoir::update(const TRN::Core::Message::Payload<TRN::Core::M
 }
 void TRN::Core::Reservoir::train(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Scheduling> &scheduling)
 {
+
 	for (std::size_t batch = 0; batch < handle->batch_size; batch++)
 	{
-		auto sub_u_ffwd = TRN::Core::Matrix::create(implementor, handle->reservoir_size, incoming->get_rows());
+		auto sub_u_ffwd = TRN::Core::Matrix::create(implementor,  incoming->get_rows(), handle->reservoir_size);
 		handle->batched_incoming->update(batch, incoming);
 		handle->batched_expected->update(batch, expected);
 		handle->batched_u_ffwd->update(batch, sub_u_ffwd);
 	}
 
 	train(incoming, expected, scheduling, handle->states->get_global());
-	/*{
-		std::vector<float> x;
-		std::size_t x_n;
-		std::vector<std::size_t> x_r, x_c;
 
-		handle->batched_u->to(x, x_n, x_r, x_c);
-
-	
-		cv::Mat mat( x_n, x_r[0], CV_32F, x.data());
-		int c = 0;
-	}*/
-	synchronize();
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>());
 }
 
@@ -320,9 +305,9 @@ void TRN::Core::Reservoir::visit(std::shared_ptr<TRN::Core::Message::Payload<TRN
 {
 	size_t flops_per_cycle = 0;
 	flops_per_cycle += (handle->reservoir_size + handle->prediction_size) * handle->reservoir_size * 2; // w_in * x_in
-	//flops_per_cycle += handle->reservoir_size * 4; // update euler
-	//flops_per_cycle += handle->reservoir_size  * (3 + 50 + 10); // tanh
-	//flops_per_cycle += handle->prediction_size * handle->reservoir_size * 2; //xro= W_ro * x_res
+	flops_per_cycle += handle->reservoir_size * 4; // update euler
+	flops_per_cycle += handle->reservoir_size  * (3 + 50 + 10); // tanh
+	flops_per_cycle += handle->prediction_size * handle->reservoir_size * 2; //xro= W_ro * x_res
 	
 	payload->set_flops_per_cycle(flops_per_cycle);
 

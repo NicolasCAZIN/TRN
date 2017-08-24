@@ -15,11 +15,7 @@ static const std::size_t aligned_size(const std::size_t &unaligned)
 	else
 		return unaligned;
 }
-template<TRN::CPU::Implementation Implementation>
-bool TRN::CPU::Memory<Implementation>::is_column_major()
-{
-	return false;
-}
+
 template<TRN::CPU::Implementation Implementation>
 void TRN::CPU::Memory<Implementation>::allocate_implementation(void **block, std::size_t &stride, const std::size_t &depth, const std::size_t &width, const std::size_t &height)
 {

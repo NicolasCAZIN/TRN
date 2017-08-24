@@ -120,7 +120,8 @@ void TRN4CPP::initialize_distributed(int argc, char *argv[])
 
 void TRN4CPP::uninitialize()
 {
-	
+	if (!broker)
+		throw std::runtime_error("A broker have never been setup");
 	// // std::unique_lock<std::mutex> lock(mutex);
 	broker->stop();
 	broker.reset();
@@ -132,7 +133,6 @@ void TRN4CPP::uninitialize()
 	id_feedback_weights.clear();
 	id_readout_weights.clear();
 	id_recurrent_weights.clear();
-
 }
 
 void TRN4CPP::allocate(const unsigned int &id)

@@ -1,9 +1,6 @@
 #include "stdafx.h"
 #include "Memory_impl.h"
-
-
-
-
+#include "Driver.cuh"
 
 TRN::GPU::Memory::Memory(const std::shared_ptr<TRN::GPU::Context> context) : handle(std::make_unique<TRN::GPU::Memory::Handle>(context))
 {
@@ -13,11 +10,6 @@ TRN::GPU::Memory::Memory(const std::shared_ptr<TRN::GPU::Context> context) : han
 TRN::GPU::Memory::~Memory()
 {
 	handle.reset();
-}
-
-bool TRN::GPU::Memory::is_column_major()
-{
-	return true;
 }
 
 void TRN::GPU::Memory::align(const std::size_t &unaligned, std::size_t &aligned)
@@ -61,23 +53,27 @@ void  TRN::GPU::Memory::copy(const void *src, void *dst, const std::size_t &dept
 void  TRN::GPU::Memory::upload(const void *local, void *remote, const std::size_t &depth, const std::size_t &size, const bool &async)
 {
 	checkCudaErrors(cudaMemcpyAsync(remote, local, depth * size, cudaMemcpyKind::cudaMemcpyHostToDevice, handle->context->get_stream()));
-	checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+	if (!async)
+		checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
 }
 void  TRN::GPU::Memory::upload(const void *local, void *remote, const std::size_t &depth, const std::size_t &width, const std::size_t &height, const std::size_t &stride, const bool &async)
 {
 	checkCudaErrors(cudaMemcpy2DAsync(remote, stride * depth, local, width * depth, width * depth, height, cudaMemcpyKind::cudaMemcpyHostToDevice, handle->context->get_stream()));
-	checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+	if (!async)
+		checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
 }
 
 void  TRN::GPU::Memory::download(void *local, const void *remote, const std::size_t &depth, const std::size_t &size, const bool &async)
 {
 	checkCudaErrors(cudaMemcpyAsync(local, remote, size * depth, cudaMemcpyKind::cudaMemcpyDeviceToHost, handle->context->get_stream()));
-	checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+	if (!async)
+		checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
 }
 void  TRN::GPU::Memory::download(void *local, const void *remote, const std::size_t &depth, const std::size_t &width, const std::size_t &height, const std::size_t &stride, const bool &async)
 {
 	checkCudaErrors(cudaMemcpy2DAsync(local, width * depth, remote, stride * depth, width * depth, height, cudaMemcpyKind::cudaMemcpyDeviceToHost, handle->context->get_stream()));
-	checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+	if (!async)
+		checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
 }
 
 void  TRN::GPU::Memory::blank(void *remote, const std::size_t &depth, const std::size_t &width, const std::size_t &height, const std::size_t &stride, const bool &async)

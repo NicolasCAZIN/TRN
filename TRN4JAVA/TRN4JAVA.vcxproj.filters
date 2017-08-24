@@ -76,4 +76,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="TRN4JAVA\Api.java">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>

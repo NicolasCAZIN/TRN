@@ -27,7 +27,7 @@ namespace TRN
 			virtual void download(void *local, const void *remote, const std::size_t &depth, const std::size_t &size, const bool &async = DEFAULT_ASYNC) = 0;
 			virtual void download(void *local, const void *remote, const std::size_t &depth, const std::size_t &width, const std::size_t &height, const std::size_t &stride, const bool &async = DEFAULT_ASYNC) = 0;
 			virtual void blank(void *remote, const std::size_t &depth, const std::size_t &width, const std::size_t &height, const std::size_t &stride, const bool &async = DEFAULT_ASYNC) = 0;
-			virtual bool is_column_major() = 0;
+		
 		};
 	};
 };

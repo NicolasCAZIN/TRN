@@ -30,17 +30,19 @@ void TRN::CPU::Driver<Implementation>::toggle()
 {
 
 }
-/*template TRN::CPU::Driver<TRN::CPU::Implementation::SCALAR>;
-#if !defined(_M_IX86) && defined(_M_X64)
+template TRN::CPU::Driver<TRN::CPU::Implementation::SCALAR>;
+#if (!defined(_M_IX86) && (defined(_M_AMD64) || defined(_M_X64)))
 template TRN::CPU::Driver<TRN::CPU::Implementation::SSE2>;
 template TRN::CPU::Driver<TRN::CPU::Implementation::SSE3>;
+template TRN::CPU::Driver<TRN::CPU::Implementation::SSE41>;
 template TRN::CPU::Driver<TRN::CPU::Implementation::AVX>;
 template TRN::CPU::Driver<TRN::CPU::Implementation::AVX2>;
 template TRN::CPU::Driver<TRN::CPU::Implementation::FMA3>;
 #endif
-#if defined(_M_IX86) && !defined(_M_X64)
+
+#if (defined(_M_IX86) && !defined(_M_AMD64) && !defined(_M_X64))
 template TRN::CPU::Driver<TRN::CPU::Implementation::MMX_SSE>;
-#endif*/
+#endif
 template<TRN::CPU::Implementation Implementation>
 std::string  TRN::CPU::Driver<Implementation>::name()
 {

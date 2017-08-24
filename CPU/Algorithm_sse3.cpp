@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-/*#if !defined(_M_IX86) && defined(_M_X64)
+#if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
 #include "Algorithm.h"
 #define USE_SSE2
 #include "sse_mathfun.h"
@@ -49,6 +49,7 @@ static const v4sf two = _mm_set1_ps(2.0f);
 #define setzero_ps() (_mm_setzero_ps())
 #define load_ps(S) (_mm_load_ps((S)))
 #define stream_ps(S, __s) (_mm_stream_ps((S), (__s)))
+#define stream_ss(S, s) (_mm_store_ss((S), _mm_set1_ps((s))))
 #define add_ps(__a, __b) (_mm_add_ps((__a), (__b)))
 #define sub_ps(__a, __b) (_mm_sub_ps((__a), (__b)))
 #define mul_ps(__a, __b) (_mm_mul_ps((__a), (__b)))
@@ -60,12 +61,12 @@ static inline __m128 tanh_ps(const __m128 &__a)
 	return _mm_div_ps(_mm_sub_ps(e, one), _mm_add_ps(e, one));
 }
 #define exp_ps(__a) (::exp_ps(__a))
-#define dp_acc_ps(__a, __b, __c) 	((__c) = _mm_add_ps(_mm_mul_ps((__a), (__b)), (__c)))
 static inline float hsum_ps(const __m128 &__a)
 {
 	__m128 t1 = _mm_hadd_ps(__a, __a);
 	return _mm_cvtss_f32(_mm_hadd_ps(t1, t1));
 }
+
 #define blendv_ps(__a, __b, __c) (_mm_blendv_ps((__a), (__b), (__c)))
 #define cmp_ps(__a, __b, __c) (_mm_cmp_ps((__a), (__b), (__c)))
 
@@ -73,4 +74,4 @@ static inline float hsum_ps(const __m128 &__a)
 
 template  TRN::CPU::Algorithm<TRN::CPU::Implementation::SSE3>;
 
-#endif */
+#endif

@@ -2,6 +2,7 @@
 
 #include "engine_global.h"
 #include "Messages.h"
+#include "Compressor.h"
 
 namespace TRN
 {

@@ -33,7 +33,7 @@ TRN::GPU::Context::Context(const int &device) :
 	checkCudaErrors(cudaStreamCreateWithFlags(&handle->stream, cudaStreamNonBlocking));
 	checkCudaErrors(cublasCreate(&handle->handle));
 	checkCudaErrors(cublasSetStream(handle->handle, handle->stream));
-
+	checkCudaErrors(cublasSetAtomicsMode(handle->handle, cublasAtomicsMode_t::CUBLAS_ATOMICS_ALLOWED));
 	checkCudaErrors(curandCreateGenerator(&handle->generator, CURAND_RNG_PSEUDO_DEFAULT));
 	checkCudaErrors(curandSetStream(handle->generator, handle->stream));
 

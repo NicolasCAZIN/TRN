@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     TRN4JAVA_Api_Scheduler
  * Method:    notify
- * Signature: ([I[I)V
+ * Signature: (I[I[I)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Api_00024Scheduler_notify
-  (JNIEnv *, jobject, jintArray, jintArray);
+  (JNIEnv *, jobject, jint, jintArray, jintArray);
 
 #ifdef __cplusplus
 }

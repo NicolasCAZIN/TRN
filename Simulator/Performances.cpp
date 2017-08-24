@@ -103,13 +103,15 @@ void TRN::Simulator::Performances::test(const std::string &label, const std::str
 
 void TRN::Simulator::Performances::initialize()
 {
-	decorated->initialize();
-
 	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>::attach(shared_from_this());
 	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TESTED>>::attach(shared_from_this());
 	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::attach(shared_from_this());
 
 	get_scheduler()->attach(shared_from_this());
+
+	decorated->initialize();
+
+
 }
 void TRN::Simulator::Performances::uninitialize()
 {
@@ -130,6 +132,7 @@ void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN
 {
 	if (handle->generate)
 	{
+		decorated->get_reservoir()->synchronize();
 		std::chrono::duration<float> seconds = std::chrono::duration_cast<std::chrono::duration<float>>(std::chrono::high_resolution_clock::now() - handle->start);
 
 		auto flops = std::make_shared<TRN::Core::Message::Payload<TRN::Core::Message::FLOPS>>(0, 0);
@@ -145,6 +148,7 @@ void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN
 {
 	if (handle->prime)
 	{
+		decorated->get_reservoir()->synchronize();
 		std::chrono::duration<float> seconds = std::chrono::duration_cast<std::chrono::duration<float>>(std::chrono::high_resolution_clock::now() - handle->start);
 
 		auto flops = std::make_shared<TRN::Core::Message::Payload<TRN::Core::Message::FLOPS>>(0, 0);
@@ -157,6 +161,7 @@ void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN
 {
 	if (handle->train)
 	{
+		decorated->get_reservoir()->synchronize();
 		std::chrono::duration<float> seconds = std::chrono::duration_cast<std::chrono::duration<float>>(std::chrono::high_resolution_clock::now() - handle->start);
 
 		auto flops = std::make_shared<TRN::Core::Message::Payload<TRN::Core::Message::FLOPS>>(0, 0);
@@ -170,7 +175,7 @@ void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN
 
 float TRN::Simulator::Performances::compute_gflops(const std::size_t &flops_per_epoch_factor, const std::size_t &observations, const std::size_t &flops_per_cycle, const std::size_t &cycles)
 {
-	return (observations * flops_per_epoch_factor + cycles * flops_per_cycle) * 10e-9f;
+	return (observations * flops_per_epoch_factor + cycles * flops_per_cycle) * 1e-9f;
 }
 
 std::shared_ptr<TRN::Simulator::Performances> TRN::Simulator::Performances::create(const std::shared_ptr<TRN::Core::Simulator> decorated,

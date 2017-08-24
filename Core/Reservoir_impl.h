@@ -13,6 +13,7 @@ public:
 	std::vector<std::shared_ptr<TRN::Core::Matrix>> _W_in;
 	std::vector<std::shared_ptr<TRN::Core::Matrix>> _W_fbck;
 	std::vector<std::shared_ptr<TRN::Core::Matrix>> _W_ffwd;*/
+	std::shared_ptr<TRN::Core::Matrix> unitary_sub_u_ffwd;
 	std::shared_ptr<TRN::Core::Batch> batched_incoming;
 	std::shared_ptr<TRN::Core::Batch> batched_expected;
 	std::shared_ptr<TRN::Core::Batch> batched_error;

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Communicator_impl.h"
 
+
 TRN::Engine::Communicator::Communicator() :
 	handle(std::make_unique<Handle>())
 {
@@ -20,29 +21,7 @@ std::string TRN::Engine::Communicator::host()
 	return handle->host;
 }
 
-std::string compress(const std::string &data)
-{
-	std::stringstream compressed;
-	std::stringstream decompressed;
-	decompressed << data;
-	boost::iostreams::filtering_streambuf<boost::iostreams::input> out;
-	out.push(boost::iostreams::bzip2_compressor());
-	out.push(decompressed);
-	boost::iostreams::copy(out, compressed);
-	return compressed.str();
-}
 
-std::string decompress(const std::string &data)
-{
-	std::stringstream compressed;
-	std::stringstream decompressed;
-	compressed << data;
-	boost::iostreams::filtering_streambuf<boost::iostreams::input> in;
-	in.push(boost::iostreams::bzip2_decompressor());
-	in.push(compressed);
-	boost::iostreams::copy(in, decompressed);
-	return decompressed.str();
-}
 
 
 template <TRN::Engine::Tag tag>
@@ -53,13 +32,13 @@ void TRN::Engine::Communicator::send(const TRN::Engine::Message<tag> &message, c
 	archive << message;
 
 	//std::unique_lock<std::mutex> lock(handle->mutex);
-	send(destination, tag, compress(archive_stream.str()));
+	send(destination, tag, compress<RAW>(archive_stream.str()));
 }
 
 template <TRN::Engine::Tag tag>
 TRN::Engine::Message<tag> TRN::Engine::Communicator::receive(const int &destination)
 {
-	std::string data = decompress(receive(destination, tag));
+	std::string data = decompress<RAW>(receive(destination, tag));
 
 	std::istringstream archive_stream(data);
 	boost::archive::binary_iarchive archive(archive_stream);

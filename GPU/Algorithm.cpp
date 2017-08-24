@@ -52,37 +52,84 @@ void TRN::GPU::Algorithm::mean_square_error
 void TRN::GPU::Algorithm::place_cell_location_probability(
 	const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
 	const float &sigma,
-	const float &radius,
 	const float ** firing_rate_map, const std::size_t *firing_rate_map_rows, const std::size_t *firing_rate_map_cols, const std::size_t *firing_rate_map_strides,
-	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
-	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
-	float **x_grid_centered2, const std::size_t *x_grid_centered2_rows, const std::size_t *x_grid_centered2_cols, const std::size_t *x_grid_centered2_strides,
-	float **y_grid_centered2, const std::size_t *y_grid_centered2_rows, const std::size_t *y_grid_centered2_cols, const std::size_t *y_grid_centered2_strides,
 	float **scale, const std::size_t *scale_rows, const std::size_t *scale_cols, const std::size_t *scale_strides,
 	const float **prediction, const std::size_t *prediction_rows, const std::size_t *prediction_cols, const std::size_t *prediction_strides,
 	float *** hypothesis_map, const std::size_t **hypothesis_map_rows, const std::size_t **hypothesis_map_cols, const std::size_t **hypothesis_map_strides,
-	float ** location_probability, const std::size_t *location_probability_rows, const std::size_t *location_probability_cols, const std::size_t *location_probability_strides,
-	float ** predicted_position, const std::size_t *predicted_position_rows, const std::size_t *predicted_position_cols, const std::size_t *predicted_position_strides)
+	float ** location_probability, const std::size_t *location_probability_rows, const std::size_t *location_probability_cols, const std::size_t *location_probability_strides)
 {
 
 	compute_place_cell_location_probability(handle->context->get_stream(), handle->context->get_handle(),
 			batch_size, place_cells_number, rows, cols,
 			sigma,
-			radius,
 			firing_rate_map, *firing_rate_map_rows, *firing_rate_map_cols, *firing_rate_map_strides,
-			x_grid, x_grid_rows, x_grid_cols, x_grid_stride,
-			y_grid, y_grid_rows, y_grid_cols, y_grid_stride,
-			x_grid_centered2, *x_grid_centered2_rows, *x_grid_centered2_cols, *x_grid_centered2_strides,
-			y_grid_centered2, *y_grid_centered2_rows, *y_grid_centered2_cols, *y_grid_centered2_strides,
 			scale, *scale_rows, *scale_cols, *scale_strides,
 			prediction, *prediction_rows, *prediction_cols, *prediction_strides,
 			hypothesis_map, **hypothesis_map_rows, **hypothesis_map_cols, **hypothesis_map_strides,
-			location_probability, *location_probability_rows, *location_probability_cols, *location_probability_strides,
-			predicted_position, *predicted_position_rows, *predicted_position_cols, *predicted_position_strides);
+			location_probability, *location_probability_rows, *location_probability_cols, *location_probability_strides);
 
 
 }
 
+
+void TRN::GPU::Algorithm::restrict_to_reachable_locations
+(
+	const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
+	const float &radius,
+	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
+	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
+	const float **batched_current_location, const std::size_t *batched_current_location_rows, const std::size_t *batched_current_location_cols, const std::size_t *batched_current_location_stride,
+	 float **batched_x_grid_centered2, const std::size_t *batched_x_grid_centered2_rows, const std::size_t *batched_x_grid_centered2_cols, const std::size_t *batched_x_grid_centered2_stride,
+	 float **batched_y_grid_centered2, const std::size_t *batched_y_grid_centered2_rows, const std::size_t *batched_y_grid_centered2_cols, const std::size_t *batched_y_grid_centered2_stride,
+	float  **batched_location_probability, const std::size_t *batched_location_probability_rows, const std::size_t *batched_location_probability_cols, const std::size_t *batched_location_probability_strides)
+{
+	compute_reachable_locations(handle->context->get_stream(), handle->context->get_handle(),batch_size, place_cells_number, rows, cols, radius,
+		x_grid, x_grid_rows, x_grid_cols, x_grid_stride,
+		y_grid, y_grid_rows, y_grid_cols, y_grid_stride,
+		batched_current_location, *batched_current_location_rows, *batched_current_location_cols, *batched_current_location_stride,
+		batched_x_grid_centered2, *batched_x_grid_centered2_rows,*batched_x_grid_centered2_cols, *batched_x_grid_centered2_stride,
+		batched_y_grid_centered2, *batched_y_grid_centered2_rows, *batched_y_grid_centered2_cols, *batched_y_grid_centered2_stride,
+		batched_location_probability, *batched_location_probability_rows, *batched_location_probability_cols, *batched_location_probability_strides
+
+		);
+}
+
+
+void TRN::GPU::Algorithm::draw_probable_location(const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
+	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
+	const float  **batched_location_probability, const std::size_t *batched_location_probability_rows, const std::size_t *batched_location_probability_cols, const std::size_t *batched_location_probability_strides,
+	float **batched_reduced_location_probability, const std::size_t *batched_reduced_location_probability_rows, const std::size_t *batched_reduced_location_probability_cols, const std::size_t *batched_reduced_location_probability_strides,
+	float **batched_row_cumsum, const std::size_t *batched_row_cumsum_rows, const std::size_t *batched_row_cumsum_cols, const std::size_t *batched_row_cumsum_strides,
+	float **batched_col_cumsum, const std::size_t *batched_col_cumsum_rows, const std::size_t *batched_col_cumsum_cols, const std::size_t *batched_col_cumsum_strides,
+	float **batched_predicted_location, const std::size_t *batched_predicted_location_rows, const std::size_t *batched_predicted_location_cols, const std::size_t *batched_predicted_location_strides
+)
+{
+	compute_draw_probable_location(handle->context->get_stream(), handle->context->get_handle(), batch_size, rows, cols,
+		x_grid, x_grid_rows, x_grid_cols, x_grid_stride,
+		y_grid, y_grid_rows, y_grid_cols, y_grid_stride,
+		batched_location_probability, *batched_location_probability_rows, *batched_location_probability_cols, *batched_location_probability_strides,
+		batched_reduced_location_probability, *batched_reduced_location_probability_rows, *batched_reduced_location_probability_cols, *batched_reduced_location_probability_strides,
+		batched_row_cumsum, *batched_row_cumsum_rows, *batched_row_cumsum_cols,*batched_row_cumsum_strides,
+		batched_col_cumsum, *batched_col_cumsum_rows, *batched_col_cumsum_cols, *batched_col_cumsum_strides,
+		batched_predicted_location, *batched_predicted_location_rows, *batched_predicted_location_cols, *batched_predicted_location_strides
+		);
+ }
+
+void TRN::GPU::Algorithm::select_most_probable_location(const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
+	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
+	const float  **batched_location_probability, const std::size_t *batched_location_probability_rows, const std::size_t *batched_location_probability_cols, const std::size_t *batched_location_probability_strides,
+	float **batched_predicted_location, const std::size_t *batched_predicted_location_rows, const std::size_t *batched_predicted_location_cols, const std::size_t *batched_predicted_location_strides
+)
+{
+	compute_select_most_probable_location(handle->context->get_stream(), batch_size, rows, cols,
+		x_grid, x_grid_rows, x_grid_cols, x_grid_stride,
+		y_grid, y_grid_rows, y_grid_cols, y_grid_stride,
+		batched_location_probability, *batched_location_probability_rows, *batched_location_probability_cols, *batched_location_probability_strides,
+		batched_predicted_location, *batched_predicted_location_rows, *batched_predicted_location_cols, *batched_predicted_location_strides
+	);
+}
 void TRN::GPU::Algorithm::learn_widrow_hoff(
 	const std::size_t &batch_size,
 	unsigned long &seed,

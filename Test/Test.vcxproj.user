@@ -11,18 +11,20 @@
     <LocalDebuggerCommandArguments>-n 1 "$(SolutionDir)$(Platform)\$(Configuration)\Test.exe" : -n 4 "$(SolutionDir)$(Platform)\$(Configuration)\Worker.exe" -i 1 : -n 4 "$(SolutionDir)$(Platform)\$(Configuration)\Worker.exe" -i 2 :  -n 4 "$(SolutionDir)$(Platform)\$(Configuration)\Worker.exe" -i 3 : -n 4 "$(SolutionDir)$(Platform)\$(Configuration)\Worker.exe" -i 4</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommand>$(I_MPI_ROOT)\intel64\bin\mpiexec.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(TargetPath)</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>-n 1 "$(SolutionDir)$(Platform)\$(Configuration)\Test.exe" : -n 4 "$(SolutionDir)$(Platform)\$(Configuration)\Worker.exe" -i 1 : -n 4 "$(SolutionDir)$(Platform)\$(Configuration)\Worker.exe" -i 2 :  -n 4 "$(SolutionDir)$(Platform)\$(Configuration)\Worker.exe" -i 3 : -n 4 "$(SolutionDir)$(Platform)\$(Configuration)\Worker.exe" -i 4</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>
+    </LocalDebuggerCommandArguments>
     <QTDIR>C:\Libraries\Build\Qt\5.8\msvc2015_64</QTDIR>
     <LocalDebuggerEnvironment>PATH=$(QTDIR)\bin%3b$(VCRedistPaths)%PATH%
 $(LocalDebuggerEnvironment)
     </LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommand>$(I_MPI_ROOT)\intel64\bin\mpiexec.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(TargetPath)</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>-n 1 "$(SolutionDir)$(Platform)\$(Configuration)\Test.exe" : -n 4 "$(SolutionDir)$(Platform)\$(Configuration)\Worker.exe" -i 1 : -n 4 "$(SolutionDir)$(Platform)\$(Configuration)\Worker.exe" -i 2 :  -n 4 "$(SolutionDir)$(Platform)\$(Configuration)\Worker.exe" -i 3 : -n 4 "$(SolutionDir)$(Platform)\$(Configuration)\Worker.exe" -i 4</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>
+    </LocalDebuggerCommandArguments>
     <QTDIR>C:\Libraries\Build\Qt\5.8\msvc2015_64</QTDIR>
     <LocalDebuggerEnvironment>PATH=$(QTDIR)\bin%3b$(VCRedistPaths)%PATH%
 $(LocalDebuggerEnvironment)

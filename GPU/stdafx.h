@@ -12,7 +12,7 @@
 #include <cassert>
 #include <random>
 // CUDA runtime
-#include <opencv2/core.hpp>
+
 
 #include <cuda.h>
 #include <cublas_v2.h>
@@ -20,8 +20,9 @@
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
 #include <curand.h>
-#include <helper_cuda.h>
+
 //#include <npp.h>
+#include <thrust/binary_search.h>
 #include <thrust/device_vector.h>
 #include <thrust/fill.h>
 #include <thrust/random.h>

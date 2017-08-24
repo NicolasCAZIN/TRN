@@ -40,12 +40,6 @@ void TRN::Core::Measurement::Abstraction::set_expected(const std::shared_ptr<TRN
 
 	handle->error = TRN::Core::Matrix::create(implementor->get_implementor(), handle->expected->get_rows(), handle->batch_size);
 
-	std::vector<float> expected_elements;
-	std::size_t expected_rows;
-	std::size_t expected_cols;
-
-	expected->to(expected_elements, expected_rows, expected_cols);
-	cv::Mat cv_expected(expected_rows, expected_cols, CV_32F, expected_elements.data());
 	for (std::size_t batch = 0; batch < handle->batch_size; batch++)
 	{
 		handle->batched_predicted->update(batch, TRN::Core::Matrix::create(implementor->get_implementor(), handle->expected->get_rows(), handle->expected->get_cols()));
@@ -57,7 +51,8 @@ void TRN::Core::Measurement::Abstraction::on_update(const std::shared_ptr<TRN::C
 {
 	for (std::size_t batch = 0; batch < handle->batch_size; batch++)
 	{
-		handle->batched_predicted->get_matrices(batch)->from(*predicted->get_matrices(batch));
+		auto slice = TRN::Core::Matrix::create(implementor->get_implementor(), handle->batched_predicted->get_matrices(batch), handle->stored, 0, 1, handle->expected->get_cols());
+		slice->from(*predicted->get_matrices(batch));
 	}
 
 	handle->stored++;

@@ -533,6 +533,8 @@ namespace TRN
 				ar & seed;
 			}
 		};
+
+
 		struct Matrix : public Dimensions
 		{
 			std::vector<float> elements;
@@ -544,17 +546,19 @@ namespace TRN
 				ar & elements;
 			}
 		};
-		struct Batch : public Matrix
+
+		struct Measurement : public Matrix
 		{
-			std::size_t matrices;
+			std::vector<float> expected;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & boost::serialization::base_object<Matrix>(*this);
-				ar & matrices;
+				ar & expected;
 			}
 		};
+
 		template<>
 		struct Message<TRN::Engine::Tag::POSITION> : public Matrix
 		{
@@ -627,22 +631,22 @@ namespace TRN
 
 
 		template<>
-		struct Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> : public Batch
+		struct Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> : public Matrix
 		{
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::FEEDFORWARD_WEIGHTS> : public Batch
+		struct Message<TRN::Engine::Tag::FEEDFORWARD_WEIGHTS> : public Matrix
 		{
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::RECURRENT_WEIGHTS> : public Batch
+		struct Message<TRN::Engine::Tag::RECURRENT_WEIGHTS> : public Matrix
 		{
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::READOUT_WEIGHTS> : public Batch
+		struct Message<TRN::Engine::Tag::READOUT_WEIGHTS> : public Matrix
 		{
 		};
 
@@ -701,19 +705,7 @@ namespace TRN
 		{
 		};
 	
-		struct Measurement : public Matrix
-		{
-			std::vector<float> expected;
-			std::size_t pages;
-			template<class Archive>
-			void serialize(Archive & ar, const unsigned int version)
-			{
-				ar & boost::serialization::base_object<Matrix>(*this);
-				ar & expected;
-				ar & pages;
-			}
-		};
-
+		
 		template<>
 		struct Message<TRN::Engine::Tag::MEASUREMENT_READOUT_MEAN_SQUARE_ERROR> : public Matrix
 		{

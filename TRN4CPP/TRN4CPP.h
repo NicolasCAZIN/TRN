@@ -60,7 +60,8 @@ namespace TRN4CPP
 														    const std::size_t &rows, const std::size_t &cols, const std::pair<float, float> &x, const std::pair<float, float> &y,
 															const std::vector<float> response, const float &sigma, const float &radius, const std::string &tag);
 	void TRN4CPP_EXPORT  	configure_loop_custom(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size,
-		const std::function<void(const unsigned int &id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request, std::function<void(const unsigned int &id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply
+		const std::function<void(const unsigned int &id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
+		std::function<void(const unsigned int &id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply
 		);
 
 	void TRN4CPP_EXPORT  	configure_scheduler_tiled(const unsigned int &id, const unsigned int &epochs);

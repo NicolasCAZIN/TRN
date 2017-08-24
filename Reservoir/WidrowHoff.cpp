@@ -53,11 +53,11 @@ void TRN::Reservoir::WidrowHoff::visit(std::shared_ptr<TRN::Core::Message::Paylo
 {
 	TRN::Core::Reservoir::visit(payload);
 
-	/*auto flops_per_cycle = payload->get_flops_per_cycle();
+	auto flops_per_cycle = payload->get_flops_per_cycle();
 	flops_per_cycle += TRN::Core::Reservoir::handle->reservoir_size * 2;
-	flops_per_cycle += TRN::Core::Reservoir::handle->prediction_size * TRN::Core::Reservoir::handle->reservoir_size * 2;*/
+	flops_per_cycle += TRN::Core::Reservoir::handle->prediction_size * TRN::Core::Reservoir::handle->reservoir_size * 2;
 
-//	payload->set_flops_per_cycle(flops_per_cycle);
+	payload->set_flops_per_cycle(flops_per_cycle);
 }
 
 std::shared_ptr<TRN::Reservoir::WidrowHoff> TRN::Reservoir::WidrowHoff::create(const std::shared_ptr<TRN::Backend::Driver> &driver,

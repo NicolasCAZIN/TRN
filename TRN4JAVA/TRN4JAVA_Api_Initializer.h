@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     TRN4JAVA_Api_Initializer
  * Method:    notify
- * Signature: ([FII)V
+ * Signature: (I[FIII)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Api_00024Initializer_notify
-  (JNIEnv *, jobject, jfloatArray, jint, jint);
+  (JNIEnv *, jobject, jint, jfloatArray, jint, jint, jint);
 
 #ifdef __cplusplus
 }

@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-/*#if !defined(_M_IX86) && defined(_M_X64)
+#if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
 #include "Algorithm.h"
-#define __AVX2__
+
 #include "avx_mathfun.h"
 
 
@@ -49,6 +49,7 @@ static const v8sf two = _mm256_set1_ps(2.0f);
 #define setzero_ps() (_mm256_setzero_ps())
 #define load_ps(S) (_mm256_load_ps((S)))
 #define stream_ps(S, __s) (_mm256_stream_ps((S), (__s)))
+#define stream_ss(S, s) (_mm256_maskstore_ps((S), _mm256_set_epi32( -1, -1, -1, -1, -1, -1, -1, 1 ), _mm256_set1_ps((s))))
 #define add_ps(__a, __b) (_mm256_add_ps((__a), (__b)))
 #define sub_ps(__a, __b) (_mm256_sub_ps((__a), (__b)))
 #define mul_ps(__a, __b) (_mm256_mul_ps((__a), (__b)))
@@ -63,7 +64,7 @@ static inline __m256 tanh_ps(const __m256 &__a)
 	return _mm256_div_ps(_mm256_sub_ps(e, one), _mm256_add_ps(e, one));
 }
 #define exp_ps(__a) (::exp256_ps(__a))
-#define dp_acc_ps(__a, __b, __c) 	((__c) =mul_add_ps((__a), (__b), (__c)))
+
 static inline float hsum_ps(const __m256 &__a)
 {
 	__m256 t1 = _mm256_hadd_ps((__a), (__a));
@@ -71,6 +72,7 @@ static inline float hsum_ps(const __m256 &__a)
 	float s = _mm_cvtss_f32(_mm_add_ss(_mm256_extractf128_ps(t2, 0), _mm256_extractf128_ps(t2, 1)));
 	return s ;
 }
+
 #define blendv_ps(__a, __b, __c) (_mm256_blendv_ps((__a), (__b), (__c)))
 #define cmp_ps(__a, __b, __c) (_mm256_cmp_ps((__a), (__b), (__c)))
 
@@ -78,4 +80,4 @@ static inline float hsum_ps(const __m256 &__a)
 
 template  TRN::CPU::Algorithm<TRN::CPU::Implementation::FMA3>;
 
-#endif */
+#endif

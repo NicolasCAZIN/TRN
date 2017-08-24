@@ -94,11 +94,13 @@ void TRN::Simulator::States::test(const std::string &sequence, const std::string
 }
 void TRN::Simulator::States::initialize()
 {
-	decorated->initialize();
-
 	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>::attach(shared_from_this());
 	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TESTED>>::attach(shared_from_this());
 	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::attach(shared_from_this());
+
+	decorated->initialize();
+
+
 }
 void TRN::Simulator::States::uninitialize()
 {
@@ -127,6 +129,8 @@ void TRN::Simulator::States::to_host(const std::string &phase)
 	std::size_t reservoir_rows;
 	std::size_t reservoir_cols;
 	handle->states->get_reservoir()->to(reservoir_data, reservoir_rows, reservoir_cols);
+
+	decorated->get_reservoir()->synchronize();
 
 	handle->functor(phase, "stimulus", stimulus_data, stimulus_rows, stimulus_cols);
 	handle->functor(phase, "desired", desired_data, desired_rows, desired_cols);

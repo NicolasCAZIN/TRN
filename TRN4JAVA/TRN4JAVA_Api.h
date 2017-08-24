@@ -9,11 +9,35 @@ extern "C" {
 #endif
 /*
  * Class:     TRN4JAVA_Api
+ * Method:    install_processor
+ * Signature: (LTRN4JAVA/Api/Processor;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Api_install_1processor
+  (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     TRN4JAVA_Api
+ * Method:    install_allocation
+ * Signature: (LTRN4JAVA/Api/Association;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Api_install_1allocation
+  (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     TRN4JAVA_Api
+ * Method:    install_deallocation
+ * Signature: (LTRN4JAVA/Api/Association;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Api_install_1deallocation
+  (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     TRN4JAVA_Api
  * Method:    initialize_local
- * Signature: (II)V
+ * Signature: ([I)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Api_initialize_1local
-  (JNIEnv *, jclass, jint, jint);
+  (JNIEnv *, jclass, jintArray);
 
 /*
  * Class:     TRN4JAVA_Api
@@ -30,6 +54,14 @@ JNIEXPORT void JNICALL Java_TRN4JAVA_Api_initialize_1remote
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Api_initialize_1distributed
   (JNIEnv *, jclass, jobjectArray);
+
+/*
+ * Class:     TRN4JAVA_Api
+ * Method:    uninitialize
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Api_uninitialize
+  (JNIEnv *, jclass);
 
 /*
  * Class:     TRN4JAVA_Api
@@ -121,35 +153,83 @@ JNIEXPORT void JNICALL Java_TRN4JAVA_Api_configure_1end
 
 /*
  * Class:     TRN4JAVA_Api
+ * Method:    configure_measurement_readout_mean_square_error
+ * Signature: (IILTRN4JAVA/Api/Measurement;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Api_configure_1measurement_1readout_1mean_1square_1error
+  (JNIEnv *, jclass, jint, jint, jobject);
+
+/*
+ * Class:     TRN4JAVA_Api
+ * Method:    configure_measurement_readout_frechet_distance
+ * Signature: (IILTRN4JAVA/Api/Measurement;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Api_configure_1measurement_1readout_1frechet_1distance
+  (JNIEnv *, jclass, jint, jint, jobject);
+
+/*
+ * Class:     TRN4JAVA_Api
+ * Method:    configure_measurement_readout_custom
+ * Signature: (IILTRN4JAVA/Api/Result;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Api_configure_1measurement_1readout_1custom
+  (JNIEnv *, jclass, jint, jint, jobject);
+
+/*
+ * Class:     TRN4JAVA_Api
+ * Method:    configure_measurement_position_mean_square_error
+ * Signature: (IILTRN4JAVA/Api/Measurement;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Api_configure_1measurement_1position_1mean_1square_1error
+  (JNIEnv *, jclass, jint, jint, jobject);
+
+/*
+ * Class:     TRN4JAVA_Api
+ * Method:    configure_measurement_position_frechet_distance
+ * Signature: (IILTRN4JAVA/Api/Measurement;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Api_configure_1measurement_1position_1frechet_1distance
+  (JNIEnv *, jclass, jint, jint, jobject);
+
+/*
+ * Class:     TRN4JAVA_Api
+ * Method:    configure_measurement_position_custom
+ * Signature: (IILTRN4JAVA/Api/Result;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Api_configure_1measurement_1position_1custom
+  (JNIEnv *, jclass, jint, jint, jobject);
+
+/*
+ * Class:     TRN4JAVA_Api
  * Method:    configure_reservoir_widrow_hoff
- * Signature: (IIIIFFF)V
+ * Signature: (IIIIFFFJI)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Api_configure_1reservoir_1widrow_1hoff
-  (JNIEnv *, jclass, jint, jint, jint, jint, jfloat, jfloat, jfloat);
+  (JNIEnv *, jclass, jint, jint, jint, jint, jfloat, jfloat, jfloat, jlong, jint);
 
 /*
  * Class:     TRN4JAVA_Api
  * Method:    configure_loop_copy
- * Signature: (II)V
+ * Signature: (III)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Api_configure_1loop_1copy
-  (JNIEnv *, jclass, jint, jint);
+  (JNIEnv *, jclass, jint, jint, jint);
 
 /*
  * Class:     TRN4JAVA_Api
  * Method:    configure_loop_spatial_filter
- * Signature: (IILTRN4JAVA/Api/Loop;LTRN4JAVA/Api/Loop;IIFFFF[FFFLjava/lang/String;)V
+ * Signature: (IIILTRN4JAVA/Api/Loop;LTRN4JAVA/Api/Loop;IIFFFF[FFFLjava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Api_configure_1loop_1spatial_1filter
-  (JNIEnv *, jclass, jint, jint, jobject, jobject, jint, jint, jfloat, jfloat, jfloat, jfloat, jfloatArray, jfloat, jfloat, jstring);
+  (JNIEnv *, jclass, jint, jint, jint, jobject, jobject, jint, jint, jfloat, jfloat, jfloat, jfloat, jfloatArray, jfloat, jfloat, jstring);
 
 /*
  * Class:     TRN4JAVA_Api
  * Method:    configure_loop_custom
- * Signature: (IILTRN4JAVA/Api/Loop;)V
+ * Signature: (IIILTRN4JAVA/Api/Loop;)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Api_configure_1loop_1custom
-  (JNIEnv *, jclass, jint, jint, jobject);
+  (JNIEnv *, jclass, jint, jint, jint, jobject);
 
 /*
  * Class:     TRN4JAVA_Api

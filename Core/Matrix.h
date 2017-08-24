@@ -40,13 +40,8 @@ namespace TRN
 	
 			const std::size_t &get_rows() const;
 			const std::size_t &get_cols() const;
-			const std::size_t &get_width() const;
-			const std::size_t &get_height() const;
 			const std::size_t &get_stride() const;
 
-		private :
-			std::vector<float> to_device_storage(const std::vector<float> &host, const std::size_t &rows, const std::size_t &cols);
-			std::vector<float> to_host_storage(const std::vector<float> &device, const std::size_t &rows, const std::size_t &cols);
 		public :
 			static std::shared_ptr<Matrix> create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &rows = DEFAULT_ROWS, const std::size_t &cols = DEFAULT_COLS, const bool &blank = DEFAULT_BLANK);
 			static std::shared_ptr<TRN::Core::Matrix> create(const std::shared_ptr<TRN::Backend::Driver> &driver, const float *dev_elements, const std::size_t &rows, const std::size_t &cols, const std::size_t &stride);

@@ -260,7 +260,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->measurement_readout_custom.find(message.id) == handle->measurement_readout_custom.end())
 						throw std::runtime_error("Prediction custom functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->measurement_readout_custom[message.id](message.elements, message.expected, message.pages, message.rows, message.cols);
+					handle->measurement_readout_custom[message.id](message.elements, message.expected, message.matrices, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -290,7 +290,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->measurement_position_custom.find(message.id) == handle->measurement_position_custom.end())
 						throw std::runtime_error("Position custom functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->measurement_position_custom[message.id](message.elements, message.expected, message.pages, message.rows, message.cols);
+					handle->measurement_position_custom[message.id](message.elements, message.expected, message.matrices, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-/*#if !defined(_M_IX86) && defined(_M_X64)
+#if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
 #include "Algorithm.h"
 
 #define _0 0
@@ -41,7 +41,8 @@
 #define set1_ps(s) ((s))
 #define setzero_ps() (0.0f)
 #define load_ps(S) ((*S))
-#define stream_ps(S, __s) ((*S) = __s)
+#define stream_ps(S, __s) ((*S) = (__s))
+#define stream_ss(S, s) ((*S) = (s))
 #define add_ps(__a, __b) ((__a) + (__b))
 #define sub_ps(__a, __b) ((__a) - (__b))
 #define mul_ps(__a, __b) ((__a) * (__b))
@@ -49,7 +50,7 @@
 #define mul_add_ps(__a, __b, __c) (add_ps(mul_ps((__a), (__b)), (__c)))
 #define tanh_ps(__a) (tanhf(__a))
 #define exp_ps(__a) (expf(__a))
-#define dp_acc_ps(__a, __b, __c) 	(__c = add_ps(mul_ps((__a), (__b)), (__c)))
+#define dp_ps(__a, __b) 	(add_ps(mul_ps((__a), (__b))))
 #define hsum_ps(__a) ((__a))
 
 #define blendv_ps(__a, __b, __c) ((__c) ? (__a) : (__b))
@@ -62,4 +63,4 @@
 
 template  TRN::CPU::Algorithm<TRN::CPU::Implementation::SCALAR>;
 
-#endif */
+#endif
