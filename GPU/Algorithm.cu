@@ -344,18 +344,74 @@ static void batched_update_reservoir_kernel(
 			float4 _u = reinterpret_cast<float4 *>(U)[col];
 			float4 _u_ffwd = reinterpret_cast<float4 *>(u_ffwd_t)[col];
 
-			_p += leak_rate * ( _u + _u_ffwd  - _p);
+			_p += leak_rate * ( _u_ffwd + _u - _p);
 			reinterpret_cast<float4 *>(X)[col] = tanhf(_p);
 			reinterpret_cast<float4 *>(P)[col] = _p;
 		}
 	}
+}
+__global__
+static void batched_update_reservoir_no_input_kernel(
+	const int batch_size,
+	const int t, const float leak_rate,
+	float ** __restrict__ u, const int u_rows, const int u_cols, const int u_stride,
+
+	float ** __restrict__ p, const int p_rows, const int p_cols, const int p_stride,
+	float ** __restrict__ x_res, const int x_res_rows, const int x_res_cols, const int x_res_stride
+)
+{
+	for (int batch = blockIdx.y * blockDim.y + threadIdx.y; batch < batch_size; batch += gridDim.y * blockDim.y)
+	{
+		float *P = p[batch];
+		float *U = u[batch];
+		float *X = x_res[batch];
+
+		for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < x_res_cols; col += gridDim.x * blockDim.x)
+		{
+			float4 _p = reinterpret_cast<float4 *>(P)[col];
+			float4 _u = reinterpret_cast<float4 *>(U)[col];
+
+			_p += leak_rate * (_u - _p);
+			reinterpret_cast<float4 *>(X)[col] = tanhf(_p);
+			reinterpret_cast<float4 *>(P)[col] = _p;
+		}
+	}
+}
+__host__
+static inline void batched_update_reservoir_no_input
+(
+	const cudaStream_t &stream,
+	const std::size_t &batch_size, const std::size_t t, const float &leak_rate, 
+
+	float **u, const std::size_t &u_rows, const std::size_t &u_cols, const std::size_t &u_stride,
+	float **p, const std::size_t &p_rows, const std::size_t &p_cols, const std::size_t &p_stride,
+	float **x_res, const std::size_t &x_res_rows, const std::size_t &x_res_cols, const std::size_t &x_res_stride
+)
+{
+	dim3 grid, block;
+
+	block.x = 128;
+	block.y = 1;
+
+	grid.x = (x_res_cols / 4 + block.x - 1) / block.x;
+	grid.y = (batch_size + block.y - 1) / block.y;
+
+	batched_update_reservoir_no_input_kernel << < grid, block, 0, stream >> > (
+		batch_size, t, leak_rate,
+		
+		u, u_rows, u_cols / 4, u_stride,
+
+		p, p_rows, p_cols / 4, p_stride,
+		x_res, x_res_rows, x_res_cols / 4, x_res_stride);
+
+	checkCudaErrors(cudaGetLastError());
 }
 
 __host__
 static inline void batched_update_reservoir
 (
 	const cudaStream_t &stream,
-	const std::size_t &batch_size, const std::size_t t, const float &leak_rate,
+	const std::size_t &batch_size, const std::size_t t, const float &leak_rate, 
 	 float **u_ffwd, const std::size_t &u_ffwd_rows, const std::size_t &u_ffwd_cols, const std::size_t &u_ffwd_stride,
 	 float **u, const std::size_t &u_rows, const std::size_t &u_cols, const std::size_t &u_stride,
 	float **p, const std::size_t &p_rows, const std::size_t &p_cols, const std::size_t &p_stride,
@@ -882,9 +938,9 @@ static void update_readout_error_kernel(
 			float4 d = reinterpret_cast<float4 *>(&D[t * batched_expected_cols])[col];
 			float4 x = reinterpret_cast<float4 *>(X)[col];
 			float4 e = learning_rate * (d - x);
-			assert(!isnan(d));
+			/*assert(!isnan(d));
 			assert(!isnan(x));
-			assert(!isnan(e));
+			assert(!isnan(e));*/
 			reinterpret_cast<float4 *>(E)[col] = e;
 		}
 	}
@@ -910,12 +966,12 @@ static void widrow_hoff_kernel(
 		for (int row = blockIdx.y * blockDim.y + threadIdx.y; row < batched_w_ro_rows; row += gridDim.y * blockDim.y)
 		{
 			const float e = E[row];
-			assert(!isnan(e));
+			//assert(!isnan(e));
 			for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < batched_w_ro_cols >> 2; col += gridDim.x * blockDim.x)
 			{
-				const float x = X[col];
-				assert(!isnan(x));
-				W[row * batched_w_ro_stride + col] += x * e;
+			
+				//assert(!isnan(x));
+				reinterpret_cast<float4 *>(&W[row * batched_w_ro_stride])[col] += reinterpret_cast<float4 *>(X)[col] * e;
 			}
 		}
 	}
@@ -1062,7 +1118,7 @@ void update_model(
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
 	float **batched_error, const std::size_t & batched_error_rows, const std::size_t &batched_error_cols, const std::size_t &batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
 	)
 {
@@ -1084,17 +1140,17 @@ void update_model(
 	std::size_t ts = 0;
 	for (std::size_t repetition = 0; repetition < repetitions; repetition++)
 	{
-		const int t0 = offsets[repetition];
-		const int tn = t0 + durations[repetition];
-
 		initialize_states<overwrite_states>(stream,  seed, batch_size,
 			batched_p, batched_p_rows, batched_p_cols, batched_p_strides, initial_state_scale);
 		//isnan(stream, batch_size, batched_p, batched_p_rows, batched_p_cols, batched_p_strides);
 		initialize_states<overwrite_states>(stream, seed, batch_size,
 			(float **)batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides, initial_state_scale);
 		//isnan(stream, batch_size, batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides);
-		for (int t = t0; t < tn; t++, ts++)
+		for (std::size_t k = 0; k < durations[repetition]; k++, ts++)
 		{
+			int t = offsets[ts];
+	
+			//std::cout << "t = " << t << std::endl;
 			batched_reset(stream, batch_size, batched_u_rows, batched_u_cols, batched_u, batched_u_strides);
 			//isnan(stream, batch_size, batched_u, batched_u_rows, batched_u_cols, batched_u_strides);
 			batched_sgemv(stream, batch_size,
@@ -1104,13 +1160,28 @@ void update_model(
 			);
 			//isnan(stream, batch_size, batched_u, batched_u_rows, batched_u_cols, batched_u_strides);
 
-			batched_update_reservoir(
-				stream,
-				batch_size, t, leak_rate,
-				batched_u_ffwd, batched_u_ffwd_rows, batched_u_ffwd_cols, batched_u_ffwd_strides,
-				batched_u, batched_u_rows, batched_u_cols, batched_u_strides,
-				batched_p, batched_p_rows, batched_p_cols, batched_p_strides,
-				batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides);
+			if (t < 0)
+			{
+				t = -t;
+				batched_update_reservoir_no_input(
+					stream,
+					batch_size, t, leak_rate,
+					batched_u, batched_u_rows, batched_u_cols, batched_u_strides,
+					batched_p, batched_p_rows, batched_p_cols, batched_p_strides,
+					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides);
+			}
+			else
+			{
+				batched_update_reservoir(
+					stream,
+					batch_size, t, leak_rate,
+					batched_u_ffwd, batched_u_ffwd_rows, batched_u_ffwd_cols, batched_u_ffwd_strides,
+					batched_u, batched_u_rows, batched_u_cols, batched_u_strides,
+					batched_p, batched_p_rows, batched_p_cols, batched_p_strides,
+					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides);
+			}
+
+
 			//isnan(stream, batch_size, batched_p, batched_p_rows, batched_p_cols, batched_w_ffwd_strides);
 			//isnan(stream, batch_size, batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides);
 
@@ -1297,18 +1368,19 @@ void compute_place_cell_location_probability(
 	float ** location_probability, const std::size_t &location_probability_rows, const std::size_t &location_probability_cols, const std::size_t &location_probability_stride) // batch_size * 2
 
 {
+	
 	const auto minus_sigma2_inv = -1.0/(sigma * sigma);
 	const std::size_t size = rows * firing_rate_map_stride;
 	dim3 block, grid;
 	block.x = 32;
 	block.y = 32;
 	block.z = 1;
-
+	batched_reset(stream, batch_size, scale_rows, scale_cols, scale, scale_stride);
 	grid.x = (size / 4 + block.x - 1) / block.x;
 	grid.z = (batch_size + block.z - 1) / block.z;
 	{
 		grid.y = (place_cells_number + block.y - 1) / block.y;
-
+		// reset location hyppothesis
 		location_hypothesis_kernel << <grid, block, 0, stream >> > (
 				batch_size, place_cells_number, size / 4, minus_sigma2_inv,
 				firing_rate_map, firing_rate_map_stride,
@@ -1374,6 +1446,7 @@ __global__
 static void inside_circle_kernel(
 	const int batch_size, const int rows, const int cols, const int location_probability_stride,
 	const float radius2,
+	const float scale,
 	const float   * __restrict__ x_grid,
 	const float   * __restrict__ y_grid,
 	const float ** __restrict__ batched_current_location,
@@ -1396,6 +1469,13 @@ static void inside_circle_kernel(
 				const float4 dx2 = dx * dx;
 				const float4 lhs = dx2 + dy2;
 				float4 p = reinterpret_cast<float4 *>(&location_probability[row * location_probability_stride])[col];
+
+				curandStatePhilox4_32_10_t state;
+		
+				// seed a random number generator
+				curand_init(col * rows + row + batch * rows * cols, 0, 0, &state);
+
+				p += curand_uniform4(&state) * scale;
 				float4 s;
 				s.x = lhs.x > radius2 ? 0.0f : p.x;
 				s.y = lhs.y > radius2 ? 0.0f : p.y;
@@ -1415,7 +1495,7 @@ void compute_reachable_locations(
 	const cudaStream_t &stream,
 	const cublasHandle_t &handle,
 	const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
-	const float &radius,
+	const float &radius, const float &scale,
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 	const float **batched_current_location, const std::size_t &batched_current_location_rows, const std::size_t &batched_current_location_cols, const std::size_t &batched_current_location_stride,
@@ -1433,7 +1513,7 @@ void compute_reachable_locations(
 	grid.y = (batched_location_probability_rows  + block.y - 1) / block.y;
 	grid.z = (batch_size + block.z - 1) / block.z;
 
-		inside_circle_kernel << <grid, block, 0, stream >> > (batch_size, rows, cols / 4, batched_location_probability_strides, radius * radius,
+		inside_circle_kernel << <grid, block, 0, stream >> > (batch_size, rows, cols / 4, batched_location_probability_strides, radius * radius, scale,
 			x_grid, y_grid, batched_current_location, batched_location_probability);
 		checkCudaErrors(cudaGetLastError());
 
@@ -1709,7 +1789,7 @@ template  void update_model<true, true, Widrow_Hoff>(
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
 	float **batched_error, const std::size_t & batched_error_rows, const std::size_t &batched_error_cols, const std::size_t &batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
 	);
 template void update_model< true, false, Widrow_Hoff >(
@@ -1733,7 +1813,7 @@ template void update_model< true, false, Widrow_Hoff >(
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
 	float **batched_error, const std::size_t & batched_error_rows, const std::size_t &batched_error_cols, const std::size_t &batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
 	);
 template void update_model< false, true, Widrow_Hoff>(
@@ -1757,7 +1837,7 @@ template void update_model< false, true, Widrow_Hoff>(
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
 	float **batched_error, const std::size_t & batched_error_rows, const std::size_t &batched_error_cols, const std::size_t &batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
 	);
 template void update_model< false, false, Widrow_Hoff>(
@@ -1781,7 +1861,7 @@ template void update_model< false, false, Widrow_Hoff>(
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
 	float **batched_error, const std::size_t & batched_error_rows, const std::size_t &batched_error_cols, const std::size_t &batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
 	);
 template void update_model<true, true, Nothing>(
@@ -1805,7 +1885,7 @@ template void update_model<true, true, Nothing>(
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
 	float **batched_error, const std::size_t & batched_error_rows, const std::size_t &batched_error_cols, const std::size_t &batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
 	);
 template void update_model< true, false, Nothing >(
@@ -1829,7 +1909,7 @@ template void update_model< true, false, Nothing >(
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
 	float **batched_error, const std::size_t & batched_error_rows, const std::size_t &batched_error_cols, const std::size_t &batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
 	);
 template void update_model< false, true, Nothing>(
@@ -1853,7 +1933,7 @@ template void update_model< false, true, Nothing>(
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
 	float **batched_error, const std::size_t & batched_error_rows, const std::size_t &batched_error_cols, const std::size_t &batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
 	);
 template void update_model< false, false, Nothing>(
@@ -1877,7 +1957,7 @@ template void update_model< false, false, Nothing>(
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
 	float **batched_error, const std::size_t & batched_error_rows, const std::size_t &batched_error_cols, const std::size_t &batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
 	);
 

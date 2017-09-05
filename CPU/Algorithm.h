@@ -39,7 +39,7 @@ namespace TRN
 			virtual void restrict_to_reachable_locations(
 
 				const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
-				const float &radius,
+				const float &radius, const float &scale,
 				const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 				const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 				const float **batched_current_location, const std::size_t *batched_current_location_rows, const std::size_t *batched_current_location_cols, const std::size_t *batched_current_location_stride,
@@ -82,7 +82,7 @@ namespace TRN
 				float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 				float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
 				float **batched_error, const std::size_t *batched_error_rows, const std::size_t *batched_error_cols, const std::size_t *batched_error_stride,
-				const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+				const int *offsets, const int *durations, const std::size_t &repetitions,
 				float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
 
 				const float &learning_rate
@@ -106,7 +106,7 @@ namespace TRN
 				float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 				float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
 				float **batched_error, const std::size_t *batched_error_rows, const std::size_t *batched_error_cols, const std::size_t *batched_error_stride,
-				const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+				const int *offsets, const int *durations, const std::size_t &repetitions,
 				float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride) override;
 			virtual void generate(
 				const std::size_t &batch_size,
@@ -127,7 +127,7 @@ namespace TRN
 				float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 				float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
 				float **batched_error, const std::size_t *batched_error_rows, const std::size_t *batched_error_cols, const std::size_t *batched_error_stride,
-				const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+				const int *offsets, const int *durations, const std::size_t &repetitions,
 				float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride) override;
 		public:
 			static std::shared_ptr<Algorithm> create();

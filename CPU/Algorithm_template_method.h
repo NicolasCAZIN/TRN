@@ -95,16 +95,28 @@ static inline float 	compute_mse(const float *A, const float *B, const size_t &c
 			acc = mul_add_ps(_d1, _d1, acc);
 		}
 	}
-	 if (cols - col > 0)
+	if (cols - col > _1)
 	{
-		for (; col  < cols; col += _1)
+		for (; col + _1 - 1 < cols; col += _1)
 		{
 			auto _d0 = sub_ps(load_ps(&A[col + _0]), load_ps(&B[col + _0]));
 			acc = mul_add_ps(_d0, _d0, acc);
 		}
 	}
 
-	 return (hsum_ps(acc) / cols);
+	auto e = hsum_ps(acc);
+
+	if (cols - col > 0)
+	{
+		for (; col  < cols; col++)
+		{
+			auto d = (A[col] - B[col]);
+			e += d * d;
+		}
+	}
+
+
+	return e / cols;
 }
 
 template <TRN::CPU::Implementation Implementation>
@@ -116,11 +128,22 @@ void TRN::CPU::Algorithm<Implementation>::mean_square_error
 	float *result, const std::size_t &result_rows, const std::size_t &result_cols, const std::size_t &result_stride
 )
 {
-/*#pragma omp parallel for
-	for (int row = 0; row < predicted_rows; row++)
+	int K = expected_rows * batch_size;
+#pragma omp parallel for
+	for (int k = 0; k < K; k++)
 	{
-		result[row * result_stride] = compute_mse<Implementation>(&predicted[row * predicted_stride], &expected[row * expected_stride], expected_cols);
-	}*/
+		int batch = k % batch_size;
+		int row = k / batch_size;
+		const float *predicted = batched_predicted[batch];
+		const std::size_t predicted_rows = batched_predicted_rows[batch];
+		const std::size_t predicted_cols = batched_predicted_cols[batch];
+		const std::size_t predicted_stride = batched_predicted_strides[batch];		
+		assert(predicted_cols == expected_cols);
+		assert(predicted_rows == expected_rows);
+		auto mse = compute_mse<Implementation>(&predicted[row * predicted_stride], &expected[row * expected_stride], expected_cols);
+
+		result[row * result_stride + batch] = mse;
+	}
 }
 
 template <TRN::CPU::Implementation Implementation>
@@ -130,28 +153,7 @@ static inline void 	weighted_sum(
 	const std::size_t &cols, float *C)
 {
 	std::size_t col = 0;
-	/*if (cols - col > 06)
-	{
-		for (; col + _16 - 1 < cols; col += _16)
-		{
-			stream_ps(&C[col + _0], mul_add_ps(load_ps(&A[col + _0]), a, mul_ps(load_ps(&B[col + _0]), b)));
-			stream_ps(&C[col + _1], mul_add_ps(load_ps(&A[col + _1]), a, mul_ps(load_ps(&B[col + _1]), b)));
-			stream_ps(&C[col + _2], mul_add_ps(load_ps(&A[col + _2]), a, mul_ps(load_ps(&B[col + _2]), b)));
-			stream_ps(&C[col + _3], mul_add_ps(load_ps(&A[col + _3]), a, mul_ps(load_ps(&B[col + _3]), b)));
-			stream_ps(&C[col + _4], mul_add_ps(load_ps(&A[col + _4]), a, mul_ps(load_ps(&B[col + _4]), b)));
-			stream_ps(&C[col + _5], mul_add_ps(load_ps(&A[col + _5]), a, mul_ps(load_ps(&B[col + _5]), b)));
-			stream_ps(&C[col + _6], mul_add_ps(load_ps(&A[col + _6]), a, mul_ps(load_ps(&B[col + _6]), b)));
-			stream_ps(&C[col + _7], mul_add_ps(load_ps(&A[col + _7]), a, mul_ps(load_ps(&B[col + _7]), b)));
-			stream_ps(&C[col + _8], mul_add_ps(load_ps(&A[col + _8]), a, mul_ps(load_ps(&B[col + _8]), b)));
-			stream_ps(&C[col + _9], mul_add_ps(load_ps(&A[col + _1]), a, mul_ps(load_ps(&B[col + _1]), b)));
-			stream_ps(&C[col + _10], mul_add_ps(load_ps(&A[col + _10]), a, mul_ps(load_ps(&B[col + _10]), b)));
-			stream_ps(&C[col + _11], mul_add_ps(load_ps(&A[col + _11]), a, mul_ps(load_ps(&B[col + _11]), b)));
-			stream_ps(&C[col + _12], mul_add_ps(load_ps(&A[col + _12]), a, mul_ps(load_ps(&B[col + _12]), b)));
-			stream_ps(&C[col + _13], mul_add_ps(load_ps(&A[col + _13]), a, mul_ps(load_ps(&B[col + _13]), b)));
-			stream_ps(&C[col + _14], mul_add_ps(load_ps(&A[col + _14]), a, mul_ps(load_ps(&B[col + _14]), b)));
-			stream_ps(&C[col + _15], mul_add_ps(load_ps(&A[col + _15]), a, mul_ps(load_ps(&B[col + _15]), b)));
-		}
-	}*/
+	
 	if (cols - col > _8)
 	{
 		for (; col + _8 - 1 < cols; col += _8)
@@ -185,13 +187,31 @@ static inline void 	weighted_sum(
 			stream_ps(&C[col + _1], mul_add_ps(load_ps(&A[col + _1]), a, mul_ps(load_ps(&B[col + _1]), b)));
 		}
 	}
-	 if (cols - col > 0)
+	if (cols - col > 0)
 	{
-		for (; col  < cols; col += _1)
+		for (; col < cols; col += _1)
 		{
 			stream_ps(&C[col + _0], mul_add_ps(load_ps(&A[col + _0]), a, mul_ps(load_ps(&B[col + _0]), b)));
 		}
 	}
+
+	/*if (cols - col > _1)
+	{
+		for (; col + _1 - 1 < cols; col += _1)
+		{
+			stream_ps(&C[col + _0], mul_add_ps(load_ps(&A[col + _0]), a, mul_ps(load_ps(&B[col + _0]), b)));
+		}
+	}
+	if (cols - col > 0)
+	{
+		float _a = get_element(0, a);
+		float _b = get_element(0, b);
+		for (; col  < cols; col ++)
+		{
+			C[col] = A[col] * _a + B[col] * _b;
+			//stream_ps(&C[col + _0], mul_add_ps(load_ps(&A[col + _0]), a, mul_ps(load_ps(&B[col + _0]), b)));
+		}
+	}*/
 }
 template <TRN::CPU::Implementation Implementation>
 static inline void 	sub_scale(
@@ -339,28 +359,7 @@ template <TRN::CPU::Implementation Implementation>
 static inline void 	weighted_acc(const float *A, const typename TRN::CPU::Traits<Implementation>::type  &a, const std::size_t &cols, float *C)
 {
 	std::size_t col = 0;
-	/*if (cols - col > 06)
-	{
-		for (; col + _16 - 1 < cols; col += _16)
-		{
-			stream_ps(&C[col + _0], mul_add_ps(load_ps(&A[col + _0]), a, load_ps(&C[col + _0])));
-			stream_ps(&C[col + _1], mul_add_ps(load_ps(&A[col + _1]), a, load_ps(&C[col + _1])));
-			stream_ps(&C[col + _2], mul_add_ps(load_ps(&A[col + _2]), a, load_ps(&C[col + _2])));
-			stream_ps(&C[col + _3], mul_add_ps(load_ps(&A[col + _3]), a, load_ps(&C[col + _3])));
-			stream_ps(&C[col + _4], mul_add_ps(load_ps(&A[col + _4]), a, load_ps(&C[col + _4])));
-			stream_ps(&C[col + _5], mul_add_ps(load_ps(&A[col + _5]), a, load_ps(&C[col + _5])));
-			stream_ps(&C[col + _6], mul_add_ps(load_ps(&A[col + _6]), a, load_ps(&C[col + _6])));
-			stream_ps(&C[col + _7], mul_add_ps(load_ps(&A[col + _7]), a, load_ps(&C[col + _7])));
-			stream_ps(&C[col + _8], mul_add_ps(load_ps(&A[col + _8]), a, load_ps(&C[col + _8])));
-			stream_ps(&C[col + _9], mul_add_ps(load_ps(&A[col + _9]), a, load_ps(&C[col + _9])));
-			stream_ps(&C[col + _10], mul_add_ps(load_ps(&A[col + _10]), a, load_ps(&C[col + _10])));
-			stream_ps(&C[col + _11], mul_add_ps(load_ps(&A[col + _11]), a, load_ps(&C[col + _11])));
-			stream_ps(&C[col + _12], mul_add_ps(load_ps(&A[col + _12]), a, load_ps(&C[col + _12])));
-			stream_ps(&C[col + _13], mul_add_ps(load_ps(&A[col + _13]), a, load_ps(&C[col + _13])));
-			stream_ps(&C[col + _14], mul_add_ps(load_ps(&A[col + _14]), a, load_ps(&C[col + _14])));
-			stream_ps(&C[col + _15], mul_add_ps(load_ps(&A[col + _15]), a, load_ps(&C[col + _15])));
-		}
-	}*/
+	
 	if (cols - col > _8)
 	{
 		for (; col + _8 - 1 < cols; col += _8)
@@ -407,28 +406,7 @@ template <TRN::CPU::Implementation Implementation>
 static inline void 	diff_square(const typename TRN::CPU::Traits<Implementation>::type &current, const float *grid, const std::size_t &cols, float *grid_centered2)
 {
 	std::size_t col = 0;
-	/*if (cols - col > 06)
-	{
-		for (; col + _16 - 1 < cols; col += _16)
-		{
-			stream_ps(&grid_centered2[col + _0], sqr_ps(sub_ps(load_ps(&grid[col + _0]), current)));
-			stream_ps(&grid_centered2[col + _1], sqr_ps(sub_ps(load_ps(&grid[col + _1]), current)));
-			stream_ps(&grid_centered2[col + _2], sqr_ps(sub_ps(load_ps(&grid[col + _2]), current)));
-			stream_ps(&grid_centered2[col + _3], sqr_ps(sub_ps(load_ps(&grid[col + _3]), current)));
-			stream_ps(&grid_centered2[col + _4], sqr_ps(sub_ps(load_ps(&grid[col + _4]), current)));
-			stream_ps(&grid_centered2[col + _5], sqr_ps(sub_ps(load_ps(&grid[col + _5]), current)));
-			stream_ps(&grid_centered2[col + _6], sqr_ps(sub_ps(load_ps(&grid[col + _6]), current)));
-			stream_ps(&grid_centered2[col + _7], sqr_ps(sub_ps(load_ps(&grid[col + _7]), current)));
-			stream_ps(&grid_centered2[col + _8], sqr_ps(sub_ps(load_ps(&grid[col + _8]), current)));
-			stream_ps(&grid_centered2[col + _9], sqr_ps(sub_ps(load_ps(&grid[col + _9]), current)));
-			stream_ps(&grid_centered2[col + _10], sqr_ps(sub_ps(load_ps(&grid[col + _10]), current)));
-			stream_ps(&grid_centered2[col + _11], sqr_ps(sub_ps(load_ps(&grid[col + _11]), current)));
-			stream_ps(&grid_centered2[col + _12], sqr_ps(sub_ps(load_ps(&grid[col + _12]), current)));
-			stream_ps(&grid_centered2[col + _13], sqr_ps(sub_ps(load_ps(&grid[col + _13]), current)));
-			stream_ps(&grid_centered2[col + _14], sqr_ps(sub_ps(load_ps(&grid[col + _14]), current)));
-			stream_ps(&grid_centered2[col + _15], sqr_ps(sub_ps(load_ps(&grid[col + _15]), current)));
-		}
-	}*/
+	
 	if (cols - col > _8)
 	{
 		for (; col + _8 - 1 < cols; col += _8)
@@ -540,67 +518,13 @@ static inline void 	circle(const float *x_grid_centered2, const std::size_t &col
 }
 
 template <TRN::CPU::Implementation Implementation>
-static inline float accumulate_ps(const float *firing_rate_row, const std::size_t &cols,
+static inline float location_hypothesis(const float *firing_rate_row, const std::size_t &cols,
 	const typename TRN::CPU::Traits<Implementation>::type  &__prediction,
 	const typename TRN::CPU::Traits<Implementation>::type  &__inv_sigma2,
 	float *hypothesis_row)
 {
 	auto __acc = setzero_ps();
 	std::size_t col = 0;
-	/*if (cols - col > 06)
-	{
-		for (; col + _16 - 1 < cols; col += _16)
-		{
-			auto __h0 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _0]))), __inv_sigma2));
-			__acc = add_ps(__h0, __acc);
-			stream_ps(&hypothesis_row[col + _0], __h0);
-			auto __h1 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _1]))), __inv_sigma2));
-			__acc = add_ps(__h1, __acc);
-			stream_ps(&hypothesis_row[col + _1], __h1);
-			auto __h2 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _2]))), __inv_sigma2));
-			__acc = add_ps(__h2, __acc);
-			stream_ps(&hypothesis_row[col + _2], __h2);
-			auto __h3 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _3]))), __inv_sigma2));
-			__acc = add_ps(__h3, __acc);
-			stream_ps(&hypothesis_row[col + _3], __h3);
-			auto __h4 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _4]))), __inv_sigma2));
-			__acc = add_ps(__h4, __acc);
-			stream_ps(&hypothesis_row[col + _4], __h4);
-			auto __h5 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _5]))), __inv_sigma2));
-			__acc = add_ps(__h5, __acc);
-			stream_ps(&hypothesis_row[col + _5], __h5);
-			auto __h6 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _6]))), __inv_sigma2));
-			__acc = add_ps(__h6, __acc);
-			stream_ps(&hypothesis_row[col + _6], __h6);
-			auto __h7 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _7]))), __inv_sigma2));
-			__acc = add_ps(__h7, __acc);
-			stream_ps(&hypothesis_row[col + _7], __h7);
-			auto __h8 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _8]))), __inv_sigma2));
-			__acc = add_ps(__h8, __acc);
-			stream_ps(&hypothesis_row[col + _8], __h8);
-			auto __h9 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _9]))), __inv_sigma2));
-			__acc = add_ps(__h9, __acc);
-			stream_ps(&hypothesis_row[col + _9], __h9);
-			auto __h10 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _10]))), __inv_sigma2));
-			__acc = add_ps(__h10, __acc);
-			stream_ps(&hypothesis_row[col + _10], __h10);
-			auto __h11 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _11]))), __inv_sigma2));
-			__acc = add_ps(__h11, __acc);
-			stream_ps(&hypothesis_row[col + _11], __h11);
-			auto __h12 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _12]))), __inv_sigma2));
-			__acc = add_ps(__h12, __acc);
-			stream_ps(&hypothesis_row[col + _12], __h12);
-			auto __h13 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _13]))), __inv_sigma2));
-			__acc = add_ps(__h13, __acc);
-			stream_ps(&hypothesis_row[col + _13], __h13);
-			auto __h14 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _14]))), __inv_sigma2));
-			__acc = add_ps(__h14, __acc);
-			stream_ps(&hypothesis_row[col + _14], __h4);
-			auto __h15 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _15]))), __inv_sigma2));
-			__acc = add_ps(__h15, __acc);
-			stream_ps(&hypothesis_row[col + _15], __h15);
-		}
-	}*/
 	if (cols - col > _8)
 	{
 		for (; col + _8 - 1 < cols; col += _8)
@@ -685,147 +609,130 @@ void TRN::CPU::Algorithm<Implementation>::place_cell_location_probability(
 	float *** hypothesis_map, const std::size_t **hypothesis_map_rows, const std::size_t **hypothesis_map_cols, const std::size_t **hypothesis_map_strides,
 	float ** location_probability, const std::size_t *location_probability_rows, const std::size_t *location_probability_cols, const std::size_t *location_probability_strides)
 {
+	const float _inv_sigma2 = -1.0f / (sigma*sigma);
+	const auto ___inv_sigma2 = set1_ps(_inv_sigma2);
 
-	//	std::cout << __FUNCTION__ << " current position " << x_current << ", " << y_current << std::endl;
+	int K = batch_size * place_cells_number;
+#pragma omp parallel for
+	for (int k = 0; k < K; k++)
+	{
+		int batch = k % batch_size;
+		int place_cell = k / batch_size;
+		const std::size_t hypothesis_map_stride = hypothesis_map_strides[batch][place_cell];
+		const std::size_t firing_rate_map_stride = firing_rate_map_strides[place_cell];
+		auto firing_rate_k = firing_rate_map[place_cell];
+		auto hypothesis_k = hypothesis_map[batch][place_cell];
+		float sum = 0.0f;
+		const float &p = prediction[batch][place_cell];
+		const auto &__prediction = set1_ps(p);
 
-		/*double duration;
-
-		const float _inv_sigma2 = -1.0f / (sigma*sigma);
-		const auto ___inv_sigma2 = set1_ps(_inv_sigma2);
-		const auto __x_current = set1_ps(x_current);
-		const auto __y_current = set1_ps(y_current);
-		const auto r2 = radius * radius;
-		const auto __r2 = set1_ps(r2);
-	#pragma omp parallel sections
+		for (std::size_t row = 0; row < rows; row++)
 		{
-	#pragma omp section
-			{
-				diff_square<Implementation>(__x_current, x_grid, x_size, x_grid_centered2);
-			}
-	#pragma omp section
-			{
-				diff_square<Implementation>(__y_current, y_grid, y_size, y_grid_centered2);
-			}
+			auto firing_rate_row = &firing_rate_k[row * firing_rate_map_stride];
+			auto hypothesis_row = &hypothesis_k[row * hypothesis_map_stride];
+
+			sum += location_hypothesis<Implementation>(firing_rate_row, hypothesis_map_stride, __prediction, ___inv_sigma2, hypothesis_row);
 		}
+		scale[batch][place_cell] = 1.0f / (sum * (float)place_cells_number);
+	}
 
-	#pragma omp parallel for
-		for (int k = 0; k < place_cells_number; k++)
+
+
+	const std::size_t place_cells_number_range = place_cells_number / 2;
+	const std::size_t place_cells_number_remaining = place_cells_number - place_cells_number_range * 2;
+
+	K = place_cells_number_range * batch_size;
+
+#pragma omp parallel for
+	for (int k = 0; k < K; k++)
+	{
+		int batch = k % batch_size;
+		int place_cell = k / batch_size;
+
+		auto place_cell_a = place_cell;
+		auto place_cell_b = place_cells_number_range + place_cell;
+		auto hypothesis_a = hypothesis_map[batch][place_cell_a];
+		auto hypothesis_b = hypothesis_map[batch][place_cell_b];
+		auto stride_a = hypothesis_map_strides[batch][place_cell_a];
+		auto stride_b = hypothesis_map_strides[batch][place_cell_b];
+		const auto scale_a = set1_ps(scale[batch][place_cell_a]);
+		const auto scale_b = set1_ps(scale[batch][place_cell_b]);
+		for (std::size_t row = 0; row < rows; row++)
 		{
-			auto firing_rate_k = &firing_rate_map[k * firing_rate_map_stride * y_size];
-			auto hypothesis_k = &hypothesis_map[k *  hypothesis_map_stride * y_size];
-			float sum = 0.0f;
-			const float &p = prediction[k];
-			const auto &__prediction = set1_ps(p);
-
-			for (std::size_t row = 0; row < y_size; row++)
-			{
-				auto firing_rate_row = &firing_rate_k[row * firing_rate_map_stride];
-				auto hypothesis_row = &hypothesis_k[row * hypothesis_map_stride];
-
-				sum += accumulate_ps<Implementation>(firing_rate_row, hypothesis_map_stride, __prediction, ___inv_sigma2, hypothesis_row);
-			}
-			scale[k] = 1.0f / (sum * (float)place_cells_number);
+			auto hypothesis_a_row = &hypothesis_a[row * stride_a];
+			auto hypothesis_b_row = &hypothesis_b[row * stride_b];
+			weighted_sum<Implementation>(hypothesis_a_row, scale_a, hypothesis_b_row, scale_b, cols, hypothesis_a_row);
 		}
+	}
 
-		const std::size_t place_cells_number_range = place_cells_number / 2;
-		const std::size_t place_cells_number_remaining = place_cells_number - place_cells_number_range * 2;
+	if (place_cells_number_range >= 2)
+	{
 
-	#pragma omp parallel for
-		for (int k = 0; k < place_cells_number_range; k++)
+		for (std::size_t range = place_cells_number_range / 2; range > 1; range /= 2)
 		{
-			auto a = (k);
-			auto b = (place_cells_number_range + k);
-			auto hypothesis_a = &hypothesis_map[a * hypothesis_map_stride * y_size];
-			auto hypothesis_b = &hypothesis_map[b * hypothesis_map_stride * y_size];
-			const auto scale_a = set1_ps(scale[a]);
-			const auto scale_b = set1_ps(scale[b]);
-			for (std::size_t row = 0; row < y_size; row++)
+			K = range * batch_size;
+#pragma omp parallel for
+			for (int k = 0; k < K; k++)
 			{
-				auto hypothesis_a_row = &hypothesis_a[row * hypothesis_map_stride];
-				auto hypothesis_b_row = &hypothesis_b[row* hypothesis_map_stride];
-				weighted_sum<Implementation>(hypothesis_a_row, scale_a, hypothesis_b_row, scale_b, x_size, hypothesis_a_row);
-			}
-		}
-
-		if (place_cells_number_range >= 2)
-		{
-			for (std::size_t range = place_cells_number_range / 2; range > 1; range /= 2)
-			{
-	#pragma omp parallel for
-				for (int k = 0; k < range; k++)
+				int batch = k % batch_size;
+				int place_cell = k / batch_size;
+				auto place_cell_a = place_cell;
+				auto place_cell_b = range + place_cell;
+				auto hypothesis_a = hypothesis_map[batch][place_cell_a];
+				auto hypothesis_b = hypothesis_map[batch][place_cell_b];
+				auto stride_a = hypothesis_map_strides[batch][place_cell_a];
+				auto stride_b = hypothesis_map_strides[batch][place_cell_b];
+				for (std::size_t row = 0; row < rows; row++)
 				{
-					auto a = (k);
-					auto b = (range + k);
-					auto hypothesis_a = &hypothesis_map[a * hypothesis_map_stride * y_size];
-					auto hypothesis_b = &hypothesis_map[b * hypothesis_map_stride * y_size];
+					auto hypothesis_a_row = &hypothesis_a[row * stride_a];
+					auto hypothesis_b_row = &hypothesis_b[row * stride_b];
 
-					for (std::size_t row = 0; row < y_size; row++)
-					{
-						auto hypothesis_a_row = &hypothesis_a[row * hypothesis_map_stride];
-						auto hypothesis_b_row = &hypothesis_b[row * hypothesis_map_stride];
-
-						sum<Implementation>(hypothesis_a_row, hypothesis_b_row, x_size, hypothesis_a_row);
-					}
-				}
-			}
-			{
-				auto hypothesis_a = &hypothesis_map[0];
-				auto hypothesis_b = &hypothesis_map[hypothesis_map_stride * y_size];
-	#pragma omp parallel for
-				for (int row = 0; row < y_size; row++)
-				{
-					auto hypothesis_a_row = &hypothesis_a[row * hypothesis_map_stride];
-					auto hypothesis_b_row = &hypothesis_b[row * hypothesis_map_stride];
-					auto location_probability_row = &location_probability[row * location_probability_stride];
-
-					sum<Implementation>(hypothesis_a_row, hypothesis_b_row, x_size, location_probability_row);
+					sum<Implementation>(hypothesis_a_row, hypothesis_b_row, cols, hypothesis_a_row);
 				}
 			}
 		}
-
-		if (place_cells_number_remaining > 0)
 		{
-			auto hypothesis_k = &hypothesis_map[place_cells_number_range * hypothesis_map_stride * y_size];
-			auto scale_k = set1_ps(scale[place_cells_number_range]);
-	#pragma omp parallel for
-			for (int row = 0; row < y_size; row++)
+			K = batch_size * rows;
+#pragma omp parallel for
+			for (int k = 0; k < K; k++)
 			{
-				auto hypothesis_k_row = &hypothesis_k[row * hypothesis_map_stride];
-				auto location_probability_row = &location_probability[row* location_probability_stride];
+				int batch = k % batch_size;
+				int row = k / batch_size;
+				auto hypothesis_a = hypothesis_map[batch][0];
+				auto hypothesis_b = hypothesis_map[batch][1];
+				auto stride_a = hypothesis_map_strides[batch][0];
+				auto stride_b = hypothesis_map_strides[batch][1];
+				auto hypothesis_a_row = &hypothesis_a[row * stride_a];
+				auto hypothesis_b_row = &hypothesis_b[row * stride_b];
+				auto location_probability_row = &location_probability[batch][row * location_probability_strides[batch]];
 
-				weighted_acc<Implementation>(hypothesis_k_row, scale_k, x_size, location_probability_row);
+				sum<Implementation>(hypothesis_a_row, hypothesis_b_row, cols, location_probability_row);
 			}
 		}
-		std::vector<float> max(y_size);
-		std::vector<std::size_t> arg_max(y_size);
+	}
 
-	#pragma omp parallel for
-		for (int row = 0; row < y_size; row++)
+	if (place_cells_number_remaining > 0)
+	{
+		K = batch_size * rows;
+#pragma omp parallel for
+		for (int k = 0; k < K; k++)
 		{
-			const auto __y2 = set1_ps(y_grid_centered2[row]);
-			auto location_probability_row = &location_probability[row* location_probability_stride];
-			//circle<Implementation>(x_grid_centered2, x_size, __y2, __r2, location_probability_row);
-			auto result = std::max_element(location_probability_row, location_probability_row + x_size);
-			max[row] = *result;
-			arg_max[row] = std::distance(location_probability_row, result);
+			int batch = k % batch_size;
+			int row = k / batch_size;
+			auto hypothesis_k = hypothesis_map[batch][place_cells_number_range];
+			auto scale_k = set1_ps(scale[batch][place_cells_number_range]);
+			auto hypothesis_k_row = &hypothesis_k[row * hypothesis_map_strides[batch][place_cells_number_range]];
+			auto location_probability_row = &location_probability[batch][row* location_probability_strides[batch]];
+
+			weighted_acc<Implementation>(hypothesis_k_row, scale_k, cols, location_probability_row);
 		}
-
-		auto result = std::max_element(max.begin(), max.end());
-		row_decoded = std::distance(max.begin(), result);
-		col_decoded = arg_max[row_decoded];
-
-		*/
-		//cv::Mat mat2(y_size, x_size, CV_32F, location_probability, location_probability_stride * sizeof(float));
-
-		/*duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
-
-		std::cout << "printf: " << duration << '\n';*/
+	}
 }
 
 template <TRN::CPU::Implementation Implementation>
  void TRN::CPU::Algorithm<Implementation>::restrict_to_reachable_locations(
 	const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
-	const float &radius,
+	const float &radius, const float &scale,
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 	const float **batched_current_location, const std::size_t *batched_current_location_rows, const std::size_t *batched_current_location_cols, const std::size_t *batched_current_location_stride,
@@ -833,7 +740,7 @@ template <TRN::CPU::Implementation Implementation>
 	float **batched_y_grid_centered2, const std::size_t *batched_y_grid_centered2_rows, const std::size_t *batched_y_grid_centered2_cols, const std::size_t *batched_y_grid_centered2_stride,
 	float  **batched_location_probability, const std::size_t *batched_location_probability_rows, const std::size_t *batched_location_probability_cols, const std::size_t *batched_location_probability_strides)
 {
-
+	 
 }
 
 template <TRN::CPU::Implementation Implementation>
@@ -856,9 +763,27 @@ void TRN::CPU::Algorithm<Implementation>::select_most_probable_location(const st
 	float **batched_predicted_location, const std::size_t *batched_predicted_location_rows, const std::size_t *batched_predicted_location_cols, const std::size_t *batched_predicted_location_strides
 )
 {
+#pragma omp parallel for
+	for (int batch = 0; batch < batch_size; batch++)
+	{
+		const float *location_probability = batched_location_probability[batch];
+		float *predicted_location = batched_predicted_location[batch];
+		const std::size_t rows = batched_location_probability_rows[batch];
+		const std::size_t stride = batched_location_probability_strides[batch];
+		auto it = std::max_element(location_probability, location_probability + rows * stride);
+		auto idx = std::distance(location_probability, it);
+		std::size_t col = idx % stride;
+		std::size_t row = idx / stride;
+		float x = x_grid[col];
+		float y = y_grid[row];
+
+		predicted_location[0] = x;
+		predicted_location[1] = y;
+	}
 
 }
-
+#define PREFETCH_T0(addr,nrOfBytesAhead) _mm_prefetch(((char *)(addr))+nrOfBytesAhead,_MM_HINT_T0)
+#define PREFETCH_T1(addr,nrOfBytesAhead) _mm_prefetch(((char *)(addr))+nrOfBytesAhead,_MM_HINT_T1)
 template <TRN::CPU::Implementation Implementation>
 static inline float  dot_product(const float *x, const float *a, const std::size_t &cols)
 {
@@ -960,10 +885,9 @@ static inline void matrix_vector_product(const std::size_t &batch_size,
 		cblas_sgemv(CBLAS_LAYOUT::CblasRowMajor, CBLAS_TRANSPOSE::CblasNoTrans, M, N, alpha, A, lda, X, incX, beta, Y, incY);
 	}*/
 
-
-	auto R = std::accumulate(batched_a_rows, batched_a_rows + batch_size, (std::size_t)0);
-	auto K = (R + _1 - 1) / _1;
-#pragma omp parallel for schedule(static , batch_size)
+	std::size_t R = std::accumulate(batched_a_rows, batched_a_rows + batch_size, (std::size_t)0);
+	std::size_t K = (R + _1 - 1) / _1;
+#pragma omp parallel for schedule(static, batch_size)
 	for (int k = 0; k < K; k++)
 	{
 		std::size_t batch = k % batch_size;
@@ -972,6 +896,7 @@ static inline void matrix_vector_product(const std::size_t &batch_size,
 		float *y = batched_y[batch];
 		float *a = batched_a[batch];
 		auto a_stride = batched_a_strides[batch];
+		auto a_rows = batched_a_rows[batch];
 		auto a_cols = batched_a_cols[batch];
 
 		auto __dp = setzero_ps();
@@ -1000,7 +925,7 @@ static inline void update_reservoir(
 		batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides,
 		batched_u, batched_u_rows, batched_u_cols, batched_u_strides);
 
-#pragma omp parallel for schedule(static , 1)
+#pragma omp parallel for 
 	for (int batch = 0; batch < batch_size; batch++)
 	{
 		auto rows = batched_w_in_rows[batch];
@@ -1113,6 +1038,132 @@ static inline void update_reservoir(
 
 
 template <TRN::CPU::Implementation Implementation>
+static inline void update_reservoir_no_input(
+	const std::size_t &batch_size, const std::size_t &t,
+	float ** const batched_w_in, const std::size_t *batched_w_in_rows, const std::size_t *batched_w_in_cols, const  std::size_t *batched_w_in_strides,
+	float ** const batched_x_in, const std::size_t *batched_x_in_rows, const std::size_t *batched_x_in_cols, const  std::size_t *batched_x_in_strides,
+	float ** const batched_u, const std::size_t *batched_u_rows, const std::size_t *batched_u_cols, const  std::size_t *batched_u_strides,
+	float ** const batched_p, const std::size_t *batched_p_rows, const std::size_t *batched_p_cols, const  std::size_t *batched_p_strides,
+	float ** const batched_x_res, const std::size_t *batched_x_res_rows, const std::size_t *batched_x_res_cols, const  std::size_t *batched_x_res_strides,
+	const typename TRN::CPU::Traits<Implementation>::type &leak_rate
+	)
+{
+	matrix_vector_product<Implementation>(batch_size,
+		batched_w_in, batched_w_in_rows, batched_w_in_cols, batched_w_in_strides,
+		batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides,
+		batched_u, batched_u_rows, batched_u_cols, batched_u_strides);
+
+#pragma omp parallel for 
+	for (int batch = 0; batch < batch_size; batch++)
+	{
+		auto rows = batched_w_in_rows[batch];
+		auto u = batched_u[batch];
+		auto p = batched_p[batch];
+		auto x_res = batched_x_res[batch];
+		auto x_in = batched_x_in[batch];
+		auto w_in = batched_w_in[batch];
+		auto w_in_stride = batched_w_in_strides[batch];
+
+		std::size_t row = 0;
+		if (rows - row > _8)
+		{
+			for (; row + _8 - 1 < rows; row += _8)
+			{
+				auto __p0 = load_ps(&p[row + _0]);
+				__p0 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _0]), __p0), __p0);
+				stream_ps(&x_res[row + _0], tanh_ps(__p0));
+				stream_ps(&p[row + _0], __p0);
+
+				auto __p1 = load_ps(&p[row + _1]);
+				__p1 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _1]), __p1), __p1);
+				stream_ps(&x_res[row + _1], tanh_ps(__p1));
+				stream_ps(&p[row + _1], __p1);
+
+				auto __p2 = load_ps(&p[row + _2]);
+				__p2 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _2]), __p2), __p2);
+				stream_ps(&x_res[row + _2], tanh_ps(__p2));
+				stream_ps(&p[row + _2], __p2);
+
+				auto __p3 = load_ps(&p[row + _3]);
+				__p3 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _3]), __p3), __p3);
+				stream_ps(&x_res[row + _3], tanh_ps(__p3));
+				stream_ps(&p[row + _3], __p3);
+
+				auto __p4 = load_ps(&p[row + _4]);
+				__p4 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _4]), __p4), __p4);
+				stream_ps(&x_res[row + _4], tanh_ps(__p4));
+				stream_ps(&p[row + _4], __p4);
+
+				auto __p5 = load_ps(&p[row + _5]);
+				__p5 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _5]), __p5), __p5);
+				stream_ps(&x_res[row + _5], tanh_ps(__p5));
+				stream_ps(&p[row + _5], __p5);
+
+				auto __p6 = load_ps(&p[row + _6]);
+				__p6 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _6]), __p6), __p6);
+				stream_ps(&x_res[row + _6], tanh_ps(__p6));
+				stream_ps(&p[row + _6], __p6);
+
+				auto __p7 = load_ps(&p[row + _7]);
+				__p7 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _7]), __p7), __p7);
+				stream_ps(&x_res[row + _7], tanh_ps(__p7));
+				stream_ps(&p[row + _7], __p7);
+			}
+		}
+		if (rows - row > _4)
+		{
+			for (; row + _4 - 1 < rows; row += _4)
+			{
+				auto __p0 = load_ps(&p[row + _0]);
+				__p0 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _0]),  __p0), __p0);
+				stream_ps(&x_res[row + _0], tanh_ps(__p0));
+				stream_ps(&p[row + _0], __p0);
+
+				auto __p1 = load_ps(&p[row + _1]);
+				__p1 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _1]),  __p1), __p1);
+				stream_ps(&x_res[row + _1], tanh_ps(__p1));
+				stream_ps(&p[row + _1], __p1);
+
+				auto __p2 = load_ps(&p[row + _2]);
+				__p2 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _2]),  __p2), __p2);
+				stream_ps(&x_res[row + _2], tanh_ps(__p2));
+				stream_ps(&p[row + _2], __p2);
+
+				auto __p3 = load_ps(&p[row + _3]);
+				__p3 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _3]), __p3), __p3);
+				stream_ps(&x_res[row + _3], tanh_ps(__p3));
+				stream_ps(&p[row + _3], __p3);
+			}
+		}
+		if (rows - row > _2)
+		{
+			for (; row + _2 - 1 < rows; row += _2)
+			{
+				auto __p0 = load_ps(&p[row + _0]);
+				__p0 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _0]),  __p0), __p0);
+				stream_ps(&x_res[row + _0], tanh_ps(__p0));
+				stream_ps(&p[row + _0], __p0);
+
+				auto __p1 = load_ps(&p[row + _1]);
+				__p1 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _1]), __p1), __p1);
+				stream_ps(&x_res[row + _1], tanh_ps(__p1));
+				stream_ps(&p[row + _1], __p1);
+			}
+		}
+		if (rows - row > 0)
+		{
+			for (; row + _1 - 1 < rows; row += _1)
+			{
+				auto __p0 = load_ps(&p[row + _0]);
+				__p0 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _0]), __p0), __p0);
+				stream_ps(&x_res[row + _0], tanh_ps(__p0));
+				stream_ps(&p[row + _0], __p0);
+			}
+		}
+	}
+}
+
+template <TRN::CPU::Implementation Implementation>
 static inline void premultiply(
 	const std::size_t &batch_size,
 	const float **batched_incoming, const std::size_t *incoming_rows, const std::size_t *incoming_cols, const std::size_t *incoming_strides,
@@ -1191,89 +1242,124 @@ static inline void update_readout(
 		batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides);
 
 	const float learning_rate = parameter.get_learning_rate();
-	int K = std::accumulate(batched_w_ro_rows, batched_w_ro_rows + batch_size, 0);
-
-#pragma omp parallel for schedule(static , batch_size)
-	for (int k = 0; k < K; k++)
+	for (std::size_t batch = 0; batch < batch_size; batch++)
 	{
-		int batch = k % batch_size;
-		int row = k / batch_size;
-		int rows = batched_w_ro_rows[batch];
+		const std::size_t rows = batched_w_ro_rows[batch];
+		const std::size_t cols = batched_w_ro_cols[batch];
 		std::size_t w_ro_stride = batched_w_ro_strides[batch];
+		std::size_t expected_stride = batched_expected_strides[batch];
 		float *w_ro = batched_w_ro[batch];
 		float *x_ro = batched_x_ro[batch];
-		float *expected = batched_expected[batch];
+		float *expected = &batched_expected[batch][t * expected_stride];
+		float *error = batched_error[batch];
 		float *x_res = batched_x_res[batch];
-		const std::size_t cols = batched_w_ro_cols[batch];
-
-
-
-
-		float *w_ro_row = &w_ro[row  * w_ro_stride];
-		const auto post_error = set1_ps(learning_rate * (x_ro[row] - expected[row]));
-
-		std::size_t col = 0;
-
-		if (cols - col > _8)
+		
+#pragma omp parallel for
+		for (int row = 0; row < rows; row++)
 		{
-			for (; col + _8 - 1 < cols; col += _8)
+			float *w_ro_row = &w_ro[row  * w_ro_stride];
+			const auto post_error = learning_rate * (expected[row] - x_ro[row]);
+			const auto __post_error = set1_ps(post_error);
+			error[row] = post_error;
+			std::size_t col = 0;
+
+			if (cols - col > _8)
 			{
-				stream_ps(&w_ro_row[col + _0], mul_add_ps(post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
-				stream_ps(&w_ro_row[col + _1], mul_add_ps(post_error, load_ps(&x_res[col + _1]), load_ps(&w_ro_row[col + _1])));
-				stream_ps(&w_ro_row[col + _2], mul_add_ps(post_error, load_ps(&x_res[col + _2]), load_ps(&w_ro_row[col + _2])));
-				stream_ps(&w_ro_row[col + _3], mul_add_ps(post_error, load_ps(&x_res[col + _3]), load_ps(&w_ro_row[col + _3])));
-				stream_ps(&w_ro_row[col + _4], mul_add_ps(post_error, load_ps(&x_res[col + _4]), load_ps(&w_ro_row[col + _4])));
-				stream_ps(&w_ro_row[col + _5], mul_add_ps(post_error, load_ps(&x_res[col + _5]), load_ps(&w_ro_row[col + _5])));
-				stream_ps(&w_ro_row[col + _6], mul_add_ps(post_error, load_ps(&x_res[col + _6]), load_ps(&w_ro_row[col + _6])));
-				stream_ps(&w_ro_row[col + _7], mul_add_ps(post_error, load_ps(&x_res[col + _7]), load_ps(&w_ro_row[col + _7])));
+				for (; col + _8 - 1 < cols; col += _8)
+				{
+					stream_ps(&w_ro_row[col + _0], mul_add_ps(__post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
+					stream_ps(&w_ro_row[col + _1], mul_add_ps(__post_error, load_ps(&x_res[col + _1]), load_ps(&w_ro_row[col + _1])));
+					stream_ps(&w_ro_row[col + _2], mul_add_ps(__post_error, load_ps(&x_res[col + _2]), load_ps(&w_ro_row[col + _2])));
+					stream_ps(&w_ro_row[col + _3], mul_add_ps(__post_error, load_ps(&x_res[col + _3]), load_ps(&w_ro_row[col + _3])));
+					stream_ps(&w_ro_row[col + _4], mul_add_ps(__post_error, load_ps(&x_res[col + _4]), load_ps(&w_ro_row[col + _4])));
+					stream_ps(&w_ro_row[col + _5], mul_add_ps(__post_error, load_ps(&x_res[col + _5]), load_ps(&w_ro_row[col + _5])));
+					stream_ps(&w_ro_row[col + _6], mul_add_ps(__post_error, load_ps(&x_res[col + _6]), load_ps(&w_ro_row[col + _6])));
+					stream_ps(&w_ro_row[col + _7], mul_add_ps(__post_error, load_ps(&x_res[col + _7]), load_ps(&w_ro_row[col + _7])));
+				}
 			}
-		}
-		if (cols - col > _4)
-		{
-			for (; col + _4 - 1 < cols; col += _4)
+			if (cols - col > _4)
 			{
-				stream_ps(&w_ro_row[col + _0], mul_add_ps(post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
-				stream_ps(&w_ro_row[col + _1], mul_add_ps(post_error, load_ps(&x_res[col + _1]), load_ps(&w_ro_row[col + _1])));
-				stream_ps(&w_ro_row[col + _2], mul_add_ps(post_error, load_ps(&x_res[col + _2]), load_ps(&w_ro_row[col + _2])));
-				stream_ps(&w_ro_row[col + _3], mul_add_ps(post_error, load_ps(&x_res[col + _3]), load_ps(&w_ro_row[col + _3])));
+				for (; col + _4 - 1 < cols; col += _4)
+				{
+					stream_ps(&w_ro_row[col + _0], mul_add_ps(__post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
+					stream_ps(&w_ro_row[col + _1], mul_add_ps(__post_error, load_ps(&x_res[col + _1]), load_ps(&w_ro_row[col + _1])));
+					stream_ps(&w_ro_row[col + _2], mul_add_ps(__post_error, load_ps(&x_res[col + _2]), load_ps(&w_ro_row[col + _2])));
+					stream_ps(&w_ro_row[col + _3], mul_add_ps(__post_error, load_ps(&x_res[col + _3]), load_ps(&w_ro_row[col + _3])));
+				}
 			}
-		}
-		if (cols - col > _2)
-		{
-			for (; col + _2 - 1 < cols; col += _2)
+			if (cols - col > _2)
 			{
-				stream_ps(&w_ro_row[col + _0], mul_add_ps(post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
-				stream_ps(&w_ro_row[col + _1], mul_add_ps(post_error, load_ps(&x_res[col + _1]), load_ps(&w_ro_row[col + _1])));
+				for (; col + _2 - 1 < cols; col += _2)
+				{
+					stream_ps(&w_ro_row[col + _0], mul_add_ps(__post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
+					stream_ps(&w_ro_row[col + _1], mul_add_ps(__post_error, load_ps(&x_res[col + _1]), load_ps(&w_ro_row[col + _1])));
+				}
 			}
-		}
-		if (cols - col > 0)
-		{
-			for (; col + _1 - 1 < cols; col += _1)
+			if (cols - col > 0)
 			{
-				stream_ps(&w_ro_row[col + _0], mul_add_ps(post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
+				for (; col + _1 - 1 < cols; col += _1)
+				{
+					stream_ps(&w_ro_row[col + _0], mul_add_ps(__post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
+				}
 			}
 		}
 	}
 }
 
 
+template <bool gather_states>
+static void copy_states(
+ const std::size_t &batch_size, const std::size_t &t, const std::size_t &ts,
+	const std::size_t &stimulus_size,
+	const std::size_t &reservoir_size,
+	const std::size_t &prediction_size,
+	const std::size_t &stimulus_stride,
+	const std::size_t &reservoir_stride,
+	const std::size_t &prediction_stride,
+	const float **batched_incoming, const std::size_t *batched_incoming_rows, const std::size_t *batched_incoming_cols, const std::size_t *batched_incoming_strides,
+	const float **batched_expected, const std::size_t *batched_expected_rows, const std::size_t *batched_expected_cols, const std::size_t *batched_expected_strides,
+	const float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
+	const float **batched_x_res, const std::size_t *batched_x_res_rows, const std::size_t *batched_x_res_cols, const std::size_t *batched_x_res_strides,
+	float *states, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride)
+{}
 
-template<TRN::CPU::Implementation Implementation, bool gather_states>
-struct copy_states
+template <>
+static void copy_states<true>(const std::size_t &batch_size, const std::size_t &t, const std::size_t &ts,
+	const std::size_t &stimulus_size,
+	const std::size_t &reservoir_size,
+	const std::size_t &prediction_size,
+	const std::size_t &stimulus_stride,
+	const std::size_t &reservoir_stride,
+	const std::size_t &prediction_stride,
+	const float **batched_incoming, const std::size_t *batched_incoming_rows, const std::size_t *batched_incoming_cols, const std::size_t *batched_incoming_strides,
+	const float **batched_expected, const std::size_t *batched_expected_rows, const std::size_t *batched_expected_cols, const std::size_t *batched_expected_strides,
+	const float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
+	const float **batched_x_res, const std::size_t *batched_x_res_rows, const std::size_t *batched_x_res_cols, const std::size_t *batched_x_res_strides,
+	float *states, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride)
 {
-	void operator() (const float *const src, const std::size_t &src_stride, float *dst, const std::size_t &dst_stride, const std::size_t &size)
-	{
+	std::size_t offset = 0;
+	float *states_ts = &states[ts * states_stride];
 
-	}
-};
-template<TRN::CPU::Implementation Implementation>
-struct copy_states<Implementation, true>
-{
-	void operator () (const float *const src, const std::size_t &src_stride, float *dst, const std::size_t &dst_stride, const std::size_t &size)
+	for (std::size_t batch = 0; batch < batch_size; batch++)
 	{
-		TRN::CPU::Memory<Implementation>::copy_implementation(src, dst, sizeof(float), size, 1, src_stride, dst_stride, true);
+		std::size_t offset = 0;
+		std::size_t  stimulus_col = batch * stimulus_stride + batch_size * offset;
+		std::memcpy(states_ts + stimulus_col, &batched_incoming[batch][t * batched_incoming_strides[batch]], sizeof(float) * stimulus_size);
+		offset += stimulus_stride;
+
+		std::size_t  desired_col = batch * prediction_stride + batch_size * offset;
+		std::memcpy(states_ts + desired_col, &batched_expected[batch][t * batched_expected_strides[batch]], sizeof(float) * prediction_size);
+		offset += prediction_stride;
+
+		std::size_t  reservoir_col = batch * reservoir_stride + batch_size * offset;
+		std::memcpy(states_ts + reservoir_col, batched_x_res[batch], sizeof(float) * reservoir_size);
+		offset += reservoir_stride;
+
+		std::size_t  predicted_col = batch * prediction_stride + batch_size * offset;
+		std::memcpy(states_ts + predicted_col, batched_x_ro[batch], sizeof(float) * prediction_size);
+		offset += prediction_stride;
 	}
-};
+}
 
 template <TRN::CPU::Implementation Implementation, bool overwrite_states>
 struct initialize_states
@@ -1316,7 +1402,7 @@ static inline void update_model(
 	float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
 	float **batched_error, const std::size_t *batched_error_rows, const std::size_t *batched_error_cols, const std::size_t *batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride)
 {
 	float *c;
@@ -1328,39 +1414,48 @@ static inline void update_model(
 
 
 	static initialize_states<Implementation, overwrite_states> initializer;
-	static copy_states<Implementation, gather_states> copier;
 
 
-	
+
+
 	premultiply<Implementation>(
 		batch_size,
 		(const float **)batched_incoming, batched_incoming_rows, batched_incoming_cols, batched_incoming_strides,
 		(const float **)batched_w_ffwd, batched_w_ffwd_rows, batched_w_ffwd_cols, batched_w_ffwd_strides,
 		batched_u_ffwd, batched_u_ffwd_rows, batched_u_ffwd_cols, batched_u_ffwd_strides);
-	
-	
-	int ts = 0;
-	for (int r = 0; r < repetitions; r++)
+
+	std::size_t ts = 0;
+	for (std::size_t repetition = 0; repetition < repetitions; repetition++)
 	{
 		initializer(batch_size, seed, batched_p, batched_p_rows, batched_p_cols, batched_p_strides, initial_state_scale);
 		initializer(batch_size, seed, batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides, initial_state_scale);
 	
-
-		auto t0 = offsets[r];
-		auto tn = t0 + durations[r];
-
-		for (int t = t0; t < tn; t++, ts++)
+		for (std::size_t k = 0; k < durations[repetition]; k++, ts++)
 		{
+			int t = offsets[ts];
 	
-			update_reservoir<Implementation>(batch_size, t,
-				batched_w_in, batched_w_in_rows, batched_w_in_cols, batched_w_in_strides,
-				batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides,
-				batched_u, batched_u_rows, batched_u_cols, batched_u_strides,
-				batched_u_ffwd, batched_u_ffwd_rows, batched_u_ffwd_cols, batched_u_ffwd_strides,
-				batched_p, batched_p_rows, batched_p_cols, batched_p_strides,
-				batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides, __leak_rate);
-
-
+			if (t < 0)
+			{
+				t = -t;
+				update_reservoir_no_input<Implementation>(batch_size, t,
+					batched_w_in, batched_w_in_rows, batched_w_in_cols, batched_w_in_strides,
+					batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides,
+					batched_u, batched_u_rows, batched_u_cols, batched_u_strides,
+					batched_p, batched_p_rows, batched_p_cols, batched_p_strides,
+					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides, __leak_rate);
+			
+			}
+			else
+			{
+				update_reservoir<Implementation>(batch_size, t,
+					batched_w_in, batched_w_in_rows, batched_w_in_cols, batched_w_in_strides,
+					batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides,
+					batched_u, batched_u_rows, batched_u_cols, batched_u_strides,
+					batched_u_ffwd, batched_u_ffwd_rows, batched_u_ffwd_cols, batched_u_ffwd_strides,
+					batched_p, batched_p_rows, batched_p_cols, batched_p_strides,
+					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides, __leak_rate);
+			}
+		
 			update_readout<Implementation>(batch_size, t, parameter,
 				batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
 				batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,
@@ -1369,11 +1464,15 @@ static inline void update_model(
 				batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides
 				);
 			//std::cout << d << std::endl;
-
-			/*copier(&incoming_samples[t * incoming_stride], incoming_stride, &states_samples[ts*states_stride], states_stride, incoming_cols);
-			copier(x_res, x_res_stride, &states_samples[ts*states_stride] + stimulus_stride, states_stride, x_res_cols);
-			copier(x_ro, x_ro_stride, &states_samples[ts*states_stride] + stimulus_stride + reservoir_stride, states_stride, x_ro_cols);
-			copier(&expected_samples[t * expected_stride], expected_stride, &states_samples[ts*states_stride] + stimulus_stride + reservoir_stride + prediction_stride, states_stride, expected_cols);*/
+			copy_states<gather_states>(batch_size, t, ts,
+				stimulus_size, reservoir_size, prediction_size,
+				stimulus_stride, reservoir_stride, prediction_stride,
+				(const float **)batched_incoming, batched_incoming_rows, batched_incoming_cols, batched_incoming_strides,
+				(const float **)batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_strides,
+				(const float **)batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,
+				(const float **)batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
+				states_samples, states_rows, states_cols, states_stride
+				);
 		}
 	}
 	
@@ -1398,7 +1497,7 @@ void TRN::CPU::Algorithm<Implementation>::learn_widrow_hoff(
 	float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
 	float **batched_error, const std::size_t *batched_error_rows, const std::size_t *batched_error_cols, const std::size_t *batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
 
 	const float &learning_rate)
@@ -1471,7 +1570,7 @@ void TRN::CPU::Algorithm<Implementation>::prime(
 	float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
 	float **batched_error, const std::size_t *batched_error_rows, const std::size_t *batched_error_cols, const std::size_t *batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride)
 {
 
@@ -1546,7 +1645,7 @@ void TRN::CPU::Algorithm<Implementation>::generate(
 	float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
 	float **batched_error, const std::size_t *batched_error_rows, const std::size_t *batched_error_cols, const std::size_t *batched_error_strides,
-	const unsigned int *offsets, const unsigned int *durations, const std::size_t &repetitions,
+	const int *offsets, const int *durations, const std::size_t &repetitions,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride)
 {
 	if (states_samples == NULL)

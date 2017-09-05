@@ -407,7 +407,7 @@ void TRN::Engine::Broker::train(const unsigned int &id, const std::string &label
 	});
 
 }
-void TRN::Engine::Broker::test(const unsigned int &id, const std::string &label, const std::string &incoming, const std::string &expected, const unsigned int &preamble)
+void TRN::Engine::Broker::test(const unsigned int &id, const std::string &label, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const unsigned int &supplementary_generations)
 {
 	auto processor = handle->manager->retrieve(id);
 	processor->post([=]()
@@ -419,7 +419,7 @@ void TRN::Engine::Broker::test(const unsigned int &id, const std::string &label,
 		message.incoming = incoming;
 		message.expected = expected;
 		message.preamble = preamble;
-		
+		message.supplementary_generations = supplementary_generations;
 		send(processor->get_rank(), message, [this, id]()
 		{
 			////PrintThread{} << "id " << id << " test ack" << std::endl;
@@ -526,6 +526,28 @@ void TRN::Engine::Broker::setup_performances(const unsigned int &id, const std::
 		});
 	});
 }
+
+
+void TRN::Engine::Broker::setup_scheduling(const unsigned int &id, const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
+{
+	auto processor = handle->manager->retrieve(id);
+	std::unique_lock<std::mutex> lock(handle->functors);
+	if (handle->scheduling.find(id) != handle->scheduling.end())
+		throw std::invalid_argument("Simulator #" + std::to_string(id) + " already have a scheduling functor");
+	handle->scheduling[id] = functor;
+	lock.unlock();
+	processor->post([=]()
+	{
+		TRN::Engine::Message<SETUP_SCHEDULING> message;
+		message.id = id;
+		
+		send(processor->get_rank(), message, [id]()
+		{
+			////PrintThread{} << "id " << id << " performances setup acked" << std::endl;
+		});
+	});
+}
+
 void TRN::Engine::Broker::configure_begin(const unsigned int &id)
 {
 	auto processor = handle->manager->retrieve(id);
@@ -732,6 +754,7 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned int &id, 
 	const std::vector<float> &response,
 	const float &sigma,
 	const float &radius,
+	const float &scale,
 	const std::string &tag)
 {
 	auto processor = handle->manager->retrieve(id);
@@ -785,6 +808,7 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned int &id, 
 		message.response = response;
 		message.sigma = sigma;
 		message.radius = radius;
+		message.scale = scale;
 		message.tag = tag;
 		send(processor->get_rank(), message, [id]()
 		{
@@ -866,9 +890,10 @@ void TRN::Engine::Broker::configure_scheduler_snippets(const unsigned int &id, c
 	});
 }
 
+
 void TRN::Engine::Broker::configure_scheduler_custom(const unsigned int &id,
-	const std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations)> &request,
-	std::function<void(const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations)> &reply, const std::string &tag)
+	const std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply, const std::string &tag)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -877,10 +902,11 @@ void TRN::Engine::Broker::configure_scheduler_custom(const unsigned int &id,
 	handle->scheduler[id] = request;
 	lock.unlock();
 
-	reply = [this, id, processor](const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations)
+	reply = [this, id, processor](const std::vector<int> &offsets, const std::vector<int> &durations)
 	{
 		TRN::Engine::Message<SCHEDULING> message;
 		message.id = id;
+		message.is_from_mutator = false;
 		message.offsets = offsets;
 		message.durations = durations;
 		send(processor->get_rank(), message, [id]()
@@ -901,6 +927,96 @@ void TRN::Engine::Broker::configure_scheduler_custom(const unsigned int &id,
 		});
 	});
 }
+
+void 	TRN::Engine::Broker::configure_mutator_shuffle(const unsigned int &id)
+{
+	auto processor = handle->manager->retrieve(id);
+	processor->post([=]()
+	{
+		processor->configuring();
+		TRN::Engine::Message<CONFIGURE_MUTATOR_SHUFFLE> message;
+		message.id = id;
+	
+		send(processor->get_rank(), message, [id]()
+		{
+			////PrintThread{} << "id " << id << " configure scheduler snippets acked" << std::endl;
+		});
+	});
+}
+void 	TRN::Engine::Broker::configure_mutator_reverse(const unsigned int &id, const float &rate, const std::size_t &size)
+{
+	auto processor = handle->manager->retrieve(id);
+	processor->post([=]()
+	{
+		processor->configuring();
+		TRN::Engine::Message<CONFIGURE_MUTATOR_REVERSE> message;
+		message.id = id;
+		message.rate = rate;
+		message.size = size;
+		send(processor->get_rank(), message, [id]()
+		{
+			////PrintThread{} << "id " << id << " configure scheduler snippets acked" << std::endl;
+		});
+	});
+}
+void 	TRN::Engine::Broker::configure_mutator_punch(const unsigned int &id, const float &rate, const std::size_t &size, const std::size_t &number)
+{
+	auto processor = handle->manager->retrieve(id);
+	processor->post([=]()
+	{
+		processor->configuring();
+		TRN::Engine::Message<CONFIGURE_MUTATOR_PUNCH> message;
+		message.id = id;
+		message.rate = rate;
+		message.size = size;
+		message.number = number;
+		send(processor->get_rank(), message, [id]()
+		{
+			////PrintThread{} << "id " << id << " configure scheduler snippets acked" << std::endl;
+		});
+	});
+}
+
+void 	TRN::Engine::Broker::configure_mutator_custom(const unsigned int &id,
+	const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply)
+{
+	auto processor = handle->manager->retrieve(id);
+	std::unique_lock<std::mutex> lock(handle->functors);
+	if (handle->mutator.find(id) != handle->mutator.end())
+		throw std::invalid_argument("Simulator #" + std::to_string(id) + " already have a mutator/scheduler functor");
+	handle->mutator[id] = request;
+	lock.unlock();
+
+	reply = [this, id, processor](const std::vector<int> &offsets, const std::vector< int> &durations)
+	{
+		TRN::Engine::Message<SCHEDULING> message;
+		message.id = id;
+		message.is_from_mutator = true;
+		message.offsets = offsets;
+		message.durations = durations;
+		send(processor->get_rank(), message, [id]()
+		{
+			////PrintThread{} << "id " << id << " scheduling acked" << std::endl;
+		});
+	};
+
+	processor->post([=]()
+	{
+		processor->configuring();
+
+		TRN::Engine::Message<CONFIGURE_MUTATOR_CUSTOM> message;
+		message.id = id;
+		send(processor->get_rank(), message, [id]()
+		{
+			////PrintThread{} << "id " << id << " configure scheduler custom acked" << std::endl;
+		});
+	});
+}
+
+
+
+
 
 void TRN::Engine::Broker::configure_readout_uniform(const unsigned int &id, const float &a, const float &b, const float &sparsity)
 {

@@ -7,6 +7,7 @@
 #include "Loop.h"
 #include "Measurement.h"
 #include "Container.h"
+#include "Mutator.h"
 #include "Helper/Delegate.h"
 
 namespace TRN
@@ -39,11 +40,12 @@ namespace TRN
 			virtual void set_scheduler(const std::shared_ptr<TRN::Core::Scheduler> &scheduler) = 0;
 			virtual void set_loop(const std::shared_ptr<TRN::Core::Loop> &loop) = 0;
 			virtual void append_measurement(const std::shared_ptr<TRN::Core::Measurement::Abstraction> &measurement) = 0;
+			virtual void append_mutator(const std::shared_ptr<TRN::Core::Mutator> &mutator) = 0;
 		public :
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Matrix> &sequence) = 0;
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Set> &batch) = 0;
 			virtual void train(const std::string &sequences, const std::string &incoming, const std::string &expected) = 0;
-			virtual void test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble) = 0;
+			virtual void test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations) = 0;
 			virtual void initialize() = 0;
 			virtual void uninitialize() = 0;
 		};

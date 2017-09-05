@@ -16,7 +16,6 @@ std::shared_ptr<TRN::Backend::Driver> TRN::Model::Driver::create(const int &inde
 #if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
 		if (TRN::CPU::InstructionSet::FMA()) //hadd 256_dp_ps
 		{
-			
 			std::cout << "FMA3 implementation selected" << std::endl;
 			return TRN::CPU::Driver<TRN::CPU::FMA3>::create();
 		}

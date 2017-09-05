@@ -18,7 +18,7 @@ TRN::Core::Reservoir::Reservoir(
 	handle->reservoir_size = reservoir;
 	handle->prediction_size = prediction;
 	handle->batch_size = batch_size;
-	
+	handle->seed = seed;
 	driver->get_memory()->align(stimulus, handle->stimulus_stride);
 	driver->get_memory()->align(reservoir, handle->reservoir_stride);
 	driver->get_memory()->align(prediction, handle->prediction_stride);
@@ -145,7 +145,7 @@ void TRN::Core::Reservoir::initialize(const std::shared_ptr<TRN::Core::Initializ
 	readout->initialize(handle->seed, handle->batched_W_ro);
 }
 
-void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::size_t &preamble)
+void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::size_t &preamble, const std::size_t &supplementary_generations)
 {
 	if (!expected)
 		throw std::invalid_argument("target expected is empty");
@@ -155,7 +155,14 @@ void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incomi
 		throw std::invalid_argument("preamble (" + std::to_string(preamble) + ") is longer than the target sequence duration");
 
 	auto sub_states = TRN::Core::Matrix::create(implementor, handle->states->get_global(), 0, 0, preamble, handle->states->get_global()->get_cols());
-	auto sub_scheduling = TRN::Core::Scheduling::create(implementor, { (unsigned int)0 }, { (unsigned int)preamble });
+
+	std::vector<int> durations(1);
+	std::vector<int> offsets(preamble);
+	std::iota(offsets.begin(), offsets.end(), 0);
+	durations[0] = preamble;
+
+
+	auto sub_scheduling = TRN::Core::Scheduling::create(offsets, durations);
 	auto sub_incoming = TRN::Core::Matrix::create(implementor, incoming, 0, 0, preamble, incoming->get_cols());
 	auto sub_expected = TRN::Core::Matrix::create(implementor, expected, 0, 0, preamble, expected->get_cols());
 
@@ -188,14 +195,14 @@ void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incomi
 		handle->batched_W_ro->get_elements(), handle->batched_W_ro->get_rows(), handle->batched_W_ro->get_cols(), handle->batched_W_ro->get_strides(),
 		handle->batched_error->get_elements(), handle->batched_error->get_rows(), handle->batched_error->get_cols(), handle->batched_error->get_strides(),
 
-			sub_scheduling->get_offsets(), sub_scheduling->get_durations(), sub_scheduling->get_repetitions(),
+			sub_scheduling->get_offsets().data(), sub_scheduling->get_durations().data(), sub_scheduling->get_durations().size(),
 			sub_states->get_elements(), sub_states->get_rows(), sub_states->get_cols(), sub_states->get_stride());
 	
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>());
 
 	handle->target_expected = expected;
 	handle->cycle = preamble;
-	handle->max_cycle = expected->get_rows();
+	handle->max_cycle = expected->get_rows() + supplementary_generations;
 	handle->prediction.enqueue(handle->batched_X_ro);
 }
 #include <iostream>
@@ -204,7 +211,13 @@ void TRN::Core::Reservoir::update(const TRN::Core::Message::Payload<TRN::Core::M
 	if (handle->cycle < handle->max_cycle)
 	{
 		auto sub_states = TRN::Core::Matrix::create(implementor, handle->states->get_global(), handle->cycle, 0, 1, handle->states->get_global()->get_cols());
-		auto sub_scheduling = TRN::Core::Scheduling::create(implementor, { (unsigned int)0 }, { 1 });
+
+		std::vector<int> durations(1);
+		std::vector<int> offsets(1);
+		offsets[0] = 0;
+		durations[0] = 1;
+
+		auto sub_scheduling = TRN::Core::Scheduling::create(offsets, durations);
 		auto sub_expected = TRN::Core::Matrix::create(implementor, handle->target_expected, handle->cycle, 0, 1, handle->target_expected->get_cols());
 
 		
@@ -237,7 +250,7 @@ void TRN::Core::Reservoir::update(const TRN::Core::Message::Payload<TRN::Core::M
 			handle->batched_X_ro->get_elements(), handle->batched_X_ro->get_rows(), handle->batched_X_ro->get_cols(), handle->batched_X_ro->get_strides(),
 			handle->batched_W_ro->get_elements(), handle->batched_W_ro->get_rows(), handle->batched_W_ro->get_cols(), handle->batched_W_ro->get_strides(),
 			handle->batched_error->get_elements(), handle->batched_error->get_rows(), handle->batched_error->get_cols(), handle->batched_error->get_strides(),
-			sub_scheduling->get_offsets(), sub_scheduling->get_durations(), sub_scheduling->get_repetitions(),
+			sub_scheduling->get_offsets().data(), sub_scheduling->get_durations().data(), sub_scheduling->get_durations().size(),
 			sub_states->get_elements(), sub_states->get_rows(), sub_states->get_cols(), sub_states->get_stride());
 		handle->cycle++;
 	

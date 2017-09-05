@@ -20,14 +20,24 @@ TRN::Scheduler::Tiled::~Tiled()
 
 void  TRN::Scheduler::Tiled::update(const TRN::Core::Message::Payload<TRN::Core::Message::SET> &payload)
 {
-	std::vector<unsigned int> offsets(handle->epochs);
-	std::vector<unsigned int> durations(handle->epochs);
 
 	auto incoming = delegate.lock()->retrieve_set(payload.get_label(), payload.get_incoming());
 
-	std::fill(offsets.begin(), offsets.end(), 0);
-	std::fill(durations.begin(), durations.end(), incoming->get_sequence()->get_rows());
-	notify(TRN::Core::Scheduling::create(implementor, offsets, durations));
+	std::vector<int> offsets(handle->epochs * incoming->get_sequence()->get_rows());
+	std::vector<int> durations(handle->epochs);
+
+	std::size_t k = 0;
+	for (std::size_t epoch = 0; epoch < handle->epochs; epoch++)
+	{
+		for (std::size_t t = 0; t < incoming->get_sequence()->get_rows(); t++)
+		{
+			offsets[k] = t;
+			k++;
+		}
+		durations[epoch] = incoming->get_sequence()->get_rows();
+	}
+
+	notify(TRN::Core::Scheduling::create(offsets, durations));
 }
 
 

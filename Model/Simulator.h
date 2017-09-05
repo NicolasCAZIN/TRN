@@ -6,7 +6,7 @@
 #include "Simulator/States.h"
 #include "Simulator/Weights.h"
 #include "Simulator/Performances.h"
-
+#include "Simulator/Scheduling.h"
 
 namespace TRN
 {
@@ -35,6 +35,11 @@ namespace TRN
 				std::shared_ptr<TRN::Simulator::Performances> MODEL_EXPORT create(const std::shared_ptr<TRN::Core::Simulator> &decorated,
 					const std::function<void(const std::string &phase, const size_t &batch_size, const size_t &cycles, const float &gflops, const float &cycles_per_second)> &functor,
 					const bool &train, const bool &prime, const bool &test);
+			};
+			namespace Scheduling
+			{
+				std::shared_ptr<TRN::Simulator::Scheduling> MODEL_EXPORT create(const std::shared_ptr<TRN::Core::Simulator> &decorated,
+					const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &functor) ;
 			};
 		};
 	};

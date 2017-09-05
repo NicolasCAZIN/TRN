@@ -62,6 +62,7 @@ template TRN::Engine::Message<TRN::Engine::Tag::DECLARE_SET> TRN::Engine::Commun
 template TRN::Engine::Message<TRN::Engine::Tag::SETUP_STATES> TRN::Engine::Communicator::receive<TRN::Engine::Tag::SETUP_STATES>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::SETUP_WEIGHTS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::SETUP_WEIGHTS>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::SETUP_PERFORMANCES> TRN::Engine::Communicator::receive<TRN::Engine::Tag::SETUP_PERFORMANCES>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::SETUP_SCHEDULING> TRN::Engine::Communicator::receive<TRN::Engine::Tag::SETUP_SCHEDULING>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_BEGIN> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_BEGIN>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_END> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_END>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RESERVOIR_WIDROW_HOFF> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_RESERVOIR_WIDROW_HOFF>(const int &destination);
@@ -77,6 +78,10 @@ template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_CUSTOM> TRN::Engi
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_TILED> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_SCHEDULER_TILED>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_SNIPPETS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_SCHEDULER_SNIPPETS>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_SCHEDULER_CUSTOM>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_PUNCH> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_MUTATOR_PUNCH>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_MUTATOR_CUSTOM>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_UNIFORM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_UNIFORM>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_GAUSSIAN> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_GAUSSIAN>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_CUSTOM>(const int &destination);
@@ -129,6 +134,7 @@ template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::En
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::SETUP_STATES> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::SETUP_WEIGHTS> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::SETUP_PERFORMANCES> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::SETUP_SCHEDULING> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_BEGIN> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_END> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RESERVOIR_WIDROW_HOFF> &message, const int &destination);
@@ -144,6 +150,10 @@ template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::En
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_TILED> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_SNIPPETS> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_CUSTOM> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_PUNCH> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_CUSTOM> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_UNIFORM> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_GAUSSIAN> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_CUSTOM> &message, const int &destination);

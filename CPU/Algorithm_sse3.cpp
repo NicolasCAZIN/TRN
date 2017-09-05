@@ -53,7 +53,10 @@ static const v4sf two = _mm_set1_ps(2.0f);
 #define add_ps(__a, __b) (_mm_add_ps((__a), (__b)))
 #define sub_ps(__a, __b) (_mm_sub_ps((__a), (__b)))
 #define mul_ps(__a, __b) (_mm_mul_ps((__a), (__b)))
-#define sqr_ps(__a) (mul_ps((__a), (__a)))
+static inline __m128 sqr_ps(const __m128 &__a)
+{
+	return mul_ps(__a, __a);
+}
 #define mul_add_ps(__a, __b, __c) (add_ps(mul_ps((__a), (__b)), (__c)))
 static inline __m128 tanh_ps(const __m128 &__a)
 {

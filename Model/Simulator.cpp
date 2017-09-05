@@ -28,3 +28,10 @@ std::shared_ptr<TRN::Simulator::Performances>  TRN::Model::Simulator::Performanc
 {
 	return TRN::Simulator::Performances::create(decorated, functor, train, prime, test);
 }
+std::shared_ptr<TRN::Simulator::Scheduling>  TRN::Model::Simulator::Scheduling::create(const std::shared_ptr<TRN::Core::Simulator> &decorated,
+	const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
+{
+	return TRN::Simulator::Scheduling::create(decorated, functor);
+}
+
+

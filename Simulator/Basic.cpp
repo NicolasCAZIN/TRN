@@ -65,7 +65,10 @@ void TRN::Simulator::Basic::append_measurement(const std::shared_ptr<TRN::Core::
 {
 	handle->measurements.push_back(measurement);
 }
-
+void TRN::Simulator::Basic::append_mutator(const std::shared_ptr<TRN::Core::Mutator> &mutator)
+{
+	handle->mutators.push_back(mutator);
+}
 void TRN::Simulator::Basic::declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Matrix> &sequence)
 {
 	if (label.empty())
@@ -111,7 +114,7 @@ void TRN::Simulator::Basic::train(const std::string &label, const std::string &i
 	handle->pending.push(sequence);
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::SET>>::notify(sequence);
 }
-void TRN::Simulator::Basic::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble)
+void TRN::Simulator::Basic::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations)
 {
 	if (!handle->initialized)
 		throw std::logic_error("Simulator is not initialized");
@@ -123,15 +126,15 @@ void TRN::Simulator::Basic::test(const std::string &label, const std::string &in
 	auto expected_sequence = retrieve_sequence(label, expected);
 
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TEST>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::TEST>(label, preamble));
-	auto total_cycles = expected_sequence->get_rows();
-	auto observations = expected_sequence->get_rows();
+	auto total_cycles = expected_sequence->get_rows() + supplementary_generations;
+	auto observations = expected_sequence->get_rows() + supplementary_generations;
 	auto batch_size = handle->reservoir->get_batch_size();
 	TRN::Core::Message::Payload<TRN::Core::Message::CYCLES> cycles(batch_size, total_cycles, observations);
 	TRN::Core::Message::Payload<TRN::Core::Message::TARGET_SEQUENCE> target_sequence(expected_sequence);
 
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::CYCLES>>::notify(cycles);
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TARGET_SEQUENCE>>::notify(target_sequence);
-	handle->reservoir->test(incoming_sequence, expected_sequence, preamble);
+	handle->reservoir->test(incoming_sequence, expected_sequence, preamble, supplementary_generations);
 }
 void TRN::Simulator::Basic::initialize()
 {
@@ -173,7 +176,22 @@ void TRN::Simulator::Basic::initialize()
 	//
 	
 	handle->scheduler->set_delegate(shared_from_this());
-	handle->scheduler->attach(shared_from_this());
+
+	if (!handle->mutators.empty())
+	{
+		handle->scheduler->attach(handle->mutators[0]);
+		auto mutator_iterator = handle->mutators.begin();
+
+		for (std::size_t k = 1; k < handle->mutators.size(); k++)
+		{
+			handle->mutators[k - 1]->attach(handle->mutators[k]);
+		}
+		handle->mutators[handle->mutators.size() - 1]->attach(shared_from_this());
+	}
+	else
+	{
+		handle->scheduler->attach(shared_from_this());
+	}
 
 	handle->reservoir->initialize(handle->feedforward, handle->recurrent, handle->feedback, handle->readout);
 	handle->initialized = true;
@@ -228,8 +246,10 @@ void  TRN::Simulator::Basic::update(const TRN::Core::Message::Payload<TRN::Core:
 	if (handle->pending.empty())
 		throw std::logic_error("train sequence queue is empty");
 
-	auto total_cycles = payload.get_scheduling()->get_total_duration();
-	auto observations = payload.get_scheduling()->get_total_duration() / payload.get_scheduling()->get_repetitions();
+	auto scheduling = payload.get_scheduling();
+	
+	auto total_cycles = scheduling->get_total_duration();
+	auto observations = scheduling->get_total_duration() / scheduling->get_durations().size();
 	auto batch_size = handle->reservoir->get_batch_size();
 	TRN::Core::Message::Payload<TRN::Core::Message::CYCLES> cycles(batch_size, total_cycles, observations);
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::CYCLES>>::notify(cycles);

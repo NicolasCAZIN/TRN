@@ -12,6 +12,7 @@ const bool TRN4CPP::DEFAULT_GENERATE = true;
 const unsigned long TRN4CPP::DEFAULT_SEED = 1;
 const std::size_t TRN4CPP::DEFAULT_BATCH_SIZE = 1;
 const unsigned int TRN4CPP::DEFAULT_INDEX = 0;
+const unsigned int TRN4CPP::DEFAULT_SUPPLEMENTARY_GENERATIONS = 0;
 const std::string TRN4CPP::DEFAULT_HOST = "127.0.0.1";
 const unsigned short TRN4CPP::DEFAULT_PORT = 12345;
 const std::string TRN4CPP::DEFAULT_TAG = "";
@@ -19,7 +20,8 @@ static std::mutex mutex;
 
 static std::map<unsigned int, std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)>> id_perceived_stimulus;
 static std::map<unsigned int, std::function<void(const std::vector<float> &estimated_position, const std::size_t &rows, const std::size_t &cols)>> id_estimated_position;
-static std::map<unsigned int, std::function<void(const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations)>> id_scheduler;
+static std::map<unsigned int, std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)>> id_scheduler;
+static std::map<unsigned int, std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)>> id_mutator;
 static std::map<unsigned int, std::function<void(const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)>> id_feedforward_weights;
 static std::map<unsigned int, std::function<void(const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)>> id_feedback_weights;
 static std::map<unsigned int, std::function<void(const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)>> id_readout_weights;
@@ -36,6 +38,8 @@ static void api_deallocation(const unsigned int &id, const int &rank)
 		id_estimated_position.erase(id);
 	if (id_scheduler.find(id) != id_scheduler.end())
 		id_scheduler.erase(id);
+	if (id_mutator.find(id) != id_mutator.end())
+		id_mutator.erase(id);
 	if (id_feedforward_weights.find(id) != id_feedforward_weights.end())
 		id_feedforward_weights.erase(id);
 	if (id_feedback_weights.find(id) != id_feedback_weights.end())
@@ -129,6 +133,7 @@ void TRN4CPP::uninitialize()
 	id_perceived_stimulus.clear();
 	id_estimated_position.clear();
 	id_scheduler.clear();
+	id_mutator.clear();
 	id_feedforward_weights.clear();
 	id_feedback_weights.clear();
 	id_readout_weights.clear();
@@ -165,13 +170,13 @@ void TRN4CPP::train(const unsigned int &id, const std::string &label, const std:
 	broker->train(id, label, incoming, expected);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
-void TRN4CPP::test(const unsigned int &id, const std::string &sequence, const std::string &incoming, const std::string &expected, const unsigned int &preamble)
+void TRN4CPP::test(const unsigned int &id, const std::string &sequence, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const unsigned int &supplementary_generations)
 {
 	// std::unique_lock<std::mutex> lock(mutex);
 	// // std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->test(id, sequence, incoming, expected, preamble);
+	broker->test(id, sequence, incoming, expected, preamble, supplementary_generations);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
 void TRN4CPP::declare_sequence(const unsigned int &id, const std::string &label, const std::string &tag, const std::vector<float> &sequence, const std::size_t &observations)
@@ -220,6 +225,14 @@ void TRN4CPP::setup_performances(const unsigned int &id, const std::function<voi
 	broker->setup_performances(id, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), train, prime, generate);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
+
+void TRN4CPP::setup_scheduling(const unsigned int &id, const std::function<void(const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
+{
+	if (!broker)
+		throw std::logic_error("broker had not been initialized");
+	broker->setup_scheduling(id, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2));
+}
+
 
 void TRN4CPP::configure_begin(const unsigned int &id)
 {
@@ -311,7 +324,7 @@ void TRN4CPP::configure_loop_spatial_filter(const unsigned int &id, const std::s
 	const std::function<void(const unsigned int &id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
 	std::function<void(const unsigned int &id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
 	const std::size_t &rows, const std::size_t &cols, const std::pair<float, float> &x, const std::pair<float, float> &y,
-	const std::vector<float> response, const float &sigma, const float &radius, const std::string &tag
+	const std::vector<float> response, const float &sigma, const float &radius, const float &scale, const std::string &tag
 	
 	)
 {
@@ -323,7 +336,7 @@ void TRN4CPP::configure_loop_spatial_filter(const unsigned int &id, const std::s
 	broker->configure_loop_spatial_filter(id, batch_size, stimulus_size, 
 		std::bind(predicted_position, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), id_estimated_position[id],
 		std::bind(predicted_stimulus, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), id_perceived_stimulus[id],
-		rows, cols, x, y, response, sigma, radius, tag);
+		rows, cols, x, y, response, sigma, radius, scale, tag);
 
 	
 	estimated_position = [=](const unsigned int &id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
@@ -376,23 +389,60 @@ void TRN4CPP::configure_scheduler_snippets(const unsigned int &id, const unsigne
 	broker->configure_scheduler_snippets(id, snippets_size, time_budget, tag);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
+
+
 void TRN4CPP::configure_scheduler_custom(const unsigned int &id, 
-	const std::function<void(const unsigned int &id, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations)> &request,
-	std::function<void(const unsigned int &id, const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations)> &reply, const std::string &tag)
+	const std::function<void(const unsigned int &id, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void(const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply, const std::string &tag)
 {
-	std::unique_lock<std::mutex> lock(mutex);
+	//std::unique_lock<std::mutex> lock(mutex);
 	// // std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
 
 	broker->configure_scheduler_custom(id, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), id_scheduler[id], tag);
-	reply = [=](const unsigned int &id, const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations)
+	reply = [=](const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)
 	{
 		std::unique_lock<std::mutex> lock(mutex);
 		id_scheduler[id](offsets, durations);
 	};
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
+
+void TRN4CPP::configure_mutator_shuffle(const unsigned int &id)
+{
+	if (!broker)
+		throw std::logic_error("broker had not been initialized");
+	broker->configure_mutator_shuffle(id);
+}
+void TRN4CPP::configure_mutator_reverse(const unsigned int &id, const float &rate, const std::size_t &size)
+{
+	if (!broker)
+		throw std::logic_error("broker had not been initialized");
+	broker->configure_mutator_reverse(id, rate, size);
+}
+void TRN4CPP::configure_mutator_punch(const unsigned int &id, const float &rate, const std::size_t &size, const std::size_t &number)
+{
+	if (!broker)
+		throw std::logic_error("broker had not been initialized");
+	broker->configure_mutator_punch(id, rate, size, number);
+}
+void TRN4CPP::configure_mutator_custom(const unsigned int &id, 
+	const std::function<void(const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void(const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply
+)
+{
+	if (!broker)
+		throw std::logic_error("broker had not been initialized");
+
+	broker->configure_mutator_custom(id, std::bind(request, id, std::placeholders::_1, std::placeholders::_2), id_mutator[id]);
+	reply = [=](const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)
+	{
+		std::unique_lock<std::mutex> lock(mutex);
+		id_mutator[id](offsets, durations);
+	};
+}
+
 
 void TRN4CPP::configure_readout_uniform(const unsigned int &id, const float &a, const float &b, const float &sparsity)
 {
@@ -412,14 +462,14 @@ void TRN4CPP::configure_readout_gaussian(const unsigned int &id, const float &mu
 	broker->configure_readout_gaussian(id, mu, sigma);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
-void TRN4CPP::configure_readout_custom(const unsigned int &id, const std::function<void(const unsigned int &id, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
+void TRN4CPP::configure_readout_custom(const unsigned int &id, const std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
 	std::unique_lock<std::mutex> lock(mutex);
 	// // std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_readout_custom(id, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), id_readout_weights[id]);
+	broker->configure_readout_custom(id, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4), id_readout_weights[id]);
 	reply = [=](const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 	{
 		std::unique_lock<std::mutex> lock(mutex);
@@ -446,14 +496,14 @@ void TRN4CPP::configure_feedback_gaussian(const unsigned int &id, const float &m
 	broker->configure_feedback_gaussian(id, mu, sigma);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
-void TRN4CPP::configure_feedback_custom(const unsigned int &id, const std::function<void(const unsigned int &id, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
+void TRN4CPP::configure_feedback_custom(const unsigned int &id, const std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
 	std::unique_lock<std::mutex> lock(mutex);
 	// // std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_feedback_custom(id, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), id_feedback_weights[id]);
+	broker->configure_feedback_custom(id, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4), id_feedback_weights[id]);
 	reply = [=](const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 	{
 		std::unique_lock<std::mutex> lock(mutex);
@@ -480,14 +530,14 @@ void TRN4CPP::configure_recurrent_gaussian(const unsigned int &id, const float &
 	broker->configure_recurrent_gaussian(id, mu, sigma);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
-void TRN4CPP::configure_recurrent_custom(const unsigned int &id, const std::function<void(const unsigned int &id, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
+void TRN4CPP::configure_recurrent_custom(const unsigned int &id, const std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
 	 std::unique_lock<std::mutex> lock(mutex);
 	// // std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_recurrent_custom(id, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), id_recurrent_weights[id]);
+	broker->configure_recurrent_custom(id, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4), id_recurrent_weights[id]);
 	reply = [=](const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 	{
 		std::unique_lock<std::mutex> lock(mutex);
@@ -514,14 +564,14 @@ void TRN4CPP::configure_feedforward_gaussian(const unsigned int &id, const float
 	broker->configure_feedforward_gaussian(id, mu, sigma);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
-void TRN4CPP::configure_feedforward_custom(const unsigned int &id, const std::function<void(const unsigned int &id, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
+void TRN4CPP::configure_feedforward_custom(const unsigned int &id, const std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
 	 std::unique_lock<std::mutex> lock(mutex);
 	// // std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_feedforward_custom(id, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), id_feedforward_weights[id]);
+	broker->configure_feedforward_custom(id, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4), id_feedforward_weights[id]);
 	reply = [=](const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 	{
 		std::unique_lock<std::mutex> lock(mutex);

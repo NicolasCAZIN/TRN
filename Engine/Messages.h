@@ -23,6 +23,7 @@ namespace TRN
 			SETUP_STATES,
 			SETUP_WEIGHTS,
 			SETUP_PERFORMANCES,
+			SETUP_SCHEDULING,
 			CONFIGURE_BEGIN,
 			CONFIGURE_END,
 			CONFIGURE_MEASUREMENT_READOUT_MEAN_SQUARE_ERROR,
@@ -38,6 +39,10 @@ namespace TRN
 			CONFIGURE_SCHEDULER_TILED,
 			CONFIGURE_SCHEDULER_SNIPPETS,
 			CONFIGURE_SCHEDULER_CUSTOM,
+			CONFIGURE_MUTATOR_SHUFFLE,
+			CONFIGURE_MUTATOR_REVERSE,
+			CONFIGURE_MUTATOR_PUNCH,
+			CONFIGURE_MUTATOR_CUSTOM,
 			CONFIGURE_FEEDFORWARD_UNIFORM,
 			CONFIGURE_FEEDFORWARD_GAUSSIAN,
 			CONFIGURE_FEEDFORWARD_CUSTOM,
@@ -167,6 +172,7 @@ namespace TRN
 			std::string incoming;
 			std::string expected;
 			unsigned int preamble;
+			unsigned int supplementary_generations;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
@@ -176,6 +182,7 @@ namespace TRN
 				ar & incoming;
 				ar & expected;
 				ar & preamble;
+				ar & supplementary_generations;
 			}
 
 		};
@@ -254,6 +261,10 @@ namespace TRN
 
 		template<>
 		struct Message<TRN::Engine::Tag::SETUP_PERFORMANCES> : public Setup
+		{
+		};
+		template<>
+		struct Message<TRN::Engine::Tag::SETUP_SCHEDULING> : public Setup
 		{
 		};
 
@@ -361,6 +372,7 @@ namespace TRN
 			std::vector<float> response;
 			float sigma;
 			float radius;
+			float scale;
 			std::string tag;
 
 			template<class Archive>
@@ -374,6 +386,7 @@ namespace TRN
 				ar & response;
 				ar & sigma;
 				ar & radius;
+				ar & scale;
 				ar & tag;
 			}
 		};
@@ -396,7 +409,6 @@ namespace TRN
 			}
 		};
 
-
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_SNIPPETS> : public Header
 		{
@@ -414,6 +426,8 @@ namespace TRN
 			}
 		};
 
+
+
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_CUSTOM> : public Header
 		{
@@ -425,6 +439,42 @@ namespace TRN
 				ar & boost::serialization::base_object<Header>(*this);
 				ar & tag;
 			}
+		};
+
+		template<>
+		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE> : public Header
+		{
+		};
+		template<>
+		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE> : public Header
+		{
+			std::size_t size;
+			float rate;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Header>(*this);
+				ar & size;
+				ar & rate;
+			}
+		};
+
+		template<>
+		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_PUNCH> : public Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE>
+		{
+			std::size_t number;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE>>(*this);
+				ar & number;
+			}
+		};
+		template<>
+		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_CUSTOM> : public Header
+		{
 		};
 
 		struct Gaussian : public Header
@@ -574,15 +624,16 @@ namespace TRN
 		template<>
 		struct Message<TRN::Engine::Tag::SCHEDULING> : public Header
 		{
-			std::vector<unsigned int> offsets;
-			std::vector<unsigned int> durations;
-
+			std::vector<int> offsets;
+			std::vector<int> durations;
+			bool is_from_mutator;
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & boost::serialization::base_object<Header>(*this);
 				ar & offsets;
 				ar & durations;
+				ar & is_from_mutator;
 			}
 		};
 
@@ -592,8 +643,8 @@ namespace TRN
 			std::vector<float> elements;
 			std::size_t rows;
 			std::size_t cols;
-			std::vector<unsigned int> offsets;
-			std::vector<unsigned int> durations;
+			std::vector<int> offsets;
+			std::vector<int> durations;
 
 
 			template<class Archive>

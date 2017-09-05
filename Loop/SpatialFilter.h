@@ -23,8 +23,9 @@ namespace TRN
 				const std::size_t &rows, const std::size_t &cols,
 				const std::pair<float, float> &x, const std::pair<float, float> &y,
 				const std::vector<float> &response,
-				const float &sigma,
+				const float &sigma, 
 				const float &radius,
+				const float &scale,
 				const std::string &tag);
 			virtual ~SpatialFilter();
 
@@ -45,8 +46,9 @@ namespace TRN
 				const std::size_t &rows, const std::size_t &cols,
 				const std::pair<float, float> &x, const std::pair<float, float> &y,
 				const std::vector<float> &response,
-				const float &sigma,
+				const float &sigma, 
 				const float &radius,
+				const float &scale,
 				const std::string &tag);
 		};
 	};

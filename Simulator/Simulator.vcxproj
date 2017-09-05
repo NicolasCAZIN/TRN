@@ -162,6 +162,7 @@
   <ItemGroup>
     <ClCompile Include="Basic.cpp" />
     <ClCompile Include="Performances.cpp" />
+    <ClCompile Include="Scheduling.cpp" />
     <ClCompile Include="States.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -176,6 +177,8 @@
     <ClInclude Include="Basic_impl.h" />
     <ClInclude Include="Performances.h" />
     <ClInclude Include="Performances_impl.h" />
+    <ClInclude Include="Scheduling.h" />
+    <ClInclude Include="Scheduling_impl.h" />
     <ClInclude Include="simulator_global.h" />
     <ClInclude Include="States.h" />
     <ClInclude Include="States_impl.h" />

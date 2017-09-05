@@ -26,6 +26,7 @@ namespace TRN
 					const std::vector<float> &response,
 					const float &sigma,
 					const float &radius,
+					const float &scale,
 					const std::string &tag);
 			};
 			namespace Custom

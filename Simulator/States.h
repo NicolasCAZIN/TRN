@@ -37,11 +37,12 @@ namespace TRN
 			virtual void set_scheduler(const std::shared_ptr<TRN::Core::Scheduler> &scheduler) override;
 			virtual void set_loop(const std::shared_ptr<TRN::Core::Loop> &loop) override;
 			virtual void append_measurement(const std::shared_ptr<TRN::Core::Measurement::Abstraction> &measurement) override;
+			virtual void append_mutator(const std::shared_ptr<TRN::Core::Mutator> &mutator) override;
 		public:
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Matrix> &sequence) override;
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Set> &batch) override;
 			virtual void train(const std::string &sequence, const std::string &incoming, const std::string &expected) override;
-			virtual void test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble) override;
+			virtual void test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations) override;
 
 			virtual void initialize() override;
 			virtual void uninitialize() override;

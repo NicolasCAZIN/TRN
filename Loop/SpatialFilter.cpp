@@ -11,6 +11,7 @@ public :
 	std::size_t cols;
 	std::size_t stimulus_size;
 	float sigma;
+	float scale;
 	float radius;
 	std::vector<float> x_range;
 	std::vector<float> y_range;
@@ -52,8 +53,9 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 	const std::size_t &rows, const std::size_t &cols,
 	const std::pair<float, float> &x, const std::pair<float, float> &y,
 	const std::vector<float> &response,
-	const float &sigma,
+	const float &sigma, 
 	const float &radius,
+	const float &scale,
 	const std::string &tag
 	) :
 	TRN::Core::Loop(driver, batch_size, stimulus_size),
@@ -62,6 +64,7 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 	handle->stimulus_size = stimulus_size;
 	handle->batch_size = batch_size;
 	handle->radius = radius;
+	handle->scale = scale;
 	handle->sigma = sigma;
 	handle->tag = tag;
 	handle->rows = rows;
@@ -258,7 +261,7 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 		implementor->get_algorithm()->restrict_to_reachable_locations(
 			handle->batch_size, handle->stimulus_size,
 			handle->rows, handle->cols,
-			handle->radius,
+			handle->radius, handle->scale,
 			handle->x_grid->get_elements(), handle->x_grid->get_rows(), handle->x_grid->get_cols(), handle->x_grid->get_stride(),
 			handle->y_grid->get_elements(), handle->y_grid->get_rows(), handle->y_grid->get_cols(), handle->y_grid->get_stride(),
 			(const float **)handle->batched_current_position->get_elements(), handle->batched_current_position->get_rows(), handle->batched_current_position->get_cols(), handle->batched_current_position->get_strides(),
@@ -267,6 +270,12 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 			handle->batched_next_location_probability->get_elements(), handle->batched_next_location_probability->get_rows(), handle->batched_next_location_probability->get_cols(), handle->batched_next_location_probability->get_strides());
 	}
 
+	/*std::size_t location_matrices;
+	std::vector<std::size_t> location_rows, location_cols;
+	std::vector<float> location_elements;
+
+	handle->batched_next_location_probability->to(location_elements, location_matrices, location_rows, location_cols);
+	cv::Mat location(location_matrices * location_rows[0], location_cols[0], CV_32F, location_elements.data());*/
 #if 1
 	implementor->get_algorithm()->select_most_probable_location(handle->batch_size, handle->rows, handle->cols,
 		handle->x_grid->get_elements(), handle->x_grid->get_rows(), handle->x_grid->get_cols(), handle->x_grid->get_stride(),
@@ -288,12 +297,6 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 #endif
 
 
-	/*std::size_t location_matrices;
-	std::vector<std::size_t> location_rows, location_cols;
-	std::vector<float> location_elements;
-
-	handle->batched_next_location_probability->to(location_elements, location_matrices, location_rows, location_cols);
-	cv::Mat location(location_matrices * location_rows[0], location_cols[0], CV_32F, location_elements.data());*/
 	
 	std::vector<float> predicted_position;
 	std::size_t predicted_position_matrices;
@@ -374,7 +377,8 @@ std::shared_ptr<TRN::Loop::SpatialFilter> TRN::Loop::SpatialFilter::create(const
 	const std::vector<float> &response,
 	const float &sigma,
 	const float &radius,
+	const float &scale,
 	const std::string &tag)
 {
-	return std::make_shared<TRN::Loop::SpatialFilter>(driver, batch_size, stimulus_size, predicted_position, estimated_position, predicted_stimulus, perceived_stimulus, rows, cols, x, y, response, sigma, radius,tag);
+	return std::make_shared<TRN::Loop::SpatialFilter>(driver, batch_size, stimulus_size, predicted_position, estimated_position, predicted_stimulus, perceived_stimulus, rows, cols, x, y, response, sigma,radius, scale,tag);
 }

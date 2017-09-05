@@ -24,28 +24,30 @@ TRN::GPU::Context::Context(const int &device) :
 
 	checkCudaErrors(cudaSetDevice(device));
 	checkCudaErrors(cudaGetDeviceProperties(&prop, device));
-	
-	if (prop.kernelExecTimeoutEnabled > 0)
+	auto freq_ghz = prop.clockRate *1e-6f;
+	/*if (prop.kernelExecTimeoutEnabled > 0)
 	{
 		throw std::runtime_error("CUDA kernel timeout must not be enabled because of persistent kernels");
-	}
+	}*/
 	//checkCudaErrors(cudaStreamCreate(&handle->stream));
 	checkCudaErrors(cudaStreamCreateWithFlags(&handle->stream, cudaStreamNonBlocking));
 	checkCudaErrors(cublasCreate(&handle->handle));
-	checkCudaErrors(cublasSetStream(handle->handle, handle->stream));
 	checkCudaErrors(cublasSetAtomicsMode(handle->handle, cublasAtomicsMode_t::CUBLAS_ATOMICS_ALLOWED));
+	checkCudaErrors(cublasSetStream(handle->handle, handle->stream));
 	checkCudaErrors(curandCreateGenerator(&handle->generator, CURAND_RNG_PSEUDO_DEFAULT));
 	checkCudaErrors(curandSetStream(handle->generator, handle->stream));
 
+	std::stringstream stream;
+	stream << "NVidia(R) " << prop.name << " GPU @ " << std::fixed << std::setprecision(2) << freq_ghz << "GHz";
+	std::string name = stream.str();
 
-	
 	//nppSetStream(handle->stream);
 	handle->stride_alignement = prop.warpSize;
-	handle->name.assign(prop.name);
+	handle->name = name;
 	handle->max_block_size = prop.maxThreadsPerBlock;
 
 
-	std::cout << "GPU version selected : " << prop.name << " # " << (device + 1) << std::endl;
+	std::cout << "GPU version selected : " << name << " # " << (device + 1) << std::endl;
 	
 }
 

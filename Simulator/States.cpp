@@ -65,6 +65,10 @@ void TRN::Simulator::States::append_measurement(const std::shared_ptr<TRN::Core:
 	decorated->append_measurement(measurement);
 }
 
+void TRN::Simulator::States::append_mutator(const std::shared_ptr<TRN::Core::Mutator> &mutator)
+{
+	decorated->append_mutator(mutator);
+}
 
 const std::shared_ptr<TRN::Core::Matrix> TRN::Simulator::States::retrieve_sequence(const std::string &label, const std::string &tag)
 {
@@ -88,9 +92,9 @@ void TRN::Simulator::States::train(const std::string &sequence, const std::strin
 {
 	decorated->train(sequence, incoming, expected);
 }
-void TRN::Simulator::States::test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble)
+void TRN::Simulator::States::test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations)
 {
-	decorated->test(sequence, incoming, expected, preamble);
+	decorated->test(sequence, incoming, expected, preamble, supplementary_generations);
 }
 void TRN::Simulator::States::initialize()
 {
@@ -99,8 +103,6 @@ void TRN::Simulator::States::initialize()
 	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::attach(shared_from_this());
 
 	decorated->initialize();
-
-
 }
 void TRN::Simulator::States::uninitialize()
 {

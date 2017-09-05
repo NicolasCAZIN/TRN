@@ -19,6 +19,7 @@ public:
 	std::function<void()> primed;
 	std::function<void()> tested;
 	std::list<std::shared_ptr<TRN::Core::Measurement::Abstraction>> measurements;
+	std::vector<std::shared_ptr<TRN::Core::Mutator>> mutators;
 
 	bool initialized;
 };

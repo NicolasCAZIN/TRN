@@ -19,9 +19,10 @@ std::shared_ptr<TRN::Core::Loop> TRN::Model::Loop::SpatialFilter::create(const s
 	const std::vector<float> &response,
 	const float &sigma,
 	const float &radius,
+	const float &scale,
 	const std::string &tag)
 {
-	return TRN::Loop::SpatialFilter::create(driver, batch_size, stimulus_size, predicted_position, estimated_position, predicted_stimulus, perceived_stimulus, rows, cols, x, y, response, sigma, radius, tag);
+	return TRN::Loop::SpatialFilter::create(driver, batch_size, stimulus_size, predicted_position, estimated_position, predicted_stimulus, perceived_stimulus, rows, cols, x, y, response, sigma, radius,scale, tag);
 }
 
 std::shared_ptr<TRN::Core::Loop> TRN::Model::Loop::Custom::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &batch_size, const std::size_t &stimulus_size,

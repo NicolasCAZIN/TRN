@@ -32,7 +32,7 @@ namespace TRN
 
 			void 	deallocate(const unsigned int &id);
 			void 	train(const unsigned int &id, const std::string &label, const std::string &incoming, const std::string &expected);
-			void 	test(const unsigned int &id, const std::string &sequence, const std::string &incoming, const std::string &expected, const unsigned int &preamble);
+			void 	test(const unsigned int &id, const std::string &sequence, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const unsigned int &supplementary_generations);
 			void 	declare_sequence(const unsigned int &id, const std::string &label, const std::string &tag,
 				const std::vector<float> &sequence, const std::size_t &observations);
 			void 	declare_set(const unsigned int &id, const std::string &label, const std::string &tag,
@@ -40,6 +40,7 @@ namespace TRN
 			void 	setup_states(const unsigned int &id, const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &train, const bool &prime, const bool &generate);
 			void 	setup_weights(const unsigned int &id, const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &initilization, const bool &train);
 			void 	setup_performances(const unsigned int &id, const std::function<void(const std::string &phase, const size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> &functor, const bool &train, const bool &prime, const bool &generate);
+			void 	setup_scheduling(const unsigned int &id, const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &functor);
 
 			void	configure_begin(const unsigned int &id);
 			void	configure_end(const unsigned int &id);
@@ -69,6 +70,7 @@ namespace TRN
 				const std::vector<float> &response,
 				const float &sigma,
 				const float &radius,
+				const float &scale,
 				const std::string &tag);
 			void 	configure_loop_custom(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size,
 				const std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &request,
@@ -77,9 +79,20 @@ namespace TRN
 
 			void 	configure_scheduler_tiled(const unsigned int &id ,const unsigned int &epochs);
 			void 	configure_scheduler_snippets(const unsigned int &id, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag);
+	
 			void 	configure_scheduler_custom(const unsigned int &id,
-				const std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations)> &request,
-				std::function<void(const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations)> &reply, const std::string &tag);
+				const std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+				std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply, const std::string &tag);
+
+			void 	configure_mutator_shuffle(const unsigned int &id);
+			void 	configure_mutator_reverse(const unsigned int &id, const float &rate, const std::size_t &size);
+			void 	configure_mutator_punch(const unsigned int &id, const float &rate, const std::size_t &size, const std::size_t &number);
+
+			void 	configure_mutator_custom(const unsigned int &id,
+								const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+								std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply);
+
+
 
 			void 	configure_readout_uniform(const unsigned int &id, const float &a, const float &b, const float &sparsity);
 			void 	configure_readout_gaussian(const unsigned int &id, const float &mu, const float &sigma);

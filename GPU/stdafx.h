@@ -11,6 +11,8 @@
 #include <iostream>
 #include <cassert>
 #include <random>
+#include <iomanip> // setprecision
+#include <sstream>
 // CUDA runtime
 
 

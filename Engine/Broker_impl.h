@@ -37,7 +37,10 @@ public :
 	std::map<unsigned int, std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)>> predicted_position;
 	std::map<unsigned int, std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)>> predicted_stimulus;
 
-	std::map<unsigned int, std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations)> > scheduler;
+	std::map<unsigned int, std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> > mutator;
+	std::map<unsigned int, std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> > scheduler;
+	std::map<unsigned int, std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> > scheduling;
+
 	std::map<unsigned int, std::function<void(const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)>> feedforward;
 	std::map<unsigned int, std::function<void(const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)>> feedback;
 	std::map<unsigned int, std::function<void(const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)>> readout;

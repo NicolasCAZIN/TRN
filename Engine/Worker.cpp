@@ -7,7 +7,7 @@
 #include "Model/Scheduler.h"
 #include "Model/Initializer.h"
 #include "Model/Measurement.h"
-
+#include "Model/Mutator.h"
 
 TRN::Engine::Worker::Worker(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::shared_ptr<TRN::Engine::Communicator> &communicator) :
 	handle(std::make_unique<Handle>())
@@ -145,7 +145,7 @@ void TRN::Engine::Worker::receive()
 						auto message = unpack<TRN::Engine::TEST>(locked,  handle->rank, id, number);
 						if (handle->simulators.find(message.id) == handle->simulators.end())
 							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-						handle->simulators[message.id]->test(message.label, message.incoming, message.expected, message.preamble);
+						handle->simulators[message.id]->test(message.label, message.incoming, message.expected, message.preamble, message.supplementary_generations);
 					}
 					break;
 
@@ -259,7 +259,30 @@ void TRN::Engine::Worker::receive()
 						handle->simulators[message.id] = decorator;
 					}
 					break;
+					case TRN::Engine::SETUP_SCHEDULING:
+					{
+						auto message = unpack<TRN::Engine::SETUP_SCHEDULING>(locked, handle->rank, id, number);
+						if (handle->simulators.find(message.id) == handle->simulators.end())
+							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
+						if (!handle->simulators[message.id]->get_reservoir())
+							throw std::logic_error("Simulator #" + std::to_string(message.id) + " does not not have a reservoir to decorate");
+						auto decorator = TRN::Model::Simulator::Scheduling::create(handle->simulators[message.id], [this, message]
+						(const std::vector<int> &offsets, const std::vector<int> &durations)
+						{
+							TRN::Engine::Message<TRN::Engine::SCHEDULING> performances;
 
+							performances.id = message.id;
+							performances.offsets = offsets;
+							performances.durations = durations;
+					
+							auto locked = handle->communicator.lock();
+							if (locked)
+								locked->send(performances, 0);
+						});
+						//handle->simulators[message.id]->attach(decorator);
+						handle->simulators[message.id] = decorator;
+					}
+					break;
 					case TRN::Engine::CONFIGURE_BEGIN:
 					{
 						auto message = unpack<TRN::Engine::CONFIGURE_BEGIN>(locked,  handle->rank, id, number);
@@ -482,7 +505,7 @@ void TRN::Engine::Worker::receive()
 								locked->send(stimulus, 0);
 						},
 							handle->perceived_stimulus[message.id],
-							message.rows, message.cols, message.x, message.y, message.response, message.sigma, message.radius, message.tag));
+							message.rows, message.cols, message.x, message.y, message.response, message.sigma, message.radius, message.scale, message.tag));
 					}
 					break;
 
@@ -504,7 +527,9 @@ void TRN::Engine::Worker::receive()
 							stimulus.elements = values;
 							stimulus.rows = rows;
 							stimulus.cols = cols;
-							locked->send(stimulus, 0);
+							auto locked = handle->communicator.lock();
+							if (locked)
+								locked->send(stimulus, 0);
 						},
 							handle->perceived_stimulus[message.id]
 							));
@@ -540,7 +565,7 @@ void TRN::Engine::Worker::receive()
 							throw std::runtime_error("Scheduler functor is already setup for simulator #" + std::to_string(message.id));
 						}
 						handle->simulators[message.id]->set_scheduler(TRN::Model::Scheduler::Custom::create(handle->driver,
-							[=](const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations)
+							[=](const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)
 						{
 							TRN::Engine::Message<SCHEDULING_REQUEST> scheduling_request;
 							scheduling_request.id = message.id;
@@ -549,13 +574,63 @@ void TRN::Engine::Worker::receive()
 							scheduling_request.cols = cols;
 							scheduling_request.offsets = offsets;
 							scheduling_request.durations = durations;
-
-							locked->send(scheduling_request, 0);
+							auto locked = handle->communicator.lock();
+							if (locked)
+								locked->send(scheduling_request, 0);
 						},
 							handle->scheduler[message.id], message.tag));
 					}
 					break;
 
+					case TRN::Engine::CONFIGURE_MUTATOR_SHUFFLE:
+					{
+						auto message = unpack<TRN::Engine::CONFIGURE_MUTATOR_SHUFFLE>(locked, handle->rank, id, number);
+						if (handle->simulators.find(message.id) == handle->simulators.end())
+							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
+						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Shuffle::create());
+					}
+					break;
+					case TRN::Engine::CONFIGURE_MUTATOR_REVERSE:
+					{
+						auto message = unpack<TRN::Engine::CONFIGURE_MUTATOR_REVERSE>(locked, handle->rank, id, number);
+						if (handle->simulators.find(message.id) == handle->simulators.end())
+							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
+						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Reverse::create(message.rate, message.size));
+					}
+					break;
+					case TRN::Engine::CONFIGURE_MUTATOR_PUNCH:
+					{
+						auto message = unpack<TRN::Engine::CONFIGURE_MUTATOR_PUNCH>(locked, handle->rank, id, number);
+						if (handle->simulators.find(message.id) == handle->simulators.end())
+							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
+						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Punch::create(message.rate, message.size, message.number));
+					}
+					break;
+					case TRN::Engine::CONFIGURE_MUTATOR_CUSTOM:
+					{
+						auto message = unpack<TRN::Engine::CONFIGURE_SCHEDULER_CUSTOM>(locked, handle->rank, id, number);
+						if (handle->simulators.find(message.id) == handle->simulators.end())
+							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
+						std::unique_lock<std::mutex> lock(handle->functors);
+						if (handle->mutator.find(message.id) != handle->mutator.end())
+						{
+							throw std::runtime_error("Mutator functor is already setup for simulator #" + std::to_string(message.id));
+						}
+						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Custom::create([=](const std::vector<int> &offsets, const std::vector<int> &durations)
+						{
+							TRN::Engine::Message<SCHEDULING> scheduling;
+
+							scheduling.id = message.id;
+							scheduling.offsets = offsets;
+							scheduling.durations = durations;
+							auto locked = handle->communicator.lock();
+							if (locked)
+								locked->send(scheduling, 0);
+						},
+							handle->mutator[message.id])
+						);
+					}
+					break;
 					case TRN::Engine::CONFIGURE_FEEDFORWARD_UNIFORM:
 					{
 						auto message = unpack<TRN::Engine::CONFIGURE_FEEDFORWARD_UNIFORM>(locked,  handle->rank, id, number);
@@ -593,7 +668,9 @@ void TRN::Engine::Worker::receive()
 							feedforward_dimensions.rows = rows;
 							feedforward_dimensions.cols = cols;
 							feedforward_dimensions.seed = seed;
-							locked->send(feedforward_dimensions, 0);
+							auto locked = handle->communicator.lock();
+							if (locked)
+								locked->send(feedforward_dimensions, 0);
 						}, handle->feedforward_weights[message.id]));
 					}
 					break;
@@ -635,7 +712,9 @@ void TRN::Engine::Worker::receive()
 							feedback_dimensions.rows = rows;
 							feedback_dimensions.cols = cols;
 							feedback_dimensions.seed = seed;
-							locked->send(feedback_dimensions, 0);
+							auto locked = handle->communicator.lock();
+							if (locked)
+								locked->send(feedback_dimensions, 0);
 						}, handle->feedback_weights[message.id]));
 					}
 					break;
@@ -677,7 +756,9 @@ void TRN::Engine::Worker::receive()
 							recurrent_dimensions.rows = rows;
 							recurrent_dimensions.cols = cols;
 							recurrent_dimensions.seed = seed;
-							locked->send(recurrent_dimensions, 0);
+							auto locked = handle->communicator.lock();
+							if (locked)
+								locked->send(recurrent_dimensions, 0);
 						}, handle->recurrent[message.id]));
 					}
 					break;
@@ -719,8 +800,10 @@ void TRN::Engine::Worker::receive()
 							readout_dimensions.rows = rows;
 							readout_dimensions.cols = cols;
 							readout_dimensions.seed = seed;
-							locked->send(readout_dimensions, 0);
-						}, handle->recurrent[message.id]));
+							auto locked = handle->communicator.lock();
+							if (locked)
+								locked->send(readout_dimensions, 0);
+						}, handle->readout[message.id]));
 					}
 					break;
 
@@ -743,8 +826,18 @@ void TRN::Engine::Worker::receive()
 					case TRN::Engine::SCHEDULING:
 					{
 						auto message = unpack<TRN::Engine::SCHEDULING>(locked,  handle->rank, id, number);
-						if (handle->scheduler.find(message.id) == handle->scheduler.end())
-							throw std::runtime_error("Scheduling functor is not setup for simulator #" + std::to_string(message.id));
+						if (message.is_from_mutator)
+						{
+							if (handle->mutator.find(message.id) == handle->mutator.end())
+								throw std::runtime_error("Mutator functor is not setup for simulator #" + std::to_string(message.id));
+							handle->mutator[message.id](message.offsets, message.durations);
+						}
+						else
+						{
+							if (handle->scheduler.find(message.id) == handle->scheduler.end())
+								throw std::runtime_error("Scheduling functor is not setup for simulator #" + std::to_string(message.id));
+							handle->scheduler[message.id](message.offsets, message.durations);
+						}
 					}
 					break;
 					case TRN::Engine::FEEDFORWARD_WEIGHTS:

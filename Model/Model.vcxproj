@@ -168,6 +168,7 @@
     <ClCompile Include="Driver.cpp" />
     <ClCompile Include="Loop.cpp" />
     <ClCompile Include="Measurement.cpp" />
+    <ClCompile Include="Mutator.cpp" />
     <ClCompile Include="Reservoir.cpp" />
     <ClCompile Include="Scheduler.cpp" />
     <ClCompile Include="Simulator.cpp" />
@@ -184,6 +185,7 @@
     <ClInclude Include="Loop.h" />
     <ClInclude Include="Measurement.h" />
     <ClInclude Include="model_global.h" />
+    <ClInclude Include="Mutator.h" />
     <ClInclude Include="Reservoir.h" />
     <ClInclude Include="Scheduler.h" />
     <ClInclude Include="Simulator.h" />
@@ -210,6 +212,9 @@
     </ProjectReference>
     <ProjectReference Include="..\Measurement\Measurement.vcxproj">
       <Project>{3a96a63a-7706-48e7-8f2d-ba9f00bcb478}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Mutator\Mutator.vcxproj">
+      <Project>{0f0dc79b-ba6f-4ed4-ad38-9390db56b4a6}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Reservoir\Reservoir.vcxproj">
       <Project>{d8428fe4-8c01-4bbf-8a89-73e7fa0a17b7}</Project>

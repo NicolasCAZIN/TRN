@@ -14,8 +14,8 @@ TRN::Core::Set::Set(const std::shared_ptr<TRN::Backend::Driver> &driver, const s
 
 		std::size_t concatenated_rows = 0;
 		std::size_t concatenated_cols = sequences[0]->get_cols();
-		std::vector<unsigned int> offsets;
-		std::vector<unsigned int> durations;
+		std::vector<int> offsets;
+		std::vector<int> durations;
 		for (auto sequence : sequences)
 		{
 			std::vector<float> elements;
@@ -25,11 +25,15 @@ TRN::Core::Set::Set(const std::shared_ptr<TRN::Backend::Driver> &driver, const s
 			
 			concatenated.insert(concatenated.end(), elements.begin(), elements.end());
 		
-			offsets.push_back(concatenated_rows);
+			std::vector<int> sequence_offsets(rows);
+
+			std::iota(sequence_offsets.begin(), sequence_offsets.end(), concatenated_rows);
+			
+			offsets.insert(offsets.end(), sequence_offsets.begin(), sequence_offsets.end());
 			concatenated_rows += rows;
 			durations.push_back(sequence->get_rows());
 		}
-		handle->scheduling = TRN::Core::Scheduling::create(driver, offsets, durations);
+		handle->scheduling = TRN::Core::Scheduling::create(offsets, durations);
 		handle->sequence = TRN::Core::Matrix::create(driver, concatenated, concatenated_rows, concatenated_cols);
 
 		break;

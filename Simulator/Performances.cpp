@@ -78,7 +78,10 @@ void TRN::Simulator::Performances::append_measurement(const std::shared_ptr<TRN:
 	decorated->append_measurement(measurement);
 }
 
-
+void TRN::Simulator::Performances::append_mutator(const std::shared_ptr<TRN::Core::Mutator> &mutator)
+{
+	decorated->append_mutator(mutator);
+}
 void TRN::Simulator::Performances::declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Matrix> &sequence)
 {
 	decorated->declare(label, tag, sequence);
@@ -93,11 +96,11 @@ void TRN::Simulator::Performances::train(const std::string &label, const std::st
 	handle->start = std::chrono::high_resolution_clock::now();
 	decorated->train(label, incoming, expected);
 }
-void TRN::Simulator::Performances::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble)
+void TRN::Simulator::Performances::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations)
 {
 	handle->start = std::chrono::high_resolution_clock::now();
 	handle->preamble = preamble;
-	decorated->test(label, incoming, expected, preamble);
+	decorated->test(label, incoming, expected, preamble, supplementary_generations);
 }
 
 
@@ -110,8 +113,6 @@ void TRN::Simulator::Performances::initialize()
 	get_scheduler()->attach(shared_from_this());
 
 	decorated->initialize();
-
-
 }
 void TRN::Simulator::Performances::uninitialize()
 {

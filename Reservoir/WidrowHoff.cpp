@@ -43,7 +43,7 @@ void TRN::Reservoir::WidrowHoff::train(const std::shared_ptr<TRN::Core::Matrix> 
 			TRN::Core::Reservoir::handle->batched_W_ro->get_elements(), TRN::Core::Reservoir::handle->batched_W_ro->get_rows(), TRN::Core::Reservoir::handle->batched_W_ro->get_cols(), TRN::Core::Reservoir::handle->batched_W_ro->get_strides(),
 			TRN::Core::Reservoir::handle->batched_error->get_elements(), TRN::Core::Reservoir::handle->batched_error->get_rows(), TRN::Core::Reservoir::handle->batched_error->get_cols(), TRN::Core::Reservoir::handle->batched_error->get_strides(),
 
-			scheduling->get_offsets(), scheduling->get_durations(), scheduling->get_repetitions(),
+			scheduling->get_offsets().data(), scheduling->get_durations().data(), scheduling->get_durations().size(),
 			states->get_elements(), states->get_rows(), states->get_cols(), states->get_stride(),
 			handle->learning_rate);
 }

@@ -3,65 +3,104 @@
 
 
 
-TRN::Core::Scheduling::Scheduling(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations) :
-	TRN::Helper::Bridge<TRN::Backend::Driver>(driver),
+TRN::Core::Scheduling::Scheduling(const std::vector<int> &offsets, const std::vector<int> &durations) :
 	handle(std::make_unique<Handle>())
-{
-	if (offsets.size() != durations.size())
-		throw std::invalid_argument("offsets and duration must have the same size");
-	
-	handle->total_duration = std::accumulate(durations.begin(), durations.end(), 0);
-	handle->repetitions = std::min(offsets.size(), durations.size());
-	
+{	
 	handle->offsets = offsets;
 	handle->durations = durations;
-	/*implementor->get_memory()->allocate((void **)&handle->durations, handle->durations_stride, sizeof(int), handle->repetitions, 1);
-	implementor->get_memory()->upload(durations.data(), handle->durations, sizeof(int), handle->repetitions, 1, handle->durations_stride);
+}
 
-
-	implementor->get_memory()->allocate((void **)&handle->offsets, handle->offsets_stride, sizeof(int), handle->repetitions, 1);
-	implementor->get_memory()->upload(offsets.data(), handle->offsets, sizeof(int), handle->repetitions, 1, handle->offsets_stride);*/
+TRN::Core::Scheduling::Scheduling(const std::vector<std::vector<int>> &indices) :
+	handle(std::make_unique<Handle>())
+{
+	from(indices);
 }
 
 TRN::Core::Scheduling::~Scheduling()
 {
-	/*implementor->get_memory()->deallocate(handle->durations);
-	implementor->get_memory()->deallocate(handle->offsets);*/
 	handle->offsets.clear();
 	handle->durations.clear();
 	handle.reset();
 }
 
-void TRN::Core::Scheduling::to(std::vector<unsigned int> &offsets, std::vector<unsigned int> &durations)
+void TRN::Core::Scheduling::to(std::vector<int> &offsets, std::vector<int> &durations)
 {
-	/*offsets.resize(handle->repetitions);
-	durations.resize(handle->repetitions);
-	implementor->get_memory()->download(durations.data(), handle->durations, sizeof(int), handle->repetitions, 1, handle->durations_stride, false);
-	implementor->get_memory()->download(offsets.data(), handle->offsets, sizeof(int), handle->repetitions, 1, handle->offsets_stride, false);*/
 	offsets = handle->offsets;
 	durations = handle->durations;
 }
 
-const std::size_t &TRN::Core::Scheduling::get_total_duration()
+
+TRN::Core::Scheduling &TRN::Core::Scheduling::operator = (const TRN::Core::Scheduling &scheduling)
 {
-	return handle->total_duration;
-}
-const std::size_t&TRN::Core::Scheduling::get_repetitions()
-{
-	return handle->repetitions;
+	this->handle->offsets = scheduling.handle->offsets;
+	this->handle->durations = scheduling.handle->durations;
+	return *this;
 }
 
-unsigned int *TRN::Core::Scheduling::get_offsets()
+void TRN::Core::Scheduling::to(std::vector<std::vector<int>> &indices)
 {
-	return handle->offsets.data();
+	indices.resize(handle->durations.size());
+	auto b = std::begin(handle->offsets);
+	for (std::size_t k = 0; k < indices.size(); k++)
+	{
+		auto e = b + handle->durations[k];
+		indices[k].resize(handle->durations[k]);
+		std::copy(b, e, std::begin(indices[k]));
+		b = e;
+	}
+
+}
+void TRN::Core::Scheduling::from(const std::vector<std::vector<int>> &indices)
+{
+	auto total_duration = std::accumulate(std::begin(indices), std::end(indices), (int)0, [](const int &accumulator, const std::vector<int> &v) { return accumulator + v.size(); });
+	handle->durations.resize(indices.size());
+	handle->offsets.resize(total_duration);
+
+	auto b = handle->offsets.begin();
+	for (std::size_t k = 0; k < indices.size(); k++)
+	{
+		auto &offsets_k = indices[k];
+
+		auto duration = offsets_k.size();
+		auto e = b + duration;
+
+		std::copy(std::begin(offsets_k), std::end(offsets_k), b);
+		handle->durations[k] = duration;
+		b = e;
+	}
 }
 
-unsigned int *TRN::Core::Scheduling::get_durations()
+std::vector<int> TRN::Core::Scheduling::get_offsets()
 {
-	return handle->durations.data();
+	return handle->offsets;
 }
 
-std::shared_ptr<TRN::Core::Scheduling> TRN::Core::Scheduling::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::vector<unsigned int> &offsets, const std::vector<unsigned int> &durations) 
+std::vector<int> TRN::Core::Scheduling::get_durations()
 {
-	return std::make_shared<TRN::Core::Scheduling>(driver, offsets, durations);
+	return handle->durations;
+}
+
+void TRN::Core::Scheduling::set_offsets(const std::vector<int> &offsets)
+{
+	handle->offsets = offsets;
+}
+void TRN::Core::Scheduling::set_durations(const std::vector<int> &durations)
+{
+	handle->durations = durations;
+}
+
+std::size_t TRN::Core::Scheduling::get_total_duration()
+{
+	return handle->offsets.size();
+}
+
+
+std::shared_ptr<TRN::Core::Scheduling> TRN::Core::Scheduling::create(const std::vector<std::vector<int>> &indices)
+{
+	return std::make_shared<TRN::Core::Scheduling>(indices);
+}
+
+std::shared_ptr<TRN::Core::Scheduling> TRN::Core::Scheduling::create(const std::vector<int> &offsets, const std::vector<int> &durations) 
+{
+	return std::make_shared<TRN::Core::Scheduling>( offsets, durations);
 }

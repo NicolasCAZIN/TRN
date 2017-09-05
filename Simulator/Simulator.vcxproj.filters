@@ -44,6 +44,9 @@
     <ClCompile Include="Basic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Scheduling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -71,6 +74,12 @@
       <Filter>Header Files\private</Filter>
     </ClInclude>
     <ClInclude Include="Basic_impl.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
+    <ClInclude Include="Scheduling.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scheduling_impl.h">
       <Filter>Header Files\private</Filter>
     </ClInclude>
   </ItemGroup>

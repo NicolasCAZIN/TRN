@@ -136,6 +136,9 @@
     <ClInclude Include="Bundle_impl.h">
       <Filter>Header Files\private</Filter>
     </ClInclude>
+    <ClInclude Include="Mutator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core_global.h">

@@ -64,6 +64,10 @@ void TRN::Simulator::Weights::append_measurement(const std::shared_ptr<TRN::Core
 	decorated->append_measurement(measurement);
 }
 
+void TRN::Simulator::Weights::append_mutator(const std::shared_ptr<TRN::Core::Mutator> &mutator)
+{
+	decorated->append_mutator(mutator);
+}
 const std::shared_ptr<TRN::Core::Matrix> TRN::Simulator::Weights::retrieve_sequence(const std::string &label, const std::string &tag)
 {
 	return decorated->retrieve_sequence(label, tag);
@@ -85,9 +89,9 @@ void TRN::Simulator::Weights::train(const std::string &label, const std::string 
 {
 	decorated->train(label, incoming, expected);
 }
-void TRN::Simulator::Weights::test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble)
+void TRN::Simulator::Weights::test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations)
 {
-	decorated->test(sequence, incoming, expected, preamble);
+	decorated->test(sequence, incoming, expected, preamble, supplementary_generations);
 }
 void TRN::Simulator::Weights::initialize()
 {

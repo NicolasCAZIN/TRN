@@ -192,6 +192,7 @@
     <ClInclude Include="Batch_impl.h" />
     <ClInclude Include="Bundle.h" />
     <ClInclude Include="Bundle_impl.h" />
+    <ClInclude Include="Mutator.h" />
     <ClInclude Include="Set_impl.h" />
     <ClInclude Include="Container.h" />
     <ClInclude Include="Measurement.h" />
