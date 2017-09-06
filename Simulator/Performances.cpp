@@ -20,6 +20,12 @@ TRN::Simulator::Performances::~Performances()
 {
 	handle.reset();
 }
+
+const std::vector<std::shared_ptr<TRN::Core::Mutator>> TRN::Simulator::Performances::get_mutators()
+{
+	return decorated->get_mutators();
+}
+
 const std::shared_ptr<TRN::Core::Reservoir> TRN::Simulator::Performances::get_reservoir()
 {
 	return decorated->get_reservoir();
@@ -106,11 +112,7 @@ void TRN::Simulator::Performances::test(const std::string &label, const std::str
 
 void TRN::Simulator::Performances::initialize()
 {
-	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>::attach(shared_from_this());
-	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TESTED>>::attach(shared_from_this());
-	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::attach(shared_from_this());
-
-	get_scheduler()->attach(shared_from_this());
+	TRN::Core::Simulator::initialize();
 
 	decorated->initialize();
 }

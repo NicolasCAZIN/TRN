@@ -264,7 +264,7 @@ namespace TRN
 		{
 		};
 		template<>
-		struct Message<TRN::Engine::Tag::SETUP_SCHEDULING> : public Setup
+		struct Message<TRN::Engine::Tag::SETUP_SCHEDULING> : public Header
 		{
 		};
 
@@ -600,12 +600,16 @@ namespace TRN
 		struct Measurement : public Matrix
 		{
 			std::vector<float> expected;
+			std::vector<float> primed;
+			std::size_t preamble;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & boost::serialization::base_object<Matrix>(*this);
 				ar & expected;
+				ar & primed;
+				ar & preamble;
 			}
 		};
 

@@ -9,7 +9,7 @@ TRN::Measurement::FrechetDistance::FrechetDistance(const std::shared_ptr<TRN::Ba
 }
 
 
-void TRN::Measurement::FrechetDistance::compute(const std::shared_ptr<TRN::Core::Batch> &predicted, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Matrix> &error)
+void TRN::Measurement::FrechetDistance::compute(const std::shared_ptr<TRN::Core::Matrix> &primed, const std::shared_ptr<TRN::Core::Batch> &predicted, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Matrix> &error)
 {
 	
 

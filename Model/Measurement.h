@@ -22,7 +22,7 @@ namespace TRN
 
 			namespace Custom
 			{
-				std::shared_ptr<TRN::Core::Measurement::Implementation> MODEL_EXPORT create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &pages,  const std::size_t &rows, const  std::size_t &cols)> &functor);
+				std::shared_ptr<TRN::Core::Measurement::Implementation> MODEL_EXPORT create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages,  const std::size_t &rows, const  std::size_t &cols)> &functor);
 			};
 
 			namespace Position

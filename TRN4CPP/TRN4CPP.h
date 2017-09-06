@@ -43,11 +43,11 @@ namespace TRN4CPP
 
 	void TRN4CPP_EXPORT 	configure_measurement_readout_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
 	void TRN4CPP_EXPORT 	configure_measurement_readout_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
-	void TRN4CPP_EXPORT 	configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
+	void TRN4CPP_EXPORT 	configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &predicted, const std::vector<float> &primed, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
 
 	void TRN4CPP_EXPORT 	configure_measurement_position_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
 	void TRN4CPP_EXPORT 	configure_measurement_position_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
-	void TRN4CPP_EXPORT 	configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
+	void TRN4CPP_EXPORT 	configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &predicted, const std::vector<float> &primed, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
 
 
 

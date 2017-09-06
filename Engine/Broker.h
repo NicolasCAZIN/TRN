@@ -47,11 +47,11 @@ namespace TRN
 
 			void 	configure_measurement_readout_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
 			void  	configure_measurement_readout_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &values,  const std::size_t &rows, const std::size_t &cols)> &functor);
-			void  	configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
+			void  	configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
 
 			void  	configure_measurement_position_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
 			void  	configure_measurement_position_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
-			void  	configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
+			void  	configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
 
 			void 	configure_reservoir_widrow_hoff(const unsigned int &id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate,
 				const float &initial_state_scale, const float &learning_rate, const unsigned long &seed, const std::size_t &batch_size);

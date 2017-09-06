@@ -26,6 +26,7 @@ namespace TRN
 			virtual const std::shared_ptr<TRN::Core::Reservoir> get_reservoir() override;
 			virtual const std::shared_ptr<TRN::Core::Loop> get_loop() override;
 			virtual const std::shared_ptr<TRN::Core::Scheduler> get_scheduler() override;
+			virtual const std::vector<std::shared_ptr<TRN::Core::Mutator>> get_mutators() override;
 
 		public:
 			virtual void set_feedforward(const std::shared_ptr<TRN::Core::Initializer> &feedforward) override;

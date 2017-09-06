@@ -16,7 +16,7 @@ std::shared_ptr<TRN::Core::Measurement::Implementation> MODEL_EXPORT TRN::Model:
 	return TRN::Measurement::FrechetDistance::create(driver, functor);
 }
 
-std::shared_ptr<TRN::Core::Measurement::Implementation> MODEL_EXPORT TRN::Model::Measurement::Custom::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> &functor)
+std::shared_ptr<TRN::Core::Measurement::Implementation> MODEL_EXPORT TRN::Model::Measurement::Custom::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> &functor)
 {
 	return TRN::Measurement::Custom::create(driver, functor);
 }

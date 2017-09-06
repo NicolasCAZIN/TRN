@@ -167,7 +167,16 @@ void TRN::Engine::Broker::receive()
 					lock.unlock();
 				}
 				break;
-
+				case TRN::Engine::SCHEDULING:
+				{
+					auto message = handle->communicator->receive<TRN::Engine::SCHEDULING>(0);
+					std::unique_lock<std::mutex> lock(handle->functors);
+					if (handle->scheduling.find(message.id) == handle->scheduling.end())
+						throw std::runtime_error("Scheduler functor for message #" + std::to_string(message.id) + " is not setup");
+					handle->scheduling[message.id](message.offsets, message.durations);
+					lock.unlock();
+				}
+				break;
 				case TRN::Engine::FEEDFORWARD_DIMENSIONS:
 				{
 					auto message = handle->communicator->receive<TRN::Engine::FEEDFORWARD_DIMENSIONS>(0);
@@ -260,7 +269,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->measurement_readout_custom.find(message.id) == handle->measurement_readout_custom.end())
 						throw std::runtime_error("Prediction custom functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->measurement_readout_custom[message.id](message.elements, message.expected, message.matrices, message.rows, message.cols);
+					handle->measurement_readout_custom[message.id](message.primed, message.elements, message.expected, message.preamble, message.matrices, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -290,7 +299,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->measurement_position_custom.find(message.id) == handle->measurement_position_custom.end())
 						throw std::runtime_error("Position custom functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->measurement_position_custom[message.id](message.elements, message.expected, message.matrices, message.rows, message.cols);
+					handle->measurement_position_custom[message.id](message.primed, message.elements, message.expected, message.preamble, message.matrices, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -619,7 +628,7 @@ void  	TRN::Engine::Broker::configure_measurement_readout_frechet_distance(const
 		});
 	});
 }
-void  	TRN::Engine::Broker::configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
+void  	TRN::Engine::Broker::configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble,const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -682,7 +691,7 @@ void  	TRN::Engine::Broker::configure_measurement_position_frechet_distance(cons
 		});
 	});
 }
-void  	TRN::Engine::Broker::configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
+void  	TRN::Engine::Broker::configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);

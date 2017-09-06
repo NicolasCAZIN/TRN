@@ -159,7 +159,8 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 	{
 
 		auto batched_hypothesis_map = TRN::Core::Batch::create(driver, stimulus_size);
-		for (std::size_t place_cell = 0; place_cell < stimulus_size; place_cell++)
+#pragma omp parallel for
+		for (int place_cell = 0; place_cell < stimulus_size; place_cell++)
 		{
 			auto b = &response[place_cell * rows * cols];
 			auto e = b + rows * cols;

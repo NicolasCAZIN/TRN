@@ -285,11 +285,10 @@ void TRN::Core::Reservoir::train(const std::shared_ptr<TRN::Core::Matrix> &incom
 
 void TRN::Core::Reservoir::visit(std::shared_ptr<TRN::Core::Message::Payload<TRN::Core::Message::WEIGHTS>> &payload)
 {
-	throw std::runtime_error("TO DO");
-	/*payload->set_readout(handle->W_ro);
-	payload->set_feedforward(handle->W_ffwd);
-	payload->set_feedback(handle->W_fbck);
-	payload->set_recurrent(handle->W_rec);*/
+	payload->set_readout(handle->batched_W_ro);
+	payload->set_feedforward(handle->batched_W_ffwd);
+	payload->set_feedback(handle->batched_W_fbck);
+	payload->set_recurrent(handle->batched_W_rec);
 }
 void TRN::Core::Reservoir::visit(std::shared_ptr<TRN::Core::Message::Payload<TRN::Core::Message::STATES>> &payload)
 {

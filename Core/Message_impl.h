@@ -51,10 +51,10 @@ public:
 class TRN::Core::Message::Payload<TRN::Core::Message::WEIGHTS>::Handle
 {
 public:
-	mutable std::shared_ptr<TRN::Core::Matrix> feedfoward;
-	mutable std::shared_ptr<TRN::Core::Matrix> recurrent;
-	mutable std::shared_ptr<TRN::Core::Matrix> feedback;
-	mutable std::shared_ptr<TRN::Core::Matrix> readout;
+	mutable std::shared_ptr<TRN::Core::Batch> feedfoward;
+	mutable std::shared_ptr<TRN::Core::Batch> recurrent;
+	mutable std::shared_ptr<TRN::Core::Batch> feedback;
+	mutable std::shared_ptr<TRN::Core::Batch> readout;
 };
 
 class TRN::Core::Message::Payload<TRN::Core::Message::CYCLES>::Handle
@@ -92,4 +92,5 @@ class TRN::Core::Message::Payload<TRN::Core::Message::TEST>::Handle
 public:
 	std::string label;
 	std::size_t preamble;
+	std::size_t supplementary_generations;
 };

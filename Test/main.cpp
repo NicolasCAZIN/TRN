@@ -146,7 +146,7 @@ static void on_states(const unsigned int &id, const std::string &phase, const st
 //	auto mat = windows[label];
 
 }
-static void on_weights(const unsigned int &id, const std::string &label, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)
+static void on_weights(const unsigned int &id, const std::string &phase, const std::string &label, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)
 {
 	int histSize = 256;
 	int hist_w = 512; int hist_h = 400;
@@ -575,40 +575,61 @@ static void position_frechet(const unsigned int &id, const std::vector<float> &v
 cv::Mat cv_accumulator(GRID_ROWS, GRID_COLS, CV_32F);
 cv::Mat cv_overall(GRID_ROWS, GRID_COLS, CV_32F);
 
-static void position_custom(const unsigned int &id, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)
+static void position_custom(const unsigned int &id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)
 {
 	cv::Mat cv_expected(GRID_ROWS, GRID_COLS, CV_8UC3);
 	cv::Mat cv_predicted(GRID_ROWS, GRID_COLS, CV_32F);
 
 	cv_expected = 0.0f;
-	for (std::size_t row = 1; row < rows; row++)
+	cv_predicted = 0.0f;
+	float x0, y0, x1, y1;
+	for (std::size_t row = 1; row < preamble; row++)
 	{
-		float x0 = expected[(row - 1)* cols + 0];
-		float y0 = expected[(row - 1)* cols + 1];
-		float x1 = expected[row * cols + 0];
-		float y1 = expected[row * cols + 1];
+		x0 = primed[(row - 1)* cols + 0];
+		y0 = primed[(row - 1)* cols + 1];
+		x1 = primed[row * cols + 0];
+		y1 = primed[row * cols + 1];
 
 		cv::Point2d pt0(X_TO_COL(x0), Y_TO_ROW(y0));
 		cv::Point2d pt1(X_TO_COL(x1), Y_TO_ROW(y1));
-		cv::line(cv_expected, pt0, pt1, cv::Scalar(255, 100, 100), 1, CV_AA, 0);
+		cv::line(cv_expected, pt0, pt1, cv::Scalar(100, 255, 100), 1, cv::LineTypes::LINE_AA, 0);
+	}
+	cv::Point2d pt0(X_TO_COL(x1), Y_TO_ROW(y1));
+	x0 = expected[0];
+	y0 = expected[1];
+	cv::Point2d pt1(X_TO_COL(x0), Y_TO_ROW(y0));
+	cv::line(cv_expected, pt0, pt1, cv::Scalar(255, 100, 100), 1, cv::LineTypes::LINE_AA, 0);
+
+	for (std::size_t row = 1; row < rows; row++)
+	{
+		x0 = expected[(row - 1)* cols + 0];
+		y0 = expected[(row - 1)* cols + 1];
+		x1 = expected[row * cols + 0];
+		y1 = expected[row * cols + 1];
+
+		cv::Point2d pt0(X_TO_COL(x0), Y_TO_ROW(y0));
+		cv::Point2d pt1(X_TO_COL(x1), Y_TO_ROW(y1));
+		cv::line(cv_expected, pt0, pt1, cv::Scalar(255, 100, 100), 1, cv::LineTypes::LINE_AA, 0);
 	}
 	to_display.enqueue(std::make_pair("expected", cv_expected));
 
-	cv_predicted = 0.0f;
+	
 	for (std::size_t page = 0; page < pages; page++)
 	{
 		cv::Mat cv_temp(GRID_ROWS, GRID_COLS, CV_32F);
 		cv_temp = 0.0f;
+
+
 		for (std::size_t row = 1; row < rows; row++)
 		{
-			float x0 = predicted[page * rows * cols + (row - 1)* cols + 0];
-			float y0 = predicted[page * rows * cols + (row - 1)* cols + 1];
-			float x1 = predicted[page * rows * cols + row * cols + 0];
-			float y1 = predicted[page * rows * cols + row * cols + 1];
+			x0 = predicted[page * rows * cols + (row - 1)* cols + 0];
+			y0 = predicted[page * rows * cols + (row - 1)* cols + 1];
+			x1 = predicted[page * rows * cols + row * cols + 0];
+			y1 = predicted[page * rows * cols + row * cols + 1];
 
 			cv::Point2d pt0(X_TO_COL(x0), Y_TO_ROW(y0));
 			cv::Point2d pt1(X_TO_COL(x1), Y_TO_ROW(y1));
-			cv::line(cv_temp, pt0, pt1, cv::Scalar(1.0f), 1, CV_AA, 0);
+			cv::line(cv_temp, pt0, pt1, cv::Scalar(1.0f), 1, cv::LineTypes::LINE_AA, 0);
 		}
 
 		cv_predicted += cv_temp;
@@ -648,6 +669,22 @@ static void readout_custom(const unsigned int &id, const std::vector<float> &pre
 
 }
 
+static void on_scheduling(const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)
+{
+	auto min_max = std::minmax_element(offsets.begin(), offsets.end());
+	auto ST = std::max(std::abs(*min_max.first), std::abs(*min_max.second)) + 1;
+	auto T = offsets.size();
+	cv::Mat chronogram(T, ST, CV_32F);
+	chronogram = 0.0f;
+
+	for (std::size_t t = 0; t < T; t++)
+	{
+		auto st = offsets[t];
+		chronogram.at<float>(t, st) = 1.0f;
+	}
+
+	to_display.enqueue(std::make_pair("scheduling fir id #" + std::to_string(id), chronogram));
+}
 
 static inline std::vector<float> initialize_uniform_weights(const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols, const float &a, const float &b)
 {
@@ -763,20 +800,21 @@ int main(int argc, char *argv[])
 		const auto leak_rate = 0.85f;
 		const auto learning_rate = 1e-3f;// 1.0f / reservoir_size;
 		const auto initial_state_scale = 0.01f;
-		const auto radius = 0.1f;
-		const auto magnitude = 1e-7f;
+		const auto radius = 0.0f;// 0.1f;
+		const auto magnitude = 0.0f;//1e-9f;
 		//	auto observations = 130*5;
 		const auto snippet_size = 10;
 		const auto snippet_number = 20;
 		const auto time_budget = epochs * snippet_size * snippet_number;
-		const auto preamble = 72;
-		const auto batch_size = 10;
+		const auto preamble = 10;
+		const auto supplementary = 0;
+		const auto batch_size = 1;
 
 		/*	for (int row = stimulus_size, col = 0; row < stimulus_size*2; row++, col++)
 			{
 				stimulus[row * stimulus_size + stimulus_size - col-1] = 1.0f;
 			}*/
-		const size_t ID = 1;// 10;
+		const size_t ID = 1;
 		const size_t TRIALS = 1;
 		const size_t WALKS = 1;
 		std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
@@ -791,10 +829,11 @@ int main(int argc, char *argv[])
 				TRN4CPP::allocate(id);
 
 				TRN4CPP::configure_begin(id);
-				TRN4CPP::configure_scheduler_snippets(id,snippet_size, time_budget, "REW");
+				//TRN4CPP::configure_scheduler_snippets(id,snippet_size, time_budget, "REW");
+				TRN4CPP::configure_scheduler_snippets(id, snippet_size, time_budget);
 				//TRN4CPP::configure_mutator_shuffle(id);
-				TRN4CPP::configure_mutator_reverse(id, 1.0f, snippet_size);
-				//TRN4CPP::configure_scheduler_snippets(id, snippet_size, time_budget);
+				//TRN4CPP::configure_mutator_reverse(id, 1.0f, snippet_size/2);
+
 				//TRN4CPP::configure_scheduler_tiled(id, epochs);
 
 				//TRN4CPP::configure_loop_copy(id, batch_size, stimulus_size);
@@ -809,10 +848,10 @@ int main(int argc, char *argv[])
 				//TRN4CPP::configure_measurement_readout_frechet_distance(id, readout_frechet);
 				//TRN4CPP::configure_measurement_readout_custom(id, readout_custom);
 				TRN4CPP::configure_reservoir_widrow_hoff(id, stimulus_size, prediction_size, reservoir_size, leak_rate, initial_state_scale, learning_rate, seed + id, batch_size);
-				TRN4CPP::setup_performances(id, on_performances, true, true, true);
-				//TRN4CPP::setup_weights(id, on_weights);
-				TRN4CPP::setup_states(id, on_states, true, false, true);
-
+				//TRN4CPP::setup_performances(id, on_performances, true, true, true);
+				TRN4CPP::setup_weights(id, on_weights);
+				//TRN4CPP::setup_states(id, on_states, false, false, true);
+				//TRN4CPP::setup_scheduling(id, on_scheduling);
 
 				/*TRN4CPP::configure_feedforward_custom(id, feedforward_request, feedforward_reply);
 				TRN4CPP::configure_feedback_custom(id, feedback_request, feedback_reply);
@@ -821,18 +860,18 @@ int main(int argc, char *argv[])
 
 				TRN4CPP::configure_feedforward_uniform(id, -1.0f, 1.0f, 0.0f);
 				TRN4CPP::configure_feedback_uniform(id, -1.0f, 1.0f, 0.0f);
-				//TRN4CPP::configure_recurrent_uniform(id, -1.0f/ sqrtf(reservoir_size), 1.0f/ sqrtf(reservoir_size), 0.0f);
-				TRN4CPP::configure_recurrent_gaussian(id, 0.0f, 0.5f / sqrtf(reservoir_size));
+				TRN4CPP::configure_recurrent_uniform(id, -1.0f/ sqrtf(reservoir_size), 1.0f/ sqrtf(reservoir_size), 0.0f);
+				//TRN4CPP::configure_recurrent_gaussian(id, 0.0f, 0.5f / sqrtf(reservoir_size));
 				TRN4CPP::configure_readout_uniform(id, -1.0e-3f, 1.0e-3f, 0.0f);
 				TRN4CPP::configure_end(id);
 				//initialize_place_cell_pattern(id, "test");
 				initialize_trajectory(id, "abcde", x, y, pc_rows, pc_cols);
-				initialize_trajectory(id, "ebcda", x, y, pc_rows, pc_cols);
+				/*initialize_trajectory(id, "ebcda", x, y, pc_rows, pc_cols);
 				initialize_trajectory(id, "bacde", x, y, pc_rows, pc_cols);
-				initialize_trajectory(id, "abced", x, y, pc_rows, pc_cols);
+				initialize_trajectory(id, "abced", x, y, pc_rows, pc_cols);*/
 
-				const std::vector<std::string> training_sequences = {  "ebcda", "bacde", "abced"};
-				//const std::vector<std::string> training_sequences = { "abcde", "abcde" };
+				//const std::vector<std::string> training_sequences = {  "ebcda", "bacde", "abced"};
+				const std::vector<std::string> training_sequences = { "abcde" };
 				TRN4CPP::declare_set(id, "training", "INC", training_sequences);
 				TRN4CPP::declare_set(id, "training", "EXP", training_sequences);
 				TRN4CPP::declare_set(id, "training", "POS", training_sequences);
@@ -843,7 +882,7 @@ int main(int argc, char *argv[])
 					TRN4CPP::train(id, "training", "INC", "EXP");
 
 					for (int walk = 0; walk < WALKS; walk++)
-						TRN4CPP::test(id, "abcde", "INC", "EXP", preamble, preamble);
+						TRN4CPP::test(id, "abcde", "INC", "EXP", preamble, supplementary);
 //
 				}
 				TRN4CPP::deallocate(id);

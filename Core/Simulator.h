@@ -31,6 +31,8 @@ namespace TRN
 			virtual const std::shared_ptr<TRN::Core::Reservoir> get_reservoir() = 0;
 			virtual const std::shared_ptr<TRN::Core::Loop> get_loop() = 0;
 			virtual const std::shared_ptr<TRN::Core::Scheduler> get_scheduler() = 0;
+			virtual const std::vector<std::shared_ptr<TRN::Core::Mutator>> get_mutators() = 0;
+
 		public:
 			virtual void set_feedforward(const std::shared_ptr<TRN::Core::Initializer> &feedforward) = 0;
 			virtual void set_recurrent(const std::shared_ptr<TRN::Core::Initializer> &recurrent) = 0;
@@ -46,7 +48,7 @@ namespace TRN
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Set> &batch) = 0;
 			virtual void train(const std::string &sequences, const std::string &incoming, const std::string &expected) = 0;
 			virtual void test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations) = 0;
-			virtual void initialize() = 0;
+			virtual void initialize();
 			virtual void uninitialize() = 0;
 		};
 	};

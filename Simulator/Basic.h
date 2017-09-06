@@ -26,9 +26,11 @@ namespace TRN
 			virtual const std::shared_ptr<TRN::Core::Set> retrieve_set(const std::string &label, const std::string &tag) override;
 			virtual const std::shared_ptr<TRN::Core::Matrix> retrieve_sequence(const std::string &label, const std::string &tag) override;
 		public :
+
 			virtual const std::shared_ptr<TRN::Core::Reservoir> get_reservoir() override;
 			virtual const std::shared_ptr<TRN::Core::Loop> get_loop() override;
 			virtual const std::shared_ptr<TRN::Core::Scheduler> get_scheduler() override;
+			virtual const std::vector<std::shared_ptr<TRN::Core::Mutator>> get_mutators() override;
 		public:
 			virtual void set_feedforward(const std::shared_ptr<TRN::Core::Initializer> &feedforward) override;
 			virtual void set_recurrent(const std::shared_ptr<TRN::Core::Initializer> &recurrent) override;

@@ -159,15 +159,15 @@ namespace TRN
 				Payload(const  Payload<TRN::Core::Message::Type::WEIGHTS> &payload);
 				~Payload();
 			public:
-			 const std::shared_ptr<TRN::Core::Matrix> get_feedforward() const;
-			 const std::shared_ptr<TRN::Core::Matrix> get_recurrent() const;
-			 const std::shared_ptr<TRN::Core::Matrix> get_feedback() const;
-			 const std::shared_ptr<TRN::Core::Matrix> get_readout() const;
+			 const std::shared_ptr<TRN::Core::Batch> get_feedforward() const;
+			 const std::shared_ptr<TRN::Core::Batch> get_recurrent() const;
+			 const std::shared_ptr<TRN::Core::Batch> get_feedback() const;
+			 const std::shared_ptr<TRN::Core::Batch> get_readout() const;
 			public :
-			 void set_feedforward(const std::shared_ptr<TRN::Core::Matrix> &feedforward) const;
-			 void set_recurrent(const std::shared_ptr<TRN::Core::Matrix> &recurrent) const;
-			 void set_feedback(const std::shared_ptr<TRN::Core::Matrix> &feedback) const;
-			 void set_readout(const std::shared_ptr<TRN::Core::Matrix> &readout) const;
+			 void set_feedforward(const std::shared_ptr<TRN::Core::Batch> &feedforward) const;
+			 void set_recurrent(const std::shared_ptr<TRN::Core::Batch> &recurrent) const;
+			 void set_feedback(const std::shared_ptr<TRN::Core::Batch> &feedback) const;
+			 void set_readout(const std::shared_ptr<TRN::Core::Batch> &readout) const;
 			public:
 				static std::shared_ptr<Payload> create();
 			};
@@ -272,13 +272,14 @@ namespace TRN
 				class Handle;
 				mutable std::unique_ptr<Handle> handle;
 			public:
-				Payload(const std::string &label, const std::size_t &preamble);
+				Payload(const std::string &label, const std::size_t &preamble, const std::size_t &supplementary_generations);
 				Payload(const Payload<TRN::Core::Message::Type::TEST> &ref);
 				~Payload();
 
 			public:
 				const std::string &get_label() const;
 				const std::size_t &get_preamble() const;
+				const std::size_t &get_supplementary_generations() const;
 			};
 		};
 	};

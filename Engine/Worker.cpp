@@ -274,7 +274,7 @@ void TRN::Engine::Worker::receive()
 							performances.id = message.id;
 							performances.offsets = offsets;
 							performances.durations = durations;
-					
+							performances.is_from_mutator = false;
 							auto locked = handle->communicator.lock();
 							if (locked)
 								locked->send(performances, 0);
@@ -355,13 +355,15 @@ void TRN::Engine::Worker::receive()
 						handle->simulators[message.id]->append_measurement(
 							TRN::Model::Measurement::Sequence::create(
 								TRN::Model::Measurement::Custom::create(handle->driver,
-								[this, message](const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &pages,  const std::size_t &rows, const  std::size_t &cols)
+								[this, message](const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages,  const std::size_t &rows, const  std::size_t &cols)
 								{
 									TRN::Engine::Message<TRN::Engine::MEASUREMENT_READOUT_CUSTOM> measurement;
 
 									measurement.id = message.id;
+									measurement.primed = primed;
 									measurement.elements = predicted;
 									measurement.expected = expected;
+									measurement.preamble = preamble;
 									measurement.matrices = pages;
 									measurement.rows = rows;
 									measurement.cols = cols;
@@ -426,17 +428,18 @@ void TRN::Engine::Worker::receive()
 						handle->simulators[message.id]->append_measurement(
 							TRN::Model::Measurement::Position::create(
 								TRN::Model::Measurement::Custom::create(handle->driver,
-								[this, message](const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &pages,  const std::size_t &rows, const  std::size_t &cols)
+								[this, message](const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages,  const std::size_t &rows, const  std::size_t &cols)
 								{
 									TRN::Engine::Message<TRN::Engine::MEASUREMENT_POSITION_CUSTOM> measurement;
 
 									measurement.id = message.id;
 									measurement.elements = predicted;
 									measurement.expected = expected;
+									measurement.primed = primed;
 									measurement.matrices = pages;
 									measurement.rows = rows;
 									measurement.cols = cols;
-
+									measurement.preamble = preamble;
 									auto locked = handle->communicator.lock();
 									if (locked)
 										locked->send(measurement, 0);

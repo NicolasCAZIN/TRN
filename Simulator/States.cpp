@@ -17,6 +17,13 @@ TRN::Simulator::States::~States()
 {
 	handle.reset();
 }
+
+const std::vector<std::shared_ptr<TRN::Core::Mutator>> TRN::Simulator::States::get_mutators()
+{
+	return decorated->get_mutators();
+}
+
+
 const std::shared_ptr<TRN::Core::Reservoir> TRN::Simulator::States::get_reservoir()
 {
 	return decorated->get_reservoir();
@@ -98,10 +105,7 @@ void TRN::Simulator::States::test(const std::string &sequence, const std::string
 }
 void TRN::Simulator::States::initialize()
 {
-	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>::attach(shared_from_this());
-	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TESTED>>::attach(shared_from_this());
-	get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::attach(shared_from_this());
-
+	TRN::Core::Simulator::initialize();
 	decorated->initialize();
 }
 void TRN::Simulator::States::uninitialize()

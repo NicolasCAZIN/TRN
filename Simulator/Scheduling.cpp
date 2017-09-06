@@ -12,6 +12,12 @@ TRN::Simulator::Scheduling::~Scheduling()
 {
 	handle.reset();
 }
+const std::vector<std::shared_ptr<TRN::Core::Mutator>> TRN::Simulator::Scheduling::get_mutators()
+{
+	return decorated->get_mutators();
+}
+
+
 const std::shared_ptr<TRN::Core::Reservoir> TRN::Simulator::Scheduling::get_reservoir()
 {
 	return decorated->get_reservoir();
@@ -96,9 +102,8 @@ void TRN::Simulator::Scheduling::test(const std::string &label, const std::strin
 
 void TRN::Simulator::Scheduling::initialize()
 {
+	TRN::Core::Simulator::initialize();
 	decorated->initialize();
-
-
 }
 void TRN::Simulator::Scheduling::uninitialize()
 {
@@ -111,7 +116,6 @@ void  TRN::Simulator::Scheduling::update(const TRN::Core::Message::Payload<TRN::
 
 	payload.get_scheduling()->to(offsets, durations);
 	handle->functor(offsets, durations);
-	//decorated->TRN::Helper::Observer<TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>>::update(payload);
 }
 
 void  TRN::Simulator::Scheduling::update(const TRN::Core::Message::Payload<TRN::Core::Message::TESTED> &payload)

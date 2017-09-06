@@ -164,7 +164,7 @@ void compute_mean_square_error
 	float *result, const std::size_t &result_rows, const std::size_t &result_cols, const std::size_t &result_stride
 )
 {
-	assert(batched_predicted_rows == expected_rows);
+
 	assert(expected_rows == result_rows);
 	assert(batched_predicted_cols == expected_cols);
 	assert(result_cols == batch_size);
@@ -180,11 +180,11 @@ void compute_mean_square_error
 		if (expected_cols >= 4)
 		{
 			grid.x = (expected_cols / 4 + block.x - 1) / block.x;
-			grid.y = (expected_rows + block.y - 1) / block.y;
+			grid.y = (result_rows + block.y - 1) / block.y;
 			grid.z = (batch_size + block.z - 1) / block.z;
 
 			mean_square_error_float4_kernel << < grid, block, 0, stream >> > (
-				batch_size, expected_rows, expected_cols/4,scale,
+				batch_size, result_rows, expected_cols/4,scale,
 				batched_predicted, batched_predicted_stride,
 				expected, expected_stride,
 				result, result_stride);
@@ -192,11 +192,11 @@ void compute_mean_square_error
 		else
 		{
 			grid.x = (expected_cols + block.x - 1) / block.x;
-			grid.y = (expected_rows + block.y - 1) / block.y;
+			grid.y = (result_rows + block.y - 1) / block.y;
 			grid.z = (batch_size + block.z - 1) / block.z;
 
 			mean_square_error_naive_kernel << < grid, block, 0, stream >> > (
-				batch_size, expected_rows, expected_cols,scale,
+				batch_size, result_rows, expected_cols,scale,
 				batched_predicted, batched_predicted_stride,
 				expected, expected_stride,
 				result, result_stride);

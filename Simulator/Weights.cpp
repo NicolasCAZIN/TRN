@@ -16,6 +16,10 @@ TRN::Simulator::Weights::~Weights()
 {
 	handle.reset();
 }
+const std::vector<std::shared_ptr<TRN::Core::Mutator>> TRN::Simulator::Weights::get_mutators()
+{
+	return decorated->get_mutators();
+}
 
 const std::shared_ptr<TRN::Core::Reservoir> TRN::Simulator::Weights::get_reservoir()
 {
@@ -99,29 +103,27 @@ void TRN::Simulator::Weights::initialize()
 
 	if (handle->initialization)
 	{
-		get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>::attach(shared_from_this());
-		get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TESTED>>::attach(shared_from_this());
-		get_reservoir()->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::attach(shared_from_this());
-
+		TRN::Core::Simulator::initialize();
+		
 		std::vector<float> feedforward_data;
 		std::size_t feedforward_rows;
 		std::size_t feedforward_cols;
-		handle->weights->get_feedforward()->to(feedforward_data, feedforward_rows, feedforward_cols);
+//		handle->weights->get_feedforward()->to(feedforward_data, feedforward_rows, feedforward_cols);
 
 		std::vector<float> recurrent_data;
 		std::size_t recurrent_rows;
 		std::size_t recurrent_cols;
-		handle->weights->get_recurrent()->to(recurrent_data, recurrent_rows, recurrent_cols);
+		//handle->weights->get_recurrent()->to(recurrent_data, recurrent_rows, recurrent_cols);
 
 		std::vector<float> feedback_data;
 		std::size_t feedback_rows;
 		std::size_t feedback_cols;
-		handle->weights->get_feedback()->to(feedback_data, feedback_rows, feedback_cols);
+		//handle->weights->get_feedback()->to(feedback_data, feedback_rows, feedback_cols);
 
 		std::vector<float> readout_data;
 		std::size_t readout_rows;
 		std::size_t readout_cols;
-		handle->weights->get_readout()->to(readout_data, readout_rows, readout_cols);
+		//handle->weights->get_readout()->to(readout_data, readout_rows, readout_cols);
 
 		decorated->get_reservoir()->synchronize();
 
@@ -153,13 +155,14 @@ void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Cor
 	if (handle->train)
 	{
 		std::vector<float> readout_data;
-		std::size_t readout_rows;
-		std::size_t readout_cols;
-		handle->weights->get_readout()->to(readout_data, readout_rows, readout_cols);
+		std::size_t readout_pages;
+		std::vector<std::size_t> readout_rows;
+		std::vector<std::size_t> readout_cols;
+		handle->weights->get_readout()->to(readout_data, readout_pages, readout_rows, readout_cols);
 
 		decorated->get_reservoir()->synchronize();
 
-		handle->functor("TRAIN", "readout", readout_data, readout_rows, readout_cols);
+		//handle->functor("TRAIN", "readout", readout_data, readout_rows, readout_cols);
 	}
 }
 

@@ -19,7 +19,7 @@ namespace TRN
 				virtual ~Implementation();
 
 			public:
-				virtual void compute(const std::shared_ptr<TRN::Core::Batch> &predicted, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Matrix> &error) = 0;
+				virtual void compute(const std::shared_ptr<TRN::Core::Matrix> &primed, const std::shared_ptr<TRN::Core::Batch> &predicted, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Matrix> &error) = 0;
 			};
 
 			class CORE_EXPORT Abstraction :

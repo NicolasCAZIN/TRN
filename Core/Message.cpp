@@ -209,35 +209,35 @@ TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::~Payload()
 {
 	handle.reset();
 }
-const std::shared_ptr<TRN::Core::Matrix> TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::get_feedforward() const
+const std::shared_ptr<TRN::Core::Batch> TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::get_feedforward() const
 {
 	return handle->feedfoward;
 }
-const std::shared_ptr<TRN::Core::Matrix> TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::get_recurrent() const
+const std::shared_ptr<TRN::Core::Batch> TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::get_recurrent() const
 {
 	return handle->recurrent;
 }
-const std::shared_ptr<TRN::Core::Matrix> TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::get_feedback() const
+const std::shared_ptr<TRN::Core::Batch> TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::get_feedback() const
 {
 	return handle->feedback;
 }
-const std::shared_ptr<TRN::Core::Matrix> TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::get_readout() const
+const std::shared_ptr<TRN::Core::Batch> TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::get_readout() const
 {
 	return handle->readout;
 }
-void TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::set_feedforward(const std::shared_ptr<TRN::Core::Matrix> &feedforward) const
+void TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::set_feedforward(const std::shared_ptr<TRN::Core::Batch> &feedforward) const
 {
 	handle->feedfoward = feedforward;
 }
-void TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::set_recurrent(const std::shared_ptr<TRN::Core::Matrix> &recurrent) const
+void TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::set_recurrent(const std::shared_ptr<TRN::Core::Batch> &recurrent) const
 {
 	handle->recurrent = recurrent;
 }
-void TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::set_feedback(const std::shared_ptr<TRN::Core::Matrix> &feedback) const
+void TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::set_feedback(const std::shared_ptr<TRN::Core::Batch> &feedback) const
 {
 	handle->feedback = feedback;
 }
-void TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::set_readout(const std::shared_ptr<TRN::Core::Matrix> &readout) const
+void TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::set_readout(const std::shared_ptr<TRN::Core::Batch> &readout) const
 {
 	handle->readout = readout;
 }
@@ -408,11 +408,12 @@ const std::string &TRN::Core::Message::Payload<TRN::Core::Message::Type::SET>::g
 	return handle->expected;
 }
 
-TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::Payload(const std::string &label, const std::size_t &preamble) :
+TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::Payload(const std::string &label, const std::size_t &preamble, const std::size_t &supplementary_generations) :
 	handle(std::make_unique<Handle>())
 {
 	handle->label = label;
 	handle->preamble = preamble;
+	handle->supplementary_generations = supplementary_generations;
 }
 TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::Payload(const Payload<TRN::Core::Message::Type::TEST> &ref) :
 	handle(std::make_unique<Handle>())
@@ -432,4 +433,9 @@ const std::string &TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::
 const std::size_t &TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::get_preamble() const
 {
 	return handle->preamble;
+}
+
+const std::size_t &TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::get_supplementary_generations() const
+{
+	return handle->supplementary_generations;
 }

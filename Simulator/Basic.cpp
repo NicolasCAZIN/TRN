@@ -16,6 +16,12 @@ TRN::Simulator::Basic::~Basic()
 	handle.reset();
 }
 
+
+const std::vector<std::shared_ptr<TRN::Core::Mutator>> TRN::Simulator::Basic::get_mutators()
+{
+	return handle->mutators;
+}
+
 const std::shared_ptr<TRN::Core::Reservoir> TRN::Simulator::Basic::get_reservoir()
 {
 	return handle->reservoir;
@@ -125,7 +131,7 @@ void TRN::Simulator::Basic::test(const std::string &label, const std::string &in
 	auto incoming_sequence = retrieve_sequence(label, incoming);
 	auto expected_sequence = retrieve_sequence(label, expected);
 
-	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TEST>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::TEST>(label, preamble));
+	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TEST>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::TEST>(label, preamble, supplementary_generations));
 	auto total_cycles = expected_sequence->get_rows() + supplementary_generations;
 	auto observations = expected_sequence->get_rows() + supplementary_generations;
 	auto batch_size = handle->reservoir->get_batch_size();
@@ -138,7 +144,7 @@ void TRN::Simulator::Basic::test(const std::string &label, const std::string &in
 }
 void TRN::Simulator::Basic::initialize()
 {
-	
+	TRN::Core::Simulator::initialize();
 	if (handle->initialized)
 		throw std::logic_error("Simulator is already initialized");
 	if (!handle->loop)
@@ -170,9 +176,6 @@ void TRN::Simulator::Basic::initialize()
 
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::SET>>::attach(handle->scheduler);
 
-	handle->reservoir->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>::attach(shared_from_this());
-	handle->reservoir->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TESTED>>::attach(shared_from_this());
-	handle->reservoir->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::attach(shared_from_this());
 	//
 	
 	handle->scheduler->set_delegate(shared_from_this());
@@ -186,11 +189,6 @@ void TRN::Simulator::Basic::initialize()
 		{
 			handle->mutators[k - 1]->attach(handle->mutators[k]);
 		}
-		handle->mutators[handle->mutators.size() - 1]->attach(shared_from_this());
-	}
-	else
-	{
-		handle->scheduler->attach(shared_from_this());
 	}
 
 	handle->reservoir->initialize(handle->feedforward, handle->recurrent, handle->feedback, handle->readout);
