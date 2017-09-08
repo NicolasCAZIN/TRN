@@ -63,7 +63,8 @@ namespace TRN
 			RECURRENT_WEIGHTS,
 			FEEDBACK_WEIGHTS,
 			READOUT_WEIGHTS,
-			SCHEDULING_REQUEST,
+			MUTATOR_CUSTOM,
+			SCHEDULER_CUSTOM,
 			FEEDFORWARD_DIMENSIONS,
 			RECURRENT_DIMENSIONS,
 			FEEDBACK_DIMENSIONS,
@@ -374,6 +375,7 @@ namespace TRN
 			float radius;
 			float scale;
 			std::string tag;
+			unsigned long seed;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
@@ -388,6 +390,7 @@ namespace TRN
 				ar & radius;
 				ar & scale;
 				ar & tag;
+				ar & seed;
 			}
 		};
 
@@ -412,6 +415,7 @@ namespace TRN
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_SNIPPETS> : public Header
 		{
+			unsigned long seed;
 			unsigned int snippets_size;
 			unsigned int time_budget;
 			std::string tag;
@@ -422,6 +426,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Header>(*this);
 				ar & snippets_size;
 				ar & time_budget;
+				ar & seed;
 				ar & tag;
 			}
 		};
@@ -432,21 +437,29 @@ namespace TRN
 		struct Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_CUSTOM> : public Header
 		{
 			std::string tag;
-
+			unsigned long seed;
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & boost::serialization::base_object<Header>(*this);
 				ar & tag;
+				ar & seed;
 			}
 		};
 
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE> : public Header
 		{
+			unsigned long seed;
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Header>(*this);
+				ar & seed;
+			}
 		};
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE> : public Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE>
 		{
 			std::size_t size;
 			float rate;
@@ -454,7 +467,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE>>(*this);
 				ar & size;
 				ar & rate;
 			}
@@ -473,7 +486,7 @@ namespace TRN
 			}
 		};
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_CUSTOM> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_CUSTOM> : public Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE>
 		{
 		};
 
@@ -616,11 +629,20 @@ namespace TRN
 		template<>
 		struct Message<TRN::Engine::Tag::POSITION> : public Matrix
 		{
+			std::size_t trial;
+			std::size_t evaluation;
 
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Matrix>(*this);
+				ar & trial;
+				ar & evaluation;
+			}
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::STIMULUS> : public Matrix
+		struct Message<TRN::Engine::Tag::STIMULUS> : public Message<TRN::Engine::Tag::POSITION>
 		{
 	
 		};
@@ -631,6 +653,9 @@ namespace TRN
 			std::vector<int> offsets;
 			std::vector<int> durations;
 			bool is_from_mutator;
+			std::size_t trial;
+	
+
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
@@ -638,28 +663,48 @@ namespace TRN
 				ar & offsets;
 				ar & durations;
 				ar & is_from_mutator;
+				ar & trial;
+		
 			}
 		};
 
+
 		template<>
-		struct Message<TRN::Engine::Tag::SCHEDULING_REQUEST> : public Header
+		struct Message<TRN::Engine::Tag::MUTATOR_CUSTOM> : public Header
 		{
-			std::vector<float> elements;
-			std::size_t rows;
-			std::size_t cols;
+			std::size_t trial;
 			std::vector<int> offsets;
 			std::vector<int> durations;
-
+			unsigned long seed;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & boost::serialization::base_object<Header>(*this);
+				ar & trial;
+				ar & offsets;
+				ar & durations;
+				ar & seed;
+			}
+		};
+
+		template<>
+		struct Message<TRN::Engine::Tag::SCHEDULER_CUSTOM> : public Message<TRN::Engine::Tag::MUTATOR_CUSTOM>
+		{
+			std::vector<float> elements;
+			std::size_t rows;
+			std::size_t cols;
+	
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Message<TRN::Engine::Tag::MUTATOR_CUSTOM>>(*this);
+		
 				ar & elements;
 				ar & rows;
 				ar & cols;
-				ar & offsets;
-				ar & durations;
+		
 			}
 		};
 
@@ -705,25 +750,38 @@ namespace TRN
 		{
 		};
 
-
 		template<>
-		struct Message<TRN::Engine::Tag::STATES> : public Matrix
+		struct Message<TRN::Engine::Tag::WEIGHTS> : public Matrix
 		{
+			std::size_t trial;
+			std::size_t batch;
 			std::string label;
 			std::string phase;
+
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & boost::serialization::base_object<Matrix>(*this);
 				ar & label;
 				ar & phase;
+				ar & batch;
+				ar & trial;
+			}
+		};
+		template<>
+		struct Message<TRN::Engine::Tag::STATES> : public Message<TRN::Engine::Tag::WEIGHTS>
+		{
+			std::size_t evaluation;
+		
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Message<TRN::Engine::Tag::WEIGHTS>>(*this);
+				ar & evaluation;
 			}
 		};
 
-		template<>
-		struct Message<TRN::Engine::Tag::WEIGHTS> : public Message<TRN::Engine::Tag::STATES>
-		{
-		};
+	
 
 		template<>
 		struct Message<TRN::Engine::Tag::PERFORMANCES> : public Header
@@ -764,26 +822,86 @@ namespace TRN
 		template<>
 		struct Message<TRN::Engine::Tag::MEASUREMENT_READOUT_MEAN_SQUARE_ERROR> : public Matrix
 		{
+			std::size_t trial;
+			std::size_t evaluation;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Matrix>(*this);
+				ar & trial;
+				ar & evaluation;
+			}
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::MEASUREMENT_READOUT_FRECHET_DISTANCE> : public Matrix
 		{
+			std::size_t trial;
+			std::size_t evaluation;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Matrix>(*this);
+				ar & trial;
+				ar & evaluation;
+			}
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::MEASUREMENT_READOUT_CUSTOM> : public Measurement
 		{
+			std::size_t trial;
+			std::size_t evaluation;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Measurement>(*this);
+				ar & trial;
+				ar & evaluation;
+			}
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> : public Matrix
 		{
+			std::size_t trial;
+			std::size_t evaluation;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Matrix>(*this);
+				ar & trial;
+				ar & evaluation;
+			}
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::MEASUREMENT_POSITION_FRECHET_DISTANCE> : public Matrix
 		{
+			std::size_t trial;
+			std::size_t evaluation;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Matrix>(*this);
+				ar & trial;
+				ar & evaluation;
+			}
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::MEASUREMENT_POSITION_CUSTOM> : public Measurement
 		{
+			std::size_t trial;
+			std::size_t evaluation;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Measurement>(*this);
+				ar & trial;
+				ar & evaluation;
+			}
 		};
 
 

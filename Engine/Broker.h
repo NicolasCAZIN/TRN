@@ -37,21 +37,21 @@ namespace TRN
 				const std::vector<float> &sequence, const std::size_t &observations);
 			void 	declare_set(const unsigned int &id, const std::string &label, const std::string &tag,
 				const std::vector<std::string> &labels);
-			void 	setup_states(const unsigned int &id, const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &train, const bool &prime, const bool &generate);
-			void 	setup_weights(const unsigned int &id, const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &initilization, const bool &train);
+			void 	setup_states(const unsigned int &id, const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &train, const bool &prime, const bool &generate);
+			void 	setup_weights(const unsigned int &id, const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &initilization, const bool &train);
 			void 	setup_performances(const unsigned int &id, const std::function<void(const std::string &phase, const size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> &functor, const bool &train, const bool &prime, const bool &generate);
-			void 	setup_scheduling(const unsigned int &id, const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &functor);
+			void 	setup_scheduling(const unsigned int &id, const std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor);
 
 			void	configure_begin(const unsigned int &id);
 			void	configure_end(const unsigned int &id);
 
-			void 	configure_measurement_readout_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
-			void  	configure_measurement_readout_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &values,  const std::size_t &rows, const std::size_t &cols)> &functor);
-			void  	configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
+			void 	configure_measurement_readout_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
+			void  	configure_measurement_readout_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values,  const std::size_t &rows, const std::size_t &cols)> &functor);
+			void  	configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
 
-			void  	configure_measurement_position_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
-			void  	configure_measurement_position_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
-			void  	configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
+			void  	configure_measurement_position_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
+			void  	configure_measurement_position_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
+			void  	configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
 
 			void 	configure_reservoir_widrow_hoff(const unsigned int &id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate,
 				const float &initial_state_scale, const float &learning_rate, const unsigned long &seed, const std::size_t &batch_size);
@@ -60,11 +60,11 @@ namespace TRN
 			/*	virtual void 	configure_reservoir_offline_svd(const unsigned int &id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate,
 			const float &initial_state_scale, const float &learning_rate) = 0;*/
 			void 	configure_loop_copy(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size);
-			void 	configure_loop_spatial_filter(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size,
-				const std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
-				std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
-				const std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
-				std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
+			void 	configure_loop_spatial_filter(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
+				const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
+				std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
+				const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
+				std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
 				const std::size_t &rows, const std::size_t &cols,
 				const std::pair<float, float> &x, const std::pair<float, float> &y,
 				const std::vector<float> &response,
@@ -73,24 +73,24 @@ namespace TRN
 				const float &scale,
 				const std::string &tag);
 			void 	configure_loop_custom(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size,
-				const std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &request,
-				std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply
+				const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &request,
+				std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply
 			);
 
 			void 	configure_scheduler_tiled(const unsigned int &id ,const unsigned int &epochs);
-			void 	configure_scheduler_snippets(const unsigned int &id, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag);
+			void 	configure_scheduler_snippets(const unsigned int &id, const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag);
 	
-			void 	configure_scheduler_custom(const unsigned int &id,
-				const std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-				std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply, const std::string &tag);
+			void 	configure_scheduler_custom(const unsigned int &id, const unsigned long &seed,
+				const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+				std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply, const std::string &tag);
 
-			void 	configure_mutator_shuffle(const unsigned int &id);
-			void 	configure_mutator_reverse(const unsigned int &id, const float &rate, const std::size_t &size);
-			void 	configure_mutator_punch(const unsigned int &id, const float &rate, const std::size_t &size, const std::size_t &number);
+			void 	configure_mutator_shuffle(const unsigned int &id, const unsigned long &seed);
+			void 	configure_mutator_reverse(const unsigned int &id, const unsigned long &seed, const float &rate, const std::size_t &size);
+			void 	configure_mutator_punch(const unsigned int &id, const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &number);
 
-			void 	configure_mutator_custom(const unsigned int &id,
-								const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-								std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply);
+			void 	configure_mutator_custom(const unsigned int &id, const unsigned long &seed,
+								const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+								std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply);
 
 
 

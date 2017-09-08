@@ -21,13 +21,13 @@ namespace TRN
 			namespace States
 			{
 				std::shared_ptr<TRN::Simulator::States> MODEL_EXPORT create(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-					const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
+					const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
 					const bool &train, const bool &prime, const bool &test);
 			};
 			namespace Weights
 			{
 				std::shared_ptr<TRN::Simulator::Weights> MODEL_EXPORT create(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-					const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
+					const std::function<void(const std::string &phase, const std::string &label, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
 					const bool &train, const bool &initialization);
 			};
 			namespace Performances
@@ -39,7 +39,7 @@ namespace TRN
 			namespace Scheduling
 			{
 				std::shared_ptr<TRN::Simulator::Scheduling> MODEL_EXPORT create(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-					const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &functor) ;
+					const std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor) ;
 			};
 		};
 	};

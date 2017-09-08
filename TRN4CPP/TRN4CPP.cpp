@@ -18,10 +18,10 @@ const unsigned short TRN4CPP::DEFAULT_PORT = 12345;
 const std::string TRN4CPP::DEFAULT_TAG = "";
 static std::mutex mutex;
 
-static std::map<unsigned int, std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)>> id_perceived_stimulus;
-static std::map<unsigned int, std::function<void(const std::vector<float> &estimated_position, const std::size_t &rows, const std::size_t &cols)>> id_estimated_position;
-static std::map<unsigned int, std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)>> id_scheduler;
-static std::map<unsigned int, std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)>> id_mutator;
+static std::map<unsigned int, std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)>> id_perceived_stimulus;
+static std::map<unsigned int, std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &estimated_position, const std::size_t &rows, const std::size_t &cols)>> id_estimated_position;
+static std::map<unsigned int, std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)>> id_scheduler;
+static std::map<unsigned int, std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)>> id_mutator;
 static std::map<unsigned int, std::function<void(const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)>> id_feedforward_weights;
 static std::map<unsigned int, std::function<void(const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)>> id_feedback_weights;
 static std::map<unsigned int, std::function<void(const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)>> id_readout_weights;
@@ -198,22 +198,22 @@ void TRN4CPP::declare_set(const unsigned int &id, const std::string &label, cons
 	broker->declare_set(id, label, tag, labels);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
-void TRN4CPP::setup_states(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &train, const bool &prime, const bool &generate)
+void TRN4CPP::setup_states(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &train, const bool &prime, const bool &generate)
 {
 	// std::unique_lock<std::mutex> lock(mutex);
 	// // std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->setup_states(id, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), train, prime, generate);
+	broker->setup_states(id, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8), train, prime, generate);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
-void TRN4CPP::setup_weights(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &initialize, const bool &train)
+void TRN4CPP::setup_weights(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &initialize, const bool &train)
 {
 	// std::unique_lock<std::mutex> lock(mutex);
 	// // std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->setup_weights(id, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), initialize, train);
+	broker->setup_weights(id, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7), initialize, train);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
 void TRN4CPP::setup_performances(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> &functor, const bool &train, const bool &prime, const bool &generate)
@@ -226,11 +226,11 @@ void TRN4CPP::setup_performances(const unsigned int &id, const std::function<voi
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
 
-void TRN4CPP::setup_scheduling(const unsigned int &id, const std::function<void(const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
+void TRN4CPP::setup_scheduling(const unsigned int &id, const std::function<void(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
 {
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->setup_scheduling(id, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2));
+	broker->setup_scheduling(id, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 }
 
 
@@ -253,50 +253,50 @@ void TRN4CPP::configure_end(const unsigned int &id)
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
 
-void 	TRN4CPP::configure_measurement_readout_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void 	TRN4CPP::configure_measurement_readout_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	// std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_measurement_readout_mean_square_error(id, batch_size, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	broker->configure_measurement_readout_mean_square_error(id, batch_size, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
 }
 
-void 	TRN4CPP::configure_measurement_readout_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void 	TRN4CPP::configure_measurement_readout_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	// std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_measurement_readout_frechet_distance(id, batch_size, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	broker->configure_measurement_readout_frechet_distance(id, batch_size, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
 }
-void 	TRN4CPP::configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
+void 	TRN4CPP::configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	// std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_measurement_readout_custom(id, batch_size, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
-}
-
-void 	TRN4CPP::configure_measurement_position_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
-{
-	// std::unique_lock<std::mutex> lock(mutex);
-	if (!broker)
-		throw std::logic_error("broker had not been initialized");
-	broker->configure_measurement_position_mean_square_error(id, batch_size, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	broker->configure_measurement_readout_custom(id, batch_size, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8, std::placeholders::_9));
 }
 
-void 	TRN4CPP::configure_measurement_position_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void 	TRN4CPP::configure_measurement_position_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	// std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_measurement_position_frechet_distance(id, batch_size, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	broker->configure_measurement_position_mean_square_error(id, batch_size, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
 }
-void 	TRN4CPP::configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
+
+void 	TRN4CPP::configure_measurement_position_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	// std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_measurement_position_custom(id, batch_size, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7 ));
+	broker->configure_measurement_position_frechet_distance(id, batch_size, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
+}
+void 	TRN4CPP::configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
+{
+	// std::unique_lock<std::mutex> lock(mutex);
+	if (!broker)
+		throw std::logic_error("broker had not been initialized");
+	broker->configure_measurement_position_custom(id, batch_size, std::bind(functor, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8, std::placeholders::_9));
 }
 
 void TRN4CPP::configure_reservoir_widrow_hoff(const unsigned int &id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate, const float &initial_state_scale, const float &learning_rate, const unsigned long &seed, const std::size_t &batch_size)
@@ -318,11 +318,11 @@ void TRN4CPP::configure_loop_copy(const unsigned int &id, const std::size_t &bat
 	broker->configure_loop_copy(id, batch_size, stimulus_size);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
-void TRN4CPP::configure_loop_spatial_filter(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size,
-	const std::function<void(const unsigned int &id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
-	std::function<void(const unsigned int &id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
-	const std::function<void(const unsigned int &id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
-	std::function<void(const unsigned int &id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
+void TRN4CPP::configure_loop_spatial_filter(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
+	const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
+	std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
+	const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
+	std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
 	const std::size_t &rows, const std::size_t &cols, const std::pair<float, float> &x, const std::pair<float, float> &y,
 	const std::vector<float> response, const float &sigma, const float &radius, const float &scale, const std::string &tag
 	
@@ -333,39 +333,39 @@ void TRN4CPP::configure_loop_spatial_filter(const unsigned int &id, const std::s
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
 
-	broker->configure_loop_spatial_filter(id, batch_size, stimulus_size, 
-		std::bind(predicted_position, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), id_estimated_position[id],
-		std::bind(predicted_stimulus, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), id_perceived_stimulus[id],
+	broker->configure_loop_spatial_filter(id, batch_size, stimulus_size, seed,
+		std::bind(predicted_position, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), id_estimated_position[id],
+		std::bind(predicted_stimulus, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), id_perceived_stimulus[id],
 		rows, cols, x, y, response, sigma, radius, scale, tag);
 
 	
-	estimated_position = [=](const unsigned int &id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
+	estimated_position = [=](const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
 	{
 		std::unique_lock<std::mutex> lock(mutex);
-		id_estimated_position[id](position, rows, cols);
+		id_estimated_position[id](trial, evaluation, position, rows, cols);
 	};
-	perceived_stimulus = [=](const unsigned int &id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
+	perceived_stimulus = [=](const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
 	{
 		std::unique_lock<std::mutex> lock(mutex);
-		id_perceived_stimulus[id](stimulus, rows, cols);
+		id_perceived_stimulus[id](trial, evaluation, stimulus, rows, cols);
 	};
 	//perceived_stimulus = std::bind(_perceived_stimulus, id, std::placeholders::_1);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
 void TRN4CPP::configure_loop_custom(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size,
-	const std::function<void(const unsigned int &id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
-	std::function<void(const unsigned int &id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply
+	const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
+	std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply
 	)
 {
 	 std::unique_lock<std::mutex> lock(mutex);
 	// // std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_loop_custom(id, batch_size, stimulus_size, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), id_estimated_position[id]);
-	reply = [=](const unsigned int &id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
+	broker->configure_loop_custom(id, batch_size, stimulus_size, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), id_estimated_position[id]);
+	reply = [=](const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
 	{
 		std::unique_lock<std::mutex> lock(mutex);
-		id_perceived_stimulus[id](stimulus, rows, cols);
+		id_perceived_stimulus[id](trial, evaluation, stimulus, rows, cols);
 	};
 	
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
@@ -380,66 +380,66 @@ void TRN4CPP::configure_scheduler_tiled(const unsigned int &id, const unsigned i
 	broker->configure_scheduler_tiled(id, epochs);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
-void TRN4CPP::configure_scheduler_snippets(const unsigned int &id, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag)
+void TRN4CPP::configure_scheduler_snippets(const unsigned int &id, const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag)
 {
 	// std::unique_lock<std::mutex> lock(mutex);
 	// // std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_scheduler_snippets(id, snippets_size, time_budget, tag);
+	broker->configure_scheduler_snippets(id, seed, snippets_size, time_budget, tag);
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
 
 
-void TRN4CPP::configure_scheduler_custom(const unsigned int &id, 
-	const std::function<void(const unsigned int &id, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-	std::function<void(const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply, const std::string &tag)
+void TRN4CPP::configure_scheduler_custom(const unsigned int &id, const unsigned long &seed,
+	const std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply, const std::string &tag)
 {
 	//std::unique_lock<std::mutex> lock(mutex);
 	// // std::unique_lock<std::mutex> lock(mutex);
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
 
-	broker->configure_scheduler_custom(id, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), id_scheduler[id], tag);
-	reply = [=](const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)
+	broker->configure_scheduler_custom(id, seed, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7), id_scheduler[id], tag);
+	reply = [=](const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 	{
 		std::unique_lock<std::mutex> lock(mutex);
-		id_scheduler[id](offsets, durations);
+		id_scheduler[id]( trial, offsets, durations);
 	};
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }
 
-void TRN4CPP::configure_mutator_shuffle(const unsigned int &id)
+void TRN4CPP::configure_mutator_shuffle(const unsigned int &id, const unsigned long &seed)
 {
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_mutator_shuffle(id);
+	broker->configure_mutator_shuffle(id, seed);
 }
-void TRN4CPP::configure_mutator_reverse(const unsigned int &id, const float &rate, const std::size_t &size)
+void TRN4CPP::configure_mutator_reverse(const unsigned int &id, const unsigned long &seed, const float &rate, const std::size_t &size)
 {
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_mutator_reverse(id, rate, size);
+	broker->configure_mutator_reverse(id, seed, rate, size);
 }
-void TRN4CPP::configure_mutator_punch(const unsigned int &id, const float &rate, const std::size_t &size, const std::size_t &number)
+void TRN4CPP::configure_mutator_punch(const unsigned int &id, const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &number)
 {
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
-	broker->configure_mutator_punch(id, rate, size, number);
+	broker->configure_mutator_punch(id, seed, rate, size, number);
 }
-void TRN4CPP::configure_mutator_custom(const unsigned int &id, 
-	const std::function<void(const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-	std::function<void(const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply
+void TRN4CPP::configure_mutator_custom(const unsigned int &id, const unsigned long &seed,
+	const std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply
 )
 {
 	if (!broker)
 		throw std::logic_error("broker had not been initialized");
 
-	broker->configure_mutator_custom(id, std::bind(request, id, std::placeholders::_1, std::placeholders::_2), id_mutator[id]);
-	reply = [=](const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations)
+	broker->configure_mutator_custom(id, seed, std::bind(request, id, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4), id_mutator[id]);
+	reply = [=](const unsigned int &id,  const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 	{
 		std::unique_lock<std::mutex> lock(mutex);
-		id_mutator[id](offsets, durations);
+		id_mutator[id](trial, offsets, durations);
 	};
 }
 

@@ -1,11 +1,12 @@
 #include "stdafx.h"
 #include "Reverse_impl.h"
 
-TRN::Mutator::Reverse::Reverse(const float &rate, const std::size_t &size) :
+TRN::Mutator::Reverse::Reverse(const unsigned long &seed, const float &rate, const std::size_t &size) :
 	handle(std::make_unique<Handle>())
 {
 	handle->rate = rate;
 	handle->size = size;
+	handle->seed = seed;
 }
 
 TRN::Mutator::Reverse::~Reverse()
@@ -18,7 +19,7 @@ TRN::Mutator::Reverse::~Reverse()
 void TRN::Mutator::Reverse::update(const TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING> &payload)
 {
 	std::vector<std::vector<int>> indices;
-	std::default_random_engine engine;
+	std::default_random_engine engine(handle->seed);
 	std::uniform_real_distribution<float> rate_distribution(0.0f, 1.0f);
 
 	auto rate_dice = std::bind(rate_distribution, engine);
@@ -36,11 +37,12 @@ void TRN::Mutator::Reverse::update(const TRN::Core::Message::Payload<TRN::Core::
 			std::reverse(std::begin(v) + offset, std::begin(v) + offset + handle->size);
 		}
 	});
+	handle->seed += payload.get_scheduling()->get_offsets().size() *  payload.get_scheduling()->get_durations().size();
 
-	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(TRN::Core::Scheduling::create(indices)));
+	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_trial(), TRN::Core::Scheduling::create(indices)));
 }
 
-std::shared_ptr<TRN::Mutator::Reverse> TRN::Mutator::Reverse::create(const float &rate, const std::size_t &size)
+std::shared_ptr<TRN::Mutator::Reverse> TRN::Mutator::Reverse::create(const unsigned long &seed, const float &rate, const std::size_t &size)
 {
-	return std::make_shared<TRN::Mutator::Reverse>(rate, size);
+	return std::make_shared<TRN::Mutator::Reverse>(seed, rate, size);
 }

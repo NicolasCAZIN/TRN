@@ -7,8 +7,7 @@ public :
 	mutable int epochs;
 };
 
-TRN::Scheduler::Tiled::Tiled(const std::shared_ptr<TRN::Backend::Driver> &driver, const unsigned int &epochs) :
-	TRN::Core::Scheduler(driver),
+TRN::Scheduler::Tiled::Tiled(const unsigned int &epochs) :
 	handle(std::make_unique<TRN::Scheduler::Tiled::Handle>())
 {
 	handle->epochs = epochs;
@@ -37,11 +36,11 @@ void  TRN::Scheduler::Tiled::update(const TRN::Core::Message::Payload<TRN::Core:
 		durations[epoch] = incoming->get_sequence()->get_rows();
 	}
 
-	notify(TRN::Core::Scheduling::create(offsets, durations));
+	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_trial(), TRN::Core::Scheduling::create(offsets, durations)));
 }
 
 
-std::shared_ptr<TRN::Scheduler::Tiled> TRN::Scheduler::Tiled::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const unsigned int &epochs)
+std::shared_ptr<TRN::Scheduler::Tiled> TRN::Scheduler::Tiled::create( const unsigned int &epochs)
 {
-	return std::make_shared<TRN::Scheduler::Tiled>(driver, epochs);
+	return std::make_shared<TRN::Scheduler::Tiled>( epochs);
 }

@@ -16,7 +16,7 @@ namespace TRN
 			mutable std::unique_ptr<Handle> handle;
 
 		public:
-			Scheduling(const std::shared_ptr<TRN::Core::Simulator> &decorated, const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &functor);
+			Scheduling(const std::shared_ptr<TRN::Core::Simulator> &decorated, const std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor);
 			virtual ~Scheduling();
 
 		public:
@@ -27,7 +27,7 @@ namespace TRN
 			virtual const std::shared_ptr<TRN::Core::Loop> get_loop() override;
 			virtual const std::shared_ptr<TRN::Core::Scheduler> get_scheduler() override;
 			virtual const std::vector<std::shared_ptr<TRN::Core::Mutator>> get_mutators() override;
-
+	
 		public:
 			virtual void set_feedforward(const std::shared_ptr<TRN::Core::Initializer> &feedforward) override;
 			virtual void set_recurrent(const std::shared_ptr<TRN::Core::Initializer> &recurrent) override;
@@ -53,7 +53,7 @@ namespace TRN
 
 		public:
 			static std::shared_ptr<Scheduling> create(const std::shared_ptr<TRN::Core::Simulator> decorated,
-				const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &functor);
+				const std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor);
 		};
 	};
 };

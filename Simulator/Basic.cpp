@@ -6,6 +6,7 @@
 TRN::Simulator::Basic::Basic(const std::function<void()> &trained, const std::function<void()> &primed, const std::function<void()> &tested) :
 	handle(std::make_unique<Handle>())
 {
+
 	handle->trained = trained;
 	handle->tested = tested;
 	handle->primed = primed;
@@ -116,7 +117,7 @@ void TRN::Simulator::Basic::train(const std::string &label, const std::string &i
 	if (handle->sets.find(key(label, expected)) == handle->sets.end())
 		throw std::invalid_argument("Batch " + key(label, expected) + " does not exist");
 	
-	TRN::Core::Message::Payload<TRN::Core::Message::SET> sequence(label, incoming, expected);
+	TRN::Core::Message::Payload<TRN::Core::Message::SET> sequence(label, incoming, expected, handle->reservoir->get_trial());
 	handle->pending.push(sequence);
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::SET>>::notify(sequence);
 }
@@ -210,6 +211,7 @@ void TRN::Simulator::Basic::uninitialize()
 			throw std::logic_error("No Initializer object have been configured for the readout weights");
 		if (!handle->scheduler)
 			throw std::logic_error("No Scheduler object have been configured for the readout weights");
+
 //		handle->loop->detach(handle->reservoir);
 		//handle->reservoir->detach(handle->loop);
 		//handle->loop->reset_delegate();
@@ -262,10 +264,12 @@ void  TRN::Simulator::Basic::update(const TRN::Core::Message::Payload<TRN::Core:
 
 void  TRN::Simulator::Basic::update(const TRN::Core::Message::Payload<TRN::Core::Message::TESTED> &payload)
 {
+
 	handle->tested();
 }
 void  TRN::Simulator::Basic::update(const TRN::Core::Message::Payload<TRN::Core::Message::PRIMED> &payload)
 {
+
 	handle->primed();
 }
 void  TRN::Simulator::Basic::update(const TRN::Core::Message::Payload<TRN::Core::Message::TRAINED> &payload)

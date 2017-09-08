@@ -46,7 +46,7 @@ namespace TRN
 			virtual void restrict_to_reachable_locations(
 
 				const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
-				const float &radius, const float &scale,
+				const float &radius, const float &scale, const unsigned long &seed,
 				const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 				const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 				const float **batched_current_location, const std::size_t *batched_current_location_rows, const std::size_t *batched_current_location_cols, const std::size_t *batched_current_location_stride,

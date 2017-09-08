@@ -70,6 +70,9 @@
     <ClInclude Include="Custom_impl.h">
       <Filter>Header Files\private</Filter>
     </ClInclude>
+    <ClInclude Include="Shuffle_impl.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mutator_global.h">

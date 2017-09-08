@@ -156,6 +156,7 @@
     <ClInclude Include="Reverse_impl.h" />
     <ClInclude Include="Shuffle.h" />
     <ClInclude Include="mutator_global.h" />
+    <ClInclude Include="Shuffle_impl.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>

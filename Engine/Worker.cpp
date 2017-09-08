@@ -181,13 +181,16 @@ void TRN::Engine::Worker::receive()
 						if (!handle->simulators[message.id]->get_reservoir())
 							throw std::logic_error("Simulator #" + std::to_string(message.id) + " does not not have a reservoir to decorate");
 						auto decorator = TRN::Model::Simulator::States::create(handle->simulators[message.id], [this, message]
-						(const std::string &phase, const std::string &label, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
+						(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 						{
 							TRN::Engine::Message<TRN::Engine::STATES> states;
 
 							states.id = message.id;
 							states.label = label;
 							states.phase = phase;
+							states.batch = batch;
+							states.trial = trial;
+							states.evaluation = evaluation;
 							states.elements = samples;
 							states.rows = rows;
 							states.cols = cols;
@@ -212,13 +215,15 @@ void TRN::Engine::Worker::receive()
 						if (!handle->simulators[message.id]->get_reservoir())
 							throw std::logic_error("Simulator #" + std::to_string(message.id) + " does not not have a reservoir to decorate");
 						auto decorator = TRN::Model::Simulator::Weights::create(handle->simulators[message.id], [this, message]
-						(const std::string &phase, const std::string &label, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
+						(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 						{
 							TRN::Engine::Message<TRN::Engine::WEIGHTS> weights;
 
 							weights.id = message.id;
 							weights.phase = phase;
 							weights.label = label;
+							weights.trial = trial;
+							weights.batch = batch;
 							weights.elements = samples;
 							weights.rows = rows;
 							weights.cols = cols;
@@ -267,17 +272,18 @@ void TRN::Engine::Worker::receive()
 						if (!handle->simulators[message.id]->get_reservoir())
 							throw std::logic_error("Simulator #" + std::to_string(message.id) + " does not not have a reservoir to decorate");
 						auto decorator = TRN::Model::Simulator::Scheduling::create(handle->simulators[message.id], [this, message]
-						(const std::vector<int> &offsets, const std::vector<int> &durations)
+						(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 						{
-							TRN::Engine::Message<TRN::Engine::SCHEDULING> performances;
+							TRN::Engine::Message<TRN::Engine::SCHEDULING> scheduling;
 
-							performances.id = message.id;
-							performances.offsets = offsets;
-							performances.durations = durations;
-							performances.is_from_mutator = false;
+							scheduling.id = message.id;
+							scheduling.trial = trial;
+							scheduling.offsets = offsets;
+							scheduling.durations = durations;
+							scheduling.is_from_mutator = false;
 							auto locked = handle->communicator.lock();
 							if (locked)
-								locked->send(performances, 0);
+								locked->send(scheduling, 0);
 						});
 						//handle->simulators[message.id]->attach(decorator);
 						handle->simulators[message.id] = decorator;
@@ -308,11 +314,13 @@ void TRN::Engine::Worker::receive()
 						handle->simulators[message.id]->append_measurement(
 							TRN::Model::Measurement::Sequence::create(
 								TRN::Model::Measurement::MeanSquareError::create(handle->driver, 
-								[this, message](const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+								[this, message](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 								{
 									TRN::Engine::Message<TRN::Engine::MEASUREMENT_READOUT_MEAN_SQUARE_ERROR> measurement;
 
 									measurement.id = message.id;
+									measurement.trial = trial;
+									measurement.evaluation = evaluation;
 									measurement.elements = values;
 								
 									measurement.rows = rows;
@@ -332,11 +340,13 @@ void TRN::Engine::Worker::receive()
 						handle->simulators[message.id]->append_measurement(
 							TRN::Model::Measurement::Sequence::create(
 								TRN::Model::Measurement::FrechetDistance::create(handle->driver,
-								[this, message](const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+								[this, message](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 								{
 									TRN::Engine::Message<TRN::Engine::MEASUREMENT_READOUT_FRECHET_DISTANCE> measurement;
 
 									measurement.id = message.id;
+									measurement.trial = trial;
+									measurement.evaluation = evaluation;
 									measurement.elements = values;
 									measurement.rows = rows;
 									measurement.cols = cols;
@@ -355,11 +365,13 @@ void TRN::Engine::Worker::receive()
 						handle->simulators[message.id]->append_measurement(
 							TRN::Model::Measurement::Sequence::create(
 								TRN::Model::Measurement::Custom::create(handle->driver,
-								[this, message](const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages,  const std::size_t &rows, const  std::size_t &cols)
+								[this, message](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages,  const std::size_t &rows, const  std::size_t &cols)
 								{
 									TRN::Engine::Message<TRN::Engine::MEASUREMENT_READOUT_CUSTOM> measurement;
 
 									measurement.id = message.id;
+									measurement.trial = trial;
+									measurement.evaluation = evaluation;
 									measurement.primed = primed;
 									measurement.elements = predicted;
 									measurement.expected = expected;
@@ -382,11 +394,13 @@ void TRN::Engine::Worker::receive()
 						handle->simulators[message.id]->append_measurement(
 							TRN::Model::Measurement::Position::create(
 								TRN::Model::Measurement::MeanSquareError::create(handle->driver,
-								[this, message](const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+								[this, message](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 								{
 									TRN::Engine::Message<TRN::Engine::MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> measurement;
 
 									measurement.id = message.id;
+									measurement.trial = trial;
+									measurement.evaluation = evaluation;
 									measurement.elements = values;
 									measurement.rows = rows;
 									measurement.cols = cols;
@@ -405,11 +419,13 @@ void TRN::Engine::Worker::receive()
 						handle->simulators[message.id]->append_measurement(
 							TRN::Model::Measurement::Position::create(
 								TRN::Model::Measurement::MeanSquareError::create(handle->driver,
-								[this, message](const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+								[this, message](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 								{
 									TRN::Engine::Message<TRN::Engine::MEASUREMENT_POSITION_FRECHET_DISTANCE> measurement;
 
 									measurement.id = message.id;
+									measurement.trial = trial;
+									measurement.evaluation = evaluation;
 									measurement.elements = values;
 									measurement.rows = rows;
 									measurement.cols = cols;
@@ -428,11 +444,13 @@ void TRN::Engine::Worker::receive()
 						handle->simulators[message.id]->append_measurement(
 							TRN::Model::Measurement::Position::create(
 								TRN::Model::Measurement::Custom::create(handle->driver,
-								[this, message](const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages,  const std::size_t &rows, const  std::size_t &cols)
+								[this, message](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages,  const std::size_t &rows, const  std::size_t &cols)
 								{
 									TRN::Engine::Message<TRN::Engine::MEASUREMENT_POSITION_CUSTOM> measurement;
 
 									measurement.id = message.id;
+									measurement.trial = trial;
+									measurement.evaluation = evaluation;
 									measurement.elements = predicted;
 									measurement.expected = expected;
 									measurement.primed = primed;
@@ -481,12 +499,14 @@ void TRN::Engine::Worker::receive()
 						{
 							throw std::runtime_error("Perceived stimulus functor is already setup for simulator #" + std::to_string(message.id));
 						}
-						handle->simulators[message.id]->set_loop(TRN::Model::Loop::SpatialFilter::create(handle->driver, message.batch_size, message.stimulus_size,
+						handle->simulators[message.id]->set_loop(TRN::Model::Loop::SpatialFilter::create(handle->driver, message.batch_size, message.stimulus_size, message.seed,
 							[this, message]
-						(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)
+						(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)
 						{
 							TRN::Engine::Message<POSITION> position;
 							position.id = message.id;
+							position.trial = trial;
+							position.evaluation = evaluation;
 							position.elements = values;
 							position.rows = rows;
 							position.cols = cols;
@@ -496,10 +516,12 @@ void TRN::Engine::Worker::receive()
 						},
 							handle->estimated_position[message.id],
 							[this, message]
-						(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)
+						(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)
 						{
 							TRN::Engine::Message<STIMULUS> stimulus;
 							stimulus.id = message.id;
+							stimulus.trial = trial;
+							stimulus.evaluation = evaluation;
 							stimulus.elements = values;
 							stimulus.rows = rows;
 							stimulus.cols = cols;
@@ -523,10 +545,12 @@ void TRN::Engine::Worker::receive()
 							throw std::runtime_error("Perceived stimulus functor is already setup for simulator #" + std::to_string(message.id));
 						}
 						handle->simulators[message.id]->set_loop(TRN::Model::Loop::Custom::create(handle->driver, message.batch_size, message.stimulus_size, [=]
-						(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)
+						(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)
 						{
 							TRN::Engine::Message<TRN::Engine::STIMULUS> stimulus;
 							stimulus.id = message.id;
+							stimulus.trial = trial;
+							stimulus.evaluation = evaluation;
 							stimulus.elements = values;
 							stimulus.rows = rows;
 							stimulus.cols = cols;
@@ -544,7 +568,7 @@ void TRN::Engine::Worker::receive()
 						auto message = unpack<TRN::Engine::CONFIGURE_SCHEDULER_TILED>(locked,  handle->rank, id, number);
 						if (handle->simulators.find(message.id) == handle->simulators.end())
 							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-						handle->simulators[message.id]->set_scheduler(TRN::Model::Scheduler::Tiled::create(handle->driver, message.epochs));
+						handle->simulators[message.id]->set_scheduler(TRN::Model::Scheduler::Tiled::create(message.epochs));
 					}
 					break;
 
@@ -553,7 +577,7 @@ void TRN::Engine::Worker::receive()
 						auto message = unpack<TRN::Engine::CONFIGURE_SCHEDULER_SNIPPETS>(locked,  handle->rank, id, number);
 						if (handle->simulators.find(message.id) == handle->simulators.end())
 							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-						handle->simulators[message.id]->set_scheduler(TRN::Model::Scheduler::Snippets::create(handle->driver, message.snippets_size, message.time_budget, message.tag));
+						handle->simulators[message.id]->set_scheduler(TRN::Model::Scheduler::Snippets::create(message.seed, message.snippets_size, message.time_budget, message.tag));
 					}
 					break;
 
@@ -567,10 +591,12 @@ void TRN::Engine::Worker::receive()
 						{
 							throw std::runtime_error("Scheduler functor is already setup for simulator #" + std::to_string(message.id));
 						}
-						handle->simulators[message.id]->set_scheduler(TRN::Model::Scheduler::Custom::create(handle->driver,
-							[=](const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)
+						handle->simulators[message.id]->set_scheduler(TRN::Model::Scheduler::Custom::create(message.seed,
+							[=](const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)
 						{
-							TRN::Engine::Message<SCHEDULING_REQUEST> scheduling_request;
+							TRN::Engine::Message<SCHEDULER_CUSTOM> scheduling_request;
+							scheduling_request.trial = trial;
+							scheduling_request.seed = seed;
 							scheduling_request.id = message.id;
 							scheduling_request.elements = elements;
 							scheduling_request.rows = rows;
@@ -590,7 +616,7 @@ void TRN::Engine::Worker::receive()
 						auto message = unpack<TRN::Engine::CONFIGURE_MUTATOR_SHUFFLE>(locked, handle->rank, id, number);
 						if (handle->simulators.find(message.id) == handle->simulators.end())
 							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Shuffle::create());
+						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Shuffle::create(message.seed));
 					}
 					break;
 					case TRN::Engine::CONFIGURE_MUTATOR_REVERSE:
@@ -598,7 +624,7 @@ void TRN::Engine::Worker::receive()
 						auto message = unpack<TRN::Engine::CONFIGURE_MUTATOR_REVERSE>(locked, handle->rank, id, number);
 						if (handle->simulators.find(message.id) == handle->simulators.end())
 							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Reverse::create(message.rate, message.size));
+						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Reverse::create(message.seed, message.rate, message.size));
 					}
 					break;
 					case TRN::Engine::CONFIGURE_MUTATOR_PUNCH:
@@ -606,12 +632,12 @@ void TRN::Engine::Worker::receive()
 						auto message = unpack<TRN::Engine::CONFIGURE_MUTATOR_PUNCH>(locked, handle->rank, id, number);
 						if (handle->simulators.find(message.id) == handle->simulators.end())
 							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Punch::create(message.rate, message.size, message.number));
+						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Punch::create(message.seed, message.rate, message.size, message.number));
 					}
 					break;
 					case TRN::Engine::CONFIGURE_MUTATOR_CUSTOM:
 					{
-						auto message = unpack<TRN::Engine::CONFIGURE_SCHEDULER_CUSTOM>(locked, handle->rank, id, number);
+						auto message = unpack<TRN::Engine::CONFIGURE_MUTATOR_CUSTOM>(locked, handle->rank, id, number);
 						if (handle->simulators.find(message.id) == handle->simulators.end())
 							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 						std::unique_lock<std::mutex> lock(handle->functors);
@@ -619,13 +645,15 @@ void TRN::Engine::Worker::receive()
 						{
 							throw std::runtime_error("Mutator functor is already setup for simulator #" + std::to_string(message.id));
 						}
-						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Custom::create([=](const std::vector<int> &offsets, const std::vector<int> &durations)
+						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Custom::create(message.seed, [=](const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 						{
-							TRN::Engine::Message<SCHEDULING> scheduling;
+							TRN::Engine::Message<MUTATOR_CUSTOM> scheduling;
 
+							scheduling.trial = trial;
 							scheduling.id = message.id;
 							scheduling.offsets = offsets;
 							scheduling.durations = durations;
+							scheduling.seed = seed;
 							auto locked = handle->communicator.lock();
 							if (locked)
 								locked->send(scheduling, 0);
@@ -815,7 +843,7 @@ void TRN::Engine::Worker::receive()
 						auto message = unpack<TRN::Engine::POSITION>(locked,  handle->rank, id, number);
 						if (handle->estimated_position.find(message.id) == handle->estimated_position.end())
 							throw std::runtime_error("Estimated position functor is not setup for simulator #" + std::to_string(message.id));
-						handle->estimated_position[message.id](message.elements, message.rows, message.cols);
+						handle->estimated_position[message.id](message.trial, message.evaluation, message.elements, message.rows, message.cols);
 					}
 					break;
 					case TRN::Engine::STIMULUS:
@@ -823,7 +851,7 @@ void TRN::Engine::Worker::receive()
 						auto message = unpack<TRN::Engine::STIMULUS>(locked,  handle->rank, id, number);
 						if (handle->perceived_stimulus.find(message.id) == handle->perceived_stimulus.end())
 							throw std::runtime_error("Perceived stimulus functor is not setup for simulator #" + std::to_string(message.id));
-						handle->perceived_stimulus[message.id]( message.elements, message.rows, message.cols);
+						handle->perceived_stimulus[message.id](message.trial, message.evaluation, message.elements, message.rows, message.cols);
 					}
 					break;
 					case TRN::Engine::SCHEDULING:
@@ -833,13 +861,13 @@ void TRN::Engine::Worker::receive()
 						{
 							if (handle->mutator.find(message.id) == handle->mutator.end())
 								throw std::runtime_error("Mutator functor is not setup for simulator #" + std::to_string(message.id));
-							handle->mutator[message.id](message.offsets, message.durations);
+							handle->mutator[message.id](message.trial, message.offsets, message.durations);
 						}
 						else
 						{
 							if (handle->scheduler.find(message.id) == handle->scheduler.end())
 								throw std::runtime_error("Scheduling functor is not setup for simulator #" + std::to_string(message.id));
-							handle->scheduler[message.id](message.offsets, message.durations);
+							handle->scheduler[message.id](message.trial, message.offsets, message.durations);
 						}
 					}
 					break;

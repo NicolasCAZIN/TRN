@@ -4,19 +4,19 @@
 class TRN::Scheduler::Snippets::Handle
 {
 public :
-	mutable unsigned int snippets_size;
-	mutable unsigned int time_budget;
-
-	mutable std::string tag;
+	unsigned int snippets_size;
+	unsigned int time_budget;
+	unsigned long seed;
+	std::string tag;
 };
 
-TRN::Scheduler::Snippets::Snippets(const std::shared_ptr<TRN::Backend::Driver> &driver, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag) :
-	TRN::Core::Scheduler(driver),
+TRN::Scheduler::Snippets::Snippets(const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag) :
 	handle(std::make_unique<TRN::Scheduler::Snippets::Handle>())
 {
 	handle->snippets_size = snippets_size;
 	handle->time_budget = time_budget;
 	handle->tag = tag;
+	handle->seed = seed;
 }
 
 TRN::Scheduler::Snippets::~Snippets()
@@ -42,7 +42,6 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 	if (handle->tag.empty())
 	{
 		set = delegate.lock()->retrieve_set(payload.get_label(), payload.get_incoming());
-
 	}
 	else
 	{
@@ -93,11 +92,12 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 		}
 	}
 
-	std::default_random_engine generator;
+	std::default_random_engine engine(handle->seed);
+
 	std::discrete_distribution<int> score_distribution(score.begin(), score.end());
-	auto random_offset = std::bind(score_distribution, generator);
+	auto random_offset = std::bind(score_distribution, engine);
 	std::uniform_real_distribution<float> mutate_distribution(0.0f, 1.0f);
-	auto random_mutation = std::bind(mutate_distribution, generator);
+	auto random_mutation = std::bind(mutate_distribution, engine);
 	std::vector<int> offsets;
 	for (std::size_t n = 0; n < snippets_number; n++)
 	{
@@ -106,11 +106,11 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 		std::iota(snippet.begin(), snippet.end(), possible_offsets[random_offset()]);
 		offsets.insert(offsets.end(), snippet.begin(), snippet.end());
 	}
-	
-	notify(TRN::Core::Scheduling::create(offsets, durations));
+	handle->seed += offsets.size() * durations.size();
+	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_trial(), TRN::Core::Scheduling::create(offsets, durations)));
 }
 
-std::shared_ptr<TRN::Scheduler::Snippets> TRN::Scheduler::Snippets::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const unsigned int  &snippets_size, const unsigned int &time_budget, const std::string &tag)
+std::shared_ptr<TRN::Scheduler::Snippets> TRN::Scheduler::Snippets::create(const unsigned long &seed, const unsigned int  &snippets_size, const unsigned int &time_budget, const std::string &tag)
 {
-	return std::make_shared<TRN::Scheduler::Snippets>(driver, snippets_size, time_budget, tag);
+	return std::make_shared<TRN::Scheduler::Snippets>(seed, snippets_size, time_budget, tag);
 }

@@ -17,7 +17,7 @@ void TRN::Measurement::Position::update(const TRN::Core::Message::Payload<TRN::C
 	if (!handle->expected)
 		throw std::invalid_argument("Expected matrix is not set");
 
-	on_update(payload.get_position());
+	on_update(payload.get_trial(), payload.get_evaluation(), payload.get_position());
 }
 void TRN::Measurement::Position::update(const TRN::Core::Message::Payload<TRN::Core::Message::TARGET_SEQUENCE> &payload)
 {

@@ -108,7 +108,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->predicted_position.find(message.id) == handle->predicted_position.end())
 						throw std::runtime_error("Predicted position functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->predicted_position[message.id](message.elements, message.rows, message.cols);
+					handle->predicted_position[message.id](message.trial, message.evaluation, message.elements, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -119,7 +119,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->predicted_stimulus.find(message.id) == handle->predicted_stimulus.end())
 						throw std::runtime_error("Predicted Stimulus functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->predicted_stimulus[message.id](message.elements, message.rows, message.cols);
+					handle->predicted_stimulus[message.id](message.trial, message.evaluation, message.elements, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -130,7 +130,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->states.find(message.id) == handle->states.end())
 						throw std::runtime_error("States functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->states[message.id](message.phase, message.label, message.elements, message.rows, message.cols);
+					handle->states[message.id](message.phase, message.label, message.batch, message.trial, message.evaluation, message.elements, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -141,7 +141,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->weights.find(message.id) == handle->weights.end())
 						throw std::runtime_error("Weights functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->weights[message.id](message.phase, message.label, message.elements, message.rows, message.cols);
+					handle->weights[message.id](message.phase, message.label, message.batch, message.trial, message.elements, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -157,13 +157,13 @@ void TRN::Engine::Broker::receive()
 				}
 				break;
 
-				case TRN::Engine::SCHEDULING_REQUEST:
+				case TRN::Engine::SCHEDULER_CUSTOM:
 				{
-					auto message = handle->communicator->receive<TRN::Engine::SCHEDULING_REQUEST>(0);
+					auto message = handle->communicator->receive<TRN::Engine::SCHEDULER_CUSTOM>(0);
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->scheduler.find(message.id) == handle->scheduler.end())
 						throw std::runtime_error("Scheduler functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->scheduler[message.id](message.elements, message.rows, message.cols, message.offsets, message.durations);
+					handle->scheduler[message.id](message.seed, message.trial, message.elements, message.rows, message.cols, message.offsets, message.durations);
 					lock.unlock();
 				}
 				break;
@@ -173,7 +173,17 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->scheduling.find(message.id) == handle->scheduling.end())
 						throw std::runtime_error("Scheduler functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->scheduling[message.id](message.offsets, message.durations);
+					handle->scheduling[message.id](message.trial, message.offsets, message.durations);
+					lock.unlock();
+				}
+				break;
+				case TRN::Engine::MUTATOR_CUSTOM:
+				{
+					auto message = handle->communicator->receive<TRN::Engine::MUTATOR_CUSTOM>(0);
+					std::unique_lock<std::mutex> lock(handle->functors);
+					if (handle->mutator.find(message.id) == handle->mutator.end())
+						throw std::runtime_error("Scheduler functor for message #" + std::to_string(message.id) + " is not setup");
+					handle->mutator[message.id](message.seed, message.trial, message.offsets, message.durations);
 					lock.unlock();
 				}
 				break;
@@ -249,7 +259,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->measurement_readout_mean_square_error.find(message.id) == handle->measurement_readout_mean_square_error.end())
 						throw std::runtime_error("Prediction mean square error functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->measurement_readout_mean_square_error[message.id](message.elements, message.rows, message.cols);
+					handle->measurement_readout_mean_square_error[message.id](message.trial, message.evaluation, message.elements, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -259,7 +269,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->measurement_readout_frechet_distance.find(message.id) == handle->measurement_readout_frechet_distance.end())
 						throw std::runtime_error("Prediction Frechet distance functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->measurement_readout_frechet_distance[message.id](message.elements, message.rows, message.cols);
+					handle->measurement_readout_frechet_distance[message.id](message.trial, message.evaluation, message.elements, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -269,7 +279,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->measurement_readout_custom.find(message.id) == handle->measurement_readout_custom.end())
 						throw std::runtime_error("Prediction custom functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->measurement_readout_custom[message.id](message.primed, message.elements, message.expected, message.preamble, message.matrices, message.rows, message.cols);
+					handle->measurement_readout_custom[message.id](message.trial, message.evaluation, message.primed, message.elements, message.expected, message.preamble, message.matrices, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -279,7 +289,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->measurement_position_mean_square_error.find(message.id) == handle->measurement_position_mean_square_error.end())
 						throw std::runtime_error("Position mean square error functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->measurement_position_mean_square_error[message.id](message.elements, message.rows, message.cols);
+					handle->measurement_position_mean_square_error[message.id](message.trial, message.evaluation, message.elements, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -289,7 +299,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->measurement_position_frechet_distance.find(message.id) == handle->measurement_position_frechet_distance.end())
 						throw std::runtime_error("Position Frechet distance functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->measurement_position_frechet_distance[message.id](message.elements, message.rows, message.cols);
+					handle->measurement_position_frechet_distance[message.id](message.trial, message.evaluation, message.elements, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -299,7 +309,7 @@ void TRN::Engine::Broker::receive()
 					std::unique_lock<std::mutex> lock(handle->functors);
 					if (handle->measurement_position_custom.find(message.id) == handle->measurement_position_custom.end())
 						throw std::runtime_error("Position custom functor for message #" + std::to_string(message.id) + " is not setup");
-					handle->measurement_position_custom[message.id](message.primed, message.elements, message.expected, message.preamble, message.matrices, message.rows, message.cols);
+					handle->measurement_position_custom[message.id](message.trial, message.evaluation, message.primed, message.elements, message.expected, message.preamble, message.matrices, message.rows, message.cols);
 					lock.unlock();
 				}
 				break;
@@ -470,7 +480,7 @@ void TRN::Engine::Broker::declare_set(const unsigned int &id, const std::string 
 		});
 	});
 }
-void TRN::Engine::Broker::setup_states(const unsigned int &id, const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &train, const bool &prime, const bool &generate)
+void TRN::Engine::Broker::setup_states(const unsigned int &id, const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &train, const bool &prime, const bool &generate)
 {
 	auto processor = handle->manager->retrieve(id);
 
@@ -493,7 +503,7 @@ void TRN::Engine::Broker::setup_states(const unsigned int &id, const std::functi
 		});
 	});
 }
-void TRN::Engine::Broker::setup_weights(const unsigned int &id, const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &initalization, const bool &train)
+void TRN::Engine::Broker::setup_weights(const unsigned int &id, const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &initalization, const bool &train)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -537,7 +547,7 @@ void TRN::Engine::Broker::setup_performances(const unsigned int &id, const std::
 }
 
 
-void TRN::Engine::Broker::setup_scheduling(const unsigned int &id, const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
+void TRN::Engine::Broker::setup_scheduling(const unsigned int &id, const std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -587,7 +597,7 @@ void TRN::Engine::Broker::configure_end(const unsigned int &id)
 	});
 }
 
-void 	TRN::Engine::Broker::configure_measurement_readout_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void 	TRN::Engine::Broker::configure_measurement_readout_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -608,7 +618,7 @@ void 	TRN::Engine::Broker::configure_measurement_readout_mean_square_error(const
 	});
 }
 
-void  	TRN::Engine::Broker::configure_measurement_readout_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void  	TRN::Engine::Broker::configure_measurement_readout_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -628,7 +638,7 @@ void  	TRN::Engine::Broker::configure_measurement_readout_frechet_distance(const
 		});
 	});
 }
-void  	TRN::Engine::Broker::configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble,const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
+void  	TRN::Engine::Broker::configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble,const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -649,7 +659,7 @@ void  	TRN::Engine::Broker::configure_measurement_readout_custom(const unsigned 
 	});
 }
 
-void  	TRN::Engine::Broker::configure_measurement_position_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void  	TRN::Engine::Broker::configure_measurement_position_mean_square_error(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -670,7 +680,7 @@ void  	TRN::Engine::Broker::configure_measurement_position_mean_square_error(con
 	});
 }
 
-void  	TRN::Engine::Broker::configure_measurement_position_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void  	TRN::Engine::Broker::configure_measurement_position_frechet_distance(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -691,7 +701,7 @@ void  	TRN::Engine::Broker::configure_measurement_position_frechet_distance(cons
 		});
 	});
 }
-void  	TRN::Engine::Broker::configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
+void  	TRN::Engine::Broker::configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -753,11 +763,11 @@ void TRN::Engine::Broker::configure_loop_copy(const unsigned int &id, const std:
 	});
 }
 
-void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size,
-	const std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
-	std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
-	const std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
-	std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
+void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
+	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
+	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
+	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
+	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
 	const std::size_t &rows, const std::size_t &cols,
 	const std::pair<float, float> &x, const std::pair<float, float> &y,
 	const std::vector<float> &response,
@@ -776,25 +786,29 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned int &id, 
 	handle->predicted_stimulus[id] = predicted_stimulus;
 	lock.unlock();
 
-	estimated_position = [this, id, processor](const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
+	estimated_position = [this, id, processor](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
 	{
 		TRN::Engine::Message<POSITION> message;
 		message.id = id;
 		message.elements = position;
 		message.rows = rows;
 		message.cols = cols;
+		message.trial = trial;
+		message.evaluation = evaluation;
 		send(processor->get_rank(), message, [id]()
 		{
 			////PrintThread{} << "id " << id << " position acked" << std::endl;
 		});
 	};
-	perceived_stimulus = [this, id, processor](const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
+	perceived_stimulus = [this, id, processor](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
 	{
 		TRN::Engine::Message<STIMULUS> message;
 		message.id = id;
 		message.elements = stimulus;
 		message.rows = rows;
 		message.cols = cols;
+		message.trial = trial;
+		message.evaluation = evaluation;
 		send(processor->get_rank(), message, [id]()
 		{
 			////PrintThread{} << "id " << id << " stimulus acked" << std::endl;
@@ -819,6 +833,7 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned int &id, 
 		message.radius = radius;
 		message.scale = scale;
 		message.tag = tag;
+		message.seed = seed;
 		send(processor->get_rank(), message, [id]()
 		{
 			////PrintThread{} << "id " << id << " configure loop spatial filter acked" << std::endl;
@@ -826,8 +841,8 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned int &id, 
 	});
 }
 void TRN::Engine::Broker::configure_loop_custom(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size,
-	const std::function<void(const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
-	std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply)
+	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
+	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -836,13 +851,15 @@ void TRN::Engine::Broker::configure_loop_custom(const unsigned int &id, const st
 	handle->predicted_stimulus[id] = request;
 	lock.unlock();
 	
-	reply = [this, id, processor](const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
+	reply = [this, id, processor](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
 	{
 		TRN::Engine::Message<STIMULUS> message;
 		message.id = id;
 		message.elements = stimulus;
 		message.rows = rows;
 		message.cols = cols;
+		message.trial = trial;
+		message.evaluation = evaluation;
 		send(processor->get_rank(), message, [id]()
 		{
 			////PrintThread{} << "id " << id << " stimulus acked" << std::endl;
@@ -880,7 +897,7 @@ void TRN::Engine::Broker::configure_scheduler_tiled(const unsigned int &id, cons
 	});
 }
 
-void TRN::Engine::Broker::configure_scheduler_snippets(const unsigned int &id, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag)
+void TRN::Engine::Broker::configure_scheduler_snippets(const unsigned int &id, const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget,  const std::string &tag)
 {
 	auto processor = handle->manager->retrieve(id);
 	processor->post([=]()
@@ -891,6 +908,7 @@ void TRN::Engine::Broker::configure_scheduler_snippets(const unsigned int &id, c
 		message.snippets_size = snippets_size;
 		message.time_budget = time_budget;
 		message.tag = tag;
+		message.seed = seed;
 
 		send(processor->get_rank(), message, [id]()
 		{
@@ -900,9 +918,9 @@ void TRN::Engine::Broker::configure_scheduler_snippets(const unsigned int &id, c
 }
 
 
-void TRN::Engine::Broker::configure_scheduler_custom(const unsigned int &id,
-	const std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-	std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply, const std::string &tag)
+void TRN::Engine::Broker::configure_scheduler_custom(const unsigned int &id, const unsigned long &seed,
+	const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void( const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply, const std::string &tag)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -911,13 +929,15 @@ void TRN::Engine::Broker::configure_scheduler_custom(const unsigned int &id,
 	handle->scheduler[id] = request;
 	lock.unlock();
 
-	reply = [this, id, processor](const std::vector<int> &offsets, const std::vector<int> &durations)
+	reply = [this, id, processor]( const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 	{
 		TRN::Engine::Message<SCHEDULING> message;
 		message.id = id;
+
 		message.is_from_mutator = false;
 		message.offsets = offsets;
 		message.durations = durations;
+		
 		send(processor->get_rank(), message, [id]()
 		{
 			////PrintThread{} << "id " << id << " scheduling acked" << std::endl;
@@ -930,6 +950,7 @@ void TRN::Engine::Broker::configure_scheduler_custom(const unsigned int &id,
 
 		TRN::Engine::Message<CONFIGURE_SCHEDULER_CUSTOM> message;
 		message.id = id;
+		message.seed = seed;
 		send(processor->get_rank(), message, [id]()
 		{
 			////PrintThread{} << "id " << id << " configure scheduler custom acked" << std::endl;
@@ -937,7 +958,7 @@ void TRN::Engine::Broker::configure_scheduler_custom(const unsigned int &id,
 	});
 }
 
-void 	TRN::Engine::Broker::configure_mutator_shuffle(const unsigned int &id)
+void 	TRN::Engine::Broker::configure_mutator_shuffle(const unsigned int &id,const unsigned long &seed)
 {
 	auto processor = handle->manager->retrieve(id);
 	processor->post([=]()
@@ -945,14 +966,14 @@ void 	TRN::Engine::Broker::configure_mutator_shuffle(const unsigned int &id)
 		processor->configuring();
 		TRN::Engine::Message<CONFIGURE_MUTATOR_SHUFFLE> message;
 		message.id = id;
-	
+		message.seed = seed;
 		send(processor->get_rank(), message, [id]()
 		{
 			////PrintThread{} << "id " << id << " configure scheduler snippets acked" << std::endl;
 		});
 	});
 }
-void 	TRN::Engine::Broker::configure_mutator_reverse(const unsigned int &id, const float &rate, const std::size_t &size)
+void 	TRN::Engine::Broker::configure_mutator_reverse(const unsigned int &id, const unsigned long &seed, const float &rate, const std::size_t &size)
 {
 	auto processor = handle->manager->retrieve(id);
 	processor->post([=]()
@@ -960,6 +981,7 @@ void 	TRN::Engine::Broker::configure_mutator_reverse(const unsigned int &id, con
 		processor->configuring();
 		TRN::Engine::Message<CONFIGURE_MUTATOR_REVERSE> message;
 		message.id = id;
+		message.seed = seed;
 		message.rate = rate;
 		message.size = size;
 		send(processor->get_rank(), message, [id]()
@@ -968,7 +990,7 @@ void 	TRN::Engine::Broker::configure_mutator_reverse(const unsigned int &id, con
 		});
 	});
 }
-void 	TRN::Engine::Broker::configure_mutator_punch(const unsigned int &id, const float &rate, const std::size_t &size, const std::size_t &number)
+void 	TRN::Engine::Broker::configure_mutator_punch(const unsigned int &id, const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &number)
 {
 	auto processor = handle->manager->retrieve(id);
 	processor->post([=]()
@@ -976,6 +998,7 @@ void 	TRN::Engine::Broker::configure_mutator_punch(const unsigned int &id, const
 		processor->configuring();
 		TRN::Engine::Message<CONFIGURE_MUTATOR_PUNCH> message;
 		message.id = id;
+		message.seed = seed;
 		message.rate = rate;
 		message.size = size;
 		message.number = number;
@@ -986,9 +1009,9 @@ void 	TRN::Engine::Broker::configure_mutator_punch(const unsigned int &id, const
 	});
 }
 
-void 	TRN::Engine::Broker::configure_mutator_custom(const unsigned int &id,
-	const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-	std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply)
+void 	TRN::Engine::Broker::configure_mutator_custom(const unsigned int &id, const unsigned long &seed,
+	const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void( const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply)
 {
 	auto processor = handle->manager->retrieve(id);
 	std::unique_lock<std::mutex> lock(handle->functors);
@@ -997,13 +1020,14 @@ void 	TRN::Engine::Broker::configure_mutator_custom(const unsigned int &id,
 	handle->mutator[id] = request;
 	lock.unlock();
 
-	reply = [this, id, processor](const std::vector<int> &offsets, const std::vector< int> &durations)
+	reply = [this, id, processor](const std::size_t &trial, const std::vector<int> &offsets, const std::vector< int> &durations)
 	{
 		TRN::Engine::Message<SCHEDULING> message;
 		message.id = id;
 		message.is_from_mutator = true;
 		message.offsets = offsets;
 		message.durations = durations;
+		message.trial = trial;
 		send(processor->get_rank(), message, [id]()
 		{
 			////PrintThread{} << "id " << id << " scheduling acked" << std::endl;
@@ -1016,6 +1040,7 @@ void 	TRN::Engine::Broker::configure_mutator_custom(const unsigned int &id,
 
 		TRN::Engine::Message<CONFIGURE_MUTATOR_CUSTOM> message;
 		message.id = id;
+		message.seed = seed;
 		send(processor->get_rank(), message, [id]()
 		{
 			////PrintThread{} << "id " << id << " configure scheduler custom acked" << std::endl;

@@ -10,6 +10,7 @@ public :
 	std::size_t rows;
 	std::size_t cols;
 	std::size_t stimulus_size;
+	unsigned long seed;
 	float sigma;
 	float scale;
 	float radius;
@@ -38,18 +39,18 @@ public :
 	
 	
 
-	std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_predicted_position;
-	std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_predicted_stimulus;
+	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_predicted_position;
+	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_predicted_stimulus;
 	std::function<std::size_t(const float &x)> x_to_col;
 	std::function<std::size_t(const float &y)> y_to_row;
 
 };
 
-TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &batch_size, const std::size_t &stimulus_size,
-	const std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
-	std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
-	const std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
-	std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
+TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
+	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
+	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
+	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
+	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
 	const std::size_t &rows, const std::size_t &cols,
 	const std::pair<float, float> &x, const std::pair<float, float> &y,
 	const std::vector<float> &response,
@@ -63,6 +64,7 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 {
 	handle->stimulus_size = stimulus_size;
 	handle->batch_size = batch_size;
+	handle->seed = seed;
 	handle->radius = radius;
 	handle->scale = scale;
 	handle->sigma = sigma;
@@ -109,7 +111,7 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 	handle->batched_predicted_position = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_current_position = TRN::Core::Batch::create(driver, batch_size);
 
-	perceived_stimulus = [this](const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
+	perceived_stimulus = [this](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
 	{	
 		assert(rows == TRN::Core::Loop::handle->batch_size);
 		for (std::size_t batch = 0; batch < TRN::Core::Loop::handle->batch_size; batch++)
@@ -120,7 +122,7 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 		}
 		TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::STIMULUS>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::STIMULUS>(TRN::Core::Loop::handle->stimulus));
 	};
-	estimated_position = [this](const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
+	estimated_position = [this](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
 	{
 		assert(rows == TRN::Core::Loop::handle->batch_size);
 		for (std::size_t batch = 0; batch < TRN::Core::Loop::handle->batch_size; batch++)
@@ -242,7 +244,7 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 		assert(std::all_of(rows.begin(), rows.end(), [](const std::size_t &r) { return r == 1; }));
 		assert(std::all_of(cols.begin(), cols.end(), [cols](const std::size_t &c) { return c == cols[0]; }));
 		//cv::Mat predicted(rows, cols, CV_32F, predicted_stimulus.data());
-		handle->on_predicted_stimulus(predicted_stimulus, matrices, cols[0]);
+		handle->on_predicted_stimulus(payload.get_trial(), payload.get_evaluation(), predicted_stimulus, matrices, cols[0]);
 	}
 
 	implementor->get_algorithm()->place_cell_location_probability(
@@ -262,21 +264,22 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 		implementor->get_algorithm()->restrict_to_reachable_locations(
 			handle->batch_size, handle->stimulus_size,
 			handle->rows, handle->cols,
-			handle->radius, handle->scale,
+			handle->radius, handle->scale, handle->seed,
 			handle->x_grid->get_elements(), handle->x_grid->get_rows(), handle->x_grid->get_cols(), handle->x_grid->get_stride(),
 			handle->y_grid->get_elements(), handle->y_grid->get_rows(), handle->y_grid->get_cols(), handle->y_grid->get_stride(),
 			(const float **)handle->batched_current_position->get_elements(), handle->batched_current_position->get_rows(), handle->batched_current_position->get_cols(), handle->batched_current_position->get_strides(),
 			handle->batched_x_grid_centered2->get_elements(), handle->batched_x_grid_centered2->get_rows(), handle->batched_x_grid_centered2->get_cols(), handle->batched_x_grid_centered2->get_strides(),
 			handle->batched_y_grid_centered2->get_elements(), handle->batched_y_grid_centered2->get_rows(), handle->batched_y_grid_centered2->get_cols(), handle->batched_y_grid_centered2->get_strides(),
 			handle->batched_next_location_probability->get_elements(), handle->batched_next_location_probability->get_rows(), handle->batched_next_location_probability->get_cols(), handle->batched_next_location_probability->get_strides());
+		handle->seed += handle->rows * handle->cols;
 	}
 
-	/*std::size_t location_matrices;
+	std::size_t location_matrices;
 	std::vector<std::size_t> location_rows, location_cols;
 	std::vector<float> location_elements;
 
 	handle->batched_next_location_probability->to(location_elements, location_matrices, location_rows, location_cols);
-	cv::Mat location(location_matrices * location_rows[0], location_cols[0], CV_32F, location_elements.data());*/
+	cv::Mat location(location_matrices * location_rows[0], location_cols[0], CV_32F, location_elements.data());
 #if 1
 	implementor->get_algorithm()->select_most_probable_location(handle->batch_size, handle->rows, handle->cols,
 		handle->x_grid->get_elements(), handle->x_grid->get_rows(), handle->x_grid->get_cols(), handle->x_grid->get_stride(),
@@ -314,10 +317,10 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 	handle->batched_predicted_position->to(predicted_position, predicted_position_matrices, predicted_position_rows, predicted_position_cols);
 	//std::cout << __FUNCTION__ << " current position " << current_position[0] << ", " << current_position[1] << std::endl;
 	//std::cout << __FUNCTION__ << " predicted position " << predicted_position[0] << ", " << predicted_position[1] << std::endl;
-	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::POSITION>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::POSITION>(handle->batched_predicted_position));
+	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::POSITION>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::POSITION>(handle->batched_predicted_position, payload.get_trial(), payload.get_evaluation()));
 
 
-	handle->on_predicted_position(predicted_position, predicted_position_matrices, predicted_position_cols[0]);
+	handle->on_predicted_position(payload.get_trial(), payload.get_evaluation(), predicted_position, predicted_position_matrices, predicted_position_cols[0]);
 
 
 }
@@ -368,11 +371,11 @@ void TRN::Loop::SpatialFilter::visit(std::shared_ptr<TRN::Core::Message::Payload
 	payload->set_flops_per_cycle(flops_per_cycle);
 }
 
-std::shared_ptr<TRN::Loop::SpatialFilter> TRN::Loop::SpatialFilter::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &batch_size, const std::size_t &stimulus_size,
-	const std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
-	std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
-	const std::function<void(const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
-	std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
+std::shared_ptr<TRN::Loop::SpatialFilter> TRN::Loop::SpatialFilter::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
+	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
+	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
+	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
+	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
 	const std::size_t &rows, const std::size_t &cols,
 	const std::pair<float, float> &x, const std::pair<float, float> &y,
 	const std::vector<float> &response,
@@ -381,5 +384,5 @@ std::shared_ptr<TRN::Loop::SpatialFilter> TRN::Loop::SpatialFilter::create(const
 	const float &scale,
 	const std::string &tag)
 {
-	return std::make_shared<TRN::Loop::SpatialFilter>(driver, batch_size, stimulus_size, predicted_position, estimated_position, predicted_stimulus, perceived_stimulus, rows, cols, x, y, response, sigma,radius, scale,tag);
+	return std::make_shared<TRN::Loop::SpatialFilter>(driver, batch_size, stimulus_size, seed, predicted_position, estimated_position, predicted_stimulus, perceived_stimulus, rows, cols, x, y, response, sigma,radius, scale,tag);
 }

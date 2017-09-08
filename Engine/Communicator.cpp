@@ -101,7 +101,8 @@ template TRN::Engine::Message<TRN::Engine::Tag::FEEDFORWARD_WEIGHTS> TRN::Engine
 template TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_WEIGHTS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::RECURRENT_WEIGHTS>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::FEEDBACK_WEIGHTS>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::READOUT_WEIGHTS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::READOUT_WEIGHTS>(const int &destination);
-template TRN::Engine::Message<TRN::Engine::Tag::SCHEDULING_REQUEST> TRN::Engine::Communicator::receive<TRN::Engine::Tag::SCHEDULING_REQUEST>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::MUTATOR_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::MUTATOR_CUSTOM>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::SCHEDULER_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::SCHEDULER_CUSTOM>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::FEEDFORWARD_DIMENSIONS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::FEEDFORWARD_DIMENSIONS>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_DIMENSIONS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::RECURRENT_DIMENSIONS>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_DIMENSIONS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::FEEDBACK_DIMENSIONS>(const int &destination);
@@ -173,7 +174,8 @@ template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::En
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_WEIGHTS> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::READOUT_WEIGHTS> &message, const int &destination);
-template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::SCHEDULING_REQUEST> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::MUTATOR_CUSTOM> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::SCHEDULER_CUSTOM> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::FEEDFORWARD_DIMENSIONS> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_DIMENSIONS> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_DIMENSIONS> &message, const int &destination);

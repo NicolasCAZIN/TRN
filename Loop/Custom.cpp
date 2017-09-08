@@ -6,18 +6,18 @@
 class TRN::Loop::Custom::Handle
 {
 public :
-	std::function<void(const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> request;
+	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> request;
 };
 
 TRN::Loop::Custom::Custom(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &batch_size, const std::size_t &stimulus_size,
-	const std::function<void(const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
-	std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply
+	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
+	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply
 	) :
 	TRN::Core::Loop(driver, batch_size, stimulus_size),
 	handle(std::make_unique<Handle>())
 {
 	handle->request = request;
-	reply = [this](const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
+	reply = [this](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
 	{
 		assert(rows == TRN::Core::Loop::handle->batch_size);
 		for (std::size_t batch = 0; batch < TRN::Core::Loop::handle->batch_size; batch++)
@@ -48,7 +48,7 @@ void TRN::Loop::Custom::update(const TRN::Core::Message::Payload<TRN::Core::Mess
 	assert(std::all_of(cols.begin(), cols.end(), [&](const std::size_t &c) { return c == cols[0]; }));
 
 	predicted->to(action, matrices, rows, cols);
-	handle->request(action, matrices, cols[0]);
+	handle->request(payload.get_trial(), payload.get_evaluation(), action, matrices, cols[0]);
 }
 
 void TRN::Loop::Custom::visit(std::shared_ptr<TRN::Core::Message::Payload<TRN::Core::Message::FLOPS>> &payload)
@@ -58,8 +58,8 @@ void TRN::Loop::Custom::visit(std::shared_ptr<TRN::Core::Message::Payload<TRN::C
 }
 
 std::shared_ptr<TRN::Loop::Custom> TRN::Loop::Custom::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &batch_size, const std::size_t &stimulus_size,
-	const std::function<void(const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &prediction,
-	std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &stimulus)
+	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &prediction,
+	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &stimulus)
 {
 	return std::make_shared<TRN::Loop::Custom>(driver, batch_size, stimulus_size, prediction, stimulus);
 }

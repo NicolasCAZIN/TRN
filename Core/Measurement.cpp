@@ -57,7 +57,7 @@ void TRN::Core::Measurement::Abstraction::set_expected(const std::shared_ptr<TRN
 	handle->stored = 0;
 }
 
-void TRN::Core::Measurement::Abstraction::on_update(const std::shared_ptr<TRN::Core::Batch> &predicted)
+void TRN::Core::Measurement::Abstraction::on_update(const std::size_t &trial, const std::size_t &evaluation, const std::shared_ptr<TRN::Core::Batch> &predicted)
 {
 	if (handle->stored < handle->expected_generations)
 	{
@@ -71,7 +71,7 @@ void TRN::Core::Measurement::Abstraction::on_update(const std::shared_ptr<TRN::C
 	handle->stored++;
 	if (handle->stored == handle->measurable_generations)
 	{
-		implementor->compute(handle->primed, handle->batched_predicted, handle->expected, handle->error);
+		implementor->compute(trial, evaluation, handle->primed, handle->batched_predicted, handle->expected, handle->error);
 	
 	}
 	else if (handle->stored == handle->expected_generations)

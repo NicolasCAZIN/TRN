@@ -4,26 +4,27 @@
 class TRN::Scheduler::Custom::Handle
 {
 public:
-	std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> request;
+	unsigned long seed;
+	std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> request;
 	std::string tag;
 };
 
-TRN::Scheduler::Custom::Custom(const std::shared_ptr<TRN::Backend::Driver> &driver, 
-	const std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-	std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply,
+TRN::Scheduler::Custom::Custom(const unsigned long &seed,
+	const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply,
 	const std::string &tag) :
-	TRN::Core::Scheduler(driver),
 	handle(std::make_unique<TRN::Scheduler::Custom::Handle>())
 {
+	handle->seed = seed;
 	handle->tag = tag;
 	handle->request = request;
-	reply = [this](const std::vector<int> &offsets, const std::vector<int> &durations)
+	reply = [this](const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 	{
 		try
 		{
 			if (offsets.size() != durations.size())
 				throw std::invalid_argument("offsets and durations vectors must have the same length");
-			notify(TRN::Core::Scheduling::create(offsets, durations));
+			notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(trial, TRN::Core::Scheduling::create(offsets, durations)));
 		}
 		catch (std::exception &e)
 		{
@@ -50,7 +51,8 @@ void TRN::Scheduler::Custom::update(const TRN::Core::Message::Payload<TRN::Core:
 		batch->get_sequence()->to(elements, rows, cols);
 		batch->get_scheduling()->to(offsets, durations);
 
-		handle->request(elements, rows, cols, offsets, durations);
+		handle->request(handle->seed, payload.get_trial(), elements, rows, cols, offsets, durations);
+		handle->seed += offsets.size() * durations.size();
 	}
 	catch (std::exception &e)
 	{
@@ -58,10 +60,10 @@ void TRN::Scheduler::Custom::update(const TRN::Core::Message::Payload<TRN::Core:
 	}
 }
 
-std::shared_ptr<TRN::Scheduler::Custom> TRN::Scheduler::Custom::create(const std::shared_ptr<TRN::Backend::Driver> &driver,
-	const std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-	std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply,
+std::shared_ptr<TRN::Scheduler::Custom> TRN::Scheduler::Custom::create(const unsigned long &seed,
+	const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply,
 	const std::string &tag)
 {
-	return std::make_shared<TRN::Scheduler::Custom>(driver, request, reply, tag);
+	return std::make_shared<TRN::Scheduler::Custom>(seed, request, reply, tag);
 }

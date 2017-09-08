@@ -29,7 +29,8 @@ public:
 	std::shared_ptr<TRN::Core::Batch> batched_X_ro;
 	std::shared_ptr<TRN::Core::Batch> batched_W_ro;
 
-
+	std::size_t trial;
+	std::size_t evaluation;
 	std::size_t stimulus_size;
 	std::size_t reservoir_size;
 	std::size_t prediction_size;
@@ -44,7 +45,7 @@ public:
 
 	bool gather_states;
 
-	TRN::Helper::Queue<std::shared_ptr<TRN::Core::Batch>> prediction;
+	TRN::Helper::Queue<std::tuple<std::shared_ptr<TRN::Core::Batch>, size_t, size_t> > prediction;
 	
 	std::mutex mutex;
 	std::condition_variable end_of_test;

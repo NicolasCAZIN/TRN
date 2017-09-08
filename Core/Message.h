@@ -56,12 +56,14 @@ namespace TRN
 				class Handle;
 				mutable std::unique_ptr<Handle> handle;
 			public:
-				Payload(const std::shared_ptr<TRN::Core::Batch> &predicted);
+				Payload(const std::shared_ptr<TRN::Core::Batch> &predicted, const std::size_t &trial, const std::size_t &evaluation);
 				Payload(const  Payload<TRN::Core::Message::Type::PREDICTION> &payload);
 				~Payload();
 
 			public :
 				const std::shared_ptr<TRN::Core::Batch> get_predicted() const;
+				const std::size_t get_trial() const;
+				const std::size_t get_evaluation() const;
 			};
 
 			template <>
@@ -71,13 +73,14 @@ namespace TRN
 				class Handle;
 				mutable std::unique_ptr<Handle> handle;
 			public:
-				Payload(const std::shared_ptr<TRN::Core::Batch> &position);
+				Payload(const std::shared_ptr<TRN::Core::Batch> &position, const std::size_t &trial, const std::size_t &evaluation);
 				Payload(const  Payload<TRN::Core::Message::Type::POSITION> &payload);
 				~Payload();
 
 			public:
 				const std::shared_ptr<TRN::Core::Batch> get_position() const;
-			
+				const std::size_t get_trial() const;
+				const std::size_t get_evaluation() const;
 			};
 
 
@@ -239,11 +242,13 @@ namespace TRN
 				class Handle;
 				mutable std::unique_ptr<Handle> handle;
 			public:
-				Payload(const std::shared_ptr<TRN::Core::Scheduling> &scheduling);
+				Payload(const std::size_t &trial, const std::shared_ptr<TRN::Core::Scheduling> &scheduling);
 				Payload(const  Payload<TRN::Core::Message::Type::SCHEDULING> &payload);
 				~Payload();
 			public:
 				const std::shared_ptr<TRN::Core::Scheduling> get_scheduling() const;
+				const std::size_t get_trial() const;
+			
 			};
 
 			template <>
@@ -255,7 +260,8 @@ namespace TRN
 			public:
 				Payload(const std::string &label,
 						const std::string &incoming,
-						const std::string &expected);
+						const std::string &expected,
+						const std::size_t &trial);
 				Payload(const Payload<TRN::Core::Message::Type::SET> &ref);
 				~Payload();
 
@@ -263,6 +269,7 @@ namespace TRN
 				const std::string &get_label() const;
 				const std::string &get_incoming() const;
 				const std::string &get_expected() const;
+				const std::size_t &get_trial() const;
 			};
 
 			template <>

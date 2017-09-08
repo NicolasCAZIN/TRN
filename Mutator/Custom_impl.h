@@ -6,6 +6,7 @@
 class TRN::Mutator::Custom::Handle 
 {
 public :
-	std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> functor;
-	TRN::Helper::Queue<TRN::Core::Scheduling> queue;
+	unsigned long seed;
+	std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> functor;
+
 };

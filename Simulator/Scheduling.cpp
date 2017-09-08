@@ -2,7 +2,7 @@
 #include "Scheduling_impl.h"
 
 TRN::Simulator::Scheduling::Scheduling(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-	const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &functor) :
+	const std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor) :
 	TRN::Helper::Decorator<TRN::Core::Simulator>(decorated),
 	handle(std::make_unique<Handle>())
 {
@@ -12,11 +12,11 @@ TRN::Simulator::Scheduling::~Scheduling()
 {
 	handle.reset();
 }
+
 const std::vector<std::shared_ptr<TRN::Core::Mutator>> TRN::Simulator::Scheduling::get_mutators()
 {
 	return decorated->get_mutators();
 }
-
 
 const std::shared_ptr<TRN::Core::Reservoir> TRN::Simulator::Scheduling::get_reservoir()
 {
@@ -115,26 +115,26 @@ void  TRN::Simulator::Scheduling::update(const TRN::Core::Message::Payload<TRN::
 	std::vector<int> offsets, durations;
 
 	payload.get_scheduling()->to(offsets, durations);
-	handle->functor(offsets, durations);
+	handle->functor(get_reservoir()->get_trial(), offsets, durations);
 }
 
 void  TRN::Simulator::Scheduling::update(const TRN::Core::Message::Payload<TRN::Core::Message::TESTED> &payload)
 {
-	//decorated->TRN::Helper::Observer<TRN::Core::Message::Payload<TRN::Core::Message::TESTED>>::update(payload);
+
 }
 void  TRN::Simulator::Scheduling::update(const TRN::Core::Message::Payload<TRN::Core::Message::PRIMED> &payload)
 {
-	//decorated->TRN::Helper::Observer<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::update(payload);
+	
 }
 void  TRN::Simulator::Scheduling::update(const TRN::Core::Message::Payload<TRN::Core::Message::TRAINED> &payload)
 {
-//	decorated->TRN::Helper::Observer<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>::update(payload);
+
 }
 
 
 
 std::shared_ptr<TRN::Simulator::Scheduling> TRN::Simulator::Scheduling::create(const std::shared_ptr<TRN::Core::Simulator> decorated,
-	const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
+	const std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
 {
 	return std::make_shared<TRN::Simulator::Scheduling>(decorated, functor);
 }

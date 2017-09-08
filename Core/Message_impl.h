@@ -11,11 +11,15 @@ public:
 class TRN::Core::Message::Payload<TRN::Core::Message::PREDICTION>::Handle
 {
 public:
+	std::size_t trial;
+	std::size_t evaluation;
 	std::shared_ptr<TRN::Core::Batch> predicted;
 };
 class TRN::Core::Message::Payload<TRN::Core::Message::POSITION>::Handle
 {
 public:
+	std::size_t trial;
+	std::size_t evaluation;
 	std::shared_ptr<TRN::Core::Batch> position;
 };
 class TRN::Core::Message::Payload<TRN::Core::Message::PERFORMANCES>::Handle
@@ -76,6 +80,7 @@ public:
 class TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>::Handle
 {
 public:
+	std::size_t trial;
 	std::shared_ptr<TRN::Core::Scheduling> scheduling;
 };
 
@@ -85,6 +90,7 @@ public:
 	std::string incoming;
 	std::string expected;
 	std::string label;
+	std::size_t trial;
 };
 
 class TRN::Core::Message::Payload<TRN::Core::Message::TEST>::Handle

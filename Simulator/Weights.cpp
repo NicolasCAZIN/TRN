@@ -2,7 +2,7 @@
 #include "Weights_impl.h"
 
 TRN::Simulator::Weights::Weights(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-	const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &initialization, const bool &train) :
+	const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &initialization, const bool &train) :
 	TRN::Helper::Decorator<TRN::Core::Simulator>(decorated),
 	handle(std::make_unique<Handle>())
 {
@@ -16,6 +16,7 @@ TRN::Simulator::Weights::~Weights()
 {
 	handle.reset();
 }
+
 const std::vector<std::shared_ptr<TRN::Core::Mutator>> TRN::Simulator::Weights::get_mutators()
 {
 	return decorated->get_mutators();
@@ -105,32 +106,33 @@ void TRN::Simulator::Weights::initialize()
 	{
 		TRN::Core::Simulator::initialize();
 		
-		std::vector<float> feedforward_data;
-		std::size_t feedforward_rows;
-		std::size_t feedforward_cols;
-//		handle->weights->get_feedforward()->to(feedforward_data, feedforward_rows, feedforward_cols);
+		for (std::size_t batch = 0; batch < decorated->get_reservoir()->get_batch_size(); batch++)
+		{
+			std::vector<float> feedforward_data;
+			std::size_t feedforward_rows;
+			std::size_t feedforward_cols;
+			handle->weights->get_feedforward()->get_matrices(batch)->to(feedforward_data, feedforward_rows, feedforward_cols);
+			handle->functor("INITIALIZATION", "feedforward", batch, get_reservoir()->get_trial(), feedforward_data, feedforward_rows, feedforward_cols);
 
-		std::vector<float> recurrent_data;
-		std::size_t recurrent_rows;
-		std::size_t recurrent_cols;
-		//handle->weights->get_recurrent()->to(recurrent_data, recurrent_rows, recurrent_cols);
+			std::vector<float> recurrent_data;
+			std::size_t recurrent_rows;
+			std::size_t recurrent_cols;
+			handle->weights->get_recurrent()->get_matrices(batch)->to(recurrent_data, recurrent_rows, recurrent_cols);
+			handle->functor("INITIALIZATION", "recurrent", batch, get_reservoir()->get_trial(), recurrent_data, recurrent_rows, recurrent_cols);
 
-		std::vector<float> feedback_data;
-		std::size_t feedback_rows;
-		std::size_t feedback_cols;
-		//handle->weights->get_feedback()->to(feedback_data, feedback_rows, feedback_cols);
+			std::vector<float> feedback_data;
+			std::size_t feedback_rows;
+			std::size_t feedback_cols;
+			handle->weights->get_feedback()->get_matrices(batch)->to(feedback_data, feedback_rows, feedback_cols);
+			handle->functor("INITIALIZATION", "feedback", batch, get_reservoir()->get_trial(), feedback_data, feedback_rows, feedback_cols);
 
-		std::vector<float> readout_data;
-		std::size_t readout_rows;
-		std::size_t readout_cols;
-		//handle->weights->get_readout()->to(readout_data, readout_rows, readout_cols);
-
-		decorated->get_reservoir()->synchronize();
-
-		handle->functor("INITIALIZATION", "feedforward", feedforward_data, feedforward_rows, feedforward_cols);
-		handle->functor("INITIALIZATION", "recurrent", recurrent_data, recurrent_rows, recurrent_cols);
-		handle->functor("INITIALIZATION", "feedback", feedback_data, feedback_rows, feedback_cols);
-		handle->functor("INITIALIZATION", "readout", readout_data, readout_rows, readout_cols);
+			std::vector<float> readout_data;
+			std::size_t readout_rows;
+			std::size_t readout_cols;
+			handle->weights->get_readout()->get_matrices(batch)->to(readout_data, readout_rows, readout_cols);
+			handle->functor("INITIALIZATION", "readout", batch, get_reservoir()->get_trial(), readout_data, readout_rows, readout_cols);
+		}
+	
 	}
 
 }
@@ -141,6 +143,7 @@ void TRN::Simulator::Weights::uninitialize()
 
 void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING> &payload)
 {
+
 }
 
 void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Core::Message::TESTED> &payload)
@@ -152,17 +155,17 @@ void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Cor
 }
 void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Core::Message::TRAINED> &payload)
 {
+
 	if (handle->train)
 	{
-		std::vector<float> readout_data;
-		std::size_t readout_pages;
-		std::vector<std::size_t> readout_rows;
-		std::vector<std::size_t> readout_cols;
-		handle->weights->get_readout()->to(readout_data, readout_pages, readout_rows, readout_cols);
-
-		decorated->get_reservoir()->synchronize();
-
-		//handle->functor("TRAIN", "readout", readout_data, readout_rows, readout_cols);
+		for (std::size_t batch = 0; batch < decorated->get_reservoir()->get_batch_size(); batch++)
+		{
+			std::vector<float> readout_data;
+			std::size_t readout_rows;
+			std::size_t readout_cols;
+			handle->weights->get_readout()->get_matrices(batch)->to(readout_data,  readout_rows, readout_cols);
+			handle->functor("TRAIN", "readout", batch, get_reservoir()->get_trial(), readout_data, readout_rows, readout_cols);
+		}
 	}
 }
 
@@ -173,7 +176,7 @@ void TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Core
 }
 
 std::shared_ptr<TRN::Simulator::Weights> TRN::Simulator::Weights::create(const std::shared_ptr<TRN::Core::Simulator> decorated,
-	const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,const bool &initialization, const bool &train)
+	const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,const bool &initialization, const bool &train)
 {
 	return std::make_shared<TRN::Simulator::Weights>(decorated, functor, initialization, train);
 }

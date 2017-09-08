@@ -1,12 +1,13 @@
 #include "stdafx.h"
 #include "Punch_impl.h"
 
-TRN::Mutator::Punch::Punch(const float &rate, const std::size_t &size, const std::size_t &number) :
+TRN::Mutator::Punch::Punch(const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &number) :
 	handle(std::make_unique<Handle>())
 {
 	handle->rate = rate;
 	handle->size = size;
 	handle->number = number;
+	handle->seed = seed;
 }
 
 TRN::Mutator::Punch::~Punch()
@@ -18,8 +19,8 @@ TRN::Mutator::Punch::~Punch()
 
 void TRN::Mutator::Punch::update(const TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING> &payload)
 {
+	std::default_random_engine engine(handle->seed);
 	std::vector<std::vector<int>> indices;
-	std::default_random_engine engine;
 	std::uniform_real_distribution<float> rate_distribution(0.0f, 1.0f);
 
 	auto rate_dice = std::bind(rate_distribution, engine);
@@ -41,11 +42,12 @@ void TRN::Mutator::Punch::update(const TRN::Core::Message::Payload<TRN::Core::Me
 			}
 		}
 	});
+	handle->seed += payload.get_scheduling()->get_offsets().size() *  payload.get_scheduling()->get_durations().size();
 
-	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(TRN::Core::Scheduling::create(indices)));
+	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_trial(), TRN::Core::Scheduling::create(indices)));
 }
 
-std::shared_ptr<TRN::Mutator::Punch> TRN::Mutator::Punch::create(const float &rate, const std::size_t &size, const std::size_t &number)
+std::shared_ptr<TRN::Mutator::Punch> TRN::Mutator::Punch::create(const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &number)
 {
-	return std::make_shared<TRN::Mutator::Punch>(rate, size, number);
+	return std::make_shared<TRN::Mutator::Punch>(seed, rate, size, number);
 }

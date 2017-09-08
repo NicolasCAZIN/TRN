@@ -20,15 +20,19 @@ const std::shared_ptr<TRN::Core::Batch> TRN::Core::Message::Payload<TRN::Core::M
 	return handle->stimulus;
 }
 
-TRN::Core::Message::Payload<TRN::Core::Message::Type::PREDICTION>::Payload(const std::shared_ptr<TRN::Core::Batch> &predicted) :
+TRN::Core::Message::Payload<TRN::Core::Message::Type::PREDICTION>::Payload(const std::shared_ptr<TRN::Core::Batch> &predicted, const std::size_t &trial, const std::size_t &evaluation) :
 	handle(std::make_unique<Handle>())
 {
+	handle->trial = trial;
+	handle->evaluation = evaluation;
 	handle->predicted = predicted;
 }
 TRN::Core::Message::Payload<TRN::Core::Message::Type::PREDICTION>::Payload(const Payload<TRN::Core::Message::Type::PREDICTION> &ref) :
 	handle(std::make_unique<Handle>())
 {
 	handle->predicted = ref.handle->predicted;
+	handle->trial = ref.handle->trial;
+	handle->evaluation = ref.handle->evaluation;
 }
 
 TRN::Core::Message::Payload<TRN::Core::Message::Type::PREDICTION>::~Payload()
@@ -41,16 +45,39 @@ const std::shared_ptr<TRN::Core::Batch> TRN::Core::Message::Payload<TRN::Core::M
 	return handle->predicted;
 }
 
+const std::size_t TRN::Core::Message::Payload<TRN::Core::Message::Type::PREDICTION>::get_trial() const
+{
+	return handle->trial;
+}
 
-TRN::Core::Message::Payload<TRN::Core::Message::Type::POSITION>::Payload(const std::shared_ptr<TRN::Core::Batch> &position) :
+const std::size_t TRN::Core::Message::Payload<TRN::Core::Message::Type::PREDICTION>::get_evaluation() const
+{
+	return handle->evaluation;
+}
+
+TRN::Core::Message::Payload<TRN::Core::Message::Type::POSITION>::Payload(const std::shared_ptr<TRN::Core::Batch> &position, const std::size_t &trial, const std::size_t &evaluation) :
 	handle(std::make_unique<Handle>())
 {
+	handle->trial = trial;
+	handle->evaluation = evaluation;
 	handle->position = position;
 }
 TRN::Core::Message::Payload<TRN::Core::Message::Type::POSITION>::Payload(const Payload<TRN::Core::Message::Type::POSITION> &ref) :
 	handle(std::make_unique<Handle>())
 {
 	handle->position = ref.handle->position;
+	handle->trial = ref.handle->trial;
+	handle->evaluation = ref.handle->evaluation;
+}
+
+const std::size_t TRN::Core::Message::Payload<TRN::Core::Message::Type::POSITION>::get_trial() const
+{
+	return handle->trial;
+}
+
+const std::size_t TRN::Core::Message::Payload<TRN::Core::Message::Type::POSITION>::get_evaluation() const
+{
+	return handle->evaluation;
 }
 
 TRN::Core::Message::Payload<TRN::Core::Message::Type::POSITION>::~Payload()
@@ -354,15 +381,19 @@ void TRN::Core::Message::Payload<TRN::Core::Message::Type::FLOPS>::set_flops_per
 	handle->flops_per_cycle = flops_per_cycle;
 }
 
-TRN::Core::Message::Payload<TRN::Core::Message::Type::SCHEDULING>::Payload(const std::shared_ptr<TRN::Core::Scheduling> &scheduling) :
+TRN::Core::Message::Payload<TRN::Core::Message::Type::SCHEDULING>::Payload( const std::size_t &trial, const std::shared_ptr<TRN::Core::Scheduling> &scheduling) :
 	handle(std::make_unique<Handle>())
 {
 	handle->scheduling = scheduling;
+	handle->trial = trial;
+
 }
 TRN::Core::Message::Payload<TRN::Core::Message::Type::SCHEDULING>::Payload(const Payload<TRN::Core::Message::Type::SCHEDULING> &ref) :
 	handle(std::make_unique<Handle>())
 {
 	handle->scheduling = ref.handle->scheduling;
+	handle->trial = ref.handle->trial;
+
 }
 
 TRN::Core::Message::Payload<TRN::Core::Message::Type::SCHEDULING>::~Payload()
@@ -374,13 +405,18 @@ const std::shared_ptr<TRN::Core::Scheduling> TRN::Core::Message::Payload<TRN::Co
 	return handle->scheduling;
 }
 
+const std::size_t TRN::Core::Message::Payload<TRN::Core::Message::Type::SCHEDULING>::get_trial() const
+{
+	return handle->trial;
+}
 
-TRN::Core::Message::Payload<TRN::Core::Message::Type::SET>::Payload(const std::string &label, const std::string &incoming, const std::string &expected) :
+TRN::Core::Message::Payload<TRN::Core::Message::Type::SET>::Payload(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &trial) :
 	handle(std::make_unique<Handle>())
 {
 	handle->label = label;
 	handle->incoming = incoming;
 	handle->expected = expected;
+	handle->trial = trial;
 }
 
 TRN::Core::Message::Payload<TRN::Core::Message::Type::SET>::Payload(const Payload<TRN::Core::Message::Type::SET> &ref) :
@@ -389,6 +425,7 @@ TRN::Core::Message::Payload<TRN::Core::Message::Type::SET>::Payload(const Payloa
 	handle->label = ref.handle->label;
 	handle->incoming = ref.handle->incoming;
 	handle->expected = ref.handle->expected;
+	handle->trial = ref.handle->trial;
 }
 TRN::Core::Message::Payload<TRN::Core::Message::Type::SET>::~Payload()
 {
@@ -407,7 +444,10 @@ const std::string &TRN::Core::Message::Payload<TRN::Core::Message::Type::SET>::g
 {
 	return handle->expected;
 }
-
+const std::size_t &TRN::Core::Message::Payload<TRN::Core::Message::Type::SET>::get_trial() const
+{
+	return handle->trial;
+}
 TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::Payload(const std::string &label, const std::size_t &preamble, const std::size_t &supplementary_generations) :
 	handle(std::make_unique<Handle>())
 {

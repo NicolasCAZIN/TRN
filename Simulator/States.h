@@ -18,7 +18,7 @@ namespace TRN
 
 		public:
 			States(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-					const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
+					const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
 				const bool &train, const bool &prime, const bool &generate);
 			~States();
 		public:
@@ -29,6 +29,7 @@ namespace TRN
 			virtual const std::shared_ptr<TRN::Core::Loop> get_loop() override;
 			virtual const std::shared_ptr<TRN::Core::Scheduler> get_scheduler() override;
 			virtual const std::vector<std::shared_ptr<TRN::Core::Mutator>> get_mutators() override;
+		
 		public:
 			virtual void set_feedforward(const std::shared_ptr<TRN::Core::Initializer> &feedforward) override;
 			virtual void set_recurrent(const std::shared_ptr<TRN::Core::Initializer> &recurrent) override;
@@ -59,7 +60,7 @@ namespace TRN
 
 		public:
 			static std::shared_ptr<States> create(const std::shared_ptr<TRN::Core::Simulator> decorated,
-				const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
+				const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
 				const bool &train, const bool &prime, const bool &generate);
 		};
 	};

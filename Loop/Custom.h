@@ -18,8 +18,8 @@ namespace TRN
 
 		public:
 			Custom(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &batch_size, const std::size_t &stimulus_size,
-				const std::function<void(const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &prediction,
-				std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &stimulus);
+				const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &prediction,
+				std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &stimulus);
 			virtual ~Custom();
 
 		public:
@@ -27,8 +27,8 @@ namespace TRN
 			virtual void visit(std::shared_ptr<TRN::Core::Message::Payload<TRN::Core::Message::FLOPS>> &payload) override;
 		public:
 			static std::shared_ptr<Custom> create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &batch_size, const std::size_t &stimulus_size,
-				const std::function<void(const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &prediction,
-				std::function<void(const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &stimulus);
+				const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &prediction,
+				std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &stimulus);
 		};
 	};
 };

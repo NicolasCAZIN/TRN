@@ -19,7 +19,7 @@ namespace TRN
 				virtual ~Implementation();
 
 			public:
-				virtual void compute(const std::shared_ptr<TRN::Core::Matrix> &primed, const std::shared_ptr<TRN::Core::Batch> &predicted, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Matrix> &error) = 0;
+				virtual void compute(const std::size_t &trial, const std::size_t &evaluation, const std::shared_ptr<TRN::Core::Matrix> &primed, const std::shared_ptr<TRN::Core::Batch> &predicted, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Matrix> &error) = 0;
 			};
 
 			class CORE_EXPORT Abstraction :
@@ -42,7 +42,7 @@ namespace TRN
 			protected:
 	
 				void set_expected(const std::shared_ptr<TRN::Core::Matrix> &expected);
-				void on_update(const std::shared_ptr<TRN::Core::Batch> &predicted);
+				void on_update(const std::size_t &trial, const std::size_t &evaluation, const std::shared_ptr<TRN::Core::Batch> &predicted);
 
 			};
 		};

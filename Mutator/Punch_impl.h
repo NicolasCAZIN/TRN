@@ -8,4 +8,5 @@ public:
 	float rate;
 	std::size_t size;
 	std::size_t number;
+	unsigned long seed;
 };

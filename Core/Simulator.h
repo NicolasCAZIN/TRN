@@ -32,7 +32,7 @@ namespace TRN
 			virtual const std::shared_ptr<TRN::Core::Loop> get_loop() = 0;
 			virtual const std::shared_ptr<TRN::Core::Scheduler> get_scheduler() = 0;
 			virtual const std::vector<std::shared_ptr<TRN::Core::Mutator>> get_mutators() = 0;
-
+	
 		public:
 			virtual void set_feedforward(const std::shared_ptr<TRN::Core::Initializer> &feedforward) = 0;
 			virtual void set_recurrent(const std::shared_ptr<TRN::Core::Initializer> &recurrent) = 0;

@@ -14,9 +14,9 @@ namespace TRN
 			std::unique_ptr<Handle> handle;
 
 		public:
-			Custom(const std::shared_ptr<TRN::Backend::Driver> &driver, 
-				const std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-				std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply,
+			Custom(const unsigned long &seed,
+				const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+				std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply,
 				const std::string &tag);
 			~Custom();
 
@@ -25,9 +25,9 @@ namespace TRN
 			
 
 		public:
-			static std::shared_ptr<Custom> create(const std::shared_ptr<TRN::Backend::Driver> &driver, 
-				const std::function<void(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-				std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply, const std::string &tag);
+			static std::shared_ptr<Custom> create(const unsigned long &seed,
+				const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+				std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply, const std::string &tag);
 		};
 
 	};

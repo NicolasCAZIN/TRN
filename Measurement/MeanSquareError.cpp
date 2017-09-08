@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "MeanSquareError_impl.h"
 
-TRN::Measurement::MeanSquareError::MeanSquareError(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor) :
+TRN::Measurement::MeanSquareError::MeanSquareError(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor) :
 	TRN::Core::Measurement::Implementation(driver),
 	handle(std::make_unique<Handle>())
 {
@@ -9,7 +9,7 @@ TRN::Measurement::MeanSquareError::MeanSquareError(const std::shared_ptr<TRN::Ba
 }
 #include <iostream>
 #include <algorithm>
-void TRN::Measurement::MeanSquareError::compute(const std::shared_ptr<TRN::Core::Matrix> &primed, const std::shared_ptr<TRN::Core::Batch> &predicted, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Matrix> &error)
+void TRN::Measurement::MeanSquareError::compute(const std::size_t &trial, const std::size_t &evaluation, const std::shared_ptr<TRN::Core::Matrix> &primed, const std::shared_ptr<TRN::Core::Batch> &predicted, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Matrix> &error)
 {
 	std::vector<float> error_values;
 	std::size_t error_rows;
@@ -25,10 +25,10 @@ void TRN::Measurement::MeanSquareError::compute(const std::shared_ptr<TRN::Core:
 
 
 	error->to(error_values, error_rows, error_cols);
-	handle->functor(error_values, error_rows, error_cols);
+	handle->functor(trial, evaluation, error_values, error_rows, error_cols);
 }
 
-std::shared_ptr<TRN::Measurement::MeanSquareError> TRN::Measurement::MeanSquareError::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+std::shared_ptr<TRN::Measurement::MeanSquareError> TRN::Measurement::MeanSquareError::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	return std::make_shared<TRN::Measurement::MeanSquareError>(driver, functor);
 }

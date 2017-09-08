@@ -10,14 +10,14 @@ std::shared_ptr<TRN::Simulator::Basic> TRN::Model::Simulator::Basic::create(cons
 
 
 std::shared_ptr<TRN::Simulator::States>  TRN::Model::Simulator::States::create(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-	const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
+	const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
 	const bool &train, const bool &prime, const bool &test)
 {
 	return TRN::Simulator::States::create(decorated, functor, train, prime, test);
 }
 
 std::shared_ptr<TRN::Simulator::Weights>  TRN::Model::Simulator::Weights::create(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-	const std::function<void(const std::string &phase, const std::string &label, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
+	const std::function<void(const std::string &phase, const std::string &label, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
 	const bool &train, const bool &initialization)
 {
 	return TRN::Simulator::Weights::create(decorated, functor, train, initialization);
@@ -29,7 +29,7 @@ std::shared_ptr<TRN::Simulator::Performances>  TRN::Model::Simulator::Performanc
 	return TRN::Simulator::Performances::create(decorated, functor, train, prime, test);
 }
 std::shared_ptr<TRN::Simulator::Scheduling>  TRN::Model::Simulator::Scheduling::create(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-	const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
+	const std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
 {
 	return TRN::Simulator::Scheduling::create(decorated, functor);
 }

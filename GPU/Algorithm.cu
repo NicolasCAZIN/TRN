@@ -1447,6 +1447,7 @@ static void inside_circle_kernel(
 	const int batch_size, const int rows, const int cols, const int location_probability_stride,
 	const float radius2,
 	const float scale,
+	const unsigned long seed,
 	const float   * __restrict__ x_grid,
 	const float   * __restrict__ y_grid,
 	const float ** __restrict__ batched_current_location,
@@ -1473,7 +1474,7 @@ static void inside_circle_kernel(
 				curandStatePhilox4_32_10_t state;
 		
 				// seed a random number generator
-				curand_init(col * rows + row + batch * rows * cols, 0, 0, &state);
+				curand_init(seed + col * rows + row + batch * rows * cols, 0, 0, &state);
 
 				p += curand_uniform4(&state) * scale;
 				float4 s;
@@ -1495,7 +1496,7 @@ void compute_reachable_locations(
 	const cudaStream_t &stream,
 	const cublasHandle_t &handle,
 	const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
-	const float &radius, const float &scale,
+	const float &radius, const float &scale, const unsigned long &seed,
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 	const float **batched_current_location, const std::size_t &batched_current_location_rows, const std::size_t &batched_current_location_cols, const std::size_t &batched_current_location_stride,
@@ -1513,10 +1514,9 @@ void compute_reachable_locations(
 	grid.y = (batched_location_probability_rows  + block.y - 1) / block.y;
 	grid.z = (batch_size + block.z - 1) / block.z;
 
-		inside_circle_kernel << <grid, block, 0, stream >> > (batch_size, rows, cols / 4, batched_location_probability_strides, radius * radius, scale,
+		inside_circle_kernel << <grid, block, 0, stream >> > (batch_size, rows, cols / 4, batched_location_probability_strides, radius * radius, scale, seed,
 			x_grid, y_grid, batched_current_location, batched_location_probability);
 		checkCudaErrors(cudaGetLastError());
-
 
 }
 

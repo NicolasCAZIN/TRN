@@ -14,14 +14,15 @@ namespace TRN
 			std::unique_ptr<Handle> handle;
 
 		public:
-			Custom(const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &request, std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply);
+			Custom(const unsigned long &seed, const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+				std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply);
 			virtual ~Custom();
 
 		public:
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING> &payload) override;
 
 		public :
-			static std::shared_ptr<Custom> create(const std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &request, std::function<void(const std::vector<int> &offsets, const std::vector<int> &durations)> &reply);
+			static std::shared_ptr<Custom> create(const unsigned long &seed, const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &request, std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply);
 		};
 	};
 };
