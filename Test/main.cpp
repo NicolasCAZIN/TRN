@@ -189,7 +189,7 @@ std::function<void(const float &x, const float &y, float *A)> place_cell_activat
 
 
 static const float RADIUS_THRESHOLD = 0.2f;
-static const float JITTER_ABS = 0.01f;
+static const float JITTER_ABS = 0.00f;
 
 
 inline float
@@ -572,9 +572,9 @@ static void position_frechet(const unsigned int &id, const std::size_t &trial, c
 #define X_TO_COL(x) ((((x) - GRID_X_MIN) / (GRID_X_MAX - GRID_X_MIN)) * (GRID_COLS - 1))
 #define Y_TO_ROW(y) (GRID_ROWS - 1 - (((y) - GRID_Y_MIN) / (GRID_Y_MAX - GRID_Y_MIN)) * (GRID_ROWS - 1))
 
-cv::Mat cv_accumulator(GRID_ROWS, GRID_COLS, CV_32F);
-cv::Mat cv_overall(GRID_ROWS, GRID_COLS, CV_32F);
-
+std::map<std::size_t, cv::Mat> cv_accumulator;// (GRID_ROWS, GRID_COLS, CV_32F);
+std::map<std::size_t, cv::Mat> cv_overall; //(GRID_ROWS, GRID_COLS, CV_32F);
+std::map<std::size_t, int> trajectories;
 static void position_custom(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)
 {
 	cv::Mat cv_expected(GRID_ROWS, GRID_COLS, CV_8UC3);
@@ -636,14 +636,16 @@ static void position_custom(const unsigned int &id, const std::size_t &trial, co
 	}
 	cv_predicted /= pages;
 
-	to_display.enqueue(std::make_pair("predcited, trial #" + std::to_string(trial), cv_predicted));
+	//to_display.enqueue(std::make_pair("predcited, trial #" + std::to_string(trial), cv_predicted));
 
 	{
 		std::unique_lock<std::mutex> lock;
 
-		cv_accumulator += cv_predicted;
-		cv::normalize(cv_accumulator, cv_overall, cv::NORM_MINMAX, 0.0f, 1.0f);
-		to_display.enqueue(std::make_pair("accumulated, trial #" + std::to_string(trial), cv_overall));
+		cv_accumulator[trial-1] += cv_predicted;
+		trajectories[trial-1]++;
+		cv_overall[trial-1] = cv_accumulator[trial-1] / trajectories[trial-1];
+		//cv::equalizeHist(cv_accumulator, cv_overall);
+		to_display.enqueue(std::make_pair("accumulated, trial #" + std::to_string(trial), cv_overall[trial-1]));
 	}
 
 }
@@ -730,8 +732,16 @@ int main(int argc, char *argv[])
 {
 	try
 	{
-	
-		cv_accumulator = 0.0f;
+		const size_t ID = 10;
+		const size_t TRIALS = 10;
+		const size_t WALKS = 10;
+		for (std::size_t trial = 0; trial < TRIALS; trial++)
+		{
+			cv_accumulator[trial] = cv::Mat(GRID_ROWS, GRID_COLS, CV_32F);
+			cv_accumulator[trial] = 0.0f;
+		}
+		
+
 		std::thread display([]() {
 
 			//std::cout << "waiting for q stroke" << std::endl;
@@ -762,7 +772,7 @@ int main(int argc, char *argv[])
 
 		auto pc_rows = GRID_ROWS;
 		auto pc_cols = GRID_COLS;
-		auto sigma = 0.1f;
+		auto sigma = 1.0f;
 
 
 		auto x = std::make_pair(GRID_X_MIN, GRID_X_MAX);
@@ -789,35 +799,33 @@ int main(int argc, char *argv[])
 
 		TRN4CPP::initialize_local(
 		{
-			0//,2,3,4
+			1,2,3,4,1,2,3,4
 			
 		});
 		//TRN4CPP::initialize_local();
 
-		const auto epochs = 1;
+		const auto epochs = 10;
 		
 		const auto reservoir_size = 1024;
 		const auto prediction_size = stimulus_size;
 		const auto leak_rate = 0.85f;
-		const auto learning_rate = 1.0f / reservoir_size;
+		const auto learning_rate = 0.1f / reservoir_size;
 		const auto initial_state_scale = 0.01f;
 		const auto radius =  0.3f;
-		const auto magnitude = 1e-9f;
+		const auto magnitude = 1e-6f;
 		//	auto observations = 130*5;
 		const auto snippet_size = 10;
 		const auto snippet_number = 20;
 		const auto time_budget = epochs * snippet_size * snippet_number;
 		const auto preamble = 10;
 		const auto supplementary = 0;
-		const auto batch_size = 2;
+		const auto batch_size = 10;
 
 		/*	for (int row = stimulus_size, col = 0; row < stimulus_size*2; row++, col++)
 			{
 				stimulus[row * stimulus_size + stimulus_size - col-1] = 1.0f;
 			}*/
-		const size_t ID = 1;
-		const size_t TRIALS = 1;
-		const size_t WALKS = 10;
+
 		std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
 		
 
@@ -833,7 +841,7 @@ int main(int argc, char *argv[])
 				TRN4CPP::configure_scheduler_snippets(id, seed, snippet_size, time_budget,  "REW");
 				//TRN4CPP::configure_scheduler_snippets(id, snippet_size, time_budget);
 				//TRN4CPP::configure_mutator_shuffle(id);
-				//TRN4CPP::configure_mutator_reverse(id, 1.0f, snippet_size/2);
+				TRN4CPP::configure_mutator_reverse(id, seed, 1.0f, snippet_size/2);
 
 				//TRN4CPP::configure_scheduler_tiled(id, epochs);
 
@@ -852,7 +860,7 @@ int main(int argc, char *argv[])
 				TRN4CPP::setup_performances(id, on_performances, true, true, true);
 				//TRN4CPP::setup_weights(id, on_weights);
 				//TRN4CPP::setup_states(id, on_states, false, false, true);
-				TRN4CPP::setup_scheduling(id, on_scheduling);
+				//TRN4CPP::setup_scheduling(id, on_scheduling);
 
 				/*TRN4CPP::configure_feedforward_custom(id, feedforward_request, feedforward_reply);
 				TRN4CPP::configure_feedback_custom(id, feedback_request, feedback_reply);

@@ -450,48 +450,57 @@ static inline void 	diff_square(const typename TRN::CPU::Traits<Implementation>:
 }
 
 template <TRN::CPU::Implementation Implementation>
-static inline void 	circle(const float *x_grid_centered2, const std::size_t &cols, const typename TRN::CPU::Traits<Implementation>::type &y2, const typename TRN::CPU::Traits<Implementation>::type &r2, float *location_probability_row)
+static inline void 	circle(VSLStreamStatePtr &stream, const float &scale, float *x_grid_centered2, const std::size_t &cols, const typename TRN::CPU::Traits<Implementation>::type &y2, const typename TRN::CPU::Traits<Implementation>::type &r2, float *location_probability_row)
 {
+	//	 vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 1000, r, 0.0, scale);
 	const auto __zero = setzero_ps();
 	std::size_t col = 0;
 
 	if (cols - col > _8)
 	{
+		float noise[8 * TRN::CPU::Traits<Implementation>::step];
 		for (; col + _8 - 1 < cols; col += _8)
 		{
-			stream_ps(&location_probability_row[col + _0], blendv_ps(__zero, load_ps(&location_probability_row[col + _0]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _0]), y2), r2, _CMP_LT_OQ)));
-			stream_ps(&location_probability_row[col + _1], blendv_ps(__zero, load_ps(&location_probability_row[col + _1]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _1]), y2), r2, _CMP_LT_OQ)));
-			stream_ps(&location_probability_row[col + _2], blendv_ps(__zero, load_ps(&location_probability_row[col + _2]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _2]), y2), r2, _CMP_LT_OQ)));
-			stream_ps(&location_probability_row[col + _3], blendv_ps(__zero, load_ps(&location_probability_row[col + _3]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _3]), y2), r2, _CMP_LT_OQ)));
-			stream_ps(&location_probability_row[col + _4], blendv_ps(__zero, load_ps(&location_probability_row[col + _4]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _4]), y2), r2, _CMP_LT_OQ)));
-			stream_ps(&location_probability_row[col + _5], blendv_ps(__zero, load_ps(&location_probability_row[col + _5]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _5]), y2), r2, _CMP_LT_OQ)));
-			stream_ps(&location_probability_row[col + _6], blendv_ps(__zero, load_ps(&location_probability_row[col + _6]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _6]), y2), r2, _CMP_LT_OQ)));
-			stream_ps(&location_probability_row[col + _7], blendv_ps(__zero, load_ps(&location_probability_row[col + _7]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _7]), y2), r2, _CMP_LT_OQ)));
+			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 8 * TRN::CPU::Traits<Implementation>::step, noise, 0.0, scale);
+			stream_ps(&location_probability_row[col + _0], blendv_ps(__zero, add_ps(load_ps(&noise[_0]), load_ps(&location_probability_row[col + _0])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _0]), y2), r2, _CMP_LT_OQ)));
+			stream_ps(&location_probability_row[col + _1], blendv_ps(__zero, add_ps(load_ps(&noise[_1]), load_ps(&location_probability_row[col + _1])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _1]), y2), r2, _CMP_LT_OQ)));
+			stream_ps(&location_probability_row[col + _2], blendv_ps(__zero, add_ps(load_ps(&noise[_2]), load_ps(&location_probability_row[col + _2])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _2]), y2), r2, _CMP_LT_OQ)));
+			stream_ps(&location_probability_row[col + _3], blendv_ps(__zero, add_ps(load_ps(&noise[_3]), load_ps(&location_probability_row[col + _3])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _3]), y2), r2, _CMP_LT_OQ)));
+			stream_ps(&location_probability_row[col + _4], blendv_ps(__zero, add_ps(load_ps(&noise[_4]), load_ps(&location_probability_row[col + _4])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _4]), y2), r2, _CMP_LT_OQ)));
+			stream_ps(&location_probability_row[col + _5], blendv_ps(__zero, add_ps(load_ps(&noise[_5]), load_ps(&location_probability_row[col + _5])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _5]), y2), r2, _CMP_LT_OQ)));
+			stream_ps(&location_probability_row[col + _6], blendv_ps(__zero, add_ps(load_ps(&noise[_6]), load_ps(&location_probability_row[col + _6])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _6]), y2), r2, _CMP_LT_OQ)));
+			stream_ps(&location_probability_row[col + _7], blendv_ps(__zero, add_ps(load_ps(&noise[_7]), load_ps(&location_probability_row[col + _7])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _7]), y2), r2, _CMP_LT_OQ)));
 		}
 	}
 	if (cols - col > _4)
 	{
+		float noise[4 * TRN::CPU::Traits<Implementation>::step];
 		for (; col + _4 - 1 < cols; col += _4)
 		{
-			stream_ps(&location_probability_row[col + _0], blendv_ps(__zero, load_ps(&location_probability_row[col + _0]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _0]), y2), r2, _CMP_LT_OQ)));
-			stream_ps(&location_probability_row[col + _1], blendv_ps(__zero, load_ps(&location_probability_row[col + _1]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _1]), y2), r2, _CMP_LT_OQ)));
-			stream_ps(&location_probability_row[col + _2], blendv_ps(__zero, load_ps(&location_probability_row[col + _2]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _2]), y2), r2, _CMP_LT_OQ)));
-			stream_ps(&location_probability_row[col + _3], blendv_ps(__zero, load_ps(&location_probability_row[col + _3]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _3]), y2), r2, _CMP_LT_OQ)));
+			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 4 * TRN::CPU::Traits<Implementation>::step, noise, 0.0, scale);
+			stream_ps(&location_probability_row[col + _0], blendv_ps(__zero, add_ps(load_ps(&noise[_0]), load_ps(&location_probability_row[col + _0])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _0]), y2), r2, _CMP_LT_OQ)));
+			stream_ps(&location_probability_row[col + _1], blendv_ps(__zero, add_ps(load_ps(&noise[_1]), load_ps(&location_probability_row[col + _1])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _1]), y2), r2, _CMP_LT_OQ)));
+			stream_ps(&location_probability_row[col + _2], blendv_ps(__zero, add_ps(load_ps(&noise[_2]), load_ps(&location_probability_row[col + _2])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _2]), y2), r2, _CMP_LT_OQ)));
+			stream_ps(&location_probability_row[col + _3], blendv_ps(__zero, add_ps(load_ps(&noise[_3]), load_ps(&location_probability_row[col + _3])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _3]), y2), r2, _CMP_LT_OQ)));
 		}
 	}
 	if (cols - col > _2)
 	{
+		float noise[2 * TRN::CPU::Traits<Implementation>::step];
 		for (; col + _2 - 1 < cols; col += _2)
 		{
-			stream_ps(&location_probability_row[col + _0], blendv_ps(__zero, load_ps(&location_probability_row[col + _0]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _0]), y2), r2, _CMP_LT_OQ)));
-			stream_ps(&location_probability_row[col + _1], blendv_ps(__zero, load_ps(&location_probability_row[col + _1]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _1]), y2), r2, _CMP_LT_OQ)));
+			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 2 * TRN::CPU::Traits<Implementation>::step, noise, 0.0, scale);
+			stream_ps(&location_probability_row[col + _0],  blendv_ps(__zero, add_ps(load_ps(&noise[_0]), load_ps(&location_probability_row[col + _0])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _0]), y2), r2, _CMP_LT_OQ)));
+			stream_ps(&location_probability_row[col + _1],  blendv_ps(__zero, add_ps(load_ps(&noise[_1]), load_ps(&location_probability_row[col + _1])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _1]), y2), r2, _CMP_LT_OQ)));
 		}
 	}
 	 if (cols - col > 0)
 	{
+		 float noise[1 * TRN::CPU::Traits<Implementation>::step];
 		for (; col  < cols; col += _1)
 		{
-			stream_ps(&location_probability_row[col + _0], blendv_ps(__zero, load_ps(&location_probability_row[col + _0]), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _0]), y2), r2, _CMP_LT_OQ)));
+			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 1 * TRN::CPU::Traits<Implementation>::step, noise, 0.0, scale);
+			stream_ps(&location_probability_row[col + _0], blendv_ps(__zero, add_ps(load_ps(&noise[_0]), load_ps(&location_probability_row[col + _0])), cmp_ps(add_ps(load_ps(&x_grid_centered2[col + _0]), y2), r2, _CMP_LT_OQ)));
 		}
 	}
 }
@@ -728,17 +737,22 @@ template <TRN::CPU::Implementation Implementation>
 		 diff_square<Implementation>(set1_ps(batched_current_location[batch][0]), x_grid, x_grid_cols, batched_x_grid_centered2[batch]);
 		 diff_square<Implementation>(set1_ps(batched_current_location[batch][1]), y_grid, y_grid_cols, batched_y_grid_centered2[batch]);
 	 }
-	 VSLStreamStatePtr stream;
-	 vslNewStream(&stream, VSL_BRNG_MT19937, seed);
+	 std::vector<VSLStreamStatePtr> streams(omp_get_max_threads());
+#pragma omp parallel for
+	 for (int tid = 0; tid < streams.size(); tid++)
+	 {
+		 vslNewStream(&streams[tid], VSL_BRNG_MT19937, seed);
+	 }
+
 	 
-	 float *r[1000];
-	 vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 1000, r, 0.0, scale);
-	
-	 vslDeleteStream(&stream);
+
+
+
 	 int K = batch_size * rows;
 #pragma omp parallel for
 	 for (int k = 0; k < K; k++)
 	 {
+		 auto tid = omp_get_thread_num();
 		 int batch = k % batch_size;
 		 int row = k / batch_size;
 
@@ -746,10 +760,15 @@ template <TRN::CPU::Implementation Implementation>
 		 auto location_probability_row = &batched_location_probability[batch][row * batched_location_probability_strides[batch]];
 		 auto y2 = batched_y_grid_centered2[batch][row];
 
-		 circle<Implementation>(batched_x_grid_centered2[batch], x_grid_cols, set1_ps(y2), set1_ps(r2), location_probability_row);
+		 circle<Implementation>(streams[tid], scale, batched_x_grid_centered2[batch], x_grid_cols, set1_ps(y2), set1_ps(r2), location_probability_row);
 
 	 }
 
+#pragma omp parallel for
+	 for (int tid = 0; tid < streams.size(); tid++)
+	 {
+		 vslDeleteStream(&streams[tid]);
+	 }
 
 }
 
