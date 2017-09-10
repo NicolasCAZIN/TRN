@@ -476,13 +476,13 @@ namespace TRN
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_PUNCH> : public Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE>
 		{
-			std::size_t number;
+			std::size_t repetition;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & boost::serialization::base_object<Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE>>(*this);
-				ar & number;
+				ar & repetition;
 			}
 		};
 		template<>

@@ -157,6 +157,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Backend.cpp" />
+    <ClCompile Include="Communicator.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -167,6 +168,8 @@
   <ItemGroup>
     <ClInclude Include="Backend.h" />
     <ClInclude Include="Backend_impl.h" />
+    <ClInclude Include="Communicator.h" />
+    <ClInclude Include="Communicator_impl.h" />
     <ClInclude Include="Connection_impl.h" />
     <ClInclude Include="remote_global.h" />
     <ClInclude Include="stdafx.h" />

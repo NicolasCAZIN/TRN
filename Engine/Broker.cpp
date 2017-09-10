@@ -1001,7 +1001,7 @@ void 	TRN::Engine::Broker::configure_mutator_punch(const unsigned int &id, const
 		message.seed = seed;
 		message.rate = rate;
 		message.size = size;
-		message.number = number;
+		message.repetition = number;
 		send(processor->get_rank(), message, [id]()
 		{
 			////PrintThread{} << "id " << id << " configure scheduler snippets acked" << std::endl;

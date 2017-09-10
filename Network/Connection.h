@@ -30,10 +30,7 @@ namespace TRN
 			void send(const unsigned int &id, const std::string &label, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols);
 			void send(const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations);
 
-		protected :
-			virtual void receive_command(const unsigned int &id, const std::vector<std::string> &command) = 0;
-			virtual void receive_matrix(const unsigned int &id, const std::string &label, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols) = 0;
-			virtual void receive_scheduling(const unsigned int &id, const std::vector<int> &offsets, const std::vector<int> &durations) = 0;
+	
 
 		private :
 			template<typename Data>

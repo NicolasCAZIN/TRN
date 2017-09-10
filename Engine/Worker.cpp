@@ -632,7 +632,7 @@ void TRN::Engine::Worker::receive()
 						auto message = unpack<TRN::Engine::CONFIGURE_MUTATOR_PUNCH>(locked, handle->rank, id, number);
 						if (handle->simulators.find(message.id) == handle->simulators.end())
 							throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Punch::create(message.seed, message.rate, message.size, message.number));
+						handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Punch::create(message.seed, message.rate, message.size, message.repetition));
 					}
 					break;
 					case TRN::Engine::CONFIGURE_MUTATOR_CUSTOM:

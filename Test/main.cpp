@@ -189,7 +189,7 @@ std::function<void(const float &x, const float &y, float *A)> place_cell_activat
 
 
 static const float RADIUS_THRESHOLD = 0.2f;
-static const float JITTER_ABS = 0.00f;
+static const float JITTER_ABS = 0.01f;
 
 
 inline float
@@ -683,7 +683,8 @@ static void on_scheduling(const unsigned int &id, const std::size_t &trial, cons
 	for (std::size_t t = 0; t < T; t++)
 	{
 		auto st = offsets[t];
-		chronogram.at<float>(t, st) = 1.0f;
+		if (st > 0)
+			chronogram.at<float>(t, st) = 1.0f;
 	}
 
 	to_display.enqueue(std::make_pair("scheduling for simulation #" + std::to_string(id) + ", trial #" + std::to_string(trial), chronogram));
@@ -799,12 +800,12 @@ int main(int argc, char *argv[])
 
 		TRN4CPP::initialize_local(
 		{
-			1,2,3,4,1,2,3,4
+			1,2,3,4
 			
 		});
 		//TRN4CPP::initialize_local();
 
-		const auto epochs = 10;
+		const auto epochs = 100;
 		
 		const auto reservoir_size = 1024;
 		const auto prediction_size = stimulus_size;
@@ -812,14 +813,14 @@ int main(int argc, char *argv[])
 		const auto learning_rate = 0.1f / reservoir_size;
 		const auto initial_state_scale = 0.01f;
 		const auto radius =  0.3f;
-		const auto magnitude = 1e-6f;
+		const auto magnitude = 1e-7f;
 		//	auto observations = 130*5;
 		const auto snippet_size = 10;
 		const auto snippet_number = 20;
 		const auto time_budget = epochs * snippet_size * snippet_number;
 		const auto preamble = 10;
 		const auto supplementary = 0;
-		const auto batch_size = 10;
+		const auto batch_size = 1;
 
 		/*	for (int row = stimulus_size, col = 0; row < stimulus_size*2; row++, col++)
 			{
@@ -840,9 +841,11 @@ int main(int argc, char *argv[])
 				TRN4CPP::configure_begin(id);
 				TRN4CPP::configure_scheduler_snippets(id, seed, snippet_size, time_budget,  "REW");
 				//TRN4CPP::configure_scheduler_snippets(id, snippet_size, time_budget);
+				
 				//TRN4CPP::configure_mutator_shuffle(id);
+				
+				TRN4CPP::configure_mutator_punch(id, seed, 1.0f, 2, 4);
 				TRN4CPP::configure_mutator_reverse(id, seed, 1.0f, snippet_size/2);
-
 				//TRN4CPP::configure_scheduler_tiled(id, epochs);
 
 				//TRN4CPP::configure_loop_copy(id, batch_size, stimulus_size);

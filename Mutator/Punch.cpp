@@ -32,10 +32,11 @@ void TRN::Mutator::Punch::update(const TRN::Core::Message::Payload<TRN::Core::Me
 		{
 			if (handle->size > v.size())
 				throw std::invalid_argument("size of sequence must be <= to " + std::to_string(handle->size));
-			std::uniform_int_distribution<std::size_t> rate_distribution(0, v.size() - handle->size);
+			auto offset_max = v.size() - handle->size;
+			std::uniform_int_distribution<std::size_t> offset_dice(0, offset_max);
 			for (std::size_t n = 0; n < handle->number; n++)
 			{
-				auto offset = rate_distribution(engine);
+				auto offset = offset_dice(engine);
 
 				std::transform(std::begin(v) + offset, std::begin(v) + offset + handle->size, std::begin(v) + offset, [](const int &x) { return -std::abs(x); });
 
