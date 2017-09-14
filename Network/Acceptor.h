@@ -14,8 +14,8 @@ namespace TRN
 			mutable std::unique_ptr<Handle> handle;
 
 		public :
-			Acceptor(const std::string &address, const std::string &port,
-				const std::function <const std::shared_ptr<TRN::Network::Connection>(boost::asio::ip::tcp::socket, const std::shared_ptr<TRN::Network::Manager>)> &create
+			Acceptor(const std::string &address, const  unsigned short &port,
+				const std::function <void(const std::shared_ptr<TRN::Network::Manager> &manager, const std::shared_ptr<TRN::Network::Connection> &connection)> &on_accept
 				);
 
 			~Acceptor();
@@ -28,8 +28,8 @@ namespace TRN
 			void await_stop();
 
 		public :
-			static std::shared_ptr<Acceptor> create(const std::string &address, const std::string &port,
-				const std::function <const std::shared_ptr<TRN::Network::Connection>(boost::asio::ip::tcp::socket, const std::shared_ptr<TRN::Network::Manager>)> &create
+			static std::shared_ptr<Acceptor> create(const std::string &address, const  unsigned short &port,
+				const std::function <void(const std::shared_ptr<TRN::Network::Manager> &manager, const std::shared_ptr<TRN::Network::Connection> &connection)> &on_accept
 				);
 		};
 	};

@@ -2,7 +2,7 @@
 #ifdef USE_VLD
 #include <vld.h>
 #endif 
-#include <functional>
+//#include <functional>
 #include <tuple>
 #include <string>
 #include <vector>
@@ -11,11 +11,15 @@
 #include <future>
 #include <iostream>
 #include <memory>
-#include <boost/signals2.hpp>
+#include <iomanip>
+#include <sstream>
+#include <set>
+
 #include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
-#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
+#include <boost/tuple/tuple.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>

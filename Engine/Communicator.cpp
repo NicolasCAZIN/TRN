@@ -5,9 +5,6 @@
 TRN::Engine::Communicator::Communicator() :
 	handle(std::make_unique<Handle>())
 {
-	boost::asio::io_service io_service;
-	boost::asio::ip::tcp::resolver resolver(io_service);
-
 	handle->host = boost::asio::ip::host_name();
 }
 

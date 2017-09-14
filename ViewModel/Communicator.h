@@ -2,7 +2,7 @@
 
 #include "viewmodel_global.h"
 #include "Engine/Communicator.h"
-
+#include "Remote/Communicator.h"
 namespace TRN
 {
 	namespace ViewModel
@@ -14,12 +14,12 @@ namespace TRN
 				std::shared_ptr<TRN::Engine::Communicator> VIEWMODEL_EXPORT  create(const std::list<unsigned int> &indexes);
 			};
 
-			/*namespace Remote
+			namespace Remote
 			{
-			std::shared_ptr<TRN::Engine::Backend> VIEWMODEL_EXPORT  create(const std::string &host, const unsigned short &port);
+			std::shared_ptr<TRN::Engine::Communicator> VIEWMODEL_EXPORT  create(const std::string &host, const unsigned short &port);
 			};
 
-			*/
+			
 			namespace Distributed
 			{
 				std::shared_ptr<TRN::Engine::Communicator> VIEWMODEL_EXPORT  create(int argc, char *argv[]);

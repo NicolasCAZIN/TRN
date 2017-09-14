@@ -3,7 +3,8 @@
 #include <vld.h>
 #endif 
 #include <opencv2/core.hpp>
-#include <boost/signals2.hpp>
+
+
 #include <cassert>
 #include <vector>
 #include <memory>

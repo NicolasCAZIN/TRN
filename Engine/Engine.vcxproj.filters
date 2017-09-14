@@ -50,6 +50,12 @@
     <ClCompile Include="Compressor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Proxy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -90,6 +96,18 @@
     </ClInclude>
     <ClInclude Include="Compressor.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Node.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Node_impl.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
+    <ClInclude Include="Proxy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Proxy_impl.h">
+      <Filter>Header Files\private</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

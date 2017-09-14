@@ -32,10 +32,10 @@
     <ClCompile Include="Communicator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Worker.cpp">
+    <ClCompile Include="Broker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Broker.cpp">
+    <ClCompile Include="Node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -46,10 +46,10 @@
     <ClInclude Include="Communicator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Worker.h">
+    <ClInclude Include="Broker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Broker.h">
+    <ClInclude Include="Node.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

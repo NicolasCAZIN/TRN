@@ -7,17 +7,15 @@ class TRN::Network::Acceptor::Handle
 public :
 	boost::asio::ip::tcp::acceptor acceptor;
 	boost::asio::signal_set signal_set;
-	boost::asio::ip::tcp::socket socket;
 	std::shared_ptr<TRN::Network::Manager> manager;
-	std::function <const std::shared_ptr<TRN::Network::Connection>(boost::asio::ip::tcp::socket, const std::shared_ptr<TRN::Network::Manager>)> create;
+	std::function <void(const std::shared_ptr<TRN::Network::Manager> &manager, const std::shared_ptr<TRN::Network::Connection> &connection)> on_accept;
 
 
-	Handle(const std::shared_ptr<TRN::Network::Manager> manager, const std::function <const std::shared_ptr<TRN::Network::Connection>(boost::asio::ip::tcp::socket, const std::shared_ptr<TRN::Network::Manager>)> &create) :
+	Handle(const std::shared_ptr<TRN::Network::Manager> &manager, const std::function<void(const std::shared_ptr<TRN::Network::Manager> &manager, const std::shared_ptr<TRN::Network::Connection> &connection)> &on_accept) :
 	
-		create(create),
-		signal_set(*manager),
-		acceptor(*manager),
-		socket(*manager),
+		on_accept(on_accept),
+		signal_set(manager->get_io_service()),
+		acceptor(manager->get_io_service()),
 		manager(manager)
 	{
 		signal_set.add(SIGINT);

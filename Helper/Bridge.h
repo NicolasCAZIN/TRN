@@ -4,16 +4,16 @@ namespace TRN
 {
 	namespace Helper
 	{
-		template <class Implementor>
+		template <class Implementor, template <typename> class Pointer = std::shared_ptr >
 		class Bridge
 		{
 		protected :
-			const std::shared_ptr<Implementor> implementor;
+			const Pointer<Implementor> implementor;
 
 		public :
-			Bridge(const std::shared_ptr<Implementor> implementor) : implementor(implementor ? implementor : throw std::invalid_argument("Implementor is not initialized")) {}
+			Bridge(const Pointer<Implementor> implementor) : implementor(implementor) {}
 			virtual ~Bridge() {}
-			std::shared_ptr<Implementor> get_implementor() const { return implementor; }
+			Pointer<Implementor> get_implementor() const { return implementor; }
 
 		};
 	};

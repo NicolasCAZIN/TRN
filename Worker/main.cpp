@@ -7,7 +7,7 @@
 #include <vector>
 #include <list>
 #include <string>
-
+#include <boost/asio.hpp>
 #include <boost/mpi.hpp>
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/string.hpp>
@@ -16,7 +16,7 @@
 #include <boost/program_options.hpp>
 
 #include "ViewModel/Communicator.h"
-#include "ViewModel/Worker.h"
+#include "ViewModel/Node.h"
 
 static int DEFAULT_INDEX = 0;
 static int DEFAULT_SEED = 0;
@@ -49,8 +49,8 @@ int main(int argc, char *argv[])
 		auto communicator = TRN::ViewModel::Communicator::Distributed::create(argc, argv);
 
 		
-		auto worker = TRN::ViewModel::Worker::create(communicator, index);
-
+		auto worker = TRN::ViewModel::Node::Worker::create(communicator, index);
+		worker->start();
 		return 0;
 	}
 	catch (std::exception &e)

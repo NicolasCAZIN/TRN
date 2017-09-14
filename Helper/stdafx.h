@@ -3,7 +3,7 @@
 #include <vld.h>
 #endif 
 #include <boost/log/trivial.hpp>
-#include <boost/signals2.hpp>
+
 #include <boost/log/sources/global_logger_storage.hpp>
 #include <boost/log/sources/severity_channel_logger.hpp>
 #include <boost/log/attributes/mutable_constant.hpp>

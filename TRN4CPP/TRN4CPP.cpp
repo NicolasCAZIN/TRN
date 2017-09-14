@@ -51,11 +51,18 @@ static void api_deallocation(const unsigned int &id, const int &rank)
 }
 
 static std::shared_ptr<TRN::Engine::Broker> broker;
+static  std::function<void(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause)> ack;
 static std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> processor;
 static std::function<void(const unsigned int &id, const int &rank)> allocation;
 static std::function<void(const unsigned int &id, const int &rank)> deallocation = api_deallocation;
 
-
+void TRN4CPP::install_ack(const std::function<void(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause)> &functor)
+{
+	std::unique_lock<std::mutex> lock(mutex);
+	if (broker)
+		throw std::runtime_error("A broker is already setup");
+	ack = functor;
+}
 
 void TRN4CPP::install_allocation(const std::function<void(const unsigned int &id, const int &rank)> &functor)
 {
@@ -94,12 +101,13 @@ static void initialize_broker(const std::shared_ptr<TRN::Engine::Communicator> &
 	// // std::unique_lock<std::mutex> lock(mutex);
 
 	broker = TRN::ViewModel::Broker::create(communicator);
-
+	if (ack)
+		broker->install_ack(ack);
 	if (processor)
-		broker->setup_processor(processor);
+		broker->install_processor(processor);
 	if (allocation)
-		broker->setup_allocation(allocation);
-	broker->setup_deallocation(deallocation);
+		broker->install_allocation(allocation);
+	broker->install_deallocation(deallocation);
 	broker->start();
 }
 
@@ -110,10 +118,8 @@ void TRN4CPP::initialize_local(const std::list<unsigned int> &indexes)
 }
 void TRN4CPP::initialize_remote(const std::string &host, const unsigned short &port)
 {
-	// std::unique_lock<std::mutex> lock(mutex);
-	if (broker)
-		throw std::runtime_error("A broker is already setup");
-	//
+	initialize_broker(TRN::ViewModel::Communicator::Remote::create(host, port));
+
 	//broker = TRN::ViewModel::Broker::Remote::create(host, port);
 	//// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
 }

@@ -7,7 +7,8 @@ TRN::Engine::Broker::Broker(const std::shared_ptr<TRN::Engine::Communicator> &co
 	handle->communicator = communicator;
 	handle->manager = TRN::Engine::Manager::create(communicator->size());
 	handle->count = 0;
-	handle->processor = [&](const int &rank, const std::string &host, const unsigned int &index, const std::string &name) {};
+	handle->on_ack = [](const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause) {};
+	handle->on_processor = [&](const int &rank, const std::string &host, const unsigned int &index, const std::string &name) {};
 	handle->on_allocation = [&](const unsigned int &id, const int &rank) {};
 	handle->on_deallocation = [&](const unsigned int &id, const int &rank) {};
 }
@@ -43,7 +44,7 @@ void TRN::Engine::Broker::receive()
 	while (active > 0)
 	{
 		auto tag = handle->communicator->probe(0);
-		//PrintThread{} << "received tag " << tag << " " << __FUNCTION__ << std::endl;
+		PrintThread{} << "BROKER received tag " << tag << " " << __FUNCTION__ << std::endl;
 		switch (tag)
 		{
 				case TRN::Engine::QUIT:
@@ -59,19 +60,20 @@ void TRN::Engine::Broker::receive()
 					processor->set_name(message.name);
 					processor->set_host(message.host);
 					processor->set_index(message.index);
-					handle->processor(message.rank, message.host, message.index, message.name);
+					handle->on_processor(message.rank, message.host, message.index, message.name);
 				}
 				break;
 				case TRN::Engine::ACK:
 				{
 					auto message = handle->communicator->receive<TRN::Engine::ACK>(0);
+					handle->on_ack(message.id, message.number, message.success, message.cause);
 					if (message.success)
 					{
 						std::unique_lock<std::mutex> lock(handle->ack);
-						if (handle->on_ack.find(message.number) == handle->on_ack.end())
+						if (handle->on_ack_map.find(message.number) == handle->on_ack_map.end())
 							throw std::runtime_error("Ack functor for message #" + std::to_string(message.number) + " is not setup");
-						handle->on_ack[message.number]();
-						handle->on_ack.erase(message.number);
+						handle->on_ack_map[message.number]();
+						handle->on_ack_map.erase(message.number);
 						lock.unlock();
 					}
 					else
@@ -334,25 +336,30 @@ void TRN::Engine::Broker::send(const int &rank, TRN::Engine::Message<tag> &messa
 
 	////PrintThread{} << "acquiring functor lock for id " << message.id << std::endl;
 
-	if (handle->on_ack.find(message.number) != handle->on_ack.end())
+	if (handle->on_ack_map.find(message.number) != handle->on_ack_map.end())
 		throw std::runtime_error("Ack functor for message #" + std::to_string(message.number) + " is already setup");
-	handle->on_ack[message.number] = functor;
+	handle->on_ack_map[message.number] = functor;
 	lock.unlock();
 
 	handle->communicator->send(message, rank);
 }
 
-void TRN::Engine::Broker::setup_processor(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &processor)
+void TRN::Engine::Broker::install_ack(const std::function<void(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause)> &on_ack)
 {
-	handle->processor = processor;
+	handle->on_ack = on_ack;
 }
 
-void    TRN::Engine::Broker::setup_allocation(const std::function<void(const unsigned int &id, const int &rank)> &on_allocation)
+void TRN::Engine::Broker::install_processor(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &on_processor)
+{
+	handle->on_processor = on_processor;
+}
+
+void    TRN::Engine::Broker::install_allocation(const std::function<void(const unsigned int &id, const int &rank)> &on_allocation)
 {
 	handle->on_allocation = on_allocation;
 }
 
-void    TRN::Engine::Broker::setup_deallocation(const std::function<void(const unsigned int &id, const int &rank)> &on_deallocation)
+void    TRN::Engine::Broker::install_deallocation(const std::function<void(const unsigned int &id, const int &rank)> &on_deallocation)
 {
 	handle->on_deallocation = on_deallocation;
 }

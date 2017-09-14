@@ -19,7 +19,6 @@
 #include <tuple>
 #include <memory>
 #include <queue>
-#include <boost/signals2.hpp>
 #include <boost/asio.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>

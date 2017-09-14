@@ -2,6 +2,8 @@
 #ifdef USE_VLD
 #include <vld.h>
 #endif 
+
+#include <boost/tuple/tuple.hpp>
 #include <boost/asio.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>

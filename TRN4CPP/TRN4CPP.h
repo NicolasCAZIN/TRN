@@ -17,6 +17,7 @@ namespace TRN4CPP
 	extern TRN4CPP_EXPORT const unsigned short DEFAULT_PORT;
 	extern TRN4CPP_EXPORT const std::string DEFAULT_TAG;
 
+	void TRN4CPP_EXPORT		install_ack(const std::function<void(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause)> &functor);
 	void TRN4CPP_EXPORT		install_processor(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &functor);
 	void TRN4CPP_EXPORT		install_allocation(const std::function<void(const unsigned int &id, const int &rank)> &functor);
 	void TRN4CPP_EXPORT		install_deallocation(const std::function<void(const unsigned int &id, const int &rank)> &functor);

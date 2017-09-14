@@ -3,7 +3,10 @@
 #include <vld.h>
 #endif 
 
-
+#include <boost/tuple/tuple.hpp>
+#include <boost/asio.hpp>
+#include <boost/function.hpp>
+#include <boost/lambda/lambda.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
@@ -17,6 +20,7 @@
 #include <sstream>
 #include <iostream>
 #include <mutex>
+#include <future>
 #include <thread>
 #include <queue>
 #include <set>

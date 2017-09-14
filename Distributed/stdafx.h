@@ -2,7 +2,7 @@
 #ifdef USE_VLD
 #include <vld.h>
 #endif 
-#include <boost/signals2.hpp>
+
 #include <chrono>
 #include <ctime>
 #include <set>

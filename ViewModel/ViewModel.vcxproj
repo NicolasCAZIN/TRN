@@ -168,14 +168,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Worker.cpp" />
+    <ClCompile Include="Node.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Broker.h" />
     <ClInclude Include="Communicator.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="viewmodel_global.h" />
-    <ClInclude Include="Worker.h" />
+    <ClInclude Include="Node.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Distributed\Distributed.vcxproj">
@@ -189,6 +189,12 @@
     </ProjectReference>
     <ProjectReference Include="..\Model\Model.vcxproj">
       <Project>{6d399a54-3ca9-432d-a521-675dc99c4608}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Network\Network.vcxproj">
+      <Project>{d8fbd935-e81e-4036-9717-43f0dcf73b41}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Remote\Remote.vcxproj">
+      <Project>{40b2f358-51fe-45b5-8390-28d500801eb0}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

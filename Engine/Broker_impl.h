@@ -18,11 +18,12 @@ public :
 	std::mutex ack;
 	//std::condition_variable transaction_pending;
 	
-	std::map<int, std::function<void()>> on_ack;
+	std::map<int, std::function<void()>> on_ack_map;
 	std::thread receive;
-	std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> processor;
+	std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> on_processor;
 	std::function<void(const unsigned int &id, const int &rank)> on_allocation;
 	std::function<void(const unsigned int &id, const int &rank)> on_deallocation;
+	std::function<void(const unsigned int &id, std::size_t &number, const bool &success, const std::string &cause)> on_ack;
 
 	std::map<unsigned int, std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values,  const std::size_t &rows, const  std::size_t &cols)>> measurement_readout_mean_square_error;
 	std::map<unsigned int, std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values,  const std::size_t &rows, const  std::size_t &cols)>> measurement_readout_frechet_distance;

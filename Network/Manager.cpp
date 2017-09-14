@@ -10,9 +10,16 @@ TRN::Network::Manager::Manager() :
 
 TRN::Network::Manager::~Manager()
 {
+	std::cout << __FUNCTION__ << std::endl;
+	stop();
 	handle.reset();
 }
 
+
+boost::asio::io_service &TRN::Network::Manager::get_io_service()
+{
+	return handle->io_service;
+}
 void TRN::Network::Manager::stop()
 {
 //	LOG_INFO("Stopping all connections");
@@ -25,13 +32,13 @@ void TRN::Network::Manager::start(const std::shared_ptr<TRN::Network::Connection
 {
 //	LOG_INFO("Starting connection");
 	handle->pool.insert(connection);
-	connection->start();
+	//connection->start();
 }
 void TRN::Network::Manager::stop(const std::shared_ptr<TRN::Network::Connection> connection)
 {
 //	LOG_INFO("Stopping connection");
 	handle->pool.erase(connection);
-	connection->stop();
+	//connection->stop();
 }
 std::shared_ptr<TRN::Network::Manager> TRN::Network::Manager::create()
 {

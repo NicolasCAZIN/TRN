@@ -23,10 +23,11 @@ namespace TRN
 		public :
 			void start();
 			void stop();
+			void    install_ack(const std::function<void(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause)> &on_ack);
 
-			void    setup_processor(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &processor);
-			void    setup_allocation(const std::function<void(const unsigned int &id, const int &rank)> &on_allocation);
-			void    setup_deallocation(const std::function<void(const unsigned int &id, const int &rank)> &on_deallocation);
+			void    install_processor(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &on_processor);
+			void    install_allocation(const std::function<void(const unsigned int &id, const int &rank)> &on_allocation);
+			void    install_deallocation(const std::function<void(const unsigned int &id, const int &rank)> &on_deallocation);
 
 			void 	allocate(const unsigned int &id);
 

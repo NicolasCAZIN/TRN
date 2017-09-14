@@ -150,6 +150,9 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Engine\Engine.vcxproj">
+      <Project>{bcec94dc-9c88-4bc6-993e-eb546dc45f29}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Model\Model.vcxproj">
       <Project>{6d399a54-3ca9-432d-a521-675dc99c4608}</Project>
     </ProjectReference>

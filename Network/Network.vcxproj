@@ -160,7 +160,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Connection.cpp" />
     <ClCompile Include="Manager.cpp" />
     <ClCompile Include="Acceptor.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -177,6 +176,7 @@
     <ClInclude Include="Manager_impl.h" />
     <ClInclude Include="Acceptor.h" />
     <ClInclude Include="Acceptor_impl.h" />
+    <ClInclude Include="Messages.h" />
     <ClInclude Include="network_global.h" />
     <ClInclude Include="Peer_impl.h" />
     <ClInclude Include="stdafx.h" />

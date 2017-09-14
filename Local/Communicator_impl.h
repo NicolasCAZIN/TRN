@@ -17,6 +17,6 @@ public :
 				>
 			>
 		> queues;
-	std::mutex mutex;
+	std::recursive_mutex mutex;
 	std::vector<std::shared_ptr<TRN::Engine::Worker>> workers;
 };

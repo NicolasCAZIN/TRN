@@ -1,7 +1,7 @@
 #ifdef USE_VLD
 #include <vld.h>
 #endif 
-#include <boost/signals2.hpp>
+
 #include <boost/asio.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -27,6 +27,7 @@
 #include <string>
 #include <list>
 #include <queue>
+
 #include "TRN4CPP/TRN4CPP.h"
 #include "Helper/Queue.h"
 
@@ -554,7 +555,7 @@ static void position_mse(const unsigned int &id, const std::size_t &trial, const
 
 		std::cout << "NAN" << std::endl;
 	}
-	std::cout << "Simulation #" << id << ", trial #" << trial << "position rmse " << mse << std::endl;
+	std::cout << "Simulation #" << id << ", trial #" << trial << " position rmse " << mse << std::endl;
 }
 
 static void position_frechet(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &value, const std::size_t &rows, const std::size_t &cols)
@@ -659,7 +660,7 @@ static void readout_mse(const unsigned int &id, const std::size_t &trial, const 
 
 		std::cout << "NAN" << std::endl;
 	}
-	std::cout << "Simulation #" << id << ", trial #" << trial << "readout rmse " << mse << std::endl;
+	std::cout << "Simulation #" << id << ", trial #" << trial << " readout rmse " << mse << std::endl;
 
 }
 
@@ -733,9 +734,9 @@ int main(int argc, char *argv[])
 {
 	try
 	{
-		const size_t ID = 10;
-		const size_t TRIALS = 10;
-		const size_t WALKS = 10;
+		const size_t ID = 1;
+		const size_t TRIALS = 1;
+		const size_t WALKS = 1;
 		for (std::size_t trial = 0; trial < TRIALS; trial++)
 		{
 			cv_accumulator[trial] = cv::Mat(GRID_ROWS, GRID_COLS, CV_32F);
@@ -770,7 +771,7 @@ int main(int argc, char *argv[])
 			to_display.invalidate();
 		});
 
-
+	
 		auto pc_rows = GRID_ROWS;
 		auto pc_cols = GRID_COLS;
 		auto sigma = 1.0f;
@@ -783,14 +784,6 @@ int main(int argc, char *argv[])
 
 		place_cell_activation = std::bind(activation_pattern, pc_rows, pc_cols, x, y, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
-
-
-
-
-
-
-
-
 		auto seed = 2;
 		TRN4CPP::install_processor(on_processor);
 		TRN4CPP::install_allocation(on_allocation);
@@ -798,9 +791,9 @@ int main(int argc, char *argv[])
 		//TRN4CPP::initialize_distributed(argc, argv);
 
 
-		TRN4CPP::initialize_local(
+		TRN4CPP::initialize_remote(
 		{
-			1,2,3,4
+			"127.0.0.1", 12345
 			
 		});
 		//TRN4CPP::initialize_local();
@@ -844,8 +837,8 @@ int main(int argc, char *argv[])
 				
 				//TRN4CPP::configure_mutator_shuffle(id);
 				
-				TRN4CPP::configure_mutator_punch(id, seed, 1.0f, 2, 4);
-				TRN4CPP::configure_mutator_reverse(id, seed, 1.0f, snippet_size/2);
+				//TRN4CPP::configure_mutator_punch(id, seed, 1.0f, 2, 1);
+				TRN4CPP::configure_mutator_reverse(id, seed, 0.4f, snippet_size);
 				//TRN4CPP::configure_scheduler_tiled(id, epochs);
 
 				//TRN4CPP::configure_loop_copy(id, batch_size, stimulus_size);
@@ -859,7 +852,8 @@ int main(int argc, char *argv[])
 
 				//TRN4CPP::configure_measurement_readout_frechet_distance(id, readout_frechet);
 				//TRN4CPP::configure_measurement_readout_custom(id, readout_custom);
-				TRN4CPP::configure_reservoir_widrow_hoff(id, stimulus_size, prediction_size, reservoir_size, leak_rate, initial_state_scale, learning_rate, seed, batch_size);
+				TRN4CPP::configure_reservoir_widrow_hoff(id, stimulus_size, prediction_size, reservoir_size, leak_rate, initial_state_scale, learning_rate, seed+id, batch_size);
+				
 				TRN4CPP::setup_performances(id, on_performances, true, true, true);
 				//TRN4CPP::setup_weights(id, on_weights);
 				//TRN4CPP::setup_states(id, on_states, false, false, true);

@@ -164,7 +164,9 @@
     <ClCompile Include="Communicator.cpp" />
     <ClCompile Include="Compressor.cpp" />
     <ClCompile Include="Manager.cpp" />
+    <ClCompile Include="Node.cpp" />
     <ClCompile Include="Processor.cpp" />
+    <ClCompile Include="Proxy.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -181,10 +183,14 @@
     <ClInclude Include="Compressor.h" />
     <ClInclude Include="engine_global.h" />
     <ClInclude Include="Manager_impl.h" />
+    <ClInclude Include="Node.h" />
+    <ClInclude Include="Node_impl.h" />
     <ClInclude Include="Processor.h" />
     <ClInclude Include="Processor_impl.h" />
     <ClInclude Include="Messages.h" />
     <ClInclude Include="Manager.h" />
+    <ClInclude Include="Proxy.h" />
+    <ClInclude Include="Proxy_impl.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Worker.h" />
     <ClInclude Include="Worker_impl.h" />

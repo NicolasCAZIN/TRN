@@ -27,7 +27,7 @@ std::size_t TRN::Local::Communicator::size()
 
 void TRN::Local::Communicator::send(const int &destination, const TRN::Engine::Tag &tag, const std::string &data)
 {
-
+	std::lock_guard<std::recursive_mutex> lock(handle->mutex);
 	if (destination >= handle->queues.size())
 		throw std::runtime_error("Rank " + std::to_string(destination) + " overflows maximum declared rank " + std::to_string(handle->queues.size()));
 	
@@ -36,6 +36,7 @@ void TRN::Local::Communicator::send(const int &destination, const TRN::Engine::T
 
 std::string TRN::Local::Communicator::receive(const int &destination, const TRN::Engine::Tag &tag)
 {
+	//std::lock_guard<std::recursive_mutex> lock(handle->mutex);
 	std::shared_ptr<TRN::Local::Communicator::Handle::Blob> blob;
 	if (!handle->queues[destination]->dequeue(blob))
 		throw std::runtime_error("received blob is invalid");
@@ -48,6 +49,7 @@ std::string TRN::Local::Communicator::receive(const int &destination, const TRN:
 
 TRN::Engine::Tag TRN::Local::Communicator::probe(const int &destination)
 {
+	//std::lock_guard<std::recursive_mutex> lock(handle->mutex);
 	//status(__FUNCTION__, "begin");
 	std::shared_ptr<TRN::Local::Communicator::Handle::Blob> blob;
 

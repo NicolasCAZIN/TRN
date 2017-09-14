@@ -4,11 +4,12 @@
 
 #include "Connection.h"
 
+
 namespace TRN
 {
 	namespace Network
 	{
-		class NETWORK_EXPORT Manager : public 		boost::asio::io_service
+		class NETWORK_EXPORT Manager 
 		{
 		private :
 			class Handle;
@@ -16,7 +17,10 @@ namespace TRN
 
 		public :
 			Manager();
-			~Manager();
+			virtual ~Manager();
+
+		public :
+			boost::asio::io_service &get_io_service();
 
 		public :
 			void stop();
