@@ -162,6 +162,7 @@
   <ItemGroup>
     <ClCompile Include="Manager.cpp" />
     <ClCompile Include="Acceptor.cpp" />
+    <ClCompile Include="Proxy.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -178,7 +179,8 @@
     <ClInclude Include="Acceptor_impl.h" />
     <ClInclude Include="Messages.h" />
     <ClInclude Include="network_global.h" />
-    <ClInclude Include="Peer_impl.h" />
+    <ClInclude Include="Proxy_impl.h" />
+    <ClInclude Include="Proxy.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>

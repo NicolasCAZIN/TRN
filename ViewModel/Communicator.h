@@ -11,7 +11,7 @@ namespace TRN
 		{
 			namespace Local
 			{
-				std::shared_ptr<TRN::Engine::Communicator> VIEWMODEL_EXPORT  create(const std::list<unsigned int> &indexes);
+				std::shared_ptr<TRN::Engine::Communicator> VIEWMODEL_EXPORT  create(const std::vector<unsigned int> &indexes);
 			};
 
 			namespace Remote

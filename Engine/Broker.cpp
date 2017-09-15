@@ -4,35 +4,51 @@
 TRN::Engine::Broker::Broker(const std::shared_ptr<TRN::Engine::Communicator> &communicator) :
 	handle(std::make_unique<Handle>())
 {
+	handle->running = false;
 	handle->communicator = communicator;
 	handle->manager = TRN::Engine::Manager::create(communicator->size());
 	handle->count = 0;
 	handle->on_ack = [](const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause) {};
-	handle->on_processor = [&](const int &rank, const std::string &host, const unsigned int &index, const std::string &name) {};
-	handle->on_allocation = [&](const unsigned int &id, const int &rank) {};
-	handle->on_deallocation = [&](const unsigned int &id, const int &rank) {};
+	handle->on_processor = [](const int &rank, const std::string &host, const unsigned int &index, const std::string &name) {};
+	handle->on_allocation = [](const unsigned int &id, const int &rank) {};
+	handle->on_deallocation = [](const unsigned int &id, const int &rank) {};
+	handle->on_trained = [](const unsigned int &id) {};
+	handle->on_primed = [](const unsigned int &id) {};
+	handle->on_tested = [](const unsigned int &id) {};
+	handle->on_quit = [](const int &rank) {};
+
 }
 
 void TRN::Engine::Broker::start()
 {
-	handle->receive = std::thread(&TRN::Engine::Broker::receive, this);
+	if (handle->running == false)
+	{
+		handle->receive = std::thread(&TRN::Engine::Broker::receive, this);
+		handle->running = true;
+	}
+	
 }
 
 void TRN::Engine::Broker::stop()
 {
-	handle->manager->wait_not_allocated();
-	TRN::Engine::Message<TRN::Engine::Tag::QUIT> quit;
-	for (auto processor : handle->manager->get_processors())
+	if (handle->running == true)
 	{
-		handle->communicator->send(quit, processor->get_rank());
-	}
+		handle->manager->wait_not_allocated();
+		TRN::Engine::Message<TRN::Engine::Tag::QUIT> quit;
+		for (auto processor : handle->manager->get_processors())
+		{
+			handle->communicator->send(quit, processor->get_rank());
+		}
 
-	if (handle->receive.joinable())
-		handle->receive.join();
+		if (handle->receive.joinable())
+			handle->receive.join();
+		handle->running = false;
+	}
 }
 
 TRN::Engine::Broker::~Broker()
 {
+	stop();
 	handle.reset();
 }
 
@@ -44,13 +60,15 @@ void TRN::Engine::Broker::receive()
 	while (active > 0)
 	{
 		auto tag = handle->communicator->probe(0);
-		PrintThread{} << "BROKER received tag " << tag << " " << __FUNCTION__ << std::endl;
+		//PrintThread{} << "BROKER received tag " << tag << " " << __FUNCTION__ << std::endl;
 		switch (tag)
 		{
 				case TRN::Engine::QUIT:
 				{
 					auto message = handle->communicator->receive<TRN::Engine::QUIT>(0);
+					handle->on_quit(message.rank);
 					active--;
+					PrintThread{} << "Broker have " << active << " active processors" << std::endl;
 				}
 				break;
 				case TRN::Engine::WORKER:
@@ -239,6 +257,8 @@ void TRN::Engine::Broker::receive()
 					auto processor = handle->manager->retrieve(message.id);
 					processor->trained();
 					processor->set_t1(std::clock());
+					handle->on_trained(message.id);
+
 				}
 				break;
 				case TRN::Engine::PRIMED:
@@ -246,6 +266,7 @@ void TRN::Engine::Broker::receive()
 					auto message = handle->communicator->receive<TRN::Engine::PRIMED>(0);
 					auto processor = handle->manager->retrieve(message.id);
 					processor->primed();
+					handle->on_primed(message.id);
 				}
 				break;
 				case TRN::Engine::TESTED:
@@ -253,6 +274,7 @@ void TRN::Engine::Broker::receive()
 					auto message = handle->communicator->receive<TRN::Engine::TESTED>(0);
 					auto processor = handle->manager->retrieve(message.id);
 					processor->tested();
+					handle->on_tested(message.id);
 				}
 				break;
 				case TRN::Engine::MEASUREMENT_READOUT_MEAN_SQUARE_ERROR:
@@ -323,7 +345,7 @@ void TRN::Engine::Broker::receive()
 			}
 		
 	}
-	//PrintThread{} << "Broker #0 quitted" << std::endl;
+
 }
 
 
@@ -344,23 +366,55 @@ void TRN::Engine::Broker::send(const int &rank, TRN::Engine::Message<tag> &messa
 	handle->communicator->send(message, rank);
 }
 
+void    TRN::Engine::Broker::install_trained(const std::function<void(const unsigned int &id)> &on_trained)
+{
+	if (handle->running)
+		throw std::runtime_error("Broker is already running");
+	handle->on_trained = on_trained;
+}
+void    TRN::Engine::Broker::install_primed(const std::function<void(const unsigned int &id)> &on_primed)
+{
+	if (handle->running)
+		throw std::runtime_error("Broker is already running");
+	handle->on_primed = on_primed;
+}
+void    TRN::Engine::Broker::install_tested(const std::function<void(const unsigned int &id)> &on_tested)
+{
+	if (handle->running)
+		throw std::runtime_error("Broker is already running");
+	handle->on_tested = on_tested;
+}
+void    TRN::Engine::Broker::install_quit(const std::function<void(const int &rank)> &on_quit)
+{
+	if (handle->running)
+		throw std::runtime_error("Broker is already running");
+	handle->on_quit = on_quit;
+}
 void TRN::Engine::Broker::install_ack(const std::function<void(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause)> &on_ack)
 {
+	if (handle->running)
+		throw std::runtime_error("Broker is already running");
 	handle->on_ack = on_ack;
 }
 
 void TRN::Engine::Broker::install_processor(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &on_processor)
 {
+	if (handle->running)
+		throw std::runtime_error("Broker is already running");
 	handle->on_processor = on_processor;
 }
 
 void    TRN::Engine::Broker::install_allocation(const std::function<void(const unsigned int &id, const int &rank)> &on_allocation)
 {
+	if (handle->running)
+		throw std::runtime_error("Broker is already running");
 	handle->on_allocation = on_allocation;
 }
 
 void    TRN::Engine::Broker::install_deallocation(const std::function<void(const unsigned int &id, const int &rank)> &on_deallocation)
 {
+	if (handle->running)
+		throw std::runtime_error("Broker is already running");
 	handle->on_deallocation = on_deallocation;
 }
 
@@ -399,13 +453,13 @@ void TRN::Engine::Broker::deallocate(const unsigned int &id)
 		send(processor->get_rank(), message, [=]()
 		{
 			handle->manager->deallocate(id);
-			//PrintThread{} << "id " << id << " deallocate ack" << std::endl;
+		//	PrintThread{} << "id " << id << " deallocate ack" << std::endl;
 			processor->deallocated();
-			//PrintThread{} << "id " << id << " manager deallocate" << std::endl;
+		//	PrintThread{} << "id " << id << " manager deallocate" << std::endl;
 		
 
 			handle->on_deallocation(id, processor->get_rank());
-			//PrintThread{} << "id " << id << " deallocate DONE" << std::endl;
+		//	PrintThread{} << "id " << id << " deallocate DONE" << std::endl;
 		});
 	});
 	//PrintThread{} << "exiting " << id << " " << __FUNCTION__ << std::endl;

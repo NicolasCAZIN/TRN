@@ -8,11 +8,12 @@ namespace TRN
 	{
 		enum Tag
 		{
+			QUIT = 0,
 			/* technical / worker -> client */
 			ACK,
 			WORKER,
 			/* technical / client -> worker */
-			QUIT,
+		
 			/* simulation / client -> worker */
 			ALLOCATE,
 			DEALLOCATE,
@@ -104,9 +105,15 @@ namespace TRN
 		{
 		};
 		template <>
-		struct Message<TRN::Engine::Tag::QUIT> : public Header
+		struct Message<TRN::Engine::Tag::QUIT>
 		{
-	
+			int rank;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & rank;
+			}
 		};
 		template <>
 		struct Message<TRN::Engine::Tag::WORKER>

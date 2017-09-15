@@ -24,7 +24,10 @@ namespace TRN
 			void start();
 			void stop();
 			void    install_ack(const std::function<void(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause)> &on_ack);
-
+			void    install_trained(const std::function<void(const unsigned int &id)> &on_trained);
+			void    install_primed(const std::function<void(const unsigned int &id)> &on_primed);
+			void    install_tested(const std::function<void(const unsigned int &id)> &on_tested);
+			void    install_quit(const std::function<void(const int &rank)> &on_quit);
 			void    install_processor(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &on_processor);
 			void    install_allocation(const std::function<void(const unsigned int &id, const int &rank)> &on_allocation);
 			void    install_deallocation(const std::function<void(const unsigned int &id, const int &rank)> &on_deallocation);

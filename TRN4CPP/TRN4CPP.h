@@ -21,7 +21,7 @@ namespace TRN4CPP
 	void TRN4CPP_EXPORT		install_processor(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &functor);
 	void TRN4CPP_EXPORT		install_allocation(const std::function<void(const unsigned int &id, const int &rank)> &functor);
 	void TRN4CPP_EXPORT		install_deallocation(const std::function<void(const unsigned int &id, const int &rank)> &functor);
-	void TRN4CPP_EXPORT  	initialize_local(const std::list<unsigned int> &indexes = {});
+	void TRN4CPP_EXPORT  	initialize_local(const std::vector<unsigned int> &indexes = {});
 	void TRN4CPP_EXPORT  	initialize_remote(const std::string &host = DEFAULT_HOST, const unsigned short &port = DEFAULT_PORT);
 	void TRN4CPP_EXPORT  	initialize_distributed(int argc, char *argv[]);
 	void TRN4CPP_EXPORT  	uninitialize();

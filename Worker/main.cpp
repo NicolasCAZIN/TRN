@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 #include <list>
+#include <mutex>
 #include <string>
 #include <boost/asio.hpp>
 #include <boost/mpi.hpp>
@@ -49,7 +50,7 @@ int main(int argc, char *argv[])
 		auto communicator = TRN::ViewModel::Communicator::Distributed::create(argc, argv);
 
 		
-		auto worker = TRN::ViewModel::Node::Worker::create(communicator, index);
+		auto worker = TRN::ViewModel::Node::Worker::create(communicator, communicator->rank(), index);
 		worker->start();
 		return 0;
 	}

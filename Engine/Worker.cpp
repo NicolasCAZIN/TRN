@@ -10,12 +10,20 @@
 #include "Model/Mutator.h"
 #include "Node_impl.h"
 
-TRN::Engine::Worker::Worker(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const std::shared_ptr<TRN::Backend::Driver> &driver) :
+TRN::Engine::Worker::Worker(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank, const std::shared_ptr<TRN::Backend::Driver> &driver) :
 	TRN::Helper::Bridge<TRN::Backend::Driver>(driver),
-	TRN::Engine::Node(communicator),
+	TRN::Engine::Node(communicator, rank),
 	handle(std::make_unique<Handle>())
 {
 	TRN::Engine::Node::handle->name = "WORKER";
+	TRN::Engine::Message<TRN::Engine::Tag::WORKER> message;
+
+	message.host = communicator->host();
+	message.rank = rank;
+	message.index = driver->index();
+	message.name = driver->name();
+	std::cout << "WORKER " << message.rank << " on " << message.host << " device " << message.name << " #" << message.index << std::endl;
+	communicator->send(message, 0);
 }
 
 TRN::Engine::Worker::~Worker()
@@ -734,7 +742,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::R
 
 
 
-std::shared_ptr<TRN::Engine::Worker> TRN::Engine::Worker::create( const std::shared_ptr<TRN::Engine::Communicator> &communicator, const std::shared_ptr<TRN::Backend::Driver> &driver)
+std::shared_ptr<TRN::Engine::Worker> TRN::Engine::Worker::create( const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank, const std::shared_ptr<TRN::Backend::Driver> &driver)
 {
-	return std::make_shared<TRN::Engine::Worker>(communicator, driver);
+	return std::make_shared<TRN::Engine::Worker>(communicator, rank, driver);
 }

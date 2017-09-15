@@ -35,6 +35,7 @@ namespace TRN
 			template <typename T>
 			void write(const T& t)
 			{
+			
 				std::ostringstream archive_stream;
 				boost::archive::binary_oarchive archive(archive_stream);
 				archive << t;
@@ -57,10 +58,11 @@ namespace TRN
 				std::vector<boost::asio::const_buffer> buffers;
 				buffers.push_back(boost::asio::buffer(outbound_header_));
 				buffers.push_back(boost::asio::buffer(outbound_data_));
+	
 				boost::asio::write(socket_, buffers);
 			}
 
-			/// Asynchronously write a data structure to the socket.
+			/*/// Asynchronously write a data structure to the socket.
 			template <typename T, typename Handler>
 			void async_write(const T& t, Handler handler)
 			{
@@ -88,12 +90,13 @@ namespace TRN
 				buffers.push_back(boost::asio::buffer(outbound_header_));
 				buffers.push_back(boost::asio::buffer(outbound_data_));
 				boost::asio::async_write(socket_, buffers, handler);
-			}
+			}*/
 
 			template <typename T>
 			void read(T& t)
 			{
-				boost::asio::read(socket_, boost::asio::buffer(inbound_header_), boost::asio::transfer_exactly(header_length));
+		
+				boost::asio::read(socket_, boost::asio::buffer(inbound_header_)/*, boost::asio::transfer_exactly(header_length)*/);
 				std::istringstream is(std::string(inbound_header_, header_length));
 				std::size_t inbound_data_size = 0;
 				if (!(is >> std::hex >> inbound_data_size))
@@ -102,7 +105,7 @@ namespace TRN
 					throw boost::system::error_code(boost::asio::error::invalid_argument);
 				}
 				inbound_data_.resize(inbound_data_size);
-				boost::asio::read(socket_, boost::asio::buffer(inbound_data_), boost::asio::transfer_exactly(inbound_data_size));
+				boost::asio::read(socket_, boost::asio::buffer(inbound_data_)/*, boost::asio::transfer_exactly(inbound_data_size)*/);
 				// Start an asynchronous call to receive the data.
 			
 				std::string archive_data(&inbound_data_[0], inbound_data_.size());
@@ -111,7 +114,7 @@ namespace TRN
 				archive >> t;
 			}
 
-			/// Asynchronously read a data structure from the socket.
+			/*/// Asynchronously read a data structure from the socket.
 			template <typename T, typename Handler>
 			void async_read(T& t, Handler handler)
 			{
@@ -194,7 +197,7 @@ namespace TRN
 					boost::get<0>(handler)(e);
 				}
 			}
-
+			*/
 		private:
 			/// The underlying socket.
 			boost::asio::ip::tcp::socket socket_;
@@ -213,7 +216,7 @@ namespace TRN
 
 			/// Holds the inbound data.
 			std::vector<char> inbound_data_;
-
+			std::mutex mutex;
 			public :
 
 

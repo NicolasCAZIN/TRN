@@ -111,7 +111,7 @@ static void initialize_broker(const std::shared_ptr<TRN::Engine::Communicator> &
 	broker->start();
 }
 
-void TRN4CPP::initialize_local(const std::list<unsigned int> &indexes)
+void TRN4CPP::initialize_local(const std::vector<unsigned int> &indexes)
 {
 	initialize_broker(TRN::ViewModel::Communicator::Local::create(indexes));
 	// std::cout << "TRN4CPP : sucessful call to " << __FUNCTION__ << std::endl;
@@ -133,7 +133,7 @@ void TRN4CPP::uninitialize()
 	if (!broker)
 		throw std::runtime_error("A broker have never been setup");
 	// // std::unique_lock<std::mutex> lock(mutex);
-	broker->stop();
+
 	broker.reset();
 	std::unique_lock<std::mutex> lock(mutex);
 	id_perceived_stimulus.clear();

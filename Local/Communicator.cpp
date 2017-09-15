@@ -18,7 +18,7 @@ TRN::Local::Communicator::~Communicator()
 }
 int TRN::Local::Communicator::rank()
 {
-	return handle->workers.size() + 1;
+	return 0;
 }
 std::size_t TRN::Local::Communicator::size()
 {

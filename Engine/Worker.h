@@ -18,7 +18,7 @@ namespace TRN
 			std::unique_ptr<Handle> handle;
 
 		public :
-			Worker(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const std::shared_ptr<TRN::Backend::Driver> &driver);
+			Worker(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank, const std::shared_ptr<TRN::Backend::Driver> &driver);
 		public :
 			virtual ~Worker();
 
@@ -77,7 +77,7 @@ namespace TRN
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::READOUT_WEIGHTS> &message) override;
 
 		public :
-			static std::shared_ptr<TRN::Engine::Worker> create(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const std::shared_ptr<TRN::Backend::Driver> &driver);
+			static std::shared_ptr<TRN::Engine::Worker> create(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank, const std::shared_ptr<TRN::Backend::Driver> &driver);
 		};
 	};
 };

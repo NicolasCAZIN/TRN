@@ -11,9 +11,9 @@
 /*#include "Remote/Backend.h"
 #include "Distributed/Backend.h"
 */
-std::shared_ptr<TRN::Engine::Communicator> TRN::ViewModel::Communicator::Local::create(const std::list<unsigned int> &indexes)
+std::shared_ptr<TRN::Engine::Communicator> TRN::ViewModel::Communicator::Local::create(const std::vector<unsigned int> &indexes)
 {
-	std::list<unsigned int> local_indexes;
+	std::vector<unsigned int> local_indexes;
 
 	if (indexes.empty())
 	{
@@ -29,9 +29,10 @@ std::shared_ptr<TRN::Engine::Communicator> TRN::ViewModel::Communicator::Local::
 	}
 
 	auto communicator = TRN::Local::Communicator::create(local_indexes.size() + 1);
-	for (auto index : local_indexes)
+	for (int k = 0; k < local_indexes.size(); k++)
 	{
-		auto worker = TRN::ViewModel::Node::Worker::create(communicator, index);
+		auto index = local_indexes[k];
+		auto worker = TRN::ViewModel::Node::Worker::create(communicator, k + 1, index);
 		worker->start();
 		communicator->append(worker);
 	}
@@ -73,9 +74,9 @@ std::shared_ptr<TRN::Engine::Communicator> TRN::ViewModel::Communicator::Remote:
 	assert(connection->socket().is_open());
 	std::cout << "API local " << connection->socket().local_endpoint().address().to_string() << ":" << connection->socket().local_endpoint().port() << " remote " << connection->socket().remote_endpoint().address().to_string() << ":" << connection->socket().remote_endpoint().port() << std::endl;
 
-	
+	std::size_t size = 0;
+	connection->read(size);
 
-
-	return TRN::Remote::Communicator::create(manager, connection, 0);
+	return TRN::Remote::Communicator::create(manager, connection, 0, size);
 }
 

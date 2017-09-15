@@ -13,7 +13,7 @@ public :
 	size_t count;
 	std::shared_ptr<TRN::Engine::Manager> manager;
 	std::shared_ptr<TRN::Engine::Communicator> communicator;
-	
+	bool running;
 	std::mutex functors;
 	std::mutex ack;
 	//std::condition_variable transaction_pending;
@@ -24,7 +24,10 @@ public :
 	std::function<void(const unsigned int &id, const int &rank)> on_allocation;
 	std::function<void(const unsigned int &id, const int &rank)> on_deallocation;
 	std::function<void(const unsigned int &id, std::size_t &number, const bool &success, const std::string &cause)> on_ack;
-
+	std::function<void(const unsigned int &id)> on_trained;
+	std::function<void(const unsigned int &id)> on_primed;
+	std::function<void(const unsigned int &id)> on_tested;
+	std::function<void(const int &rank)> on_quit;
 	std::map<unsigned int, std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values,  const std::size_t &rows, const  std::size_t &cols)>> measurement_readout_mean_square_error;
 	std::map<unsigned int, std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values,  const std::size_t &rows, const  std::size_t &cols)>> measurement_readout_frechet_distance;
 	std::map<unsigned int, std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages,  const std::size_t &rows, const  std::size_t &cols)>> measurement_readout_custom;

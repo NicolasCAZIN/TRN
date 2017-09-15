@@ -67,6 +67,7 @@ std::mutex processor;
 
 static void on_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)
 {
+	std::cout << "processor " << rank << " hosted on " << host << " using device #" << index << " named " << name << std::endl;
 	std::unique_lock<std::mutex> lock(processor);
 	
 	auto key = std::make_pair(host, index);
@@ -734,9 +735,9 @@ int main(int argc, char *argv[])
 {
 	try
 	{
-		const size_t ID = 1;
-		const size_t TRIALS = 1;
-		const size_t WALKS = 1;
+		const size_t ID = 10;
+		const size_t TRIALS = 2;
+		const size_t WALKS = 2;
 		for (std::size_t trial = 0; trial < TRIALS; trial++)
 		{
 			cv_accumulator[trial] = cv::Mat(GRID_ROWS, GRID_COLS, CV_32F);
@@ -792,13 +793,14 @@ int main(int argc, char *argv[])
 
 
 		TRN4CPP::initialize_remote(
-		{
 			"127.0.0.1", 12345
-			
-		});
-		//TRN4CPP::initialize_local();
+			);
+		/*TRN4CPP::initialize_local(
+		{
+			1
+		});*/
 
-		const auto epochs = 100;
+		const auto epochs = 10;
 		
 		const auto reservoir_size = 1024;
 		const auto prediction_size = stimulus_size;
@@ -813,7 +815,7 @@ int main(int argc, char *argv[])
 		const auto time_budget = epochs * snippet_size * snippet_number;
 		const auto preamble = 10;
 		const auto supplementary = 0;
-		const auto batch_size = 1;
+		const auto batch_size = 10;
 
 		/*	for (int row = stimulus_size, col = 0; row < stimulus_size*2; row++, col++)
 			{
@@ -837,8 +839,8 @@ int main(int argc, char *argv[])
 				
 				//TRN4CPP::configure_mutator_shuffle(id);
 				
-				//TRN4CPP::configure_mutator_punch(id, seed, 1.0f, 2, 1);
-				TRN4CPP::configure_mutator_reverse(id, seed, 0.4f, snippet_size);
+				TRN4CPP::configure_mutator_punch(id, seed, 1.0f, 2, 1);
+				TRN4CPP::configure_mutator_reverse(id, seed, 1.0f, snippet_size/2);
 				//TRN4CPP::configure_scheduler_tiled(id, epochs);
 
 				//TRN4CPP::configure_loop_copy(id, batch_size, stimulus_size);
@@ -857,7 +859,7 @@ int main(int argc, char *argv[])
 				TRN4CPP::setup_performances(id, on_performances, true, true, true);
 				//TRN4CPP::setup_weights(id, on_weights);
 				//TRN4CPP::setup_states(id, on_states, false, false, true);
-				//TRN4CPP::setup_scheduling(id, on_scheduling);
+				TRN4CPP::setup_scheduling(id, on_scheduling);
 
 				/*TRN4CPP::configure_feedforward_custom(id, feedforward_request, feedforward_reply);
 				TRN4CPP::configure_feedback_custom(id, feedback_request, feedback_reply);

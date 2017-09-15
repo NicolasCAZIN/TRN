@@ -11,22 +11,26 @@
 #include <utility>
 #include <string>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 #include <functional>
 #include <string>
 #include <vector>
 #include <list>
 #include <set>
+#include <mutex>
 #include <tuple>
 #include <memory>
 #include <queue>
 #include <boost/asio.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/archive/basic_binary_oarchive.hpp>
-#include <boost/archive/basic_binary_iarchive.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/archive/basic_binary_oarchive.hpp>
+#include <boost/archive/basic_binary_iarchive.hpp>
+
 #include <boost/asio/io_service.hpp>
 
 #include <boost/log/trivial.hpp>
@@ -54,8 +58,6 @@
 #include <boost/log/support/date_time.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 #include <boost/tuple/tuple.hpp>
 
 #include <string>
