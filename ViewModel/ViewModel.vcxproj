@@ -71,7 +71,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0A00;BOOST_ALL_DYN_LINK;UNICODE;WIN32;WIN64;QT_DLL;QT_CORE_LIB;VIEWMODEL_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_VLD;_WIN32_WINNT=0x0A00;BOOST_ALL_DYN_LINK;UNICODE;WIN32;WIN64;QT_DLL;QT_CORE_LIB;VIEWMODEL_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(BOOST_ROOT)\include;..;.\GeneratedFiles;.;$(QTDIR64)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -94,7 +94,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0A00;BOOST_ALL_DYN_LINK;QT_DLL;QT_CORE_LIB;VIEWMODEL_LIB;UNICODE;WIN32;WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_VLD;_WIN32_WINNT=0x0A00;BOOST_ALL_DYN_LINK;QT_DLL;QT_CORE_LIB;VIEWMODEL_LIB;UNICODE;WIN32;WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(BOOST_ROOT)\include;..;.\GeneratedFiles;.;$(QTDIR32)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -160,7 +160,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Broker.cpp" />
     <ClCompile Include="Communicator.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -171,7 +170,6 @@
     <ClCompile Include="Node.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Broker.h" />
     <ClInclude Include="Communicator.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="viewmodel_global.h" />

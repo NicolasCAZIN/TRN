@@ -45,7 +45,6 @@ void TRN::Network::Acceptor::accept()
 
 		if (!error)
 		{
-			std::cout << "ACCEPTED" << std::endl;
 			handle->on_accept(handle->manager, connection);
 		}
 

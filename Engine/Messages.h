@@ -9,6 +9,7 @@ namespace TRN
 		enum Tag
 		{
 			QUIT = 0,
+			COMPLETED,
 			/* technical / worker -> client */
 			ACK,
 			WORKER,
@@ -103,6 +104,14 @@ namespace TRN
 		template <enum TRN::Engine::Tag>
 		struct Message
 		{
+		};
+		template <>
+		struct Message<TRN::Engine::Tag::COMPLETED>
+		{
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+			}
 		};
 		template <>
 		struct Message<TRN::Engine::Tag::QUIT>

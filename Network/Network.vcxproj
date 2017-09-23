@@ -71,7 +71,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0A00;BOOST_ALL_DYN_LINK;UNICODE;WIN32;WIN64;QT_CORE_LIB;NETWORK_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_VLD;_WIN32_WINNT=0x0A00;BOOST_ALL_DYN_LINK;UNICODE;WIN32;WIN64;QT_CORE_LIB;NETWORK_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(BOOST_ROOT)\include;..;.\GeneratedFiles;.;$(QTDIR32)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR32)\include\QtCore;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -96,7 +96,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0A00;BOOST_ALL_DYN_LINK;UNICODE;WIN32;WIN64;QT_CORE_LIB;NETWORK_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_VLD;_WIN32_WINNT=0x0A00;BOOST_ALL_DYN_LINK;UNICODE;WIN32;WIN64;QT_CORE_LIB;NETWORK_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(BOOST_ROOT)\include;..;.\GeneratedFiles;.;$(QTDIR64)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR64)\include\QtCore;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -162,7 +162,6 @@
   <ItemGroup>
     <ClCompile Include="Manager.cpp" />
     <ClCompile Include="Acceptor.cpp" />
-    <ClCompile Include="Proxy.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -180,7 +179,6 @@
     <ClInclude Include="Messages.h" />
     <ClInclude Include="network_global.h" />
     <ClInclude Include="Proxy_impl.h" />
-    <ClInclude Include="Proxy.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>

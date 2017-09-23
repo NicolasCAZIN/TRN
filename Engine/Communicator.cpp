@@ -31,7 +31,14 @@ void TRN::Engine::Communicator::send(const TRN::Engine::Message<tag> &message, c
 	//std::unique_lock<std::mutex> lock(handle->mutex);
 	send(destination, tag, compress<RAW>(archive_stream.str()));
 }
-
+template <TRN::Engine::Tag tag>
+void TRN::Engine::Communicator::broadcast(const TRN::Engine::Message<tag> &message)
+{
+	for (int rank = 1; rank < size(); rank++)
+	{
+		send(message, rank);
+	}
+}
 template <TRN::Engine::Tag tag>
 TRN::Engine::Message<tag> TRN::Engine::Communicator::receive(const int &destination)
 {
@@ -46,8 +53,9 @@ TRN::Engine::Message<tag> TRN::Engine::Communicator::receive(const int &destinat
 
 	return message;
 }
-
+template void TRN::Engine::Communicator::broadcast(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message);
 template TRN::Engine::Message<TRN::Engine::Tag::QUIT> TRN::Engine::Communicator::receive<TRN::Engine::Tag::QUIT>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> TRN::Engine::Communicator::receive<TRN::Engine::Tag::COMPLETED>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::WORKER> TRN::Engine::Communicator::receive<TRN::Engine::Tag::WORKER>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::ACK> TRN::Engine::Communicator::receive<TRN::Engine::Tag::ACK>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> TRN::Engine::Communicator::receive<TRN::Engine::Tag::ALLOCATE>(const int &destination);
@@ -119,7 +127,7 @@ template TRN::Engine::Message<TRN::Engine::Tag::LOG_ERROR> TRN::Engine::Communic
 template TRN::Engine::Message<TRN::Engine::Tag::TRAINED> TRN::Engine::Communicator::receive<TRN::Engine::Tag::TRAINED>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::PRIMED> TRN::Engine::Communicator::receive<TRN::Engine::Tag::PRIMED>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::TESTED> TRN::Engine::Communicator::receive<TRN::Engine::Tag::TESTED>(const int &destination);
-
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::WORKER> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::ACK> &message, const int &destination);

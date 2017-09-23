@@ -71,7 +71,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>BOOST_ALL_DYN_LINK;UNICODE;WIN32;WIN64;QT_DLL;QT_CORE_LIB;ENGINE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_VLD;BOOST_ALL_DYN_LINK;UNICODE;WIN32;WIN64;QT_DLL;QT_CORE_LIB;ENGINE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(BOOST_ROOT)\include;..;.\GeneratedFiles;.;$(QTDIR64)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -94,7 +94,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>BOOST_ALL_DYN_LINK;QT_DLL;QT_CORE_LIB;ENGINE_LIB;UNICODE;WIN32;WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_VLD;BOOST_ALL_DYN_LINK;QT_DLL;QT_CORE_LIB;ENGINE_LIB;UNICODE;WIN32;WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(BOOST_ROOT)\include;..;.\GeneratedFiles;.;$(QTDIR32)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -160,13 +160,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Blocking.cpp" />
+    <ClCompile Include="Executor.cpp" />
     <ClCompile Include="Broker.cpp" />
     <ClCompile Include="Communicator.cpp" />
     <ClCompile Include="Compressor.cpp" />
     <ClCompile Include="Manager.cpp" />
     <ClCompile Include="Node.cpp" />
+    <ClCompile Include="NonBlocking.cpp" />
     <ClCompile Include="Processor.cpp" />
     <ClCompile Include="Proxy.cpp" />
+    <ClCompile Include="Receiver.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -176,6 +180,8 @@
     <ClCompile Include="Worker.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Executor.h" />
+    <ClInclude Include="Executor_impl.h" />
     <ClInclude Include="Broker.h" />
     <ClInclude Include="Broker_impl.h" />
     <ClInclude Include="Communicator.h" />
@@ -185,13 +191,18 @@
     <ClInclude Include="Manager_impl.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="Node_impl.h" />
+    <ClInclude Include="NonBlocking.h" />
+    <ClInclude Include="NonBlocking_impl.h" />
     <ClInclude Include="Processor.h" />
     <ClInclude Include="Processor_impl.h" />
     <ClInclude Include="Messages.h" />
     <ClInclude Include="Manager.h" />
     <ClInclude Include="Proxy.h" />
     <ClInclude Include="Proxy_impl.h" />
+    <ClInclude Include="Receiver.h" />
+    <ClInclude Include="Receiver_impl.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Blocking.h" />
     <ClInclude Include="Worker.h" />
     <ClInclude Include="Worker_impl.h" />
   </ItemGroup>

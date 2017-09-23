@@ -32,6 +32,9 @@ namespace TRN
 			void send(const TRN::Engine::Message<tag> &message, const int &destination);
 			
 			template <TRN::Engine::Tag tag>
+			void broadcast(const TRN::Engine::Message<tag> &message);
+
+			template <TRN::Engine::Tag tag>
 			TRN::Engine::Message<tag> receive(const int &destination);
 		};
 	};

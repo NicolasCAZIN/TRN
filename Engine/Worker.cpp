@@ -31,14 +31,18 @@ TRN::Engine::Worker::~Worker()
 	handle.reset();
 }
 
-void TRN::Engine::Worker::on_receive_start()
+void TRN::Engine::Worker::initialize()
 {
 	TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->toggle();
 }
 
-void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message)
+void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message)
 {
-	TRN::Engine::Node::handle->stop = true;
+	TRN::Engine::Message<TRN::Engine::QUIT> quit;
+	quit.rank = TRN::Engine::Node::handle->rank;
+	auto locked = TRN::Engine::Node::implementor.lock();
+	if (locked)
+		locked->send(quit, 0);
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message)
 {
@@ -393,7 +397,6 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 
-	std::unique_lock<std::mutex> lock(TRN::Engine::Node::handle->functors);
 	if (TRN::Engine::Node::handle->estimated_position.find(message.id) != TRN::Engine::Node::handle->estimated_position.end())
 	{
 		throw std::runtime_error("Estimated position functor is already setup for simulator #" + std::to_string(message.id));
@@ -440,7 +443,6 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 {
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	std::unique_lock<std::mutex> lock(TRN::Engine::Node::handle->functors);
 	if (TRN::Engine::Node::handle->perceived_stimulus.find(message.id) != TRN::Engine::Node::handle->perceived_stimulus.end())
 	{
 		throw std::runtime_error("Perceived stimulus functor is already setup for simulator #" + std::to_string(message.id));
@@ -479,7 +481,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 {
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	std::unique_lock<std::mutex> lock(TRN::Engine::Node::handle->functors);
+
 	if (TRN::Engine::Node::handle->scheduler.find(message.id) != TRN::Engine::Node::handle->scheduler.end())
 	{
 		throw std::runtime_error("Scheduler functor is already setup for simulator #" + std::to_string(message.id));
@@ -525,7 +527,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 {
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	std::unique_lock<std::mutex> lock(TRN::Engine::Node::handle->functors);
+	
 	if (TRN::Engine::Node::handle->mutator.find(message.id) != TRN::Engine::Node::handle->mutator.end())
 	{
 		throw std::runtime_error("Mutator functor is already setup for simulator #" + std::to_string(message.id));
@@ -562,7 +564,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 {
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	std::unique_lock<std::mutex> lock(TRN::Engine::Node::handle->functors);
+	
 	if (TRN::Engine::Node::handle->feedforward_weights.find(message.id) != TRN::Engine::Node::handle->feedforward_weights.end())
 	{
 		throw std::runtime_error("Feedforward functor is already setup for simulator #" + std::to_string(message.id));
@@ -598,7 +600,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 {
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	std::unique_lock<std::mutex> lock(TRN::Engine::Node::handle->functors);
+
 	if (TRN::Engine::Node::handle->feedback_weights.find(message.id) != TRN::Engine::Node::handle->feedback_weights.end())
 	{
 		throw std::runtime_error("Feedback functor is already setup for simulator #" + std::to_string(message.id));
@@ -633,7 +635,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 {
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	std::unique_lock<std::mutex> lock(TRN::Engine::Node::handle->functors);
+
 	if (TRN::Engine::Node::handle->recurrent.find(message.id) != TRN::Engine::Node::handle->recurrent.end())
 	{
 		throw std::runtime_error("Recurrent functor is already setup for simulator #" + std::to_string(message.id));
@@ -668,7 +670,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 {
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	std::unique_lock<std::mutex> lock(TRN::Engine::Node::handle->functors);
+
 	if (TRN::Engine::Node::handle->readout.find(message.id) != TRN::Engine::Node::handle->readout.end())
 	{
 		throw std::runtime_error("Readout functor is already setup for simulator #" + std::to_string(message.id));

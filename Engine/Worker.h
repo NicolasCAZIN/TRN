@@ -23,10 +23,10 @@ namespace TRN
 			virtual ~Worker();
 
 		public :
-			virtual void on_receive_start() override;
+			virtual void initialize() override;
 
 		public :
-			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message) override;
+			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATE> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::TRAIN> &message) override;

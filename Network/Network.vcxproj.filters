@@ -38,9 +38,6 @@
     <ClCompile Include="Acceptor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Proxy.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -65,9 +62,6 @@
       <Filter>Header Files\private</Filter>
     </ClInclude>
     <ClInclude Include="Messages.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Proxy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Proxy_impl.h">

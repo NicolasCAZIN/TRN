@@ -40,6 +40,7 @@ float total_seconds = 0.0f;
 struct Node
 {
 	std::vector<int> ranks;
+
 	std::string host;
 	unsigned int index;
 	std::string name;
@@ -63,6 +64,7 @@ std::map<std::pair<std::string, unsigned int>, Node> nodes;
 std::map<int, std::pair<std::string, unsigned int>> processor_node;
 std::map<unsigned int, int> simulation_processor;
 std::map<std::string, std::vector<int>> host_rank;
+std::map<int, std::vector<unsigned int>> rank_simulations;
 std::mutex processor;
 
 static void on_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)
@@ -89,6 +91,16 @@ static void on_allocation(const unsigned int &id, const int &rank)
 	std::cout << "id #" << id << " allocated on " << rank << std::endl;
 
 	simulation_processor[id] = rank;
+
+	rank_simulations[rank].push_back(id);
+}
+static void on_deallocation(const unsigned int &id, const int &rank)
+{
+	std::unique_lock<std::mutex> lock(processor);
+
+	std::cout << "id #" << id << " deallocated from " << rank << std::endl;
+
+	//simulation_processor[id] = rank;
 }
 
 
@@ -191,7 +203,7 @@ std::function<void(const float &x, const float &y, float *A)> place_cell_activat
 
 
 static const float RADIUS_THRESHOLD = 0.2f;
-static const float JITTER_ABS = 0.01f;
+static const float JITTER_ABS = 0.00f;
 
 
 inline float
@@ -272,9 +284,11 @@ static void robot_predicted_stimulus(const unsigned int &id, const std::size_t &
 {
 
 }
+std::mutex mutex;
 
 static void robot_predicted_position(const unsigned int &id,  const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &predicted_position, const std::size_t &rows, const std::size_t &cols)
 {
+	std::unique_lock<std::mutex> lock(mutex);
 	std::vector<float> effective_position(predicted_position.size());
 	std::vector<float> perceived_stimulus(rows * stimulus_size);
 #pragma omp parallel for
@@ -491,7 +505,7 @@ static void initialize_place_cells_response(const std::size_t &rows, const std::
 	}
 	std::random_device rd;  //Will be used to obtain a seed for the random number engine
 	std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-	std::uniform_real_distribution<> dist(-JITTER_ABS, JITTER_ABS);
+	std::uniform_real_distribution<float> dist(-JITTER_ABS, JITTER_ABS);
 	std::function<float(void)> dice = std::bind(dist, gen);
 	auto jitter = [dice](const std::pair<float, float> &b, const float &v)
 	{
@@ -563,24 +577,28 @@ static void position_frechet(const unsigned int &id, const std::size_t &trial, c
 {
 
 }
-#define GRID_ROWS 400
-#define GRID_COLS 400
+#define GRID_ROWS 100
+#define GRID_COLS 100
+#define WIN_ROWS 1000
+#define WIN_COLS 1000
+
 #define GRID_X_MIN -1.0f
 #define GRID_Y_MIN -1.0f
 #define GRID_X_MAX 1.0f
 #define GRID_Y_MAX 1.0f
 
 
-#define X_TO_COL(x) ((((x) - GRID_X_MIN) / (GRID_X_MAX - GRID_X_MIN)) * (GRID_COLS - 1))
-#define Y_TO_ROW(y) (GRID_ROWS - 1 - (((y) - GRID_Y_MIN) / (GRID_Y_MAX - GRID_Y_MIN)) * (GRID_ROWS - 1))
+#define X_TO_COL(x) ((((x) - GRID_X_MIN) / (GRID_X_MAX - GRID_X_MIN)) * (WIN_COLS - 1))
+#define Y_TO_ROW(y) (WIN_ROWS - 1 - (((y) - GRID_Y_MIN) / (GRID_Y_MAX - GRID_Y_MIN)) * (WIN_ROWS - 1))
 
 std::map<std::size_t, cv::Mat> cv_accumulator;// (GRID_ROWS, GRID_COLS, CV_32F);
 std::map<std::size_t, cv::Mat> cv_overall; //(GRID_ROWS, GRID_COLS, CV_32F);
 std::map<std::size_t, int> trajectories;
+std::mutex traj_mutex;
 static void position_custom(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)
 {
-	cv::Mat cv_expected(GRID_ROWS, GRID_COLS, CV_8UC3);
-	cv::Mat cv_predicted(GRID_ROWS, GRID_COLS, CV_32F);
+	cv::Mat cv_expected(WIN_ROWS, WIN_COLS, CV_8UC3);
+	cv::Mat cv_predicted(WIN_ROWS, WIN_COLS, CV_32F);
 
 	cv_expected = 0.0f;
 	cv_predicted = 0.0f;
@@ -618,7 +636,7 @@ static void position_custom(const unsigned int &id, const std::size_t &trial, co
 	
 	for (std::size_t page = 0; page < pages; page++)
 	{
-		cv::Mat cv_temp(GRID_ROWS, GRID_COLS, CV_32F);
+		cv::Mat cv_temp(WIN_ROWS, WIN_COLS, CV_32F);
 		cv_temp = 0.0f;
 
 
@@ -641,7 +659,7 @@ static void position_custom(const unsigned int &id, const std::size_t &trial, co
 	//to_display.enqueue(std::make_pair("predcited, trial #" + std::to_string(trial), cv_predicted));
 
 	{
-		std::unique_lock<std::mutex> lock;
+		std::unique_lock<std::mutex> lock(traj_mutex);
 
 		cv_accumulator[trial-1] += cv_predicted;
 		trajectories[trial-1]++;
@@ -735,12 +753,12 @@ int main(int argc, char *argv[])
 {
 	try
 	{
-		const size_t ID = 10;
-		const size_t TRIALS = 2;
-		const size_t WALKS = 2;
+		const size_t ID = 2;
+		const size_t TRIALS = 1;
+		const size_t WALKS = 1;
 		for (std::size_t trial = 0; trial < TRIALS; trial++)
 		{
-			cv_accumulator[trial] = cv::Mat(GRID_ROWS, GRID_COLS, CV_32F);
+			cv_accumulator[trial] = cv::Mat(WIN_ROWS, WIN_COLS, CV_32F);
 			cv_accumulator[trial] = 0.0f;
 		}
 		
@@ -788,19 +806,20 @@ int main(int argc, char *argv[])
 		auto seed = 2;
 		TRN4CPP::install_processor(on_processor);
 		TRN4CPP::install_allocation(on_allocation);
-	
+		TRN4CPP::install_deallocation(on_deallocation);
 		//TRN4CPP::initialize_distributed(argc, argv);
 
-
+		TRN4CPP::initialize_executor(true);
 		TRN4CPP::initialize_remote(
 			"127.0.0.1", 12345
 			);
+
 		/*TRN4CPP::initialize_local(
 		{
-			1
+			0,1,2,3,4,1,2,3,4
 		});*/
 
-		const auto epochs = 10;
+		const auto epochs = 1;
 		
 		const auto reservoir_size = 1024;
 		const auto prediction_size = stimulus_size;
@@ -839,8 +858,8 @@ int main(int argc, char *argv[])
 				
 				//TRN4CPP::configure_mutator_shuffle(id);
 				
-				TRN4CPP::configure_mutator_punch(id, seed, 1.0f, 2, 1);
-				TRN4CPP::configure_mutator_reverse(id, seed, 1.0f, snippet_size/2);
+				//TRN4CPP::configure_mutator_punch(id, seed, 1.0f, 2, 1);
+				//TRN4CPP::configure_mutator_reverse(id, seed, 1.0f, snippet_size/2);
 				//TRN4CPP::configure_scheduler_tiled(id, epochs);
 
 				//TRN4CPP::configure_loop_copy(id, batch_size, stimulus_size);
@@ -859,7 +878,7 @@ int main(int argc, char *argv[])
 				TRN4CPP::setup_performances(id, on_performances, true, true, true);
 				//TRN4CPP::setup_weights(id, on_weights);
 				//TRN4CPP::setup_states(id, on_states, false, false, true);
-				TRN4CPP::setup_scheduling(id, on_scheduling);
+			//	TRN4CPP::setup_scheduling(id, on_scheduling);
 
 				/*TRN4CPP::configure_feedforward_custom(id, feedforward_request, feedforward_reply);
 				TRN4CPP::configure_feedback_custom(id, feedback_request, feedback_reply);
@@ -899,7 +918,7 @@ int main(int argc, char *argv[])
 			//});
 		}
 		
-	
+		TRN4CPP::run();
 
 		TRN4CPP::uninitialize();
 		
@@ -924,14 +943,27 @@ int main(int argc, char *argv[])
 			auto speed = (node_perfs[node_key].speed)/ node_perfs[node_key].simulations;
 			throughput *= node.ranks.size();
 			speed *= node.ranks.size();
-			std::cout << node.host << " / device #" << node.index << " ("<< node.name << ")" << " with " << node.ranks.size() << " subscribers : throughput " << throughput << " cycles per second / " << std::fixed << speed << " Gflops/s" << std::endl;
+			std::size_t simulations = 0;
+			for (auto rank : node.ranks)
+			{
+				simulations += rank_simulations[rank].size();
+			}
+			if (simulations > 0)
+				std::cout << node.host << " / device #" << node.index << " ("<< node.name << ")" << " with " << node.ranks.size() << " subscribers, computed " << simulations << " simulations with throughput " << throughput << " cycles per second / " << std::fixed << speed << " Gflops/s" << std::endl;
 		}
 		for (auto p : host_perfs)
 		{
 			auto throughput = p.second.throughput/ p.second.simulations;
 			auto speed = p.second.speed / p.second.simulations;
-			throughput *= host_rank[p.first].size();
-			speed *= host_rank[p.first].size();
+
+			std::size_t simulations = 0;
+			for (auto rank : host_rank[p.first])
+			{
+				simulations += rank_simulations[rank].size();
+			}
+
+			throughput *= simulations;
+			speed *= simulations;
 			std::cout << p.first << " : throughput " << throughput << " cycles per second / " << std::fixed << speed << " Gflops/s" << std::endl;
 		}
 	
