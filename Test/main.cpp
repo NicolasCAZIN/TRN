@@ -577,8 +577,8 @@ static void position_frechet(const unsigned int &id, const std::size_t &trial, c
 {
 
 }
-#define GRID_ROWS 100
-#define GRID_COLS 100
+#define GRID_ROWS 400
+#define GRID_COLS 400
 #define WIN_ROWS 1000
 #define WIN_COLS 1000
 
@@ -753,9 +753,9 @@ int main(int argc, char *argv[])
 {
 	try
 	{
-		const size_t ID = 2;
-		const size_t TRIALS = 1;
-		const size_t WALKS = 1;
+		const size_t ID = 100;
+		const size_t TRIALS = 10;
+		const size_t WALKS = 10;
 		for (std::size_t trial = 0; trial < TRIALS; trial++)
 		{
 			cv_accumulator[trial] = cv::Mat(WIN_ROWS, WIN_COLS, CV_32F);
@@ -819,7 +819,7 @@ int main(int argc, char *argv[])
 			0,1,2,3,4,1,2,3,4
 		});*/
 
-		const auto epochs = 1;
+		const auto epochs = 10;
 		
 		const auto reservoir_size = 1024;
 		const auto prediction_size = stimulus_size;
