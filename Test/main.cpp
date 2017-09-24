@@ -36,6 +36,18 @@ size_t total_cycles = 0;
 float total_gflops = 0.0f;
 float total_seconds = 0.0f;
 
+const bool BLOCKING = true;
+ std::thread::id CALLER_THREAD_ID;
+
+void check_thread_id()
+{
+	auto thread_id = std::this_thread::get_id();
+	if (BLOCKING && thread_id != CALLER_THREAD_ID ||
+		!BLOCKING && thread_id == CALLER_THREAD_ID)
+		throw std::runtime_error("unexpected thread id");
+}
+
+#define CHECK_THREAD_ID check_thread_id()
 
 struct Node
 {
@@ -67,8 +79,12 @@ std::map<std::string, std::vector<int>> host_rank;
 std::map<int, std::vector<unsigned int>> rank_simulations;
 std::mutex processor;
 
+
+
 static void on_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)
 {
+	
+	CHECK_THREAD_ID;
 	std::cout << "processor " << rank << " hosted on " << host << " using device #" << index << " named " << name << std::endl;
 	std::unique_lock<std::mutex> lock(processor);
 	
@@ -86,6 +102,7 @@ static void on_processor(const int &rank, const std::string &host, const unsigne
 
 static void on_allocation(const unsigned int &id, const int &rank)
 {
+	CHECK_THREAD_ID;
 	std::unique_lock<std::mutex> lock(processor);
 
 	std::cout << "id #" << id << " allocated on " << rank << std::endl;
@@ -96,6 +113,7 @@ static void on_allocation(const unsigned int &id, const int &rank)
 }
 static void on_deallocation(const unsigned int &id, const int &rank)
 {
+	CHECK_THREAD_ID;
 	std::unique_lock<std::mutex> lock(processor);
 
 	std::cout << "id #" << id << " deallocated from " << rank << std::endl;
@@ -106,7 +124,7 @@ static void on_deallocation(const unsigned int &id, const int &rank)
 
 static void on_performances(const unsigned int &id, const std::string &phase, const std::size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)
 {
-
+	CHECK_THREAD_ID;
 	auto throughput = batch_size * cycles / seconds;
 	auto speed = batch_size * gflops / seconds;
 
@@ -128,13 +146,14 @@ static void on_performances(const unsigned int &id, const std::string &phase, co
 		auto node_key = processor_node[simulation_processor[id]];
 		auto node = nodes[node_key];
 
-
 		node_perfs[node_key].cycles += batch_size * cycles;
 		node_perfs[node_key].seconds += seconds;
 		node_perfs[node_key].gflops += batch_size * gflops;
 		node_perfs[node_key].throughput += throughput;
 		node_perfs[node_key].speed += speed;
 		node_perfs[node_key].simulations++;
+
+
 		host_perfs[node.host].cycles += batch_size * cycles;
 		host_perfs[node.host].seconds += seconds;
 		host_perfs[node.host].gflops += batch_size * gflops;
@@ -150,6 +169,7 @@ std::map<std::string, cv::Mat> windows;
 
 static void on_states(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)
 {
+	CHECK_THREAD_ID;
 	//cv::namedWindow(label, 1);
 	//std::cout << "id = " << std::to_string(id) << ", states = " << label << ", rows = " << rows << ", cols = " << cols << std::endl;
 //	cv::Mat my_mat(rows, cols, CV_32FC1, (char *)data.data());
@@ -162,6 +182,7 @@ static void on_states(const unsigned int &id, const std::string &phase, const st
 }
 static void on_weights(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)
 {
+	CHECK_THREAD_ID;
 	int histSize = 256;
 	int hist_w = 512; int hist_h = 400;
 	int bin_w = cvRound((double)hist_w / histSize);
@@ -282,12 +303,13 @@ void activation_pattern(const std::size_t &pc_rows, const std::size_t &pc_cols, 
 
 static void robot_predicted_stimulus(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &predicted_stimulus, const std::size_t &rows, const std::size_t &cols)
 {
-
+	CHECK_THREAD_ID;
 }
 std::mutex mutex;
 
 static void robot_predicted_position(const unsigned int &id,  const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &predicted_position, const std::size_t &rows, const std::size_t &cols)
 {
+	CHECK_THREAD_ID;
 	std::unique_lock<std::mutex> lock(mutex);
 	std::vector<float> effective_position(predicted_position.size());
 	std::vector<float> perceived_stimulus(rows * stimulus_size);
@@ -563,6 +585,7 @@ static void initialize_place_cells_response(const std::size_t &rows, const std::
 #include <numeric>
 static void position_mse(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &value,  const std::size_t &rows, const std::size_t &cols)
 {
+	CHECK_THREAD_ID;
 	auto mse = sqrtf(std::accumulate(value.begin(), value.end(), 0.0f) / value.size());
 	if (isnan(mse))
 	{
@@ -575,10 +598,10 @@ static void position_mse(const unsigned int &id, const std::size_t &trial, const
 
 static void position_frechet(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &value, const std::size_t &rows, const std::size_t &cols)
 {
-
+	CHECK_THREAD_ID;
 }
-#define GRID_ROWS 400
-#define GRID_COLS 400
+#define GRID_ROWS 100
+#define GRID_COLS 100
 #define WIN_ROWS 1000
 #define WIN_COLS 1000
 
@@ -597,6 +620,7 @@ std::map<std::size_t, int> trajectories;
 std::mutex traj_mutex;
 static void position_custom(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)
 {
+	CHECK_THREAD_ID;
 	cv::Mat cv_expected(WIN_ROWS, WIN_COLS, CV_8UC3);
 	cv::Mat cv_predicted(WIN_ROWS, WIN_COLS, CV_32F);
 
@@ -672,6 +696,7 @@ static void position_custom(const unsigned int &id, const std::size_t &trial, co
 
 static void readout_mse(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &value, const std::size_t &rows, const std::size_t &cols)
 {
+	CHECK_THREAD_ID;
 	auto mse = sqrtf(std::accumulate(value.begin(), value.end(), 0.0f) / value.size());
 	if (isnan(mse))
 	{
@@ -685,15 +710,16 @@ static void readout_mse(const unsigned int &id, const std::size_t &trial, const 
 
 static void readout_frechet(const unsigned int &id, const std::vector<float> &value, const std::size_t &rows, const std::size_t &cols)
 {
-
+	CHECK_THREAD_ID;
 }
 static void readout_custom(const unsigned int &id, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &rows, const std::size_t &cols)
 {
-
+	CHECK_THREAD_ID;
 }
 
 static void on_scheduling(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
+	CHECK_THREAD_ID;
 	auto min_max = std::minmax_element(offsets.begin(), offsets.end());
 	auto ST = std::max(std::abs(*min_max.first), std::abs(*min_max.second)) + 1;
 	auto T = offsets.size();
@@ -724,6 +750,7 @@ static inline std::vector<float> initialize_uniform_weights(const std::size_t &m
 std::function<void(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> feedforward_reply;
 static void feedforward_request(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
+	CHECK_THREAD_ID;
 	std::vector<float> weights = initialize_uniform_weights(matrices, rows, cols, -1.0, 1.0f);
 	feedforward_reply(id, weights, matrices, rows, cols);
 }
@@ -731,6 +758,7 @@ static void feedforward_request(const unsigned int &id, const unsigned long &see
 std::function<void(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> feedback_reply;
 static void feedback_request(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
+	CHECK_THREAD_ID;
 	std::vector<float> weights = initialize_uniform_weights(matrices, rows, cols, -1.0, 1.0f);
 	feedback_reply(id, weights, matrices, rows, cols);
 }
@@ -738,6 +766,7 @@ static void feedback_request(const unsigned int &id, const unsigned long &seed, 
 std::function<void(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> recurrent_reply;
 static void recurrent_request(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
+	CHECK_THREAD_ID;
 	std::vector<float> weights = initialize_uniform_weights(matrices, rows, cols, -1.0/sqrtf(rows), 1.0f/sqrtf(rows));
 	recurrent_reply(id, weights, matrices, rows, cols);
 }
@@ -745,17 +774,19 @@ static void recurrent_request(const unsigned int &id, const unsigned long &seed,
 std::function<void(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> readout_reply;
 static void readout_request(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
+	CHECK_THREAD_ID;
 	std::vector<float> weights = initialize_uniform_weights(matrices, rows, cols, -1e-3f, 1e-3f);
 	readout_reply(id, weights, matrices, rows, cols);
 }
 
 int main(int argc, char *argv[])
 {
+	CALLER_THREAD_ID = std::this_thread::get_id();
 	try
 	{
 		const size_t ID = 100;
-		const size_t TRIALS = 10;
-		const size_t WALKS = 10;
+		const size_t TRIALS = 100;
+		const size_t WALKS = 1;
 		for (std::size_t trial = 0; trial < TRIALS; trial++)
 		{
 			cv_accumulator[trial] = cv::Mat(WIN_ROWS, WIN_COLS, CV_32F);
@@ -809,7 +840,7 @@ int main(int argc, char *argv[])
 		TRN4CPP::install_deallocation(on_deallocation);
 		//TRN4CPP::initialize_distributed(argc, argv);
 
-		TRN4CPP::initialize_executor(true);
+		TRN4CPP::initialize_executor(BLOCKING);
 		TRN4CPP::initialize_remote(
 			"127.0.0.1", 12345
 			);
@@ -821,7 +852,7 @@ int main(int argc, char *argv[])
 
 		const auto epochs = 10;
 		
-		const auto reservoir_size = 1024;
+		const auto reservoir_size = 4096;
 		const auto prediction_size = stimulus_size;
 		const auto leak_rate = 0.85f;
 		const auto learning_rate = 0.1f / reservoir_size;
@@ -853,18 +884,18 @@ int main(int argc, char *argv[])
 				TRN4CPP::allocate(id);
 
 				TRN4CPP::configure_begin(id);
-				TRN4CPP::configure_scheduler_snippets(id, seed, snippet_size, time_budget,  "REW");
+				//TRN4CPP::configure_scheduler_snippets(id, seed, snippet_size, time_budget,  "REW");
 				//TRN4CPP::configure_scheduler_snippets(id, snippet_size, time_budget);
 				
 				//TRN4CPP::configure_mutator_shuffle(id);
 				
 				//TRN4CPP::configure_mutator_punch(id, seed, 1.0f, 2, 1);
 				//TRN4CPP::configure_mutator_reverse(id, seed, 1.0f, snippet_size/2);
-				//TRN4CPP::configure_scheduler_tiled(id, epochs);
+				TRN4CPP::configure_scheduler_tiled(id, epochs);
 
-				//TRN4CPP::configure_loop_copy(id, batch_size, stimulus_size);
+				TRN4CPP::configure_loop_copy(id, batch_size, stimulus_size);
 				//TRN4CPP::configure_loop_custom(id, stimulus_size, robot_action, robot_perception);
-				TRN4CPP::configure_loop_spatial_filter(id, batch_size, stimulus_size, seed, robot_predicted_position, robot_estimated_position[id], robot_predicted_stimulus, robot_perceived_stimulus[id], pc_rows, pc_cols, x, y, place_cells_response, sigma, radius,magnitude, "POS");
+				//TRN4CPP::configure_loop_spatial_filter(id, batch_size, stimulus_size, seed, robot_predicted_position, robot_estimated_position[id], robot_predicted_stimulus, robot_perceived_stimulus[id], pc_rows, pc_cols, x, y, place_cells_response, sigma, radius,magnitude, "POS");
 				TRN4CPP::configure_measurement_position_mean_square_error(id, batch_size, position_mse);
 				TRN4CPP::configure_measurement_position_custom(id, batch_size, position_custom);
 				TRN4CPP::configure_measurement_readout_mean_square_error(id, batch_size, readout_mse);
@@ -893,12 +924,12 @@ int main(int argc, char *argv[])
 				TRN4CPP::configure_end(id);
 				//initialize_place_cell_pattern(id, "test");
 				initialize_trajectory(id, "abcde", x, y, pc_rows, pc_cols);
-				initialize_trajectory(id, "ebcda", x, y, pc_rows, pc_cols);
+				/*initialize_trajectory(id, "ebcda", x, y, pc_rows, pc_cols);
 				initialize_trajectory(id, "bacde", x, y, pc_rows, pc_cols);
-				initialize_trajectory(id, "abced", x, y, pc_rows, pc_cols);
+				initialize_trajectory(id, "abced", x, y, pc_rows, pc_cols);*/
 
-				const std::vector<std::string> training_sequences = {  "ebcda", "bacde", "abced"};
-				//const std::vector<std::string> training_sequences = { "abcde" };
+				//const std::vector<std::string> training_sequences = {  "ebcda", "bacde", "abced"};
+				const std::vector<std::string> training_sequences = { "abcde" };
 				TRN4CPP::declare_set(id, "training", "INC", training_sequences);
 				TRN4CPP::declare_set(id, "training", "EXP", training_sequences);
 				TRN4CPP::declare_set(id, "training", "POS", training_sequences);
@@ -913,8 +944,8 @@ int main(int argc, char *argv[])
 //
 				}
 				TRN4CPP::deallocate(id);
-
-
+			
+				TRN4CPP::run_one();
 			//});
 		}
 		
@@ -956,14 +987,16 @@ int main(int argc, char *argv[])
 			auto throughput = p.second.throughput/ p.second.simulations;
 			auto speed = p.second.speed / p.second.simulations;
 
-			std::size_t simulations = 0;
+			throughput *= host_rank[p.first].size();
+			speed *= host_rank[p.first].size();
+			/*std::size_t simulations = 0;
 			for (auto rank : host_rank[p.first])
 			{
 				simulations += rank_simulations[rank].size();
 			}
 
 			throughput *= simulations;
-			speed *= simulations;
+			speed *= simulations;*/
 			std::cout << p.first << " : throughput " << throughput << " cycles per second / " << std::fixed << speed << " Gflops/s" << std::endl;
 		}
 	

@@ -4,6 +4,7 @@
 
 namespace TRN4CPP
 {
+
 	extern TRN4CPP_EXPORT const bool DEFAULT_BLOCKING;
 	extern TRN4CPP_EXPORT const bool DEFAULT_INITIALIZE;
 	extern TRN4CPP_EXPORT const bool DEFAULT_TRAIN;
@@ -33,6 +34,7 @@ namespace TRN4CPP
 	void TRN4CPP_EXPORT		install_deallocation(const std::function<void(const unsigned int &id, const int &rank)> &functor);
 
 	void TRN4CPP_EXPORT  	run();
+	void TRN4CPP_EXPORT  	run_one();
 	void TRN4CPP_EXPORT  	uninitialize();
 	void TRN4CPP_EXPORT  	allocate(const unsigned int &id);
 	void TRN4CPP_EXPORT  	deallocate(const unsigned int &id);

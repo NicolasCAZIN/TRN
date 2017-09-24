@@ -256,6 +256,11 @@ void TRN4CPP::Frontend::callback_weights(const unsigned int &id, const std::stri
 {
 	get_map(handle->on_weights, id)(id, phase, label, batch, trial, samples, rows, cols);
 }
+
+void TRN4CPP::Frontend::callback_scheduling(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
+{
+	get_map(handle->on_scheduling, id)(id, trial, offsets, durations);
+}
 void TRN4CPP::Frontend::callback_position(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
 {
 	get_map(handle->on_position, id)(id, trial, evaluation, position, rows, cols);
@@ -264,6 +269,7 @@ void TRN4CPP::Frontend::callback_stimulus(const unsigned int &id, const std::siz
 {
 	get_map(handle->on_stimulus, id)(id, trial, evaluation, stimulus, rows, cols);
 }
+
 void TRN4CPP::Frontend::callback_mutator(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
 	get_map(handle->on_mutator, id)(id, seed, trial, offsets, durations);
@@ -272,10 +278,7 @@ void TRN4CPP::Frontend::callback_scheduler(const unsigned int &id, const unsigne
 {
 	get_map(handle->on_scheduler, id)(id, seed, trial, elements, rows, cols, offsets, durations);
 }
-void TRN4CPP::Frontend::callback_scheduling(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
-{
-	get_map(handle->on_scheduling, id)(id, trial, offsets, durations);
-}
+
 void TRN4CPP::Frontend::callback_feedforward(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
 {
 	get_map(handle->on_feedforward, id)(id, seed, matrices, rows, cols);

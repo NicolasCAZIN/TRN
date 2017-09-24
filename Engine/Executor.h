@@ -23,6 +23,7 @@ namespace TRN
 
 		public :
 			virtual void run() = 0;
+			virtual void run_one() = 0;
 		};
 	};
 };

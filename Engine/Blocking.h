@@ -13,7 +13,7 @@ namespace TRN
 			Blocking();
 		public :
 			virtual void run() override;
-
+			virtual void run_one() override;
 		public :
 			static std::shared_ptr<Blocking> create();
 

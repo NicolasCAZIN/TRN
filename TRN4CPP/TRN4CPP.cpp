@@ -122,6 +122,15 @@ void TRN4CPP::run()
 	executor->run();
 }
 
+void TRN4CPP::run_one()
+{
+	if (!executor)
+	{
+		throw std::runtime_error("Executor is not setup");
+	}
+	executor->run_one();
+}
+
 void TRN4CPP::uninitialize()
 {
 	if (!frontend)

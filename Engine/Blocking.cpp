@@ -17,6 +17,16 @@ void TRN::Engine::Blocking::run()
 	}
 }
 
+
+void TRN::Engine::Blocking::run_one()
+{
+	std::function<void(void)> command;
+	if (TRN::Engine::Executor::handle->commands.dequeue(command))
+	{
+		command();
+	}
+}
+
 std::shared_ptr<TRN::Engine::Blocking> TRN::Engine::Blocking::create()
 {
 	return std::make_shared<TRN::Engine::Blocking>();

@@ -8,6 +8,7 @@ TRN::Engine::NonBlocking::NonBlocking() :
 {
 	handle->process = std::thread([&]()
 	{
+	
 		std::function<void(void)> command;
 		while (TRN::Engine::Executor::handle->commands.dequeue(command))
 		{
@@ -28,6 +29,10 @@ void TRN::Engine::NonBlocking::run()
 {
 	if (handle->process.joinable())
 		handle->process.join();
+}
+
+void TRN::Engine::NonBlocking::run_one()
+{
 }
 
 std::shared_ptr<TRN::Engine::NonBlocking> TRN::Engine::NonBlocking::create()

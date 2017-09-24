@@ -31,7 +31,7 @@ namespace TRN
 		protected :
 			void	completed();
 
-		public :
+		public  :
 			void 	allocate(const unsigned int &id);
 			void 	deallocate(const unsigned int &id);
 			void 	train(const unsigned int &id, const std::string &label, const std::string &incoming, const std::string &expected);
@@ -148,12 +148,12 @@ namespace TRN
 			void notify_readout(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols);
 			void notify_recurrent(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols);
 		private :
+			std::size_t generate_number();
 			template<TRN::Engine::Tag tag>
 			void send(const int &rank, TRN::Engine::Message<tag> &message, const std::function<void()> &functor);
-			void allocate_from_caller(const unsigned int &id);
-			void deallocate_from_caller(const unsigned int &id);
-			std::shared_ptr<TRN::Engine::Executor> retrieve_from_caller(const unsigned int &id);
-			
+			void append_simulation(const unsigned int &id);
+			void remove_simulation(const unsigned int &id);	
+			std::shared_ptr<TRN::Engine::Executor> retrieve_simulation(const unsigned int &id);
 		};
 	};
 };

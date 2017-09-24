@@ -30,7 +30,7 @@ void TRN::Engine::Proxy::uninitialize()
 	TRN::Engine::Broker::handle->to_caller->post([=]() 
 	{
 		callback_information("Proxy uptime : " + std::to_string(uptime) + " seconds");
-		//handle->visitor->visit(shared_from_this());
+	//	handle->visitor->visit(shared_from_this());
 	});
 
 	TRN::Engine::Broker::uninitialize();

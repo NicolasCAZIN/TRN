@@ -19,7 +19,7 @@ namespace TRN
 
 		public :
 			virtual void run() override;
-
+			virtual void run_one() override;
 		public :
 			static std::shared_ptr<NonBlocking> create();
 		};

@@ -17,6 +17,7 @@ TRN::Engine::Broker::~Broker()
 }
 void TRN::Engine::Broker::initialize()
 {
+
 	handle->active = handle->manager->get_processors().size();
 }
 
@@ -41,11 +42,11 @@ void TRN::Engine::Broker::receive()
 			handle->active--;
 			if (handle->active == 0)
 			{
-				handle->from_caller.clear();
 				handle->to_caller->post([=]()
 				{
 					callback_information("Broker stopped");
 					handle->to_caller->terminate();
+					
 				});
 			
 				stop();
@@ -322,32 +323,51 @@ void TRN::Engine::Broker::receive()
 
 
 
-void TRN::Engine::Broker::allocate_from_caller(const unsigned int &id)
+void TRN::Engine::Broker::append_simulation(const unsigned int &id)
 {
-	if (handle->from_caller.find(id) != handle->from_caller.end())
-		throw std::runtime_error("Simulation #" + std::to_string(id) + " is already allocated");
+	std::unique_lock<std::mutex> lock(handle->mutex);
+	if (handle->simulations.find(id) != handle->simulations.end())
+		throw std::logic_error("Simulation #" + std::to_string(id) + " is already allocated");
+	handle->simulations.insert(id);
 	handle->from_caller[id] = TRN::Engine::NonBlocking::create();
 }
-std::shared_ptr<TRN::Engine::Executor> TRN::Engine::Broker::retrieve_from_caller(const unsigned int &id)
+
+std::shared_ptr<TRN::Engine::Executor> TRN::Engine::Broker::retrieve_simulation(const unsigned int &id)
 {
-	if (handle->from_caller.find(id) == handle->from_caller.end())
-		throw std::runtime_error("Simulation #" + std::to_string(id) + " is not allocated");
+	std::unique_lock<std::mutex> lock(handle->mutex);
+
 	return handle->from_caller[id];
 }
 
-void TRN::Engine::Broker::deallocate_from_caller(const unsigned int &id)
+
+void TRN::Engine::Broker::remove_simulation(const unsigned int &id)
 {
-	if (handle->from_caller.find(id) == handle->from_caller.end())
-		throw std::runtime_error("Simulation #" + std::to_string(id) + " is not allocated");
+	std::unique_lock<std::mutex> lock(handle->mutex);;
+	if (handle->simulations.find(id) == handle->simulations.end())
+		throw std::logic_error("Simulation #" + std::to_string(id) + " is not allocated");
+	handle->simulations.erase(id);
 	handle->from_caller.erase(id);
+	//	PrintThread{} << "id " << id << " deallocate DONE" << std::endl;
+	if (handle->simulations.empty())
+	{
+		completed();
+	}
 }
 
+
+std::size_t TRN::Engine::Broker::generate_number()
+{
+	std::unique_lock<std::mutex> lock(handle->number);
+	std::size_t number = handle->count;
+	handle->count++;
+	return number;
+}
 
 template<TRN::Engine::Tag tag>
 void TRN::Engine::Broker::send(const int &rank, TRN::Engine::Message<tag> &message, const std::function<void()> &functor)
 {
-	message.number = handle->count;
-	handle->count++;
+	message.number = generate_number();
+
 	std::unique_lock<std::recursive_mutex> lock(handle->ack);
 	////PrintThread{} << "acquiring functor lock for id " << message.id << std::endl;
 
@@ -364,14 +384,17 @@ void TRN::Engine::Broker::completed()
 	handle->communicator->broadcast(message);
 	handle->to_caller->post([=]()
 	{
+
+		//handle->from_caller->terminate();
 		callback_completed();
 	});
 }
 
 void TRN::Engine::Broker::allocate(const unsigned int &id)
 {
-	allocate_from_caller(id);
-	retrieve_from_caller(id)->post([=]() 
+	append_simulation(id);
+
+	retrieve_simulation(id)->post([=]() 
 	{
 		auto processor = handle->manager->allocate(id);
 		processor->post([=]()
@@ -382,10 +405,11 @@ void TRN::Engine::Broker::allocate(const unsigned int &id)
 			send(processor->get_rank(), message, [=]()
 			{
 				processor->allocated();
-				callback_allocation(id, handle->manager->retrieve(id)->get_rank());
-				if (handle->simulations.find(id) != handle->simulations.end())
-					throw std::logic_error("Simulation #" + std::to_string(id) + " is already allocated");
-				handle->simulations.insert(id);
+				handle->to_caller->post([=]() 
+				{
+					callback_allocation(id, processor->get_rank());
+				});
+			
 				////PrintThread{} << "id " << id << " allocate ack" << std::endl;
 			});
 		});
@@ -393,7 +417,7 @@ void TRN::Engine::Broker::allocate(const unsigned int &id)
 }
 void TRN::Engine::Broker::deallocate(const unsigned int &id)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		//PrintThread{} << "entering " << id << " " << __FUNCTION__ << std::endl;
 		auto processor = handle->manager->retrieve(id);
@@ -413,17 +437,11 @@ void TRN::Engine::Broker::deallocate(const unsigned int &id)
 				processor->deallocated();
 				//	PrintThread{} << "id " << id << " manager deallocate" << std::endl;
 
-
-				callback_deallocation(id, processor->get_rank());
-				if (handle->simulations.find(id) == handle->simulations.end())
-					throw std::logic_error("Simulation #" + std::to_string(id) + " is not allocated");
-				handle->simulations.erase(id);
-				handle->from_caller.erase(id);
-					//	PrintThread{} << "id " << id << " deallocate DONE" << std::endl;
-				if (handle->simulations.empty())
+				handle->to_caller->post([=]()
 				{
-					completed();
-				}
+					callback_deallocation(id, processor->get_rank());
+				});
+				remove_simulation(id);
 			});
 		});
 		//PrintThread{} << "exiting " << id << " " << __FUNCTION__ << std::endl;
@@ -431,7 +449,7 @@ void TRN::Engine::Broker::deallocate(const unsigned int &id)
 }
 void TRN::Engine::Broker::train(const unsigned int &id, const std::string &label, const std::string &incoming, const std::string &expected)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -454,7 +472,7 @@ void TRN::Engine::Broker::train(const unsigned int &id, const std::string &label
 }
 void TRN::Engine::Broker::test(const unsigned int &id, const std::string &label, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const unsigned int &supplementary_generations)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -476,7 +494,7 @@ void TRN::Engine::Broker::test(const unsigned int &id, const std::string &label,
 }
 void TRN::Engine::Broker::declare_sequence(const unsigned int &id, const std::string &label, const std::string &tag, const std::vector<float> &sequence, const std::size_t &observations)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -497,7 +515,7 @@ void TRN::Engine::Broker::declare_sequence(const unsigned int &id, const std::st
 }
 void TRN::Engine::Broker::declare_set(const unsigned int &id, const std::string &label, const std::string &tag, const std::vector<std::string> &labels)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -517,7 +535,7 @@ void TRN::Engine::Broker::declare_set(const unsigned int &id, const std::string 
 }
 void TRN::Engine::Broker::setup_states(const unsigned int &id, const bool &train, const bool &prime, const bool &generate)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -536,7 +554,7 @@ void TRN::Engine::Broker::setup_states(const unsigned int &id, const bool &train
 }
 void TRN::Engine::Broker::setup_weights(const unsigned int &id, const bool &initalization, const bool &train)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -555,7 +573,7 @@ void TRN::Engine::Broker::setup_weights(const unsigned int &id, const bool &init
 }
 void TRN::Engine::Broker::setup_performances(const unsigned int &id, const bool &train, const bool &prime, const bool &generate)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{	
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -574,7 +592,7 @@ void TRN::Engine::Broker::setup_performances(const unsigned int &id, const bool 
 }
 void TRN::Engine::Broker::setup_scheduling(const unsigned int &id)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -591,7 +609,7 @@ void TRN::Engine::Broker::setup_scheduling(const unsigned int &id)
 }
 void TRN::Engine::Broker::configure_begin(const unsigned int &id)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -609,7 +627,7 @@ void TRN::Engine::Broker::configure_begin(const unsigned int &id)
 }
 void TRN::Engine::Broker::configure_end(const unsigned int &id)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -626,7 +644,7 @@ void TRN::Engine::Broker::configure_end(const unsigned int &id)
 }
 void TRN::Engine::Broker::configure_measurement_readout_mean_square_error(const unsigned int &id, const std::size_t &batch_size)
 {
-    retrieve_from_caller(id)->post([=]()
+    retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -644,7 +662,7 @@ void TRN::Engine::Broker::configure_measurement_readout_mean_square_error(const 
 }
 void TRN::Engine::Broker::configure_measurement_readout_frechet_distance(const unsigned int &id, const std::size_t &batch_size)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -662,7 +680,7 @@ void TRN::Engine::Broker::configure_measurement_readout_frechet_distance(const u
 }
 void TRN::Engine::Broker::configure_measurement_readout_custom(const unsigned int &id, const std::size_t &batch_size)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -680,7 +698,7 @@ void TRN::Engine::Broker::configure_measurement_readout_custom(const unsigned in
 }
 void TRN::Engine::Broker::configure_measurement_position_mean_square_error(const unsigned int &id, const std::size_t &batch_size)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -698,7 +716,7 @@ void TRN::Engine::Broker::configure_measurement_position_mean_square_error(const
 }
 void TRN::Engine::Broker::configure_measurement_position_frechet_distance(const unsigned int &id, const std::size_t &batch_size)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -717,7 +735,7 @@ void TRN::Engine::Broker::configure_measurement_position_frechet_distance(const 
 }
 void TRN::Engine::Broker::configure_measurement_position_custom(const unsigned int &id, const std::size_t &batch_size)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -735,7 +753,7 @@ void TRN::Engine::Broker::configure_measurement_position_custom(const unsigned i
 }
 void TRN::Engine::Broker::configure_reservoir_widrow_hoff(const unsigned int &id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate, const float &initial_state_scale, const float &learning_rate, const unsigned long &seed, const std::size_t &batch_size)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -760,7 +778,7 @@ void TRN::Engine::Broker::configure_reservoir_widrow_hoff(const unsigned int &id
 }
 void TRN::Engine::Broker::configure_loop_copy(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -786,7 +804,7 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned int &id, 
 	const float &scale,
 	const std::string &tag)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -847,7 +865,7 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned int &id, 
 }
 void TRN::Engine::Broker::configure_loop_custom(const unsigned int &id, const std::size_t &batch_size, const std::size_t &stimulus_size)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -867,7 +885,7 @@ void TRN::Engine::Broker::configure_loop_custom(const unsigned int &id, const st
 }
 void TRN::Engine::Broker::configure_scheduler_tiled(const unsigned int &id, const unsigned int &epochs)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 	 auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -886,7 +904,7 @@ void TRN::Engine::Broker::configure_scheduler_tiled(const unsigned int &id, cons
 }
 void TRN::Engine::Broker::configure_scheduler_snippets(const unsigned int &id, const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget,  const std::string &tag)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		 auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -908,7 +926,7 @@ void TRN::Engine::Broker::configure_scheduler_snippets(const unsigned int &id, c
 }
 void TRN::Engine::Broker::configure_scheduler_custom(const unsigned int &id, const unsigned long &seed, const std::string &tag)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		 auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -929,7 +947,7 @@ void TRN::Engine::Broker::configure_scheduler_custom(const unsigned int &id, con
 }
 void TRN::Engine::Broker::configure_mutator_shuffle(const unsigned int &id,const unsigned long &seed)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -947,7 +965,7 @@ void TRN::Engine::Broker::configure_mutator_shuffle(const unsigned int &id,const
 }
 void TRN::Engine::Broker::configure_mutator_reverse(const unsigned int &id, const unsigned long &seed, const float &rate, const std::size_t &size)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -967,7 +985,7 @@ void TRN::Engine::Broker::configure_mutator_reverse(const unsigned int &id, cons
 }
 void TRN::Engine::Broker::configure_mutator_punch(const unsigned int &id, const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &number)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -988,7 +1006,7 @@ void TRN::Engine::Broker::configure_mutator_punch(const unsigned int &id, const 
 }
 void TRN::Engine::Broker::configure_mutator_custom(const unsigned int &id, const unsigned long &seed)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1007,7 +1025,7 @@ void TRN::Engine::Broker::configure_mutator_custom(const unsigned int &id, const
 }
 void TRN::Engine::Broker::configure_readout_uniform(const unsigned int &id, const float &a, const float &b, const float &sparsity)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1027,7 +1045,7 @@ void TRN::Engine::Broker::configure_readout_uniform(const unsigned int &id, cons
 }
 void TRN::Engine::Broker::configure_readout_gaussian(const unsigned int &id, const float &mu, const float &sigma)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1047,7 +1065,7 @@ void TRN::Engine::Broker::configure_readout_gaussian(const unsigned int &id, con
 }
 void TRN::Engine::Broker::configure_readout_custom(const unsigned int &id)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1066,7 +1084,7 @@ void TRN::Engine::Broker::configure_readout_custom(const unsigned int &id)
 }
 void TRN::Engine::Broker::configure_feedback_uniform(const unsigned int &id, const float &a, const float &b, const float &sparsity)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1086,7 +1104,7 @@ void TRN::Engine::Broker::configure_feedback_uniform(const unsigned int &id, con
 }
 void TRN::Engine::Broker::configure_feedback_gaussian(const unsigned int &id, const float &mu, const float &sigma)
 {
- retrieve_from_caller(id)->post([=]()
+ retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1106,7 +1124,7 @@ void TRN::Engine::Broker::configure_feedback_gaussian(const unsigned int &id, co
 }
 void TRN::Engine::Broker::configure_feedback_custom(const unsigned int &id)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 	 auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1125,7 +1143,7 @@ void TRN::Engine::Broker::configure_feedback_custom(const unsigned int &id)
 }
 void TRN::Engine::Broker::configure_recurrent_uniform(const unsigned int &id, const float &a, const float &b, const float &sparsity)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1145,7 +1163,7 @@ void TRN::Engine::Broker::configure_recurrent_uniform(const unsigned int &id, co
 }
 void TRN::Engine::Broker::configure_recurrent_gaussian(const unsigned int &id, const float &mu, const float &sigma)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1165,7 +1183,7 @@ void TRN::Engine::Broker::configure_recurrent_gaussian(const unsigned int &id, c
 }
 void TRN::Engine::Broker::configure_recurrent_custom(const unsigned int &id)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1184,7 +1202,7 @@ void TRN::Engine::Broker::configure_recurrent_custom(const unsigned int &id)
 }
 void TRN::Engine::Broker::configure_feedforward_uniform(const unsigned int &id, const float &a, const float &b, const float &sparsity)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1204,7 +1222,7 @@ void TRN::Engine::Broker::configure_feedforward_uniform(const unsigned int &id, 
 }
 void TRN::Engine::Broker::configure_feedforward_gaussian(const unsigned int &id, const float &mu, const float &sigma)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1224,7 +1242,7 @@ void TRN::Engine::Broker::configure_feedforward_gaussian(const unsigned int &id,
 }
 void TRN::Engine::Broker::configure_feedforward_custom(const unsigned int &id)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
 		processor->post([=]()
@@ -1243,7 +1261,7 @@ void TRN::Engine::Broker::configure_feedforward_custom(const unsigned int &id)
 }
 void TRN::Engine::Broker::notify_stimulus(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		TRN::Engine::Message<STIMULUS> message;
 		message.id = id;
@@ -1260,7 +1278,7 @@ void TRN::Engine::Broker::notify_stimulus(const unsigned int &id, const std::siz
 }
 void TRN::Engine::Broker::notify_position(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		TRN::Engine::Message<POSITION> message;
 		message.id = id;
@@ -1277,7 +1295,7 @@ void TRN::Engine::Broker::notify_position(const unsigned int &id, const std::siz
 }
 void TRN::Engine::Broker::notify_scheduler(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		TRN::Engine::Message<SCHEDULING> message;
 		message.id = id;
@@ -1294,7 +1312,7 @@ void TRN::Engine::Broker::notify_scheduler(const unsigned int &id, const std::si
 }
 void TRN::Engine::Broker::notify_mutator(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		TRN::Engine::Message<SCHEDULING> message;
 		message.id = id;
@@ -1311,7 +1329,7 @@ void TRN::Engine::Broker::notify_mutator(const unsigned int &id, const std::size
 }
 void TRN::Engine::Broker::notify_feedforward(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		TRN::Engine::Message<FEEDFORWARD_WEIGHTS> message;
 		message.id = id;
@@ -1327,7 +1345,7 @@ void TRN::Engine::Broker::notify_feedforward(const unsigned int &id, const std::
 }
 void TRN::Engine::Broker::notify_feedback(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		TRN::Engine::Message<FEEDBACK_WEIGHTS> message;
 		message.id = id;
@@ -1343,7 +1361,7 @@ void TRN::Engine::Broker::notify_feedback(const unsigned int &id, const std::vec
 }
 void TRN::Engine::Broker::notify_readout(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		TRN::Engine::Message<READOUT_WEIGHTS> message;
 		message.id = id;
@@ -1359,7 +1377,7 @@ void TRN::Engine::Broker::notify_readout(const unsigned int &id, const std::vect
 }
 void TRN::Engine::Broker::notify_recurrent(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
-	retrieve_from_caller(id)->post([=]()
+	retrieve_simulation(id)->post([=]()
 	{
 		TRN::Engine::Message<RECURRENT_WEIGHTS> message;
 		message.id = id;
