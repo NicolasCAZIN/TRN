@@ -2,9 +2,9 @@
 
 #include "Frontend.h"
 
-class TRN4CPP::Frontend::Handle 
+class TRN::Engine::Frontend::Handle
 {
-public :
+public:
 	std::function<void()> on_completed;
 	std::function<void(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause)> on_ack;
 	std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> on_processor;
@@ -14,9 +14,9 @@ public :
 	std::function<void(const unsigned int &id)> on_trained;
 	std::function<void(const unsigned int &id)> on_primed;
 	std::function<void(const unsigned int &id)> on_tested;
-	std::function <void(const std::string &message) > on_error;
-	std::function <void(const std::string &message) > on_information;
-	std::function <void(const std::string &message) > on_warning;
+	std::function<void(const std::string &message) > on_error;
+	std::function<void(const std::string &message) > on_information;
+	std::function<void(const std::string &message) > on_warning;
 
 	std::map<unsigned int, std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)>> on_measurement_readout_mean_square_error;
 	std::map<unsigned int, std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)>> on_measurement_readout_frechet_distance;

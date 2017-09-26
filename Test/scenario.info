@@ -1,0 +1,20 @@
+
+Simulation
+{
+	id 0
+	
+	trials 10
+	tests 10
+	
+	batch_size 10
+	stimulus_size 256
+	reservoir_size 1024
+	prediction_size 256
+	
+	Loop
+	{
+		type copy
+		
+	}
+}
+

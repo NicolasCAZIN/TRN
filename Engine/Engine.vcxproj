@@ -165,6 +165,7 @@
     <ClCompile Include="Broker.cpp" />
     <ClCompile Include="Communicator.cpp" />
     <ClCompile Include="Compressor.cpp" />
+    <ClCompile Include="Frontend.cpp" />
     <ClCompile Include="Manager.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="NonBlocking.cpp" />
@@ -188,6 +189,8 @@
     <ClInclude Include="Communicator_impl.h" />
     <ClInclude Include="Compressor.h" />
     <ClInclude Include="engine_global.h" />
+    <ClInclude Include="Frontend.h" />
+    <ClInclude Include="Frontend_impl.h" />
     <ClInclude Include="Manager_impl.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="Node_impl.h" />
