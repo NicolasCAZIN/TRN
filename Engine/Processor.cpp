@@ -58,6 +58,9 @@ std::ostream &operator << ( std::ostream& stream, const TRN::Engine::Processor::
 		case TRN::Engine::Processor::Deallocated:
 			stream << "Deallocated";
 			break;
+		/*case TRN::Engine::Processor::Ready:
+			stream << "Ready";
+			break;*/
 		case TRN::Engine::Processor::Allocating:
 			stream << "Allocating";
 			break;
@@ -104,7 +107,7 @@ void TRN::Engine::Processor::notify(const TRN::Engine::Processor::Status &status
 	if (old_status != handle->status)
 	{
 		handle->cond.notify_one();
-		std::string ;
+	
 		
 
 		//PrintThread{} << "rank " << handle->rank << " status changed to " << status << std::endl;
@@ -233,7 +236,7 @@ void TRN::Engine::Processor::set_t1(const clock_t &t1)
 	 //PrintThread{} << handle->rank << " entering " << __FUNCTION__ << std::endl;
 	 wait([=](const TRN::Engine::Processor::Status &status)
 	 {
-		 //PrintThread{} << "waiting for rank " << handle->rank << " status " << status << " == " << TRN::Engine::Processor::Status::Configuring  << std::endl;
+		// PrintThread{} << "waiting for rank " << handle->rank << " status " << status << " == " << TRN::Engine::Processor::Status::Configuring  << std::endl;
 		 return status == TRN::Engine::Processor::Status::Configuring;
 	 });
 	 notify(TRN::Engine::Processor::Status::Configured);
@@ -245,7 +248,9 @@ void TRN::Engine::Processor::set_t1(const clock_t &t1)
 	 //PrintThread{} << handle->rank << " entering " << __FUNCTION__ << std::endl;
 	 wait([=](const TRN::Engine::Processor::Status &status)
 	 {
-		 /*PrintThread{} << "waiting for rank " << handle->rank <<
+	//	 PrintThread{} << "waiting for rank " << handle->rank <<
+/*			 " status " << status << " == " << TRN::Engine::Processor::Status::Ready <<
+			 " || " <<
 			 " status " << status << " == " << TRN::Engine::Processor::Status::Configured <<
 			 " || " <<
 			 " status " << status << " == " << TRN::Engine::Processor::Status::Tested << std::endl;*/
@@ -253,6 +258,7 @@ void TRN::Engine::Processor::set_t1(const clock_t &t1)
 			 status == TRN::Engine::Processor::Status::Tested || status == TRN::Engine::Processor::Status::Trained;
 	 });
 	notify(TRN::Engine::Processor::Status::Training);
+
 	//PrintThread{} << handle->rank << " exiting " << __FUNCTION__ << std::endl;
  }
  void TRN::Engine::Processor::trained()
@@ -260,7 +266,7 @@ void TRN::Engine::Processor::set_t1(const clock_t &t1)
 	 //PrintThread{} << handle->rank << " entering " << __FUNCTION__ << std::endl;
 	 wait([=](const TRN::Engine::Processor::Status &status)
 	 {
-		 //PrintThread{} << "waiting for rank " << handle->rank << " status " << status << " == " << TRN::Engine::Processor::Status::Training << std::endl;
+		// PrintThread{} << "waiting for rank " << handle->rank << " status " << status << " == " << TRN::Engine::Processor::Status::Training << std::endl;
 		 return status == TRN::Engine::Processor::Status::Training;
 	 });
 	 notify(TRN::Engine::Processor::Status::Trained);
@@ -269,7 +275,7 @@ void TRN::Engine::Processor::set_t1(const clock_t &t1)
 
  void TRN::Engine::Processor::testing()
  {
-	 //PrintThread{} << handle->rank << " entering " << __FUNCTION__ << std::endl;
+	// PrintThread{} << handle->rank << " entering " << __FUNCTION__ << std::endl;
 	 wait([=](const TRN::Engine::Processor::Status &status)
 	 {
 		// PrintThread{} << "waiting for rank " << handle->rank << " status " << status << " == " << TRN::Engine::Processor::Status::Trained << std::endl;
@@ -284,7 +290,7 @@ void TRN::Engine::Processor::set_t1(const clock_t &t1)
 	 //PrintThread{} << handle->rank << " entering " << __FUNCTION__ << std::endl;
 	 wait([=](const TRN::Engine::Processor::Status &status)
 	 {
-		 //PrintThread{} << "waiting for rank " << handle->rank << " status " << status << " == " << TRN::Engine::Processor::Status::Priming << std::endl;
+		// PrintThread{} << "waiting for rank " << handle->rank << " status " << status << " == " << TRN::Engine::Processor::Status::Priming << std::endl;
 		 return status == TRN::Engine::Processor::Status::Priming;
 	 });
 	 notify(TRN::Engine::Processor::Status::Primed);
@@ -303,13 +309,22 @@ void TRN::Engine::Processor::set_t1(const clock_t &t1)
 	 //PrintThread{} << handle->rank << " exiting " << __FUNCTION__ << std::endl;
  }
 
-
+/* void TRN::Engine::Processor::ready()
+ {
+	 wait([=](const TRN::Engine::Processor::Status &status)
+	 {
+		 PrintThread{} << "waiting for rank " << handle->rank << " status " << status << " == " << TRN::Engine::Processor::Status::Configured << std::endl;
+		 return status == TRN::Engine::Processor::Status::Configured;
+		 //PrintThread{} << handle->rank << " exiting " << __FUNCTION__ << std::endl;
+	 });
+	 notify(TRN::Engine::Processor::Status::Ready);
+ }*/
  void TRN::Engine::Processor::declare()
  {
 	 //PrintThread{} << handle->rank << " entering " << __FUNCTION__ << std::endl;
 	 wait([=](const TRN::Engine::Processor::Status &status)
 	 {
-		 //PrintThread{} << "waiting for rank " << handle->rank << " status " << status << " == " << TRN::Engine::Processor::Status::Configured << std::endl;
+		// PrintThread{} << "waiting for rank " << handle->rank << " status " << status << " == " << TRN::Engine::Processor::Status::Configured << std::endl;
 		 return status == TRN::Engine::Processor::Status::Configured;
 		 //PrintThread{} << handle->rank << " exiting " << __FUNCTION__ << std::endl;
 	 });

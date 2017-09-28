@@ -54,6 +54,16 @@ void TRN::Engine::Proxy::callback_ack(const unsigned int &id, const std::size_t 
 
 	handle->frontend_proxy->send(message, 0);*/
 }
+void TRN::Engine::Proxy::callback_configured(const unsigned int &id)
+{
+
+	TRN::Engine::Message<TRN::Engine::Tag::CONFIGURED> message;
+
+	message.id = id;
+
+	handle->frontend_proxy->send(message, 0);
+
+}
 void TRN::Engine::Proxy::callback_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)
 {
 	TRN::Engine::Message<TRN::Engine::Tag::WORKER> message;
@@ -65,13 +75,21 @@ void TRN::Engine::Proxy::callback_processor(const int &rank, const std::string &
 
 	handle->frontend_proxy->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_allocation(const unsigned int &id, const int &rank)
+void TRN::Engine::Proxy::callback_allocated(const unsigned int &id, const int &rank)
 {
+	TRN::Engine::Message<TRN::Engine::Tag::ALLOCATED> message;
 
+	message.id = id;
+
+	handle->frontend_proxy->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_deallocation(const unsigned int &id, const int &rank)
+void TRN::Engine::Proxy::callback_deallocated(const unsigned int &id, const int &rank)
 {
+	TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATED> message;
 
+	message.id = id;
+
+	handle->frontend_proxy->send(message, 0);
 }
 void TRN::Engine::Proxy::callback_quit(const int &rank)
 {
@@ -387,7 +405,14 @@ void TRN::Engine::Proxy::callback_recurrent(const unsigned int &id, const unsign
 	if (locked)
 		locked->send(message, 0);
 }
+/*void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::READY> &message)
+{
+	ready(message.id);
+	auto processor = TRN::Engine::Broker::handle->manager->retrieve(message.id);
+	processor->ready();
 
+
+}*/
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message)
 {
 	
@@ -402,6 +427,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::DE
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::TRAIN> &message)
 {
+
 	train(message.id, message.label, message.incoming, message.expected);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::TEST> &message)

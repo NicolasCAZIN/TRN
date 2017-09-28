@@ -11,6 +11,10 @@ namespace TRN
 		{
 		public :
 			Blocking();
+			virtual ~Blocking();
+		protected :
+			virtual void join() override;
+
 		public :
 			virtual void run() override;
 			virtual void run_one() override;

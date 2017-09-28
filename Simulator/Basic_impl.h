@@ -18,6 +18,7 @@ public:
 	std::function<void()> trained;
 	std::function<void()> primed;
 	std::function<void()> tested;
+	std::function<void()> configured;
 	std::list<std::shared_ptr<TRN::Core::Measurement::Abstraction>> measurements;
 	std::vector<std::shared_ptr<TRN::Core::Mutator>> mutators;
 

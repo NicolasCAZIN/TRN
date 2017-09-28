@@ -54,7 +54,7 @@ namespace TRN
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::TESTED> &payload) override;
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::PRIMED> &payload) override;
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::TRAINED> &payload) override;
-
+			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED> &payload) override;
 		private:
 			void to_host(const std::string &phase);
 

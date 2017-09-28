@@ -24,8 +24,11 @@ namespace TRN
 
 		private:
 			void receive() override;
+			void erase_functors(const unsigned int &id);
 
-		public:
+
+		protected:
+//			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::READY> &message) = 0;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message) = 0;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message) = 0;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATE> &message) = 0;

@@ -8,12 +8,13 @@ public:
 	std::function<void()> on_completed;
 	std::function<void(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause)> on_ack;
 	std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> on_processor;
-	std::function<void(const unsigned int &id, const int &rank)> on_allocation;
-	std::function<void(const unsigned int &id, const int &rank)> on_deallocation;
+	std::function<void(const unsigned int &id, const int &rank)> on_allocated;
+	std::function<void(const unsigned int &id, const int &rank)> on_deallocated;
 	std::function<void(const int &rank)> on_quit;
 	std::function<void(const unsigned int &id)> on_trained;
 	std::function<void(const unsigned int &id)> on_primed;
 	std::function<void(const unsigned int &id)> on_tested;
+	std::function<void(const unsigned int &id)> on_configured;
 	std::function<void(const std::string &message) > on_error;
 	std::function<void(const std::string &message) > on_information;
 	std::function<void(const std::string &message) > on_warning;

@@ -17,6 +17,7 @@ namespace TRN
 				Allocated,
 				Configuring,
 				Configured,
+				//Ready,
 				Training,
 				Trained,
 				Priming,
@@ -52,6 +53,7 @@ namespace TRN
 			void allocated();
 			void configuring();
 			void configured();
+		//	void ready();
 			void declare();
 		
 			void training();

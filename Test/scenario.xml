@@ -1,4 +1,26 @@
-<Simulation id = "0" trials = "10" tests = "10">
+<Simulation number="10">
+	<Configuration>
+		<Model>
+			<Reservoir type="WidrowHoff" batch_size="10" seed="0" stimulus_size="256" reservoir_size="1024" prediction_size="256" leak_rate="0.2" initial_state_scale="0.01" learning_rate="0.0001">
+				<Weights target="Feedforward" type="Uniform" a="-1" b="1" sparsity="0"/>
+				<Weights target="Feedback" type="Uniform" a="-1" b="1" sparsity="0"/>
+				<Weights target="Recurrent" type="Uniform" a="-0.03125" b="0.03125" sparsity="0"/>
+				<Weights target="Readout" type="Uniform" a="-1e-3" b="1e-3" sparsity="0"/>
+			</Reservoir>
+			<Loop type="SpatialFilter" seed="0" sigma="1.0" scale="1e-7" radius="0.3" tag="POS" response="firing_rate_map" x_min="-1" x_max="1" y_min="-1" y_max="1"/>
+			<Scheduler type="Snippets" snippets_size="10" time_budget="20000" seed="0" tag="REW">
+			<!--<Scheduler type="Tiled" epochs="100">-->
+			</Scheduler>
+		</Model>
+		<Result>
+			<Measurement target="readout" type="MeanSquareError"/>
+			<Measurement target="readout" type="Custom"/>
+			<Measurement target="position" type="MeanSquareError"/>
+			<Measurement target="position" type="Custom" />
+			<Recording target="Performances" train="true" prime="true" generate="true"/>
+			<!--<Recording  target="Scheduling"/>-->
+		</Result>	
+	</Configuration>
 	<Declaration>
 		<Data>
 			<Sequence label="abcde">
@@ -25,6 +47,13 @@
 					<Tag>POS</Tag>
 					<Tag>REW</Tag>
 			</Sequence>
+			<!--<Set label="full_training_set">
+				<Label>abcde</Label>
+				<Tag>INC</Tag>
+				<Tag>EXP</Tag>
+				<Tag>POS</Tag>
+				<Tag>REW</Tag>
+			</Set>-->
 			<Set label="full_training_set">
 				<Label>bacde</Label>
 				<Label>abced</Label>
@@ -36,45 +65,46 @@
 			</Set>
 		</Data>
 	</Declaration>
-	<Configuration>
-		<Model>
-			<Reservoir type="WidrowHoff" batch_size="10" seed="2" stimulus_size="256" reservoir_size="1024" prediction_size="256" leak_rate="0.8" initial_state_scale="0.01" learning_rate="0.001">
-				<Weights target="Feedforward" type="Custom"/>
-				<Weights target="Feedback" type="Uniform" a="-1" b="1" sparsity="0"/>
-				<Weights target="Recurrent" type="Uniform" a="-1" b="1" sparsity="0"/>
-				<Weights target="Readout" type="Uniform" a="-1" b="1" sparsity="0"/>
-			</Reservoir>
-			<Loop type="SpatialFilter" seed="2" sigma="1.0" scale="0.000001" radius="0.3" tag="POS" response="firing_rate_map" x_min="-1" x_max="1" y_min="-1" y_max="1"/>
-			<Scheduler type="Tiled" epochs="100">
-				<Mutator type="Reverse" seed = "0" size="5" number="1" rate="0.5"/>
-				<Mutator type="Punch" seed = "0" size="1" number="2" rate="0.5"/>
-				<Mutator type="Shuffle" seed = "0" />
-			<!--	<Mutator type="Custom" seed = "0" />-->
-			</Scheduler>
-		</Model>
-		<Result>
-			<Measurement target="readout" type="MeanSquareError"/>
-			<Measurement target="readout" type="Custom"/>
-			<Measurement target="position" type="MeanSquareError"/>
-			<Measurement target="position" type="Custom" />
-			<Recording target="States" train="true" prime="true" generate="true"/>
-			<Recording  target="Weights" initialize="true" train="true"/>
-			<Recording target="Performances" train="true" prime="true" generate="true"/>
-			<Recording  target="Scheduling"/>
-		</Result>	
-	</Configuration>
 	<Execution>
-		<Train label="training_set" incoming="INC" expected="EXP"/>
-		<Train label="training_set" incoming="INC" expected="EXP"/>
-		<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0"/>
-		<Train label="training_set" incoming="INC" expected="EXP"/>
-		<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0"/>
-		<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0"/>
-		<Train label="training_set" incoming="INC" expected="EXP"/>
-		<Train label="training_set" incoming="INC" expected="EXP"/>
-		<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0"/>
-		<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0"/>
-		<Train label="training_set" incoming="INC" expected="EXP"/>
+		<Trial>
+			<Train label="full_training_set" incoming="INC" expected="EXP"/>
+			<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0" repeat="10"/>
+		</Trial>
+		<Trial>
+			<Train label="full_training_set" incoming="INC" expected="EXP"/>
+			<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0" repeat="10"/>
+		</Trial>
+		<Trial>
+			<Train label="full_training_set" incoming="INC" expected="EXP"/>
+			<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0" repeat="10"/>
+		</Trial>
+		<Trial>
+			<Train label="full_training_set" incoming="INC" expected="EXP"/>
+			<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0" repeat="10"/>
+		</Trial>
+				<Trial>
+			<Train label="full_training_set" incoming="INC" expected="EXP"/>
+			<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0" repeat="10"/>
+		</Trial>
+		<Trial>
+			<Train label="full_training_set" incoming="INC" expected="EXP"/>
+			<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0" repeat="10"/>
+		</Trial>
+		<Trial>
+			<Train label="full_training_set" incoming="INC" expected="EXP"/>
+			<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0" repeat="10"/>
+		</Trial>
+		<Trial>
+			<Train label="full_training_set" incoming="INC" expected="EXP"/>
+			<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0" repeat="10"/>
+		</Trial>
+		<Trial>
+			<Train label="full_training_set" incoming="INC" expected="EXP"/>
+			<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0" repeat="10"/>
+		</Trial>
+		<Trial>
+			<Train label="full_training_set" incoming="INC" expected="EXP"/>
+			<Test preamble="10" label="abcde" incoming="INC" expected="EXP" supplementary="0" repeat="10"/>
+		</Trial>
 	</Execution>
 </Simulation>
-

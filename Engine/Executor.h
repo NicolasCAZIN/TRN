@@ -19,7 +19,10 @@ namespace TRN
 
 		public :
 			void post(const std::function<void(void)> &functor);
+		public:
 			void terminate();
+		public:
+			virtual void join() = 0;
 
 		public :
 			virtual void run() = 0;

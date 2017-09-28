@@ -9,10 +9,7 @@ TRN::Engine::Manager::Manager(const std::size_t &size):
 	for (std::size_t k = 1; k < size; k++)
 		handle->processors.push_back(TRN::Engine::Processor::create(k));
 
-	for (auto processor : handle->processors)
-	{
-		handle->available.emplace(processor);
-	}
+
 	handle->deallocator = std::thread([&]()
 	{
 		unsigned int id;
@@ -45,7 +42,21 @@ std::vector<std::shared_ptr<TRN::Engine::Processor>> TRN::Engine::Manager::get_p
 	return handle->processors;
 }
 
-void TRN::Engine::Manager::wait_not_allocated()
+void TRN::Engine::Manager::update_processor(const int &rank, const std::string host, const unsigned int &index, const std::string name)
+{
+
+	auto processor = handle->processors[rank - 1];
+	processor->set_host(host);
+	processor->set_name(name);
+	processor->set_index(index);
+
+	std::unique_lock<std::mutex> lock(handle->mutex);
+	handle->available.emplace(processor);
+	lock.unlock();
+	handle->condition.notify_one();
+}
+
+/*void TRN::Engine::Manager::wait_not_allocated()
 {
 	std::unique_lock<std::mutex> lock(handle->mutex);
 
@@ -55,7 +66,7 @@ void TRN::Engine::Manager::wait_not_allocated()
 		handle->condition.wait(lock);
 	}
 	//PrintThread{} << "no more simulations pending" << std::endl;
-}
+}*/
 std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::allocate(const unsigned int &id)
 {
 	std::unique_lock<std::mutex> lock(handle->mutex);

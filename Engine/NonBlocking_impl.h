@@ -6,4 +6,5 @@ class TRN::Engine::NonBlocking::Handle
 {
 public :
 	std::thread process;
+	bool joined;
 };

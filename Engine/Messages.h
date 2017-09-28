@@ -9,7 +9,8 @@ namespace TRN
 		enum Tag
 		{
 			QUIT = 0,
-			COMPLETED,
+			/*READY,*/
+
 			/* technical / worker -> client */
 			ACK,
 			WORKER,
@@ -74,9 +75,13 @@ namespace TRN
 			STATES,
 			WEIGHTS,
 			PERFORMANCES,
+			CONFIGURED,
+			COMPLETED,
 			TRAINED,
 			TESTED,
 			PRIMED,
+			ALLOCATED,
+			DEALLOCATED,
 			MEASUREMENT_READOUT_MEAN_SQUARE_ERROR,
 			MEASUREMENT_READOUT_FRECHET_DISTANCE,
 			MEASUREMENT_READOUT_CUSTOM,
@@ -105,6 +110,24 @@ namespace TRN
 		struct Message
 		{
 		};
+		template <>
+		struct Message<TRN::Engine::Tag::CONFIGURED> : public Header
+		{
+		};
+		template <>
+		struct Message<TRN::Engine::Tag::ALLOCATED> : public Header
+		{
+
+		};
+		template <>
+		struct Message<TRN::Engine::Tag::DEALLOCATED> : public Header
+		{
+
+		};
+		/*template <>
+		struct Message<TRN::Engine::Tag::READY> : public Header
+		{
+		};*/
 		template <>
 		struct Message<TRN::Engine::Tag::COMPLETED>
 		{

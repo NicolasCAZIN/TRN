@@ -54,7 +54,7 @@ namespace TRN
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::TESTED> &payload) override;
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::PRIMED> &payload) override;
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::TRAINED> &payload) override;
-
+			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED> &payload) override;
 		private :
 			static float compute_gflops(const std::size_t &flops_per_epoch_factor, const std::size_t &observations, const std::size_t &flops_per_cycle, const std::size_t &cycles);
 		public:

@@ -1237,8 +1237,68 @@ static inline void premultiply(
 }
 
 
+
+template <TRN::CPU::Implementation Implementation>
+static inline void batched_update_readout_activation(const std::size_t &batch_size,
+	float **batched_x, const std::size_t *batched_x_rows, const std::size_t *batched_x_cols, const std::size_t *batched_x_strides)
+{
+
+
+	std::size_t K = batch_size;
+#pragma omp parallel for schedule(static, batch_size)
+	for (int batch = 0; batch < batch_size; batch++)
+	{
+	
+		float *x = batched_x[batch];
+		auto cols = batched_x_cols[batch];
+
+		std::size_t col = 0;
+		if (cols - col > _8)
+		{
+			for (; col + _8 - 1 < cols; col += _8)
+			{
+				stream_ps(&x[col + _0], tanh_ps(load_ps(&x[col + _0])));
+				stream_ps(&x[col + _1], tanh_ps(load_ps(&x[col + _1])));
+				stream_ps(&x[col + _2], tanh_ps(load_ps(&x[col + _2])));
+				stream_ps(&x[col + _3], tanh_ps(load_ps(&x[col + _3])));
+				stream_ps(&x[col + _4], tanh_ps(load_ps(&x[col + _4])));
+				stream_ps(&x[col + _5], tanh_ps(load_ps(&x[col + _5])));
+				stream_ps(&x[col + _6], tanh_ps(load_ps(&x[col + _6])));
+				stream_ps(&x[col + _7], tanh_ps(load_ps(&x[col + _7])));
+			}
+		}
+		if (cols - col > _4)
+		{
+			for (; col + _4 - 1 < cols; col += _4)
+			{
+				stream_ps(&x[col + _0], tanh_ps(load_ps(&x[col + _0])));
+				stream_ps(&x[col + _1], tanh_ps(load_ps(&x[col + _1])));
+				stream_ps(&x[col + _2], tanh_ps(load_ps(&x[col + _2])));
+				stream_ps(&x[col + _3], tanh_ps(load_ps(&x[col + _3])));
+			}
+		}
+		if (cols - col > _2)
+		{
+			for (; col + _2 - 1 < cols; col += _2)
+			{
+				stream_ps(&x[col + _0], tanh_ps(load_ps(&x[col + _0])));
+				stream_ps(&x[col + _1], tanh_ps(load_ps(&x[col + _1])));
+			}
+		}
+		if (cols - col > 0)
+		{
+			for (; col + _1 - 1 < cols; col += _1)
+			{
+				stream_ps(&x[col + _0], tanh_ps(load_ps(&x[col + _0])));
+			}
+		}
+	}
+}
+
+
+
 template <TRN::CPU::Implementation Implementation, typename Parameter>
-static inline void update_readout(
+static inline void batched_update_readout(
 	const std::size_t &batch_size, const std::size_t & t, const Parameter &parameter,
 	float **batched_x_res, const std::size_t *batched_x_res_rows, const std::size_t *batched_x_res_cols, const std::size_t *batched_x_res_strides,
 	float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
@@ -1251,12 +1311,17 @@ static inline void update_readout(
 		batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides,
 		batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
 		batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides);
+	batched_update_readout_activation<Implementation>
+		(
+			batch_size,
+			batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides
+			);
 }
 
 
 
 template <TRN::CPU::Implementation Implementation>
-static inline void update_readout(
+static inline void batched_update_readout(
 	const std::size_t &batch_size, const std::size_t & t, const Widrow_Hoff &parameter,
 	float **batched_x_res, const std::size_t *batched_x_res_rows, const std::size_t *batched_x_res_cols, const std::size_t *batched_x_res_strides,
 	float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
@@ -1269,7 +1334,11 @@ static inline void update_readout(
 		batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides,
 		batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
 		batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides);
-
+	batched_update_readout_activation<Implementation>
+		(
+			batch_size,
+			batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides
+			);
 	const float learning_rate = parameter.get_learning_rate();
 	for (std::size_t batch = 0; batch < batch_size; batch++)
 	{
@@ -1287,7 +1356,8 @@ static inline void update_readout(
 		for (int row = 0; row < rows; row++)
 		{
 			float *w_ro_row = &w_ro[row  * w_ro_stride];
-			const auto post_error = learning_rate * (expected[row] - x_ro[row]);
+			const auto x_ro_row = x_ro[row];
+			const auto post_error = learning_rate * (expected[row] - x_ro_row) * (1.0f - x_ro_row * x_ro_row);
 			const auto __post_error = set1_ps(post_error);
 			error[row] = post_error;
 			std::size_t col = 0;
@@ -1485,7 +1555,7 @@ static inline void update_model(
 					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides, __leak_rate);
 			}
 		
-			update_readout<Implementation>(batch_size, t, parameter,
+			batched_update_readout<Implementation>(batch_size, t, parameter,
 				batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
 				batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,
 				batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_strides,

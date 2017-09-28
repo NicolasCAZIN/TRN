@@ -28,7 +28,7 @@ void TRN::Engine::Broker::uninitialize()
 void TRN::Engine::Broker::receive()
 {
 	TRN::Engine::Tag tag = handle->communicator->probe(0);
-		//PrintThread{} << "BROKER received tag " << tag << " " << __FUNCTION__ << std::endl;
+	//	PrintThread{} << "BROKER received tag " << tag << " " << __FUNCTION__ << std::endl;
 	switch (tag)
 	{
 		case TRN::Engine::QUIT:
@@ -45,10 +45,10 @@ void TRN::Engine::Broker::receive()
 				handle->to_caller->post([=]()
 				{
 					callback_information("Broker stopped");
-					handle->to_caller->terminate();
+			
 					
 				});
-			
+				handle->to_caller->terminate();
 				stop();
 			
 			}
@@ -57,13 +57,14 @@ void TRN::Engine::Broker::receive()
 		case TRN::Engine::WORKER:
 		{
 			auto message = handle->communicator->receive<TRN::Engine::WORKER>(0);
-			auto processor = handle->manager->get_processors()[message.rank - 1];
-			processor->set_name(message.name);
-			processor->set_host(message.host);
-			processor->set_index(message.index);
+
+
+			handle->manager->update_processor(message.rank, message.host, message.index, message.name);
 			handle->to_caller->post([=]()
 			{
+	
 				callback_processor(message.rank, message.host, message.index, message.name);
+			
 			});
 		}
 		break;
@@ -226,12 +227,71 @@ void TRN::Engine::Broker::receive()
 			});
 		}
 		break;
+
+		case TRN::Engine::ALLOCATED:
+		{
+			auto message = handle->communicator->receive<TRN::Engine::ALLOCATED>(0);
+			auto processor = handle->manager->retrieve(message.id);
+			/*retrieve_simulation(message.id)->post([=]()
+			{*/
+				processor->allocated();
+		/*	});*/
+		
+			handle->to_caller->post([=]()
+			{
+				callback_allocated(message.id, processor->get_rank());
+			});
+		}
+		break;
+		case TRN::Engine::DEALLOCATED:
+		{
+			auto message = handle->communicator->receive<TRN::Engine::DEALLOCATED>(0);
+			auto processor = handle->manager->retrieve(message.id);
+			/*retrieve_simulation(message.id)->post([=]()
+			{*/
+		
+			/*});*/
+			handle->manager->deallocate(message.id);
+				//	PrintThread{} << "id " << id << " deallocate ack" << std::endl;
+			processor->deallocated();
+			remove_simulation(message.id);
+			handle->to_caller->post([=]()
+			{
+				callback_deallocated(message.id, processor->get_rank());
+			});
+		}
+		break;
+
+
+		case TRN::Engine::CONFIGURED:
+		{
+			auto message = handle->communicator->receive<TRN::Engine::CONFIGURED>(0);
+			auto processor = handle->manager->retrieve(message.id);
+
+/*			retrieve_simulation(message.id)->post([=]()
+			{*/
+				processor->configured();
+		/*	});*/
+
+	
+
+			handle->to_caller->post([=]()
+			{
+				callback_configured(message.id);
+			});
+		}
+		break;
+
 		case TRN::Engine::TRAINED:
 		{
 			auto message = handle->communicator->receive<TRN::Engine::TRAINED>(0);
 			auto processor = handle->manager->retrieve(message.id);
-			processor->trained();
-			processor->set_t1(std::clock());
+			/*retrieve_simulation(message.id)->post([=]()
+			{*/
+				processor->trained();
+				processor->set_t1(std::clock());
+			/*});*/
+
 			handle->to_caller->post([=]()
 			{
 				callback_trained(message.id);
@@ -242,7 +302,11 @@ void TRN::Engine::Broker::receive()
 		{
 			auto message = handle->communicator->receive<TRN::Engine::PRIMED>(0);
 			auto processor = handle->manager->retrieve(message.id);
-			processor->primed();
+			/*retrieve_simulation(message.id)->post([=]()
+			{*/
+				processor->primed();
+			/*});*/
+	
 			handle->to_caller->post([=]()
 			{
 				callback_primed(message.id);
@@ -253,7 +317,11 @@ void TRN::Engine::Broker::receive()
 		{
 			auto message = handle->communicator->receive<TRN::Engine::TESTED>(0);
 			auto processor = handle->manager->retrieve(message.id);
-			processor->tested();
+		/*	retrieve_simulation(message.id)->post([=]()
+			{*/
+				processor->tested();
+			/*});*/
+	
 			handle->to_caller->post([=]()
 			{
 				callback_tested(message.id);
@@ -346,6 +414,8 @@ void TRN::Engine::Broker::remove_simulation(const unsigned int &id)
 	if (handle->simulations.find(id) == handle->simulations.end())
 		throw std::logic_error("Simulation #" + std::to_string(id) + " is not allocated");
 	handle->simulations.erase(id);
+	handle->from_caller[id]->terminate();
+	handle->from_caller[id]->join();
 	handle->from_caller.erase(id);
 	//	PrintThread{} << "id " << id << " deallocate DONE" << std::endl;
 	if (handle->simulations.empty())
@@ -389,7 +459,27 @@ void TRN::Engine::Broker::completed()
 		callback_completed();
 	});
 }
+/*void TRN::Engine::Broker::ready(const unsigned int &id)
+{
+	retrieve_simulation(id)->post([=]()
+	{
+		auto processor = handle->manager->retrieve(id);
+		//processor->configured();
 
+		processor->post([=]()
+		{	
+		
+			TRN::Engine::Message<READY> message;
+			message.id = id;
+			
+			send(processor->get_rank(), message, [=]()
+			{
+			
+							////PrintThread{} << "id " << id << " allocate ack" << std::endl;
+			});
+		});
+	});
+}*/
 void TRN::Engine::Broker::allocate(const unsigned int &id)
 {
 	append_simulation(id);
@@ -397,19 +487,15 @@ void TRN::Engine::Broker::allocate(const unsigned int &id)
 	retrieve_simulation(id)->post([=]() 
 	{
 		auto processor = handle->manager->allocate(id);
+		processor->allocating();
 		processor->post([=]()
 		{
 			TRN::Engine::Message<ALLOCATE> message;
 			message.id = id;
-			processor->allocating();
+		
 			send(processor->get_rank(), message, [=]()
 			{
-				processor->allocated();
-				handle->to_caller->post([=]() 
-				{
-					callback_allocation(id, processor->get_rank());
-				});
-			
+
 				////PrintThread{} << "id " << id << " allocate ack" << std::endl;
 			});
 		});
@@ -421,27 +507,17 @@ void TRN::Engine::Broker::deallocate(const unsigned int &id)
 	{
 		//PrintThread{} << "entering " << id << " " << __FUNCTION__ << std::endl;
 		auto processor = handle->manager->retrieve(id);
+
+		processor->deallocating();
 		processor->post([=]()
-		{
+		{	
 			TRN::Engine::Message<DEALLOCATE> message;
 			message.id = id;
-			//PrintThread{} << "id " << id << " deallocate BEFORE" << std::endl;
-			processor->deallocating();
-
-			//PrintThread{} << "id " << id << " deallocate SEND" << std::endl;
 
 			send(processor->get_rank(), message, [=]()
 			{
-				handle->manager->deallocate(id);
-				//	PrintThread{} << "id " << id << " deallocate ack" << std::endl;
-				processor->deallocated();
+	
 				//	PrintThread{} << "id " << id << " manager deallocate" << std::endl;
-
-				handle->to_caller->post([=]()
-				{
-					callback_deallocation(id, processor->get_rank());
-				});
-				remove_simulation(id);
 			});
 		});
 		//PrintThread{} << "exiting " << id << " " << __FUNCTION__ << std::endl;
@@ -452,10 +528,11 @@ void TRN::Engine::Broker::train(const unsigned int &id, const std::string &label
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->training();
+		processor->set_t0(std::clock());
 		processor->post([=]()
 		{
-			processor->training();
-			processor->set_t0(std::clock());
+		
 			TRN::Engine::Message<TRAIN> message;
 			message.id = id;
 			message.label = label;
@@ -475,9 +552,10 @@ void TRN::Engine::Broker::test(const unsigned int &id, const std::string &label,
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->testing();
 		processor->post([=]()
 		{
-			processor->testing();
+			
 			TRN::Engine::Message<TEST> message;
 			message.id = id;
 			message.label = label;
@@ -497,9 +575,10 @@ void TRN::Engine::Broker::declare_sequence(const unsigned int &id, const std::st
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->declare();
 		processor->post([=]()
 		{
-			processor->declare();
+	
 			TRN::Engine::Message<DECLARE_SEQUENCE> message;
 			message.id = id;
 			message.label = label;
@@ -518,9 +597,10 @@ void TRN::Engine::Broker::declare_set(const unsigned int &id, const std::string 
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->declare();
 		processor->post([=]()
 		{
-			processor->declare();
+
 			TRN::Engine::Message<DECLARE_SET> message;
 			message.id = id;
 			message.label = label;
@@ -538,8 +618,10 @@ void TRN::Engine::Broker::setup_states(const unsigned int &id, const bool &train
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
+			
 			TRN::Engine::Message<SETUP_STATES> message;
 			message.id = id;
 			message.train = train;
@@ -557,8 +639,10 @@ void TRN::Engine::Broker::setup_weights(const unsigned int &id, const bool &init
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
+		
 			TRN::Engine::Message<SETUP_WEIGHTS> message;
 			message.id = id;
 			message.train = train;
@@ -576,8 +660,11 @@ void TRN::Engine::Broker::setup_performances(const unsigned int &id, const bool 
 	retrieve_simulation(id)->post([=]()
 	{	
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
-		{
+		{		
+	
+	
 			TRN::Engine::Message<SETUP_PERFORMANCES> message;
 			message.id = id;
 			message.train = train;
@@ -595,8 +682,10 @@ void TRN::Engine::Broker::setup_scheduling(const unsigned int &id)
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
+		
 			TRN::Engine::Message<SETUP_SCHEDULING> message;
 			message.id = id;
 
@@ -612,10 +701,9 @@ void TRN::Engine::Broker::configure_begin(const unsigned int &id)
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
-
 			TRN::Engine::Message<CONFIGURE_BEGIN> message;
 			message.id = id;
 			send(processor->get_rank(), message, [id]()
@@ -625,31 +713,38 @@ void TRN::Engine::Broker::configure_begin(const unsigned int &id)
 		});
 	});
 }
+
+
 void TRN::Engine::Broker::configure_end(const unsigned int &id)
 {
+	auto processor = handle->manager->retrieve(id);
 	retrieve_simulation(id)->post([=]()
 	{
-		auto processor = handle->manager->retrieve(id);
+		
+		processor->configuring();
 		processor->post([=]()
 		{
+		
 			TRN::Engine::Message<CONFIGURE_END> message;
 			message.id = id;
 			send(processor->get_rank(), message, [=]()
 			{
-				processor->configured();
+				
 				////PrintThread{} << "id " << id << " configure end acked" << std::endl;
 			});
 		});
 	});
+	//processor->ready();
 }
 void TRN::Engine::Broker::configure_measurement_readout_mean_square_error(const unsigned int &id, const std::size_t &batch_size)
 {
     retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+		
 			TRN::Engine::Message<CONFIGURE_MEASUREMENT_READOUT_MEAN_SQUARE_ERROR> message;
 			message.id = id;
 			message.batch_size = batch_size;
@@ -665,9 +760,10 @@ void TRN::Engine::Broker::configure_measurement_readout_frechet_distance(const u
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+		
 			TRN::Engine::Message<CONFIGURE_MEASUREMENT_READOUT_FRECHET_DISTANCE> message;
 			message.id = id;
 			message.batch_size = batch_size;
@@ -683,9 +779,10 @@ void TRN::Engine::Broker::configure_measurement_readout_custom(const unsigned in
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+		
 			TRN::Engine::Message<CONFIGURE_MEASUREMENT_READOUT_CUSTOM> message;
 			message.id = id;
 			message.batch_size = batch_size;
@@ -701,9 +798,10 @@ void TRN::Engine::Broker::configure_measurement_position_mean_square_error(const
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+	
 			TRN::Engine::Message<CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> message;
 			message.id = id;
 			message.batch_size = batch_size;
@@ -719,9 +817,10 @@ void TRN::Engine::Broker::configure_measurement_position_frechet_distance(const 
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+		
 
 			TRN::Engine::Message<CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> message;
 			message.id = id;
@@ -738,9 +837,10 @@ void TRN::Engine::Broker::configure_measurement_position_custom(const unsigned i
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+		
 			TRN::Engine::Message<CONFIGURE_MEASUREMENT_POSITION_CUSTOM> message;
 			message.id = id;
 			message.batch_size = batch_size;
@@ -756,9 +856,10 @@ void TRN::Engine::Broker::configure_reservoir_widrow_hoff(const unsigned int &id
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+	
 			TRN::Engine::Message<CONFIGURE_RESERVOIR_WIDROW_HOFF> message;
 			message.id = id;
 			message.stimulus_size = stimulus_size;
@@ -781,9 +882,10 @@ void TRN::Engine::Broker::configure_loop_copy(const unsigned int &id, const std:
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+		
 			TRN::Engine::Message<CONFIGURE_LOOP_COPY> message;
 			message.id = id;
 			message.stimulus_size = stimulus_size;
@@ -807,10 +909,11 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned int &id, 
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
-
+			
 			TRN::Engine::Message<CONFIGURE_LOOP_SPATIAL_FILTER> message;
 
 			message.id = id;
@@ -868,9 +971,10 @@ void TRN::Engine::Broker::configure_loop_custom(const unsigned int &id, const st
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+	
 			TRN::Engine::Message<CONFIGURE_LOOP_CUSTOM> message;
 
 			message.id = id;
@@ -888,9 +992,10 @@ void TRN::Engine::Broker::configure_scheduler_tiled(const unsigned int &id, cons
 	retrieve_simulation(id)->post([=]()
 	{
 	 auto processor = handle->manager->retrieve(id);
+	 processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+		
 			TRN::Engine::Message<CONFIGURE_SCHEDULER_TILED> message;
 			message.id = id;
 			message.epochs = epochs;
@@ -907,9 +1012,10 @@ void TRN::Engine::Broker::configure_scheduler_snippets(const unsigned int &id, c
 	retrieve_simulation(id)->post([=]()
 	{
 		 auto processor = handle->manager->retrieve(id);
+		 processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+		
 			TRN::Engine::Message<CONFIGURE_SCHEDULER_SNIPPETS> message;
 			message.id = id;
 			message.snippets_size = snippets_size;
@@ -929,10 +1035,11 @@ void TRN::Engine::Broker::configure_scheduler_custom(const unsigned int &id, con
 	retrieve_simulation(id)->post([=]()
 	{
 		 auto processor = handle->manager->retrieve(id);
+		 processor->configuring();
 		processor->post([=]()
 		{
 
-			processor->configuring();
+
 
 			TRN::Engine::Message<CONFIGURE_SCHEDULER_CUSTOM> message;
 			message.id = id;
@@ -950,9 +1057,10 @@ void TRN::Engine::Broker::configure_mutator_shuffle(const unsigned int &id,const
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+		
 			TRN::Engine::Message<CONFIGURE_MUTATOR_SHUFFLE> message;
 			message.id = id;
 			message.seed = seed;
@@ -968,9 +1076,10 @@ void TRN::Engine::Broker::configure_mutator_reverse(const unsigned int &id, cons
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+	
 			TRN::Engine::Message<CONFIGURE_MUTATOR_REVERSE> message;
 			message.id = id;
 			message.seed = seed;
@@ -988,9 +1097,10 @@ void TRN::Engine::Broker::configure_mutator_punch(const unsigned int &id, const 
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+	
 			TRN::Engine::Message<CONFIGURE_MUTATOR_PUNCH> message;
 			message.id = id;
 			message.seed = seed;
@@ -1009,9 +1119,10 @@ void TRN::Engine::Broker::configure_mutator_custom(const unsigned int &id, const
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+	
 
 			TRN::Engine::Message<CONFIGURE_MUTATOR_CUSTOM> message;
 			message.id = id;
@@ -1028,9 +1139,10 @@ void TRN::Engine::Broker::configure_readout_uniform(const unsigned int &id, cons
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+		
 			TRN::Engine::Message<CONFIGURE_READOUT_UNIFORM> message;
 			message.id = id;
 			message.a = a;
@@ -1048,9 +1160,10 @@ void TRN::Engine::Broker::configure_readout_gaussian(const unsigned int &id, con
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+
 			TRN::Engine::Message<CONFIGURE_READOUT_GAUSSIAN> message;
 			message.id = id;
 			message.mu = mu;
@@ -1068,9 +1181,10 @@ void TRN::Engine::Broker::configure_readout_custom(const unsigned int &id)
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+	
 
 			TRN::Engine::Message<CONFIGURE_READOUT_CUSTOM> message;
 			message.id = id;
@@ -1087,9 +1201,10 @@ void TRN::Engine::Broker::configure_feedback_uniform(const unsigned int &id, con
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+
 			TRN::Engine::Message<CONFIGURE_FEEDBACK_UNIFORM> message;
 			message.id = id;
 			message.a = a;
@@ -1107,9 +1222,10 @@ void TRN::Engine::Broker::configure_feedback_gaussian(const unsigned int &id, co
  retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+		
 			TRN::Engine::Message<CONFIGURE_FEEDBACK_GAUSSIAN> message;
 			message.id = id;
 			message.mu = mu;
@@ -1127,10 +1243,10 @@ void TRN::Engine::Broker::configure_feedback_custom(const unsigned int &id)
 	retrieve_simulation(id)->post([=]()
 	{
 	 auto processor = handle->manager->retrieve(id);
+	 processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
-
+		
 			TRN::Engine::Message<CONFIGURE_FEEDBACK_CUSTOM> message;
 			message.id = id;
 
@@ -1146,9 +1262,10 @@ void TRN::Engine::Broker::configure_recurrent_uniform(const unsigned int &id, co
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+			
 			TRN::Engine::Message<CONFIGURE_RECURRENT_UNIFORM> message;
 			message.id = id;
 			message.a = a;
@@ -1166,9 +1283,10 @@ void TRN::Engine::Broker::configure_recurrent_gaussian(const unsigned int &id, c
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+			
 			TRN::Engine::Message<CONFIGURE_RECURRENT_GAUSSIAN> message;
 			message.id = id;
 			message.mu = mu;
@@ -1186,10 +1304,10 @@ void TRN::Engine::Broker::configure_recurrent_custom(const unsigned int &id)
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
-
+			
 			TRN::Engine::Message<CONFIGURE_RECURRENT_CUSTOM> message;
 			message.id = id;
 
@@ -1205,9 +1323,10 @@ void TRN::Engine::Broker::configure_feedforward_uniform(const unsigned int &id, 
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+		
 			TRN::Engine::Message<CONFIGURE_FEEDFORWARD_UNIFORM> message;
 			message.id = id;
 			message.a = a;
@@ -1225,9 +1344,10 @@ void TRN::Engine::Broker::configure_feedforward_gaussian(const unsigned int &id,
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
+			
 			TRN::Engine::Message<CONFIGURE_FEEDFORWARD_GAUSSIAN> message;
 			message.id = id;
 			message.mu = mu;
@@ -1245,9 +1365,9 @@ void TRN::Engine::Broker::configure_feedforward_custom(const unsigned int &id)
 	retrieve_simulation(id)->post([=]()
 	{
 		auto processor = handle->manager->retrieve(id);
+		processor->configuring();
 		processor->post([=]()
 		{
-			processor->configuring();
 
 			TRN::Engine::Message<CONFIGURE_FEEDFORWARD_CUSTOM> message;
 			message.id = id;
@@ -1261,133 +1381,173 @@ void TRN::Engine::Broker::configure_feedforward_custom(const unsigned int &id)
 }
 void TRN::Engine::Broker::notify_stimulus(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
 {
-	retrieve_simulation(id)->post([=]()
-	{
-		TRN::Engine::Message<STIMULUS> message;
-		message.id = id;
-		message.elements = stimulus;
-		message.rows = rows;
-		message.cols = cols;
-		message.trial = trial;
-		message.evaluation = evaluation;
-		send(handle->manager->retrieve(id)->get_rank(), message, [id]()
-		{
-			////PrintThread{} << "id " << id << " stimulus acked" << std::endl;
-		});
-	});
+	/*retrieve_simulation(id)->post([=]()
+	{*/
+		auto processor = handle->manager->retrieve(id);
+		/*processor->post([=]()
+		{*/
+			TRN::Engine::Message<STIMULUS> message;
+			message.id = id;
+			message.elements = stimulus;
+			message.rows = rows;
+			message.cols = cols;
+			message.trial = trial;
+			message.evaluation = evaluation;
+			send(processor->get_rank(), message, [id]()
+			{
+				////PrintThread{} << "id " << id << " stimulus acked" << std::endl;
+			});
+		/*});
+	});*/
 }
 void TRN::Engine::Broker::notify_position(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
 {
-	retrieve_simulation(id)->post([=]()
-	{
-		TRN::Engine::Message<POSITION> message;
-		message.id = id;
-		message.elements = position;
-		message.rows = rows;
-		message.cols = cols;
-		message.trial = trial;
-		message.evaluation = evaluation;
-		send(handle->manager->retrieve(id)->get_rank(), message, [id]()
-		{
-			////PrintThread{} << "id " << id << " position acked" << std::endl;
-		});
-	});
+	/*retrieve_simulation(id)->post([=]()
+	{*/
+		auto processor = handle->manager->retrieve(id);
+		/*processor->post([=]()
+		{*/
+			TRN::Engine::Message<POSITION> message;
+			message.id = id;
+			message.elements = position;
+			message.rows = rows;
+			message.cols = cols;
+			message.trial = trial;
+			message.evaluation = evaluation;
+			send(processor->get_rank(), message, [id]()
+			{
+				////PrintThread{} << "id " << id << " position acked" << std::endl;
+			});
+		/*});
+	});*/
 }
 void TRN::Engine::Broker::notify_scheduler(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
-	retrieve_simulation(id)->post([=]()
-	{
-		TRN::Engine::Message<SCHEDULING> message;
-		message.id = id;
+	/*retrieve_simulation(id)->post([=]()
+	{*/
+		auto processor = handle->manager->retrieve(id);
+		/*processor->post([=]()
+		{*/
+			TRN::Engine::Message<SCHEDULING> message;
+			message.id = id;
 
-		message.is_from_mutator = false;
-		message.offsets = offsets;
-		message.durations = durations;
+			message.is_from_mutator = false;
+			message.offsets = offsets;
+			message.durations = durations;
 
-		send(handle->manager->retrieve(id)->get_rank(), message, [id]()
-		{
-			////PrintThread{} << "id " << id << " scheduling acked" << std::endl;
-		});
-	});
+			send(processor->get_rank(), message, [id]()
+			{
+				////PrintThread{} << "id " << id << " scheduling acked" << std::endl;
+			});
+		/*});
+	});*/
 }
 void TRN::Engine::Broker::notify_mutator(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
-	retrieve_simulation(id)->post([=]()
-	{
-		TRN::Engine::Message<SCHEDULING> message;
-		message.id = id;
-		message.is_from_mutator = true;
-		message.offsets = offsets;
-		message.durations = durations;
-		message.trial = trial;
+	/*retrieve_simulation(id)->post([=]()
+	{*/
+		auto processor = handle->manager->retrieve(id);
+		/*processor->post([=]()
+		{*/
+			TRN::Engine::Message<SCHEDULING> message;
+			message.id = id;
+			message.is_from_mutator = true;
+			message.offsets = offsets;
+			message.durations = durations;
+			message.trial = trial;
 
-		send(handle->manager->retrieve(id)->get_rank(), message, [id]()
-		{
-			////PrintThread{} << "id " << id << " scheduling acked" << std::endl;
-		});
-	});
+			send(processor->get_rank(), message, [id]()
+			{
+				////PrintThread{} << "id " << id << " scheduling acked" << std::endl;
+			});
+	/*	});
+	});*/
 }
 void TRN::Engine::Broker::notify_feedforward(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
-	retrieve_simulation(id)->post([=]()
-	{
-		TRN::Engine::Message<FEEDFORWARD_WEIGHTS> message;
-		message.id = id;
-		message.elements = weights;
-		message.matrices = matrices;
-		message.rows = rows;
-		message.cols = cols;
-		send(handle->manager->retrieve(id)->get_rank(), message, [id]()
+	/*retrieve_simulation(id)->post([=]()
+	{*/
+		auto processor = handle->manager->retrieve(id);
+		/*processor->configuring();
+		processor->post([=]()
 		{
-			////PrintThread{} << "id " << id << " recurrent weights acked" << std::endl;
-		});
-	});
+		*/
+			TRN::Engine::Message<FEEDFORWARD_WEIGHTS> message;
+			message.id = id;
+			message.elements = weights;
+			message.matrices = matrices;
+			message.rows = rows;
+			message.cols = cols;
+			send(processor->get_rank(), message, [id]()
+			{
+				////PrintThread{} << "id " << id << " recurrent weights acked" << std::endl;
+			});
+	/*	});
+	});*/
 }
 void TRN::Engine::Broker::notify_feedback(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
-	retrieve_simulation(id)->post([=]()
-	{
-		TRN::Engine::Message<FEEDBACK_WEIGHTS> message;
-		message.id = id;
-		message.elements = weights;
-		message.matrices = matrices;
-		message.rows = rows;
-		message.cols = cols;
-		send(handle->manager->retrieve(id)->get_rank(), message, [id]()
-		{
-			////PrintThread{} << "id " << id << " feedback weights acked" << std::endl;
-		});
-	});
+	/*retrieve_simulation(id)->post([=]()
+	{*/
+		auto processor = handle->manager->retrieve(id);
+		/*processor->configuring();
+		processor->post([=]()
+		{*/
+	
+			TRN::Engine::Message<FEEDBACK_WEIGHTS> message;
+			message.id = id;
+			message.elements = weights;
+			message.matrices = matrices;
+			message.rows = rows;
+			message.cols = cols;
+			send(processor->get_rank(), message, [id]()
+			{
+				////PrintThread{} << "id " << id << " feedback weights acked" << std::endl;
+			});
+	/*	});
+	});*/
 }
 void TRN::Engine::Broker::notify_readout(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
-	retrieve_simulation(id)->post([=]()
-	{
-		TRN::Engine::Message<READOUT_WEIGHTS> message;
-		message.id = id;
-		message.elements = weights;
-		message.matrices = matrices;
-		message.rows = rows;
-		message.cols = cols;
-		send(handle->manager->retrieve(id)->get_rank(), message, [id]()
-		{
-			////PrintThread{} << "id " << id << " readout weights acked" << std::endl;
-		});
-	});
+	/*retrieve_simulation(id)->post([=]()
+	{*/
+		auto processor = handle->manager->retrieve(id);
+		/*processor->configuring();
+		processor->post([=]()
+		{*/
+	
+			TRN::Engine::Message<READOUT_WEIGHTS> message;
+			message.id = id;
+			message.elements = weights;
+			message.matrices = matrices;
+			message.rows = rows;
+			message.cols = cols;
+			send(processor->get_rank(), message, [id]()
+			{
+				////PrintThread{} << "id " << id << " readout weights acked" << std::endl;
+			});
+	/*	});
+	});*/
 }
 void TRN::Engine::Broker::notify_recurrent(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
-	retrieve_simulation(id)->post([=]()
-	{
-		TRN::Engine::Message<RECURRENT_WEIGHTS> message;
-		message.id = id;
-		message.elements = weights;
-		message.matrices = matrices;
-		message.rows = rows;
-		message.cols = cols;
-		send(handle->manager->retrieve(id)->get_rank(), message, [id]()
+	/*retrieve_simulation(id)->post([=]()
+	{*/
+		auto processor = handle->manager->retrieve(id);
+		/*processor->configuring();
+		processor->post([=]()
 		{
-			////PrintThread{} << "id " << id << " recurrent weights acked" << std::endl;
-		});
-	});
+		*/
+			TRN::Engine::Message<RECURRENT_WEIGHTS> message;
+			message.id = id;
+			message.elements = weights;
+			message.matrices = matrices;
+			message.rows = rows;
+			message.cols = cols;
+			send(processor->get_rank(), message, [id]()
+			{
+				////PrintThread{} << "id " << id << " recurrent weights acked" << std::endl;
+			});
+		/*});
+	});*/
 }

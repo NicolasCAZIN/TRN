@@ -30,7 +30,9 @@ namespace TRN
 
 		protected :
 			void	completed();
-
+	
+		protected :
+			//void ready(const unsigned int &id);
 		public  :
 			void 	allocate(const unsigned int &id);
 			void 	deallocate(const unsigned int &id);
@@ -106,9 +108,10 @@ namespace TRN
 			virtual void callback_completed() = 0;
 			virtual void callback_ack(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause) = 0;
 			virtual void callback_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name) = 0;
-			virtual void callback_allocation(const unsigned int &id, const int &rank) = 0;
-			virtual void callback_deallocation(const unsigned int &id, const int &rank) = 0;
+			virtual void callback_allocated(const unsigned int &id, const int &rank) = 0;
+			virtual void callback_deallocated(const unsigned int &id, const int &rank) = 0;
 			virtual void callback_quit(const int &rank) = 0;
+			virtual void callback_configured(const unsigned int &id) = 0;
 			virtual void callback_trained(const unsigned int &id) = 0;
 			virtual void callback_primed(const unsigned int &id) = 0;
 			virtual void callback_tested(const unsigned int &id) = 0;

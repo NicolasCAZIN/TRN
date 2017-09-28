@@ -15,14 +15,14 @@ TRN::Engine::Worker::Worker(const std::shared_ptr<TRN::Engine::Communicator> &co
 	TRN::Engine::Node(communicator, rank),
 	handle(std::make_unique<Handle>())
 {
-	TRN::Engine::Node::handle->name = "WORKER";
+	//TRN::Engine::Node::handle->name = "WORKER";
 	TRN::Engine::Message<TRN::Engine::Tag::WORKER> message;
 
 	message.host = communicator->host();
 	message.rank = rank;
 	message.index = driver->index();
 	message.name = driver->name();
-	std::cout << "WORKER " << message.rank << " on " << message.host << " device " << message.name << " #" << message.index << std::endl;
+	//std::cout << "WORKER " << message.rank << " on " << message.host << " device " << message.name << " #" << message.index << std::endl;
 	communicator->send(message, 0);
 }
 
@@ -31,11 +31,34 @@ TRN::Engine::Worker::~Worker()
 	handle.reset();
 }
 
+void TRN::Engine::Worker::send_configured(const unsigned int &id)
+{
+	if (handle->configured_required[id] == true && handle->remaining_initializations[id] == 0)
+	{
+		if (handle->simulators.find(id) == handle->simulators.end())
+			throw std::invalid_argument("Simulator #" + std::to_string(id) + "does not exist");
+		handle->simulators[id]->get_reservoir()->initialize();
+		TRN::Engine::Message<TRN::Engine::CONFIGURED> configured;
+
+
+		configured.id = id;
+		
+		auto locked = TRN::Engine::Node::get_implementor().lock();
+		if (locked)
+			locked->send(configured, 0);
+		handle->configured_required[id] = false;
+	}
+}
+
 void TRN::Engine::Worker::initialize()
 {
 	TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->toggle();
 }
+/*void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::READY> &message)
+{
 
+
+}*/
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message)
 {
 	TRN::Engine::Message<TRN::Engine::QUIT> quit;
@@ -81,12 +104,30 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::A
 	}
 	);
 	handle->simulators[message.id] = basic;
+	handle->configured_required[message.id] = false;
+	handle->remaining_initializations[message.id] = 0;
+
+	TRN::Engine::Message<TRN::Engine::ALLOCATED> allocated;
+
+	allocated.id = message.id;
+	auto locked = TRN::Engine::Node::implementor.lock();
+	if (locked)
+		locked->send(allocated, 0);
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATE> &message)
 {
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators.erase(message.id);
+	handle->remaining_initializations.erase(message.id);
+	handle->configured_required.erase(message.id);
+
+	TRN::Engine::Message<TRN::Engine::DEALLOCATED> deallocated;
+
+	deallocated.id = message.id;
+	auto locked = TRN::Engine::Node::implementor.lock();
+	if (locked)
+		locked->send(deallocated, 0);
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::TRAIN> &message)
 {
@@ -224,15 +265,22 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::S
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_BEGIN> &message)
 {
+
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->uninitialize();
+
+
+
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_END> &message)
 {
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->initialize();
+
+	handle->configured_required[message.id] = true;
+	send_configured(message.id);
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_MEAN_SQUARE_ERROR> &message)
 {
@@ -582,6 +630,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 		if (locked)
 			locked->send(feedforward_dimensions, 0);
 	}, TRN::Engine::Node::handle->feedforward_weights[message.id]));
+	handle->remaining_initializations[message.id]++;
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_UNIFORM> &message)
 {
@@ -618,6 +667,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 		if (locked)
 			locked->send(feedback_dimensions, 0);
 	}, TRN::Engine::Node::handle->feedback_weights[message.id]));
+	handle->remaining_initializations[message.id]++;
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_UNIFORM> &message) 
 {
@@ -653,6 +703,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 		if (locked)
 			locked->send(recurrent_dimensions, 0);
 	}, TRN::Engine::Node::handle->recurrent[message.id]));
+	handle->remaining_initializations[message.id]++;
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_UNIFORM> &message)
 {
@@ -688,6 +739,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 		if (locked)
 			locked->send(readout_dimensions, 0);
 	}, TRN::Engine::Node::handle->readout[message.id]));
+	handle->remaining_initializations[message.id]++;
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::POSITION> &message)
 {
@@ -721,24 +773,32 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::F
 	if (TRN::Engine::Node::handle->feedforward_weights.find(message.id) == TRN::Engine::Node::handle->feedforward_weights.end())
 		throw std::runtime_error("Perceived stimulus functor is not setup for simulator #" + std::to_string(message.id));
 	TRN::Engine::Node::handle->feedforward_weights[message.id](message.elements, message.matrices, message.rows, message.cols);
+	handle->remaining_initializations[message.id]--;
+	send_configured(message.id);
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_WEIGHTS> &message)
 {
 	if (TRN::Engine::Node::handle->recurrent.find(message.id) == TRN::Engine::Node::handle->recurrent.end())
 		throw std::runtime_error("Recurrent stimulus functor is not setup for simulator #" + std::to_string(message.id));
 	TRN::Engine::Node::handle->recurrent[message.id](message.elements, message.matrices, message.rows, message.cols);
+	handle->remaining_initializations[message.id]--;
+	send_configured(message.id);
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> &message)
 {
 	if (TRN::Engine::Node::handle->feedback_weights.find(message.id) == TRN::Engine::Node::handle->feedback_weights.end())
 		throw std::runtime_error("Feedback stimulus functor is not setup for simulator #" + std::to_string(message.id));
 	TRN::Engine::Node::handle->feedback_weights[message.id](message.elements, message.matrices, message.rows, message.cols);
+	handle->remaining_initializations[message.id]--;
+	send_configured(message.id);
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::READOUT_WEIGHTS> &message) 
 {
 	if (TRN::Engine::Node::handle->readout.find(message.id) == TRN::Engine::Node::handle->readout.end())
 		throw std::runtime_error("Readout stimulus functor is not setup for simulator #" + std::to_string(message.id));
 	TRN::Engine::Node::handle->readout[message.id](message.elements, message.matrices, message.rows, message.cols);
+	handle->remaining_initializations[message.id]--;
+	send_configured(message.id);
 }
 
 

@@ -4,6 +4,8 @@
 class TRN::Initializer::Custom::Handle
 {
 public:
+	std::mutex mutex;
+	std::condition_variable cond;
 	std::function<void(const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> request;
 	std::queue<std::shared_ptr<TRN::Core::Batch>> pending;
 };
@@ -29,8 +31,9 @@ TRN::Initializer::Custom::Custom(const std::shared_ptr<TRN::Backend::Driver> &dr
 				auto we = wb + rows*cols;
 				std::vector<float> sub_weights(wb, we);
 				batch->get_matrices(matrix)->from(sub_weights, rows, cols);
-				wb = we + 1;
+				wb = we;
 			}
+
 			handle->pending.pop();
 		}
 		catch (std::exception &e)

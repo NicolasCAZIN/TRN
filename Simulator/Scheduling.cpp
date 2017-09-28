@@ -107,6 +107,7 @@ void TRN::Simulator::Scheduling::initialize()
 }
 void TRN::Simulator::Scheduling::uninitialize()
 {
+	TRN::Core::Simulator::uninitialize();
 	decorated->uninitialize();
 }
 
@@ -118,6 +119,10 @@ void  TRN::Simulator::Scheduling::update(const TRN::Core::Message::Payload<TRN::
 	handle->functor(get_reservoir()->get_trial(), offsets, durations);
 }
 
+void  TRN::Simulator::Scheduling::update(const TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED> &payload)
+{
+
+}
 void  TRN::Simulator::Scheduling::update(const TRN::Core::Message::Payload<TRN::Core::Message::TESTED> &payload)
 {
 

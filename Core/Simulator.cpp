@@ -19,7 +19,7 @@ void TRN::Core::Simulator::initialize()
 	reservoir->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>::attach(shared_from_this());
 	reservoir->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TESTED>>::attach(shared_from_this());
 	reservoir->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::attach(shared_from_this());
-
+	reservoir->TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED>>::attach(shared_from_this());
 
 	auto mutators = get_mutators();
 	if (!mutators.empty())
@@ -35,3 +35,7 @@ void TRN::Core::Simulator::initialize()
 	}
 }
 
+void TRN::Core::Simulator::uninitialize()
+{
+
+}

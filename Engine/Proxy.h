@@ -28,10 +28,11 @@ namespace TRN
 
 		protected:
 			virtual void callback_completed() override;
+			virtual void callback_configured(const unsigned int &id);
 			virtual void callback_ack(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause) override;
 			virtual void callback_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name) override;
-			virtual void callback_allocation(const unsigned int &id, const int &rank) override;
-			virtual void callback_deallocation(const unsigned int &id, const int &rank) override;
+			virtual void callback_allocated(const unsigned int &id, const int &rank) override;
+			virtual void callback_deallocated(const unsigned int &id, const int &rank) override;
 			virtual void callback_quit(const int &rank) override;
 			virtual void callback_trained(const unsigned int &id) override;
 			virtual void callback_primed(const unsigned int &id) override;
@@ -64,6 +65,7 @@ namespace TRN
 
 
 		public:
+			//virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::READY> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATE> &message) override;

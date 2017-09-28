@@ -110,6 +110,7 @@ void TRN::Simulator::States::initialize()
 }
 void TRN::Simulator::States::uninitialize()
 {
+	TRN::Core::Simulator::uninitialize();
 	decorated->uninitialize();
 }
 
@@ -188,7 +189,10 @@ void  TRN::Simulator::States::update(const TRN::Core::Message::Payload<TRN::Core
 		to_host("TRAIN");
 }
 
+void  TRN::Simulator::States::update(const TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED> &payload)
+{
 
+}
 std::shared_ptr<TRN::Simulator::States> TRN::Simulator::States::create(const std::shared_ptr<TRN::Core::Simulator> decorated,
 	const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
 	const bool &train, const bool &prime, const bool &generate)

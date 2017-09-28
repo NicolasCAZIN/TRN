@@ -302,14 +302,22 @@ TRN::Core::Message::Payload<TRN::Core::Message::Type::TRAINED>::Payload()
 {
 }
 TRN::Core::Message::Payload<TRN::Core::Message::Type::TRAINED>::Payload(const Payload<TRN::Core::Message::Type::TRAINED> &ref)
-	
 {
 
 }
 TRN::Core::Message::Payload<TRN::Core::Message::Type::TRAINED>::~Payload()
 {
 }
+TRN::Core::Message::Payload<TRN::Core::Message::Type::CONFIGURED>::Payload()
+{
+}
+TRN::Core::Message::Payload<TRN::Core::Message::Type::CONFIGURED>::Payload(const Payload<TRN::Core::Message::Type::CONFIGURED> &ref)
+{
 
+}
+TRN::Core::Message::Payload<TRN::Core::Message::Type::CONFIGURED>::~Payload()
+{
+}
 
 TRN::Core::Message::Payload<TRN::Core::Message::Type::CYCLES>::Payload(const std::size_t &batch_size, const std::size_t &cycles, const std::size_t &observations) :
 	handle(std::make_unique<Handle>())

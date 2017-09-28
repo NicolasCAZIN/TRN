@@ -19,7 +19,7 @@ namespace TRN
 			mutable std::unique_ptr<Handle> handle;
 
 		public:
-			Basic(const std::function<void()> &trained, const std::function<void()> &primed, const std::function<void()> &tested);
+			Basic( const std::function<void()> &trained, const std::function<void()> &primed, const std::function<void()> &tested);
 			~Basic();
 
 		public :
@@ -54,10 +54,11 @@ namespace TRN
 		public :
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING> &payload) override;
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::TESTED> &payload) override;
+			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED> &payload) override;
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::PRIMED> &payload) override;
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::TRAINED> &payload) override;
 		public:
-			static std::shared_ptr<Basic> create(const std::function<void()> &trained, const std::function<void()> &primed, const std::function<void()> &tested);
+			static std::shared_ptr<Basic> create( const std::function<void()> &trained, const std::function<void()> &primed, const std::function<void()> &tested);
 
 		private :
 			static const std::string key(const std::string &label, const std::string &tag);

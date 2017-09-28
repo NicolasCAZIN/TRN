@@ -243,8 +243,8 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 		payload.get_predicted()->to(predicted_stimulus, matrices, rows, cols);
 		assert(std::all_of(rows.begin(), rows.end(), [](const std::size_t &r) { return r == 1; }));
 		assert(std::all_of(cols.begin(), cols.end(), [cols](const std::size_t &c) { return c == cols[0]; }));
-		//cv::Mat predicted(rows, cols, CV_32F, predicted_stimulus.data());
-		handle->on_predicted_stimulus(payload.get_trial(), payload.get_evaluation(), predicted_stimulus, matrices, cols[0]);
+		/*cv::Mat predicted(rows[0], cols[0], CV_32F, predicted_stimulus.data());
+		handle->on_predicted_stimulus(payload.get_trial(), payload.get_evaluation(), predicted_stimulus, matrices, cols[0]);*/
 	}
 
 	implementor->get_algorithm()->place_cell_location_probability(
@@ -274,12 +274,12 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 		handle->seed += handle->rows * handle->cols;
 	}
 
-	std::size_t location_matrices;
+	/*std::size_t location_matrices;
 	std::vector<std::size_t> location_rows, location_cols;
 	std::vector<float> location_elements;
 
 	handle->batched_next_location_probability->to(location_elements, location_matrices, location_rows, location_cols);
-	cv::Mat location(location_matrices * location_rows[0], location_cols[0], CV_32F, location_elements.data());
+	cv::Mat location(location_matrices * location_rows[0], location_cols[0], CV_32F, location_elements.data());*/
 #if 1
 	implementor->get_algorithm()->select_most_probable_location(handle->batch_size, handle->rows, handle->cols,
 		handle->x_grid->get_elements(), handle->x_grid->get_rows(), handle->x_grid->get_cols(), handle->x_grid->get_stride(),

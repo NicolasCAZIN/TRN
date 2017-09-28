@@ -100,12 +100,35 @@ void TRN::Simulator::Weights::test(const std::string &sequence, const std::strin
 }
 void TRN::Simulator::Weights::initialize()
 {
+	TRN::Core::Simulator::initialize();
 	decorated->initialize();
 
+	
+}
+void TRN::Simulator::Weights::uninitialize()
+{
+	TRN::Core::Simulator::uninitialize();
+	decorated->uninitialize();
+}
+
+void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING> &payload)
+{
+
+}
+
+void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Core::Message::TESTED> &payload)
+{
+}
+void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Core::Message::PRIMED> &payload)
+{
+
+}
+void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED> &payload)
+{
 	if (handle->initialization)
 	{
-		TRN::Core::Simulator::initialize();
 		
+
 		for (std::size_t batch = 0; batch < decorated->get_reservoir()->get_batch_size(); batch++)
 		{
 			std::vector<float> feedforward_data;
@@ -132,27 +155,11 @@ void TRN::Simulator::Weights::initialize()
 			handle->weights->get_readout()->get_matrices(batch)->to(readout_data, readout_rows, readout_cols);
 			handle->functor("INITIALIZATION", "readout", batch, get_reservoir()->get_trial(), readout_data, readout_rows, readout_cols);
 		}
-	
+
 	}
 
 }
-void TRN::Simulator::Weights::uninitialize()
-{
-	decorated->uninitialize();
-}
 
-void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING> &payload)
-{
-
-}
-
-void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Core::Message::TESTED> &payload)
-{
-}
-void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Core::Message::PRIMED> &payload)
-{
-
-}
 void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Core::Message::TRAINED> &payload)
 {
 

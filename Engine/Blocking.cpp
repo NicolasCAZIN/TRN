@@ -7,6 +7,13 @@ TRN::Engine::Blocking::Blocking() :
 {
 
 }
+TRN::Engine::Blocking::~Blocking()
+{
+
+}
+void TRN::Engine::Blocking::join()
+{
+}
 
 void TRN::Engine::Blocking::run()
 {

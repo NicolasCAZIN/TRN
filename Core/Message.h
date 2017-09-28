@@ -23,6 +23,7 @@ namespace TRN
 				PRIMED,
 				TESTED,
 				TRAINED,
+				CONFIGURED,
 				CYCLES,
 				FLOPS,
 				SCHEDULING,
@@ -202,7 +203,15 @@ namespace TRN
 				Payload(const  Payload<TRN::Core::Message::Type::TRAINED> &payload);
 				~Payload();
 			};
+			template <>
+			class CORE_EXPORT Payload<TRN::Core::Message::CONFIGURED>
+			{
 
+			public:
+				Payload();
+				Payload(const  Payload<TRN::Core::Message::Type::CONFIGURED> &payload);
+				~Payload();
+			};
 			template <>
 			class CORE_EXPORT Payload<TRN::Core::Message::Type::CYCLES>
 			{

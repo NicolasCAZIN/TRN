@@ -21,6 +21,7 @@ namespace TRN
 			public TRN::Helper::Observer<TRN::Core::Message::Payload<TRN::Core::Message::TESTED>>,
 			public TRN::Helper::Observer<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>,
 			public TRN::Helper::Observer<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>,
+			public TRN::Helper::Observer<TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED>>,
 			public TRN::Helper::Delegate<TRN::Core::Container>
 		{
 		protected :
@@ -49,7 +50,7 @@ namespace TRN
 			virtual void train(const std::string &sequences, const std::string &incoming, const std::string &expected) = 0;
 			virtual void test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations) = 0;
 			virtual void initialize();
-			virtual void uninitialize() = 0;
+			virtual void uninitialize();
 		};
 	};
 };

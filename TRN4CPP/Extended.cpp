@@ -41,17 +41,42 @@ void TRN4CPP::Engine::Events::Ack::install(const std::function<void(const unsign
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->install_ack(functor);
 }
-void TRN4CPP::Engine::Events::Allocation::install(const std::function<void(const unsigned int &id, const int &rank)> &functor)
+void TRN4CPP::Engine::Events::Allocated::install(const std::function<void(const unsigned int &id, const int &rank)> &functor)
 {
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
-	frontend->install_allocation(functor);
+	frontend->install_allocated(functor);
 }
-void TRN4CPP::Engine::Events::Deallocation::install(const std::function<void(const unsigned int &id, const int &rank)> &functor)
+void TRN4CPP::Engine::Events::Configured::install(const std::function<void(const unsigned int &id)> &functor)
 {
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
-	frontend->install_deallocation(functor);
+	frontend->install_configured(functor);
+}
+void TRN4CPP::Engine::Events::Trained::install(const std::function<void(const unsigned int &id)> &functor)
+{
+	if (!frontend)
+		throw std::runtime_error("Frontend is not initialized");
+	frontend->install_trained(functor);
+}
+void TRN4CPP::Engine::Events::Primed::install(const std::function<void(const unsigned int &id)> &functor)
+{
+	if (!frontend)
+		throw std::runtime_error("Frontend is not initialized");
+	frontend->install_primed(functor);
+}
+void TRN4CPP::Engine::Events::Tested::install(const std::function<void(const unsigned int &id)> &functor)
+{
+	if (!frontend)
+		throw std::runtime_error("Frontend is not initialized");
+	frontend->install_tested(functor);
+}
+
+void TRN4CPP::Engine::Events::Deallocated::install(const std::function<void(const unsigned int &id, const int &rank)> &functor)
+{
+	if (!frontend)
+		throw std::runtime_error("Frontend is not initialized");
+	frontend->install_deallocated(functor);
 }
 void TRN4CPP::Engine::Events::Processor::install(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &functor)
 {
@@ -108,28 +133,28 @@ void TRN4CPP::Simulation::configure_end(const unsigned int &id)
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->configure_end(id);
 }
-void TRN4CPP::Simulation::Recordings::States::configure(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &train, const bool &prime, const bool &generate)
+void TRN4CPP::Simulation::Recording::States::configure(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &train, const bool &prime, const bool &generate)
 {
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->install_states(id, functor);
 	frontend->setup_states(id, train, prime, generate);
 }
-void TRN4CPP::Simulation::Recordings::Weights::configure(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &initialize, const bool &train)
+void TRN4CPP::Simulation::Recording::Weights::configure(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &initialize, const bool &train)
 {
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->install_weights(id, functor);
 	frontend->setup_weights(id, initialize, train);
 }
-void TRN4CPP::Simulation::Recordings::Performances::configure(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> &functor, const bool &train, const bool &prime, const bool &generate)
+void TRN4CPP::Simulation::Recording::Performances::configure(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> &functor, const bool &train, const bool &prime, const bool &generate)
 {
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->install_performances(id, functor);
 	frontend->setup_performances(id, train, prime, generate);
 }
-void TRN4CPP::Simulation::Recordings::Scheduling::configure(const unsigned int &id, const std::function<void(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
+void TRN4CPP::Simulation::Recording::Scheduling::configure(const unsigned int &id, const std::function<void(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
 {
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");

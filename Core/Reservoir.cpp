@@ -145,6 +145,12 @@ void TRN::Core::Reservoir::synchronize()
 {
 	implementor->synchronize();
 }
+
+void TRN::Core::Reservoir::initialize()
+{
+	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED>());
+}
+
 void TRN::Core::Reservoir::initialize(const std::shared_ptr<TRN::Core::Initializer> &feedforward,
 										const std::shared_ptr<TRN::Core::Initializer> &recurrent,
 										const std::shared_ptr<TRN::Core::Initializer> &feedback,

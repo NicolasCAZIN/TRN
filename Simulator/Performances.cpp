@@ -118,6 +118,7 @@ void TRN::Simulator::Performances::initialize()
 }
 void TRN::Simulator::Performances::uninitialize()
 {
+	TRN::Core::Simulator::uninitialize();
 	decorated->uninitialize();
 }
 
@@ -131,6 +132,12 @@ void TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN:
 	handle->observations = payload.get_observations();
 	notify(payload);
 }
+
+void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED> &payload)
+{
+
+}
+
 void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN::Core::Message::TESTED> &payload)
 {
 	if (handle->generate)

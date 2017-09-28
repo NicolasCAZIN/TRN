@@ -20,7 +20,8 @@ namespace TRN
 			virtual ~Manager();
 
 		public:
-			void wait_not_allocated();
+			void update_processor(const int &rank, const std::string host, const unsigned int &index, const std::string name);
+			//void wait_not_allocated();
 			std::shared_ptr<TRN::Engine::Processor> allocate(const unsigned int &id);
 			void deallocate(const unsigned int &id);
 		

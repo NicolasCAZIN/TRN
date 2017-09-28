@@ -18,6 +18,7 @@ namespace TRN
 			public TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TESTED>>,
 			public TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>,
 			public TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>,
+			public TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED>>,
 			public TRN::Helper::Visitor<TRN::Core::Message::Payload<TRN::Core::Message::WEIGHTS>>,
 			public TRN::Helper::Visitor<TRN::Core::Message::Payload<TRN::Core::Message::STATES>>,
 			public TRN::Helper::Visitor<TRN::Core::Message::Payload<TRN::Core::Message::FLOPS>>,
@@ -41,10 +42,12 @@ namespace TRN
 			virtual ~Reservoir();
 
 		public :
+	
 			void initialize(const std::shared_ptr<TRN::Core::Initializer> &feedforward, 
 							const std::shared_ptr<TRN::Core::Initializer> &recurrent,
 							const std::shared_ptr<TRN::Core::Initializer> &feedback,
 							const std::shared_ptr<TRN::Core::Initializer> &readout);
+			void initialize();
 			void synchronize();
 
 		public :

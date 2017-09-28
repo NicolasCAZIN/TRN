@@ -17,14 +17,17 @@ namespace TRN
 			Frontend(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const std::shared_ptr<TRN::Engine::Executor> &to_caller);
 			virtual ~Frontend();
 
+		
+
 		public:
 			void install_completed(const std::function<void()> &functor);
 			void install_ack(const std::function<void(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause)> &functor);
 			void install_processor(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &functor);
-			void install_allocation(const std::function<void(const unsigned int &id, const int &rank)> &functor);
-			void install_deallocation(const std::function<void(const unsigned int &id, const int &rank)> &functor);
+			void install_allocated(const std::function<void(const unsigned int &id, const int &rank)> &functor);
+			void install_deallocated(const std::function<void(const unsigned int &id, const int &rank)> &functor);
 			void install_quit(const std::function<void(const int &rank)> &functor);
 			void install_trained(const std::function<void(const unsigned int &id)> &functor);
+			void install_configured(const std::function<void(const unsigned int &id)> &functor);
 			void install_primed(const std::function<void(const unsigned int &id)> &functor);
 			void install_tested(const std::function<void(const unsigned int &id)> &functor);
 			void install_error(const std::function<void(const std::string &message)> &functor);
@@ -57,10 +60,11 @@ namespace TRN
 
 		protected:
 			virtual void callback_completed() override;
+			virtual void callback_configured(const unsigned int &id) override;
 			virtual void callback_ack(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause) override;
 			virtual void callback_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name) override;
-			virtual void callback_allocation(const unsigned int &id, const int &rank) override;
-			virtual void callback_deallocation(const unsigned int &id, const int &rank) override;
+			virtual void callback_allocated(const unsigned int &id, const int &rank) override;
+			virtual void callback_deallocated(const unsigned int &id, const int &rank) override;
 			virtual void callback_quit(const int &rank) override;
 			virtual void callback_trained(const unsigned int &id) override;
 			virtual void callback_primed(const unsigned int &id) override;

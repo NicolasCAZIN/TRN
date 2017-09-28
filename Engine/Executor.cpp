@@ -14,7 +14,12 @@ TRN::Engine::Executor::~Executor()
 
 void TRN::Engine::Executor::terminate()
 {
-	handle->commands.invalidate();
+	handle->commands.enqueue([&]() 
+	{
+		handle->commands.invalidate(); 
+		//std::cout << "invalidated" << std::endl;
+	});
+	//join();
 }
 
 void TRN::Engine::Executor::post(const std::function<void(void)> &command)

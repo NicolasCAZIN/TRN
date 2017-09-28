@@ -927,6 +927,7 @@ static void update_readout_error_kernel(
 	float ** __restrict__ batched_error, const int batched_error_rows, const int batched_error_cols, const int batched_error_stride
 )
 {
+	const float4 ONE = make_float4(1.0f);
 	for (int batch = blockIdx.y * blockDim.y + threadIdx.y; batch < batch_size; batch += gridDim.y * blockDim.y)
 	{
 		float *E = batched_error[batch];
@@ -937,11 +938,27 @@ static void update_readout_error_kernel(
 		{
 			float4 d = reinterpret_cast<float4 *>(&D[t * batched_expected_cols])[col];
 			float4 x = reinterpret_cast<float4 *>(X)[col];
-			float4 e = learning_rate * (d - x);
+			float4 e = learning_rate * (d - x) * (ONE - x*x);
 			/*assert(!isnan(d));
 			assert(!isnan(x));
 			assert(!isnan(e));*/
 			reinterpret_cast<float4 *>(E)[col] = e;
+		}
+	}
+}
+__global__
+static void update_readout_activation_kernel(
+	const int batch_size,
+	float ** __restrict__ batched_x_ro, const int batched_x_ro_rows, const int batched_x_ro_cols, const int batched_x_ro_stride
+)
+{
+	for (int batch = blockIdx.y * blockDim.y + threadIdx.y; batch < batch_size; batch += gridDim.y * blockDim.y)
+	{
+		float *X = batched_x_ro[batch];
+
+		for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < batched_x_ro_cols >> 2; col += gridDim.x * blockDim.x)
+		{
+			reinterpret_cast<float4 *>(X)[col] = tanhf(reinterpret_cast<float4 *>(X)[col]);
 		}
 	}
 }
@@ -978,7 +995,7 @@ static void widrow_hoff_kernel(
 
 }
 template <typename Parameter>
-static inline void update_readout(
+static inline void batched_update_readout(
 	const cudaStream_t &stream,
 	const cublasHandle_t &handle,
 	const std::size_t &batch_size, const std::size_t & t, const Parameter &parameter,
@@ -988,13 +1005,25 @@ static inline void update_readout(
 	float **batched_error, const std::size_t &batched_error_rows, const std::size_t &batched_error_cols, const std::size_t & batched_error_stride,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t & batched_w_ro_stride)
 {
+	dim3 block;
+	dim3 grid;
 
+	block.x = warpSize * 4;
+	grid.x = (batched_x_ro_cols / 4 + block.x - 1) / block.x;
+
+	update_readout_activation_kernel << <grid, block, 0, stream >> >
+		(
+			batch_size, 
+			batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_stride
+		);
+
+	checkCudaErrors(cudaGetLastError());
 }
 
 
 
 template <>
-static inline void update_readout(
+static inline void batched_update_readout(
 	const cudaStream_t &stream, 
 	const cublasHandle_t &handle, 
 	const std::size_t &batch_size, const std::size_t & t, const Widrow_Hoff &parameter,
@@ -1010,6 +1039,21 @@ static inline void update_readout(
 	assert(batched_w_ro_cols == batched_x_res_cols);
 	assert(batched_w_ro_rows == batched_x_ro_cols);
 
+	{
+		dim3 block;
+		dim3 grid;
+
+		block.x = warpSize * 4;
+		grid.x = (batched_x_ro_cols / 4 + block.x - 1) / block.x;
+
+		update_readout_activation_kernel << <grid, block, 0, stream >> >
+			(
+				batch_size,
+				batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_stride
+				);
+
+		checkCudaErrors(cudaGetLastError());
+	}
 	{
 		dim3 block;
 		dim3 grid;
@@ -1193,7 +1237,7 @@ void update_model(
 				batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides
 			);
 			//isnan(stream, batch_size, batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides);
-			update_readout<Parameter>(
+			batched_update_readout<Parameter>(
 				stream, handle, batch_size, t, parameter,
 				batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
 				batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,

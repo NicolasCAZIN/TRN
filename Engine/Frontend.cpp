@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Frontend_impl.h"
+#include "Broker_impl.h"
 
 TRN::Engine::Frontend::Frontend(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const std::shared_ptr<TRN::Engine::Executor> &to_caller) :
 	TRN::Engine::Broker(communicator, to_caller),
@@ -11,7 +12,6 @@ TRN::Engine::Frontend::~Frontend()
 {
 	handle.reset();
 }
-
 
 
 void TRN::Engine::Frontend::install_completed(const std::function<void()> &functor)
@@ -26,17 +26,21 @@ void TRN::Engine::Frontend::install_processor(const std::function<void(const int
 {
 	handle->on_processor = functor;
 }
-void TRN::Engine::Frontend::install_allocation(const std::function<void(const unsigned int &id, const int &rank)> &functor)
+void TRN::Engine::Frontend::install_allocated(const std::function<void(const unsigned int &id, const int &rank)> &functor)
 {
-	handle->on_allocation = functor;
+	handle->on_allocated = functor;
 }
-void TRN::Engine::Frontend::install_deallocation(const std::function<void(const unsigned int &id, const int &rank)> &functor)
+void TRN::Engine::Frontend::install_deallocated(const std::function<void(const unsigned int &id, const int &rank)> &functor)
 {
-	handle->on_deallocation = functor;
+	handle->on_deallocated = functor;
 }
 void TRN::Engine::Frontend::install_quit(const std::function<void(const int &rank)> &functor)
 {
 	handle->on_quit = functor;
+}
+void TRN::Engine::Frontend::install_configured(const std::function<void(const unsigned int &id)> &functor)
+{
+	handle->on_configured = functor;
 }
 void TRN::Engine::Frontend::install_trained(const std::function<void(const unsigned int &id)> &functor)
 {
@@ -172,15 +176,15 @@ void TRN::Engine::Frontend::callback_processor(const int &rank, const std::strin
 	if (handle->on_processor)
 		handle->on_processor(rank, host, index, name);
 }
-void TRN::Engine::Frontend::callback_allocation(const unsigned int &id, const int &rank)
+void TRN::Engine::Frontend::callback_allocated(const unsigned int &id, const int &rank)
 {
-	if (handle->on_allocation)
-		handle->on_allocation(id, rank);
+	if (handle->on_allocated)
+		handle->on_allocated(id, rank);
 }
-void TRN::Engine::Frontend::callback_deallocation(const unsigned int &id, const int &rank)
+void TRN::Engine::Frontend::callback_deallocated(const unsigned int &id, const int &rank)
 {
-	if (handle->on_deallocation)
-		handle->on_deallocation(id, rank);
+	if (handle->on_deallocated)
+		handle->on_deallocated(id, rank);
 
 
 }
@@ -188,6 +192,11 @@ void TRN::Engine::Frontend::callback_quit(const int &rank)
 {
 	if (handle->on_quit)
 		handle->on_quit(rank);
+}
+void TRN::Engine::Frontend::callback_configured(const unsigned int &id)
+{
+	if (handle->on_configured)
+		handle->on_configured(id);
 }
 void TRN::Engine::Frontend::callback_trained(const unsigned int &id)
 {

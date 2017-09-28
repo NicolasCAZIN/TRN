@@ -6,7 +6,6 @@
 TRN::Simulator::Basic::Basic(const std::function<void()> &trained, const std::function<void()> &primed, const std::function<void()> &tested) :
 	handle(std::make_unique<Handle>())
 {
-
 	handle->trained = trained;
 	handle->tested = tested;
 	handle->primed = primed;
@@ -267,6 +266,12 @@ void  TRN::Simulator::Basic::update(const TRN::Core::Message::Payload<TRN::Core:
 
 	handle->tested();
 }
+
+void  TRN::Simulator::Basic::update(const TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED> &payload)
+{
+
+}
+
 void  TRN::Simulator::Basic::update(const TRN::Core::Message::Payload<TRN::Core::Message::PRIMED> &payload)
 {
 
@@ -278,7 +283,7 @@ void  TRN::Simulator::Basic::update(const TRN::Core::Message::Payload<TRN::Core:
 }
 
 
-std::shared_ptr<TRN::Simulator::Basic> TRN::Simulator::Basic::create(const std::function<void()> &trained, const std::function<void()> &primed, const std::function<void()> &tested)
+std::shared_ptr<TRN::Simulator::Basic> TRN::Simulator::Basic::create( const std::function<void()> &trained, const std::function<void()> &primed, const std::function<void()> &tested)
 {
 	return std::make_shared<TRN::Simulator::Basic>(trained, primed, tested);
 }

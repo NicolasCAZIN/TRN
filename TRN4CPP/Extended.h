@@ -8,6 +8,22 @@ namespace TRN4CPP
 	{
 		namespace Events
 		{
+			namespace Configured
+			{
+				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned int &id)> &functor);
+			};
+			namespace Trained
+			{
+				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned int &id)> &functor);
+			};
+			namespace Primed
+			{
+				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned int &id)> &functor);
+			};
+			namespace Tested
+			{
+				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned int &id)> &functor);
+			};
 			namespace Completed
 			{
 				void TRN4CPP_EXPORT		install(const std::function<void()> &functor);
@@ -20,11 +36,11 @@ namespace TRN4CPP
 			{
 				void TRN4CPP_EXPORT		install(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &functor);
 			};
-			namespace Allocation
+			namespace Allocated
 			{
 				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned int &id, const int &rank)> &functor);
 			};
-			namespace Deallocation
+			namespace Deallocated
 			{
 				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned int &id, const int &rank)> &functor);
 			};
@@ -244,7 +260,7 @@ namespace TRN4CPP
 			};
 
 		};
-		namespace Recordings
+		namespace Recording
 		{
 			namespace States
 			{
