@@ -8,7 +8,7 @@ TRN::Engine::Broker::Broker(const std::shared_ptr<TRN::Engine::Communicator> &co
 	handle->communicator = communicator;
 	handle->manager = TRN::Engine::Manager::create(communicator->size());
 	handle->count = 0;
-
+	handle->completed = false;
 	handle->to_caller = to_caller;
 }
 TRN::Engine::Broker::~Broker()
@@ -447,17 +447,29 @@ void TRN::Engine::Broker::send(const int &rank, TRN::Engine::Message<tag> &messa
 
 	handle->communicator->send(message, rank);
 }
-
+void TRN::Engine::Broker::halt()
+{
+	completed();
+	join();
+}
 void TRN::Engine::Broker::completed()
 {
-	TRN::Engine::Message<TRN::Engine::COMPLETED> message;
-	handle->communicator->broadcast(message);
-	handle->to_caller->post([=]()
+	if (!handle->completed)
 	{
+		TRN::Engine::Message<TRN::Engine::COMPLETED> message;
+		handle->communicator->broadcast(message);
+		handle->to_caller->post([=]()
+		{
 
-		//handle->from_caller->terminate();
-		callback_completed();
-	});
+			//handle->from_caller->terminate();
+			callback_completed();
+		});
+		handle->to_caller->terminate();
+		handle->to_caller->join();
+		handle->completed = true;
+	}
+
+
 }
 /*void TRN::Engine::Broker::ready(const unsigned int &id)
 {

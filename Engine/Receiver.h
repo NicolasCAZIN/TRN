@@ -18,12 +18,13 @@ namespace TRN
 
 		public :
 			virtual void start();
-	
+			
 		protected :
 			bool is_running();
 			virtual void initialize();
 			virtual void receive() = 0;
 			virtual void uninitialize();
+			void join();
 			void stop();
 		};
 	}

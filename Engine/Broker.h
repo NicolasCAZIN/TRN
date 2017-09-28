@@ -22,6 +22,9 @@ namespace TRN
 		public :
 			virtual ~Broker();
 
+		public :
+			void halt();
+
 		protected :
 			virtual void initialize() override;
 			virtual void uninitialize() override;

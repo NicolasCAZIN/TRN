@@ -884,13 +884,14 @@ int main(int argc, char *argv[])
 		try
 		{
 			TRN4CPP::Engine::Execution::initialize(BLOCKING);
-			TRN4CPP::Engine::Backend::Remote::initialize();
+			TRN4CPP::Engine::Backend::Local::initialize(
+			{
+			0,1
+			});
+			//TRN4CPP::Engine::Backend::Remote::initialize();
 			TRN4CPP::Engine::uninitialize();
 			exit(0);
-			/*TRN4CPP::Engine::Backend::Local::initialize(
-			{
-				0,1,2,3,4,1,2,3,4
-			});*/
+		
 
 #ifdef TRN4CPP_EXTENDED
 			TRN4CPP::Engine::Events::Configured::install(on_configured);

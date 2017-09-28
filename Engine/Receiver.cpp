@@ -11,6 +11,7 @@ TRN::Engine::Receiver::~Receiver()
 {
 	if (handle->thread.joinable())
 		handle->thread.join();
+
 	handle.reset();
 }
 
@@ -54,4 +55,9 @@ bool TRN::Engine::Receiver::is_running()
 void TRN::Engine::Receiver::stop()
 {
 	handle->running = false;
+}
+void TRN::Engine::Receiver::join()
+{
+	if (handle->thread.joinable())
+		handle->thread.join();
 }

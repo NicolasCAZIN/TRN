@@ -13,6 +13,7 @@ TRN::Local::Communicator::~Communicator()
 {
 	for (auto queue : handle->queues)
 		queue->invalidate();
+
 	handle->workers.clear();
 	handle.reset();
 }

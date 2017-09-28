@@ -11,7 +11,7 @@ namespace TRN
 	{
 		class ENGINE_EXPORT Worker : 
 			public TRN::Helper::Bridge<TRN::Backend::Driver>,
-			public virtual TRN::Engine::Node
+			public TRN::Engine::Node
 		{
 		private :
 			class Handle;

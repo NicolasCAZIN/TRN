@@ -145,10 +145,17 @@ void TRN4CPP::Engine::initialize()
 }
 void TRN4CPP::Engine::uninitialize()
 {
-	if (!frontend)
-		throw std::runtime_error("A frontend have never been setup");
-
-	frontend.reset();
+	if (frontend)
+	{
+		frontend->halt();
+		
+		frontend.reset();
+	}
+	if (executor)
+	{
+		executor->terminate();
+		executor.reset();
+	}
 
 	on_feedforward = NULL;
 	on_feedback = NULL;

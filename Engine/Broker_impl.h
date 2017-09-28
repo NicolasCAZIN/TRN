@@ -13,6 +13,7 @@ public :
 public :
 	size_t count;
 	std::size_t active;
+	bool completed;
 	std::set<unsigned int> simulations;
 	std::shared_ptr<TRN::Engine::Manager> manager;
 	std::shared_ptr<TRN::Engine::Communicator> communicator;
