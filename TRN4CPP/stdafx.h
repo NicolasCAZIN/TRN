@@ -8,6 +8,8 @@
 #include <boost/asio.hpp>
 #include <boost/function.hpp>
 #include <boost/lambda/lambda.hpp>
+#include <boost/multi_array.hpp>
+#include <boost/dll/import.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
@@ -35,3 +37,5 @@
 #include <set>
 #include <map>
 #include <ctime>
+
+#include <mat.h>

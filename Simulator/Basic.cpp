@@ -77,6 +77,8 @@ void TRN::Simulator::Basic::append_mutator(const std::shared_ptr<TRN::Core::Muta
 }
 void TRN::Simulator::Basic::declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Matrix> &sequence)
 {
+	
+
 	if (label.empty())
 		throw std::invalid_argument("Sequence label cannot be empty");
 	if (tag.empty())

@@ -1,12 +1,14 @@
 #include "stdafx.h"
 #include "Simplified.h"
 #include "Engine/Frontend.h"
+#include "Callbacks.h"
+#include "Custom.h"
 
 extern std::shared_ptr<TRN::Engine::Frontend> frontend;
 extern std::shared_ptr<TRN::Engine::Executor> executor;
 
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_custom;
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_custom;
+extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
+extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_raw;
 extern std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_mutator;
 extern std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduler;
 extern std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedforward;
@@ -47,6 +49,8 @@ static const std::string train_name = "TRAIN";
 static const std::string trial_name = "TRIAL";
 static const std::string mutator_name = "MUTATOR";
 static const std::string decorator_name = "DECORATOR";
+static const std::string variable_name = "VARIABLE";
+static const std::string plugin_name = "PLUGIN";
 
 static const std::string widrowhoff_type = "WIDROWHOFF";
 static const std::string copy_type = "COPY";
@@ -81,6 +85,24 @@ struct Sequence
 };
 
 static std::map<std::pair<std::string, std::string>, Sequence> sequences_map;
+
+
+
+boost::shared_ptr<TRN4CPP::Plugin::Simplified::Interface> simplified;
+
+void TRN4CPP::Plugin::Simplified::initialize(const std::string &library_path, const std::string &name, const std::map<std::string, std::string>  &arguments)
+{
+	if (simplified)
+		throw std::runtime_error("A plugin is already loaded");
+	boost::filesystem::path path = library_path;
+
+	path /=  name;
+
+	simplified = boost::dll::import<TRN4CPP::Plugin::Simplified::Interface>(path, "plugin_simplified", boost::dll::load_mode::append_decorations);
+	simplified->install_variable(std::bind(&TRN4CPP::Simulation::declare, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
+	simplified->initialize(arguments);
+}
+
 
 void TRN4CPP::Simulation::declare(const std::string &label, const std::vector<float> &elements, const std::size_t rows, const std::size_t &cols, const std::string &tag)
 {
@@ -161,16 +183,76 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 	const std::string preamble_attribute = prefix + "preamble";
 	const std::string repeat_attribute = prefix + "repeat";
 	const std::string supplementary_attribute = prefix + "supplementary";
-
+	const std::string filename_attribute = prefix + "filename";
+	const std::string path_attribute = prefix + "path";
+	const std::string name_attribute = prefix + "name";
+	const std::string interface_attribute = prefix + "interface";
+	const std::string arguments_attribute = prefix + "arguments";
 	unsigned int id = 0;
+	
 	for (auto property_element : properties)
 	{
-		if (boost::iequals(property_element.first, simulation_name))
+		if (boost::iequals(property_element.first, plugin_name))
+		{
+			auto _plugin = property_element.second;
+			auto interface = _plugin.get_child(interface_attribute).get_value<std::string>();
+			auto path = _plugin.get_child(path_attribute).get_value<std::string>();
+			auto name = _plugin.get_child(name_attribute).get_value<std::string>();
+			std::vector<std::string> arguments_list;
+
+			boost::split(arguments_list, _plugin.get_child(arguments_attribute).get_value<std::string>(), boost::is_any_of(",; \t"));
+			std::map<std::string, std::string> arguments;
+			for (auto argument : arguments_list)
+			{
+				std::vector<std::string> key_value;
+				boost::split(key_value, argument, boost::is_any_of("="));
+				if (key_value.size() != 2)
+					throw std::runtime_error("Malformed key/value pair " + argument);
+				auto key = key_value[0];
+				boost::to_upper(key);
+				auto value = key_value[1];
+				arguments[key] = value;
+			}
+		
+
+			if (boost::iequals(interface, "Simplified"))
+			{
+				TRN4CPP::Plugin::Simplified::initialize(path, name, arguments);
+			}
+			else if (boost::iequals(interface, "Custom"))
+			{
+				TRN4CPP::Plugin::Custom::initialize(path, name, arguments);
+			}
+			else if (boost::iequals(interface, "Callbacks"))
+			{
+				TRN4CPP::Plugin::Callbacks::initialize(path, name, arguments);
+			}
+			else
+				throw std::runtime_error("Unexpected plugin interface " + interface);
+		}
+		else if (boost::iequals(property_element.first, data_name))
+		{
+			auto _data = property_element.second;
+
+			for (auto data_element : _data)
+			{
+				if (boost::iequals(data_element.first, variable_name))
+				{
+					auto _variable = data_element.second;
+					auto label = _variable.get_child(label_attribute).get_value<std::string>();
+					auto tag = _variable.get(tag_attribute, "");
+					simplified->callback_variable(label, tag);
+				}
+				
+			}
+			simplified.reset();
+		}
+		else if (boost::iequals(property_element.first, simulation_name))
 		{
 			auto _simulation = property_element.second;
 
 
-			std::size_t repeat = _simulation.get(number_attribute, 1);
+			std::size_t repeat = _simulation.get < std::size_t> (number_attribute, 1);
 			for (std::size_t iteration = 0; iteration < repeat; repeat++)
 			{
 				bool reservoir_initialized = false;
@@ -629,9 +711,9 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 											{
 												if (readout_custom_initialized)
 													throw std::runtime_error("Readout custom is already initialized");
-												if (!on_measurement_readout_custom)
+												if (!on_measurement_readout_raw)
 													throw std::runtime_error("Readout custom callback must be installed first");
-												frontend->install_measurement_readout_custom(id, on_measurement_readout_custom);
+												frontend->install_measurement_readout_custom(id, on_measurement_readout_raw);
 												frontend->configure_measurement_readout_custom(id, batch_size);
 												//executor->run_one();
 												readout_custom_initialized = true;
@@ -666,9 +748,9 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 											{
 												if (position_custom_initialized)
 													throw std::runtime_error("Position custom is already initialized");
-												if (!on_measurement_position_custom)
+												if (!on_measurement_position_raw)
 													throw std::runtime_error("Position custom callback must be installed first");
-												frontend->install_measurement_position_custom(id, on_measurement_position_custom);
+												frontend->install_measurement_position_custom(id, on_measurement_position_raw);
 												frontend->configure_measurement_position_custom(id, batch_size);
 												//executor->run_one();
 												position_custom_initialized = true;
@@ -817,8 +899,6 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 				id++;
 			}
 		}
-
-	
 	}  	
 	executor->run();
 }

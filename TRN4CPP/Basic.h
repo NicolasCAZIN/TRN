@@ -4,6 +4,19 @@
 
 namespace TRN4CPP
 {
+	namespace Plugin
+	{
+		namespace Basic
+		{
+			class TRN4CPP_EXPORT Interface
+			{
+			public :
+				virtual void initialize(const std::map<std::string, std::string>  &arguments) = 0;
+				virtual void uninitialize() = 0;
+			};
+		}
+	};
+
 	namespace Engine
 	{
 		void TRN4CPP_EXPORT  	initialize();
@@ -35,12 +48,18 @@ namespace TRN4CPP
 
 			void TRN4CPP_EXPORT		initialize(const bool &blocking = DEFAULT_BLOCKING);
 		};
+
+
 	};
 
 	namespace Simulation
 	{
 		extern TRN4CPP_EXPORT const std::string DEFAULT_TAG;
 	};
+
+
+
+
 };
 
 

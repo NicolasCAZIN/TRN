@@ -1,11 +1,63 @@
 #pragma once
 
 #include "trn4cpp_global.h"
+#include "Basic.h"
 
 namespace TRN4CPP
 {
+
+	namespace Plugin
+	{
+		namespace Custom
+		{
+			class TRN4CPP_EXPORT Interface : public Plugin::Basic::Interface
+			{
+			public:
+				virtual void callback_position(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols) = 0;
+				virtual void install_position(const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &functor) = 0;
+
+				virtual void callback_stimulus(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols) = 0;
+				virtual void install_stimulus(const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &functor) = 0;
+
+				virtual void callback_mutator(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations) = 0;
+				virtual void install_mutator(const std::function<void(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor) = 0;
+
+				virtual void callback_scheduler(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations) = 0;
+				virtual	void install_scheduler(const std::function<void(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor) = 0;
+
+				virtual void callback_feedforward(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols) = 0;
+				virtual void install_feedforward(const std::function<void(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &functor) = 0;
+
+				virtual void callback_feedback(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols) = 0;
+				virtual void install_feedback(const std::function<void(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &functor) = 0;
+
+				virtual void callback_readout(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols) = 0;
+				virtual void install_readout(const std::function<void(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &functor) = 0;
+
+				virtual void callback_recurrent(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols) = 0;
+				virtual void install_recurrent(const std::function<void(const unsigned int &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &functor) = 0;
+			};
+
+			void TRN4CPP_EXPORT		initialize(const std::string &library_path, const std::string &name, const std::map<std::string, std::string> &arguments);
+		};
+	}
+
 	namespace Simulation
 	{
+		namespace Loop
+		{
+			namespace Stimulus
+			{
+				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
+					std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply);
+			};
+			namespace Position
+			{
+				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
+					std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply);
+			};
+		};
+
 		namespace Scheduler
 		{
 			namespace Custom
@@ -61,23 +113,7 @@ namespace TRN4CPP
 				};
 			};
 		};
-		namespace Measurement
-		{
-			namespace Readout
-			{
-				namespace Custom
-				{
-					void TRN4CPP_EXPORT 	install(const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &predicted, const std::vector<float> &primed, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
-				};
-			};
-			namespace Position
-			{
-				namespace Custom
-				{
-					void TRN4CPP_EXPORT 	install(const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &predicted, const std::vector<float> &primed, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
-				};
-			};
-		};
+
 
 	};
 };

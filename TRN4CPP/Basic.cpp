@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "TRN4CPP.h"
 #include "Basic.h"
+#include "Custom.h"
+#include "Callbacks.h"
+
 #include "ViewModel/Communicator.h"
 #include "ViewModel/Frontend.h"
 #include "ViewModel/Executor.h"
@@ -12,8 +15,13 @@ const unsigned short TRN4CPP::Engine::Backend::Remote::DEFAULT_PORT = 12345;
 std::shared_ptr<TRN::Engine::Frontend> frontend;
 std::shared_ptr<TRN::Engine::Executor> executor;
 
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_custom;
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_custom;
+extern boost::shared_ptr<TRN4CPP::Plugin::Simplified::Interface> simplified;
+extern boost::shared_ptr<TRN4CPP::Plugin::Custom::Interface> custom;
+extern std::vector<boost::shared_ptr<TRN4CPP::Plugin::Callbacks::Interface>> callbacks;
+
+
+extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
+extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_raw;
 extern std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_mutator;
 extern std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduler;
 extern std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedforward;
@@ -31,6 +39,7 @@ extern std::function<void(const unsigned int &id, const std::string &phase, cons
 extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduling;
 extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_position;
 extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_stimulus;
+
 
 void TRN4CPP::Engine::Execution::initialize(const bool &blocking)
 {
@@ -156,6 +165,24 @@ void TRN4CPP::Engine::uninitialize()
 		executor->terminate();
 		executor.reset();
 	}
+	if (simplified)
+	{
+		simplified->uninitialize();
+		simplified.reset();
+	}
+	if (custom)
+	{
+		custom->uninitialize();
+		custom.reset();
+	}
+	if (!callbacks.empty())
+	{
+		for (auto callback : callbacks)
+		{
+			callback->uninitialize();
+		}
+		callbacks.clear();
+	}
 
 	on_feedforward = NULL;
 	on_feedback = NULL;
@@ -169,10 +196,10 @@ void TRN4CPP::Engine::uninitialize()
 	on_scheduling = NULL;
 	on_position = NULL;
 	on_stimulus = NULL;
-	on_measurement_position_custom = NULL;
+	on_measurement_position_raw = NULL;
 	on_measurement_position_frechet_distance = NULL;
 	on_measurement_position_mean_square_error = NULL;
-	on_measurement_readout_custom = NULL;
+	on_measurement_readout_raw = NULL;
 	on_measurement_readout_frechet_distance = NULL;
 	on_measurement_readout_mean_square_error = NULL;
 }

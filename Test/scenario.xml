@@ -1,3 +1,12 @@
+<Data filename="Z:\Nicolas\JNS_data\data\efficient_trajectory\data.mat">
+	<Variable path="bacde.firing_rate_map" label="bacde" tag="INC" />
+	<Variable path="bacde.incoming" label="bacde" tag="INC" />
+	<Variable path="bacde.expected" label="bacde" tag="EXP" />
+	<Variable path="bacde.position" label="bacde" tag="POS" />
+	<Variable path="bacde.reward" label="bacde" tag="REW" />
+</Data>
+<Result filename="result.mat">
+</Result>
 <Simulation number="10">
 	<Configuration>
 		<Model>
