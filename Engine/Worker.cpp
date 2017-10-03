@@ -222,17 +222,18 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::S
 	if (!handle->simulators[message.id]->get_reservoir())
 		throw std::logic_error("Simulator #" + std::to_string(message.id) + " does not not have a reservoir to decorate");
 	auto decorator = TRN::Model::Simulator::Performances::create(handle->simulators[message.id], [this, message]
-	(const std::string &phase, const size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)
+	(const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
 	{
 		TRN::Engine::Message<TRN::Engine::PERFORMANCES> performances;
 
 		performances.id = message.id;
 		performances.phase = phase;
 
-		performances.cycles = cycles;
-		performances.gflops = gflops;
-		performances.seconds = seconds;
-		performances.batch_size = batch_size;
+		performances.trial = trial;
+		performances.evaluation = evaluation;
+		performances.phase = phase;
+		performances.cycles_per_second = cycles_per_second;
+		performances.gflops_per_second = gflops_per_second;
 		 auto locked = TRN::Engine::Node::implementor.lock();
 		if (locked)
 			locked->send(performances, 0);

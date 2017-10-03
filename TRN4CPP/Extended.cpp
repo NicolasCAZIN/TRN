@@ -147,7 +147,7 @@ void TRN4CPP::Simulation::Recording::Weights::configure(const unsigned int &id, 
 	frontend->install_weights(id, functor);
 	frontend->setup_weights(id, initialize, train);
 }
-void TRN4CPP::Simulation::Recording::Performances::configure(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> &functor, const bool &train, const bool &prime, const bool &generate)
+void TRN4CPP::Simulation::Recording::Performances::configure(const unsigned int &id, const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor, const bool &train, const bool &prime, const bool &generate)
 {
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");

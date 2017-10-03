@@ -20,7 +20,7 @@ extern std::function<void(const unsigned int &id, const std::size_t &trial, cons
 extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_frechet_distance;
 extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_mean_square_error;
 extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_frechet_distance;
-extern std::function<void(const unsigned int &id, const std::string &phase, const size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> on_performances;
+extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> on_performances;
 extern std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_states;
 extern std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_weights;
 extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduling;
@@ -99,8 +99,8 @@ void TRN4CPP::Plugin::Simplified::initialize(const std::string &library_path, co
 	path /=  name;
 
 	simplified = boost::dll::import<TRN4CPP::Plugin::Simplified::Interface>(path, "plugin_simplified", boost::dll::load_mode::append_decorations);
-	simplified->install_variable(std::bind(&TRN4CPP::Simulation::declare, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
 	simplified->initialize(arguments);
+	simplified->install_variable(std::bind(&TRN4CPP::Simulation::declare, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
 }
 
 
@@ -206,12 +206,15 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 			{
 				std::vector<std::string> key_value;
 				boost::split(key_value, argument, boost::is_any_of("="));
-				if (key_value.size() != 2)
-					throw std::runtime_error("Malformed key/value pair " + argument);
-				auto key = key_value[0];
-				boost::to_upper(key);
-				auto value = key_value[1];
-				arguments[key] = value;
+				if (key_value.size() == 2)
+				{
+					auto key = key_value[0];
+					boost::to_upper(key);
+					auto value = key_value[1];
+					arguments[key] = value;
+				}
+				
+		
 			}
 		
 
@@ -252,8 +255,8 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 			auto _simulation = property_element.second;
 
 
-			std::size_t repeat = _simulation.get < std::size_t> (number_attribute, 1);
-			for (std::size_t iteration = 0; iteration < repeat; repeat++)
+			const std::size_t repeat = _simulation.get <std::size_t> (number_attribute, 1);
+			for (std::size_t iteration = 0; iteration < repeat; iteration++)
 			{
 				bool reservoir_initialized = false;
 				bool loop_initialized = false;
@@ -579,10 +582,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 												throw std::runtime_error("Can't find response matrix " + response);
 											auto &response_matrix = sequences_map[key];
 											auto cols = response_matrix.cols;
-											auto rows = response_matrix.rows;
-											auto implicit_stimulus_size = response_matrix.elements.size() / (cols * rows);
-											if (implicit_stimulus_size != stimulus_size)
-												throw std::runtime_error("Declared stimulus size is " + std::to_string(stimulus_size) + " and implicit stimulus size in place cell respons is " + std::to_string(implicit_stimulus_size));
+											auto rows = response_matrix.rows / stimulus_size;
 											auto firing_rate_map = response_matrix.elements;
 											frontend->install_stimulus(id, on_stimulus);
 											frontend->install_position(id, on_position);

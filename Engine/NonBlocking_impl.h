@@ -6,5 +6,7 @@ class TRN::Engine::NonBlocking::Handle
 {
 public :
 	std::thread process;
-	bool joined;
+	bool running;
+	std::condition_variable cond;
+	std::mutex mutex;
 };

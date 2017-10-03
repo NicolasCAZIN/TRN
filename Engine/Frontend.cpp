@@ -112,7 +112,7 @@ void TRN::Engine::Frontend::install_measurement_position_custom(const unsigned i
 {
 	set_map(handle->on_measurement_position_custom, id, functor);
 }
-void TRN::Engine::Frontend::install_performances(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> &functor)
+void TRN::Engine::Frontend::install_performances(const unsigned int &id, const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor)
 {
 	set_map(handle->on_performances, id, functor);
 }
@@ -255,9 +255,9 @@ void TRN::Engine::Frontend::callback_measurement_position_custom(const unsigned 
 {
 	get_map(handle->on_measurement_position_custom, id)(id, trial, evaluation, primed, predicted, expected, preamble, pages, rows, cols);
 }
-void TRN::Engine::Frontend::callback_performances(const unsigned int &id, const std::string &phase, const size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)
+void TRN::Engine::Frontend::callback_performances(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
 {
-	get_map(handle->on_performances, id)(id, phase, batch_size, cycles, gflops, seconds);
+	get_map(handle->on_performances, id)(id, trial, evaluation, phase, cycles_per_second, gflops_per_second);
 }
 void TRN::Engine::Frontend::callback_states(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {

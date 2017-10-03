@@ -160,7 +160,7 @@ void TRN::Engine::Broker::receive()
 			auto message = handle->communicator->receive<TRN::Engine::PERFORMANCES>(0);
 			handle->to_caller->post([=]()
 			{
-				callback_performances(message.id, message.phase, message.batch_size, message.cycles, message.gflops, message.seconds);
+				callback_performances(message.id, message.trial, message.evaluation, message.phase, message.cycles_per_second, message.gflops_per_second);
 			});
 		}
 		break;

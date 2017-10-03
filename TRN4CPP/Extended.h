@@ -272,7 +272,7 @@ namespace TRN4CPP
 			};
 			namespace Performances
 			{
-				void TRN4CPP_EXPORT  	configure(const unsigned int &id, const std::function<void(const unsigned int &id, const std::string &phase, const std::size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> &functor, const bool &train, const bool &prime, const bool &generate);
+				void TRN4CPP_EXPORT  	configure(const unsigned int &id, const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor, const bool &train, const bool &prime, const bool &generate);
 			};
 			namespace Scheduling
 			{

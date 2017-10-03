@@ -10,7 +10,7 @@ std::function<void(const unsigned int &id, const std::size_t &trial, const std::
 std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_frechet_distance;
 std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_mean_square_error;
 std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_frechet_distance;
-std::function<void(const unsigned int &id, const std::string &phase, const size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> on_performances;
+std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> on_performances;
 std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_states;
 std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_weights;
 std::function<void(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduling;
@@ -19,7 +19,7 @@ std::vector<boost::shared_ptr<TRN4CPP::Plugin::Callbacks::Interface>> callbacks;
 
 static void callback_measurement_readout_raw(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
 {
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
@@ -28,7 +28,7 @@ static void callback_measurement_readout_raw(const unsigned int &id, const std::
 }
 static void  callback_measurement_position_raw(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
 {
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
@@ -37,7 +37,7 @@ static void  callback_measurement_position_raw(const unsigned int &id, const std
 }
 static void callback_measurement_readout_mean_square_error(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
@@ -46,7 +46,7 @@ static void callback_measurement_readout_mean_square_error(const unsigned int &i
 }
 static void callback_measurement_readout_frechet_distance(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
@@ -55,7 +55,7 @@ static void callback_measurement_readout_frechet_distance(const unsigned int &id
 }
 static void callback_measurement_position_mean_square_error(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
@@ -64,25 +64,25 @@ static void callback_measurement_position_mean_square_error(const unsigned int &
 }
 static void callback_measurement_position_frechet_distance(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
 		plugin->callback_measurement_position_frechet_distance(id, trial, evaluation, values, rows, cols);
 	}
 }
-static void callback_performances(const unsigned int &id, const std::string &phase, const size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)
+static void callback_performances(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
 {
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
-		plugin->callback_performances(id, phase, batch_size, cycles, gflops, seconds);
+		plugin->callback_performances(id, trial, evaluation, phase, cycles_per_second, gflops_per_second);
 	}
 }
 static void callback_states(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
@@ -91,7 +91,7 @@ static void callback_states(const unsigned int &id, const std::string &phase, co
 }
 static void callback_weights(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
@@ -100,7 +100,7 @@ static void callback_weights(const unsigned int &id, const std::string &phase, c
 }
 static void callback_scheduling(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
@@ -169,7 +169,7 @@ void TRN4CPP::Simulation::Recording::Weights::install(const std::function<void(c
 		throw std::runtime_error("Frontend is not initialized");
 	on_weights = functor;
 }
-void TRN4CPP::Simulation::Recording::Performances::install(const std::function<void(const unsigned int &id, const std::string &phase, const std::size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> &functor)
+void TRN4CPP::Simulation::Recording::Performances::install(const std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor)
 {
 	if (on_performances)
 		throw std::runtime_error("Performances functor is already installed");

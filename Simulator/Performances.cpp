@@ -2,7 +2,7 @@
 #include "Performances_impl.h"
 
 TRN::Simulator::Performances::Performances(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-										   const std::function<void(const std::string &phase, const size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> &functor,
+	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor,
 	const bool &train, const bool &prime, const bool &generate) :
 	TRN::Helper::Decorator<TRN::Core::Simulator>(decorated),
 	handle(std::make_unique<Handle>())
@@ -140,6 +140,7 @@ void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN
 
 void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN::Core::Message::TESTED> &payload)
 {
+	
 	if (handle->generate)
 	{
 		decorated->get_reservoir()->synchronize();
@@ -151,7 +152,11 @@ void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN
 		auto reservoir_gflops = compute_gflops(remaining, flops->get_flops_per_epoch_factor(), remaining, flops->get_flops_per_cycle());
 		decorated->get_loop()->visit(flops);
 		auto loop_gflops = compute_gflops(remaining, flops->get_flops_per_epoch_factor(), remaining, flops->get_flops_per_cycle());
-		handle->functor("GENERATE", handle->batch_size, handle->cycles, reservoir_gflops + loop_gflops, seconds.count());
+		auto gflops = reservoir_gflops + loop_gflops;
+		auto s = seconds.count();
+		auto gflops_per_second = (gflops * handle->batch_size) / s;
+		auto cycles_per_second = (handle->cycles * handle->batch_size) / s;
+		handle->functor(get_reservoir()->get_trial(), get_reservoir()->get_evaluation(), "GENERATE", cycles_per_second, gflops_per_second);
 	}
 }
 void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN::Core::Message::PRIMED> &payload)
@@ -164,7 +169,10 @@ void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN
 		auto flops = std::make_shared<TRN::Core::Message::Payload<TRN::Core::Message::FLOPS>>(0, 0);
 		decorated->get_reservoir()->visit(flops);
 		auto gflops = compute_gflops(flops->get_flops_per_epoch_factor(), handle->preamble, flops->get_flops_per_cycle(), handle->preamble);
-		handle->functor("PRIME", handle->batch_size, handle->preamble, gflops, seconds.count());
+		auto s = seconds.count();
+		auto gflops_per_second = (gflops * handle->batch_size) / s;
+		auto cycles_per_second = (handle->preamble *handle->batch_size) / s;
+		handle->functor(get_reservoir()->get_trial(), get_reservoir()->get_evaluation(), "PRIME", cycles_per_second, gflops_per_second);
 	}
 }
 void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN::Core::Message::TRAINED> &payload)
@@ -179,7 +187,12 @@ void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN
 
 		auto observations = handle->observations;
 		auto gflops = compute_gflops(observations, flops->get_flops_per_epoch_factor(), handle->cycles, flops->get_flops_per_cycle());
-		handle->functor("TRAIN", handle->batch_size, handle->cycles, gflops, seconds.count());
+
+		auto s = seconds.count();
+		auto gflops_per_second = (gflops * handle->batch_size) / s;
+		auto cycles_per_second = (handle->cycles *handle->batch_size) / s;
+
+		handle->functor(get_reservoir()->get_trial(), get_reservoir()->get_evaluation(), "TRAIN", cycles_per_second, gflops_per_second);
 	}
 }
 
@@ -189,7 +202,7 @@ float TRN::Simulator::Performances::compute_gflops(const std::size_t &flops_per_
 }
 
 std::shared_ptr<TRN::Simulator::Performances> TRN::Simulator::Performances::create(const std::shared_ptr<TRN::Core::Simulator> decorated,
-	const std::function<void(const std::string &phase, const size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)> &functor,
+	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor,
 	const bool &train, const bool &prime, const bool &test)
 {
 	return std::make_shared<TRN::Simulator::Performances>(decorated, functor, train, prime, test);

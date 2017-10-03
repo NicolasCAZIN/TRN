@@ -19,7 +19,11 @@ void TRN4CPP::Plugin::Custom::initialize(const std::string &library_path, const 
 {
 	if (custom)
 		throw std::runtime_error("A plugin is already loaded");
-	custom = boost::dll::import<TRN4CPP::Plugin::Custom::Interface>(library_path, name, boost::dll::load_mode::append_decorations);
+
+	boost::filesystem::path path = library_path;
+	path /= name;
+
+	custom = boost::dll::import<TRN4CPP::Plugin::Custom::Interface>(path, "plugin_custom", boost::dll::load_mode::append_decorations);
 	custom->initialize(arguments);
 	std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> reply_position;
 	TRN4CPP::Simulation::Loop::Position::install(std::bind(&TRN4CPP::Plugin::Custom::Interface::callback_position, custom, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6), reply_position);

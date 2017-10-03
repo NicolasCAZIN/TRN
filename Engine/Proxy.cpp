@@ -235,17 +235,17 @@ void TRN::Engine::Proxy::callback_measurement_position_custom(const unsigned int
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_performances(const unsigned int &id, const std::string &phase, const size_t &batch_size, const size_t &cycles, const float &gflops, const float &seconds)
+void TRN::Engine::Proxy::callback_performances(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
 {
 	TRN::Engine::Message<TRN::Engine::PERFORMANCES> message;
 
 	message.id = id;
 	message.phase = phase;
 
-	message.cycles = cycles;
-	message.gflops = gflops;
-	message.seconds = seconds;
-	message.batch_size = batch_size;
+	message.trial = trial;
+	message.evaluation = evaluation;
+	message.cycles_per_second = cycles_per_second;
+	message.gflops_per_second = gflops_per_second;
 	auto locked = TRN::Engine::Node::implementor.lock();
 	if (locked)
 		locked->send(message, 0);

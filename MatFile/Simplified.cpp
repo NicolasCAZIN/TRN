@@ -1,8 +1,22 @@
 #include "stdafx.h"
 #include "Simplified.h"
 
+const std::string FILENAME_TOKEN = "FILENAME";
+const std::string MAPPING_TOKEN = "MAPPING";
+const std::string VARIABLE_TOKEN = "VARIABLE";
+
+struct Simplified::Handle 
+{
+	MATFile *pmat;
+	std::map<std::pair<std::string, std::string>, std::vector<std::string>> fields;
+	std::function<void(const std::string &label, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::string &tag)> declare;
+};
+
 void Simplified::initialize(const std::map<std::string, std::string> &arguments)
 {
+	if (handle)
+		throw std::runtime_error("Handle already allocated");
+	handle = std::make_unique<Handle>();
 	std::string prefix = "";
 
 	if (arguments.find(FILENAME_TOKEN) == arguments.end())
@@ -12,7 +26,6 @@ void Simplified::initialize(const std::map<std::string, std::string> &arguments)
 	if (arguments.find(MAPPING_TOKEN) == arguments.end())
 		throw std::runtime_error("Can't file " + MAPPING_TOKEN + " key/value pair");
 	auto mapping = arguments.at(MAPPING_TOKEN);
-	
 
 
 	boost::property_tree::iptree properties;
@@ -46,28 +59,33 @@ void Simplified::initialize(const std::map<std::string, std::string> &arguments)
 
 			std::vector<std::string> path;
 			boost::split(path, _variable.get_child(PATH_ATTRIBUTE).get_value<std::string>(), boost::is_any_of("."));
-			fields[std::make_pair(label, tag)] = path;
+			handle->fields[std::make_pair(label, tag)] = path;
 		}
 	}
 
-	Basic::initialize(filename, "r");
+	if (handle->pmat != NULL)
+		throw std::runtime_error("a MAT-File is already opened");
+	handle->pmat = matOpen(filename.c_str(), "r");
+	if (handle->pmat == NULL)
+		throw std::runtime_error("Can't open MAT file " + filename);
 }
 void Simplified::uninitialize()
 {
-	Basic::uninitialize();
+	if (matClose(handle->pmat))
+		throw std::runtime_error("Can't close matfile handle");
+	handle.reset();
 }
 void  Simplified::callback_variable(const std::string &label, const std::string &tag)
 {
-	
-	if (!declare)
+	if (!handle->declare)
 		throw std::runtime_error("Declare functor is not installed");
 
 	auto key = std::make_pair(label, tag);
-	if (fields.find(key) == fields.end())
+	if (handle->fields.find(key) == handle->fields.end())
 		throw std::runtime_error("variable with label "  +label + " and tag "+ tag + "is not mapped");
-	auto path = fields[key];
+	auto path = handle->fields[key];
 
-	auto mx_variable = matGetVariable(pmat, path[0].c_str());
+	auto mx_variable = matGetVariable(handle->pmat, path[0].c_str());
 	if (mx_variable == NULL)
 		throw std::runtime_error("Can't read variable " + label);
 
@@ -92,7 +110,7 @@ void  Simplified::callback_variable(const std::string &label, const std::string 
 					auto size = rows * cols;
 					float *ptr = (float *)mxGetData(mx_field);
 					std::vector<float> elements(ptr, ptr + size);
-					declare(label, elements, rows, cols, tag);
+					handle->declare(label, elements, rows, cols, tag);
 				}
 				else
 				{
@@ -114,7 +132,7 @@ void  Simplified::callback_variable(const std::string &label, const std::string 
 }
 void  Simplified::install_variable(const std::function<void(const std::string &label, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::string &tag)> &functor)
 {
-	declare = functor;
+	handle->declare = functor;
 }
 
 /*boost::shared_ptr<Simplified>  Simplified::create()

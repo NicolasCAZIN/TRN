@@ -6,7 +6,7 @@ TRN::Engine::NonBlocking::NonBlocking() :
 	TRN::Engine::Executor(),
 	handle(std::make_unique<Handle>())
 {
-	handle->joined = false;
+	handle->running = true;
 	handle->process = std::thread([&]()
 	{
 	
@@ -15,29 +15,33 @@ TRN::Engine::NonBlocking::NonBlocking() :
 		{
 			command();
 		}
-		//std::cout << "stopped" << std::endl;
+		std::unique_lock<std::mutex> lock(handle->mutex);
+		handle->running = false;
+		handle->cond.notify_one();
 	});
 }
 
 TRN::Engine::NonBlocking::~NonBlocking()
 {
-	join();
+
 	handle.reset();
 }
 void TRN::Engine::NonBlocking::join()
 {
-	if (!handle->joined)
+	if (handle->running)
 	{
 		if (handle->process.joinable())
 			handle->process.join();
-		handle->joined = true;
 	}
 }
 
 
 void TRN::Engine::NonBlocking::run()
 {
-	join();
+	std::unique_lock<std::mutex> lock(handle->mutex);
+
+	while (handle->running)
+		handle->cond.wait(lock);
 }
 
 void TRN::Engine::NonBlocking::run_one()

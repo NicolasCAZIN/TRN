@@ -825,22 +825,21 @@ namespace TRN
 		template<>
 		struct Message<TRN::Engine::Tag::PERFORMANCES> : public Header
 		{
-			std::size_t cycles;
-			std::size_t batch_size;
-			float gflops;
-			float seconds;
+			std::size_t trial;
+			std::size_t evaluation;
+			float cycles_per_second;
+			float gflops_per_second;
 			std::string phase;
 	
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & boost::serialization::base_object<Header>(*this);
-				ar & cycles;
-				ar & batch_size;
-				ar & gflops;
-				ar & seconds;
+				ar & trial;
+				ar & evaluation;
+				ar & cycles_per_second;
+				ar & gflops_per_second;
 				ar & phase;
-	
 			}
 		};
 
