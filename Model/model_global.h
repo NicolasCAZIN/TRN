@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
 
-#ifndef QT_STATIC
+
+#ifndef TRN_STATIC
 # if defined(MODEL_LIB)
-#  define MODEL_EXPORT Q_DECL_EXPORT
+#  define MODEL_EXPORT __declspec(dllexport)
 # else
-#  define MODEL_EXPORT Q_DECL_IMPORT
+#  define MODEL_EXPORT __declspec(dllimport)
 # endif
 #else
 # define MODEL_EXPORT

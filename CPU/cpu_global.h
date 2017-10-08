@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
 
-#ifndef QT_STATIC
+
+#ifndef TRN_STATIC
 # if defined(CPU_LIB)
-#  define CPU_EXPORT Q_DECL_EXPORT
+#  define CPU_EXPORT __declspec(dllexport)
 # else
-#  define CPU_EXPORT Q_DECL_IMPORT
+#  define CPU_EXPORT __declspec(dllimport)
 # endif
 #else
 # define CPU_EXPORT

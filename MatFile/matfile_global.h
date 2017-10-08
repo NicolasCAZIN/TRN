@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
+
 
 #ifndef BUILD_STATIC
 # if defined(MATFILE_LIB)
-#  define MATFILE_EXPORT Q_DECL_EXPORT
+#  define MATFILE_EXPORT __declspec(dllexport)
 # else
-#  define MATFILE_EXPORT Q_DECL_IMPORT
+#  define MATFILE_EXPORT __declspec(dllimport)
 # endif
 #else
 # define MATFILE_EXPORT

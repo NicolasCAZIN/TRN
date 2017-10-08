@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
 
-#ifndef QT_STATIC
+
+#ifndef TRN_STATIC
 # if defined(RESERVOIR_LIB)
-#  define RESERVOIR_EXPORT Q_DECL_EXPORT
+#  define RESERVOIR_EXPORT __declspec(dllexport)
 # else
-#  define RESERVOIR_EXPORT Q_DECL_IMPORT
+#  define RESERVOIR_EXPORT __declspec(dllimport)
 # endif
 #else
 # define RESERVOIR_EXPORT

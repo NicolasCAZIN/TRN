@@ -315,8 +315,8 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 
 	//handle->batched_current_position->to(current_position, current_position_matrices, current_position_rows, current_position_cols);
 	handle->batched_predicted_position->to(predicted_position, predicted_position_matrices, predicted_position_rows, predicted_position_cols);
-	//std::cout << __FUNCTION__ << " current position " << current_position[0] << ", " << current_position[1] << std::endl;
-	//std::cout << __FUNCTION__ << " predicted position " << predicted_position[0] << ", " << predicted_position[1] << std::endl;
+	//// std::cout << __FUNCTION__ << " current position " << current_position[0] << ", " << current_position[1] << std::endl;
+	//// std::cout << __FUNCTION__ << " predicted position " << predicted_position[0] << ", " << predicted_position[1] << std::endl;
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::POSITION>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::POSITION>(handle->batched_predicted_position, payload.get_trial(), payload.get_evaluation()));
 
 

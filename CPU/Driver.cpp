@@ -3,7 +3,6 @@
 #include "Memory.h"
 #include "Random.h"
 #include "Algorithm.h"
-#include "InstructionSet.h"
 
 template<TRN::CPU::Implementation Implementation>
 TRN::CPU::Driver<Implementation>::Driver() :
@@ -46,7 +45,10 @@ template TRN::CPU::Driver<TRN::CPU::Implementation::MMX_SSE>;
 template<TRN::CPU::Implementation Implementation>
 std::string  TRN::CPU::Driver<Implementation>::name()
 {
-	return TRN::CPU::InstructionSet::Brand();
+	std::string brand;
+	TRN::CPU::Implementation implementation;
+	TRN::CPU::query(brand, implementation);
+	return brand;
 }
 template<TRN::CPU::Implementation Implementation>
 int TRN::CPU::Driver<Implementation>::index()
@@ -60,7 +62,12 @@ std::list<std::pair<int, std::string>> TRN::CPU::enumerate_devices()
 {
 	if (enumerated.empty())
 	{
-		enumerated.push_back(std::make_pair(0, TRN::CPU::InstructionSet::Brand()));
+
+		std::string brand;
+		TRN::CPU::Implementation implementation;
+		TRN::CPU::query(brand, implementation);
+
+		enumerated.push_back(std::make_pair(0, brand));
 	}
 	return enumerated;
 }

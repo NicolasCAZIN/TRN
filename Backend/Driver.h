@@ -14,7 +14,7 @@ namespace TRN
 		{
 		protected :
 			class Handle;
-			mutable std::unique_ptr<Handle> handle;
+			std::unique_ptr<Handle> handle;
 
 		public :
 			Driver(const std::shared_ptr<TRN::Backend::Memory> &memory, const std::shared_ptr<TRN::Backend::Random> &random, const std::shared_ptr<TRN::Backend::Algorithm> &algorithm);

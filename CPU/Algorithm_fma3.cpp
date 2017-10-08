@@ -6,8 +6,6 @@
 #include "avx_mathfun.h"
 
 
-static const v8sf one = _mm256_set1_ps(1.0f);
-static const v8sf two = _mm256_set1_ps(2.0f);
 
 #define _0 0
 #define _1 8
@@ -63,6 +61,9 @@ static inline __m256 sqr_ps(const __m256 &__a)
 
 static inline __m256 tanh_ps(const __m256 &__a)
 {
+	const v8sf one = _mm256_set1_ps(1.0f);
+	const v8sf two = _mm256_set1_ps(2.0f);
+
 	auto e = ::exp256_ps(_mm256_mul_ps(__a, two));
 	return _mm256_div_ps(_mm256_sub_ps(e, one), _mm256_add_ps(e, one));
 }

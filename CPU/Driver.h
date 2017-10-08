@@ -3,6 +3,7 @@
 #include "cpu_global.h"
 #include "Backend/Driver.h"
 #include "Implementation.h"
+
 namespace TRN
 {
 	namespace CPU

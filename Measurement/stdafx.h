@@ -3,7 +3,6 @@
 #include <vld.h>
 #endif 
 
-#include <opencv/cxcore.hpp>
 #include <numeric>
 #include <string>
 #include <cassert>

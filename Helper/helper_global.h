@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
 
-#ifndef QT_STATIC
+
+#ifndef TRN_STATIC
 # if defined(HELPER_LIB)
-#  define HELPER_EXPORT Q_DECL_EXPORT
+#  define HELPER_EXPORT __declspec(dllexport)
 # else
-#  define HELPER_EXPORT Q_DECL_IMPORT
+#  define HELPER_EXPORT __declspec(dllimport)
 # endif
 #else
 # define HELPER_EXPORT

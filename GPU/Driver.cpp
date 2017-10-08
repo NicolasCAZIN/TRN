@@ -92,19 +92,33 @@ std::list<std::pair<int, std::string>> TRN::GPU::enumerate_devices()
 	if (enumerated.empty())
 	{
 		int count;
-		checkCudaErrors(cudaGetDeviceCount(&count));
-
-		for (int k = 0; k < count; k++)
+		switch (cudaGetDeviceCount(&count))
 		{
-			cudaDeviceProp prop;
+			case cudaErrorInsufficientDriver :
+				std::cerr << "CUDA enabled device present but the actual driver is insufficient (version " << CUDA_VERSION << " expected)" << std::endl;
+				break;
+			case cudaErrorNoDevice:
+			
+				std::cerr << "No CUDA enabled device had been detected" << std::endl;
+				break;
+			default :
+				for (int k = 0; k < count; k++)
+				{
+					cudaDeviceProp prop;
 
-			checkCudaErrors(cudaSetDevice(k));
-			checkCudaErrors(cudaGetDeviceProperties(&prop, k));
+					checkCudaErrors(cudaSetDevice(k));
+					checkCudaErrors(cudaGetDeviceProperties(&prop, k));
 
-			auto device_number = k + 1;
-			auto name = prop.name + std::string(" #") + std::to_string(device_number);
-			enumerated.push_back(std::make_pair(device_number, name));
+					auto device_number = k + 1;
+					auto name = prop.name + std::string(" #") + std::to_string(device_number);
+					enumerated.push_back(std::make_pair(device_number, name));
+				}
+				break;
 		}
+
+	
+
+
 	}
 	return enumerated;
 }

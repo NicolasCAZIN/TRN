@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
 
-#ifndef QT_STATIC
+
+#ifndef TRN_STATIC
 # if defined(BACKEND_LIB)
-#  define BACKEND_EXPORT Q_DECL_EXPORT
+#  define BACKEND_EXPORT __declspec(dllexport)
 # else
-#  define BACKEND_EXPORT Q_DECL_IMPORT
+#  define BACKEND_EXPORT __declspec(dllimport)
 # endif
 #else
 # define BACKEND_EXPORT

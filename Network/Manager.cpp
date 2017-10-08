@@ -10,7 +10,7 @@ TRN::Network::Manager::Manager() :
 
 TRN::Network::Manager::~Manager()
 {
-	std::cout << __FUNCTION__ << std::endl;
+	// std::cout << __FUNCTION__ << std::endl;
 	stop();
 	handle.reset();
 }

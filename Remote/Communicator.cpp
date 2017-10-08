@@ -26,7 +26,7 @@ TRN::Remote::Communicator::Communicator(const std::shared_ptr<TRN::Network::Mana
 
 TRN::Remote::Communicator::~Communicator()
 {
-	std::cout << __FUNCTION__ << std::endl;
+	// std::cout << __FUNCTION__ << std::endl;
 	handle->manager->stop(handle->connection);
 
 

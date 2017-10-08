@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
 {
 	try
 	{
+		std::cout << argv[0] << " INITIALIZE" << std::endl;
 		boost::program_options::options_description desc("Allowed options");
 		desc.add_options()
 			("help,h", "produce help message")
@@ -46,12 +47,13 @@ int main(int argc, char *argv[])
 		}
 
 		auto index = vm.count("index") ? vm["index"].as<int>() : DEFAULT_INDEX;
-		auto seed = vm.count("seed") ? vm["seed"].as<int>() : DEFAULT_SEED;
 		auto communicator = TRN::ViewModel::Communicator::Distributed::create(argc, argv);
 
 		
 		auto worker = TRN::ViewModel::Node::Worker::create(communicator, communicator->rank(), index);
 		worker->start();
+		worker->wait();
+		std::cout << argv[0] << " EXITED" << std::endl;
 		return 0;
 	}
 	catch (std::exception &e)

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
+
 
 #ifndef BUILD_STATIC
 # if defined(MUTATOR_LIB)
-#  define MUTATOR_EXPORT Q_DECL_EXPORT
+#  define MUTATOR_EXPORT __declspec(dllexport)
 # else
-#  define MUTATOR_EXPORT Q_DECL_IMPORT
+#  define MUTATOR_EXPORT __declspec(dllimport)
 # endif
 #else
 # define MUTATOR_EXPORT

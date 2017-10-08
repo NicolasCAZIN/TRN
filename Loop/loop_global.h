@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
 
-#ifndef QT_STATIC
+
+#ifndef TRN_STATIC
 # if defined(LOOP_LIB)
-#  define LOOP_EXPORT Q_DECL_EXPORT
+#  define LOOP_EXPORT __declspec(dllexport)
 # else
-#  define LOOP_EXPORT Q_DECL_IMPORT
+#  define LOOP_EXPORT __declspec(dllimport)
 # endif
 #else
 # define LOOP_EXPORT

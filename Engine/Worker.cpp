@@ -15,6 +15,7 @@ TRN::Engine::Worker::Worker(const std::shared_ptr<TRN::Engine::Communicator> &co
 	TRN::Engine::Node(communicator, rank),
 	handle(std::make_unique<Handle>())
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	//TRN::Engine::Node::handle->name = "WORKER";
 	TRN::Engine::Message<TRN::Engine::Tag::WORKER> message;
 
@@ -28,11 +29,14 @@ TRN::Engine::Worker::Worker(const std::shared_ptr<TRN::Engine::Communicator> &co
 
 TRN::Engine::Worker::~Worker()
 {
+
+	// std::cout << __FUNCTION__ << std::endl;
 	handle.reset();
 }
 
 void TRN::Engine::Worker::send_configured(const unsigned int &id)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->configured_required[id] == true && handle->remaining_initializations[id] == 0)
 	{
 		if (handle->simulators.find(id) == handle->simulators.end())
@@ -52,6 +56,8 @@ void TRN::Engine::Worker::send_configured(const unsigned int &id)
 
 void TRN::Engine::Worker::initialize()
 {
+	TRN::Engine::Receiver::initialize();
+	// std::cout << __FUNCTION__ << std::endl;
 	TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->toggle();
 }
 /*void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::READY> &message)
@@ -61,6 +67,7 @@ void TRN::Engine::Worker::initialize()
 }*/
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	TRN::Engine::Message<TRN::Engine::QUIT> quit;
 	quit.rank = TRN::Engine::Node::handle->rank;
 	auto locked = TRN::Engine::Node::implementor.lock();
@@ -69,6 +76,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) != handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + "already exists");
 
@@ -116,6 +124,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::A
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATE> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators.erase(message.id);
@@ -131,12 +140,14 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::D
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::TRAIN> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->train(message.label, message.incoming, message.expected);
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::TEST> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->test(message.label, message.incoming, message.expected, message.preamble, message.supplementary_generations);
@@ -144,12 +155,14 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::T
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::DECLARE_SEQUENCE> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->declare(message.label, message.tag, TRN::Core::Matrix::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.sequence, message.observations, message.sequence.size() / message.observations));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::DECLARE_SET> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	std::vector<std::shared_ptr<TRN::Core::Matrix>> sequences;
@@ -162,6 +175,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::D
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::SETUP_STATES> &message) 
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	if (!handle->simulators[message.id]->get_reservoir())
@@ -190,6 +204,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::S
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::SETUP_WEIGHTS> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	if (!handle->simulators[message.id]->get_reservoir())
@@ -217,6 +232,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::S
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::SETUP_PERFORMANCES> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	if (!handle->simulators[message.id]->get_reservoir())
@@ -243,6 +259,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::S
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::SETUP_SCHEDULING> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	if (!handle->simulators[message.id]->get_reservoir())
@@ -266,16 +283,14 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::S
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_BEGIN> &message)
 {
-
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->uninitialize();
-
-
-
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_END> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->initialize();
@@ -285,6 +300,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_MEAN_SQUARE_ERROR> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->append_measurement(
@@ -309,6 +325,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_FRECHET_DISTANCE> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->append_measurement(
@@ -332,6 +349,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_CUSTOM> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->append_measurement(
@@ -359,6 +377,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->append_measurement(
@@ -382,6 +401,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->append_measurement(
@@ -405,6 +425,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_CUSTOM> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->append_measurement(
@@ -431,18 +452,21 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RESERVOIR_WIDROW_HOFF> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->set_reservoir(TRN::Model::Reservoir::WidrowHoff::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.stimulus_size, message.prediction_size, message.reservoir_size, message.leak_rate, message.initial_state_scale, message.learning_rate, message.seed, message.batch_size));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_COPY> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->set_loop(TRN::Model::Loop::Copy::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.batch_size, message.stimulus_size));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_SPATIAL_FILTER> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 
@@ -490,6 +514,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_CUSTOM> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	if (TRN::Engine::Node::handle->perceived_stimulus.find(message.id) != TRN::Engine::Node::handle->perceived_stimulus.end())
@@ -515,12 +540,14 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_TILED> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->set_scheduler(TRN::Model::Scheduler::Tiled::create(message.epochs));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_SNIPPETS> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->set_scheduler(TRN::Model::Scheduler::Snippets::create(message.seed, message.snippets_size, message.time_budget, message.tag));
@@ -528,6 +555,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_CUSTOM> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 
@@ -555,18 +583,21 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Shuffle::create(message.seed));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Reverse::create(message.seed, message.rate, message.size));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_PUNCH> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->append_mutator(TRN::Model::Mutator::Punch::create(message.seed, message.rate, message.size, message.repetition));
@@ -574,6 +605,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_CUSTOM> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	
@@ -599,18 +631,21 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_UNIFORM> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->set_feedforward(TRN::Model::Initializer::Uniform::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.a, message.b, message.sparsity));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_GAUSSIAN> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->set_feedforward(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_CUSTOM> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	
@@ -635,6 +670,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_UNIFORM> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->set_feedback(TRN::Model::Initializer::Uniform::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.a, message.b, message.sparsity));
@@ -642,12 +678,14 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_GAUSSIAN> &message) 
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->set_feedback(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 
@@ -672,18 +710,21 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_UNIFORM> &message) 
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->set_recurrent(TRN::Model::Initializer::Uniform::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.a, message.b, message.sparsity));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_GAUSSIAN> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->set_recurrent(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_CUSTOM> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 
@@ -708,18 +749,21 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_UNIFORM> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->set_readout(TRN::Model::Initializer::Uniform::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.a, message.b, message.sparsity));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_GAUSSIAN> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->set_readout(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_CUSTOM> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 
@@ -744,18 +788,21 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::POSITION> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (TRN::Engine::Node::handle->estimated_position.find(message.id) == TRN::Engine::Node::handle->estimated_position.end())
 		throw std::runtime_error("Estimated position functor is not setup for simulator #" + std::to_string(message.id));
 	TRN::Engine::Node::handle->estimated_position[message.id](message.trial, message.evaluation, message.elements, message.rows, message.cols);
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::STIMULUS> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (TRN::Engine::Node::handle->perceived_stimulus.find(message.id) == TRN::Engine::Node::handle->perceived_stimulus.end())
 		throw std::runtime_error("Perceived stimulus functor is not setup for simulator #" + std::to_string(message.id));
 	TRN::Engine::Node::handle->perceived_stimulus[message.id](message.trial, message.evaluation, message.elements, message.rows, message.cols);
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::SCHEDULING> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (message.is_from_mutator)
 	{
 		if (TRN::Engine::Node::handle->mutator.find(message.id) == TRN::Engine::Node::handle->mutator.end())
@@ -771,6 +818,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::S
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::FEEDFORWARD_WEIGHTS> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (TRN::Engine::Node::handle->feedforward_weights.find(message.id) == TRN::Engine::Node::handle->feedforward_weights.end())
 		throw std::runtime_error("Perceived stimulus functor is not setup for simulator #" + std::to_string(message.id));
 	TRN::Engine::Node::handle->feedforward_weights[message.id](message.elements, message.matrices, message.rows, message.cols);
@@ -779,6 +827,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::F
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_WEIGHTS> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (TRN::Engine::Node::handle->recurrent.find(message.id) == TRN::Engine::Node::handle->recurrent.end())
 		throw std::runtime_error("Recurrent stimulus functor is not setup for simulator #" + std::to_string(message.id));
 	TRN::Engine::Node::handle->recurrent[message.id](message.elements, message.matrices, message.rows, message.cols);
@@ -787,6 +836,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::R
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> &message)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (TRN::Engine::Node::handle->feedback_weights.find(message.id) == TRN::Engine::Node::handle->feedback_weights.end())
 		throw std::runtime_error("Feedback stimulus functor is not setup for simulator #" + std::to_string(message.id));
 	TRN::Engine::Node::handle->feedback_weights[message.id](message.elements, message.matrices, message.rows, message.cols);
@@ -795,6 +845,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::F
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::READOUT_WEIGHTS> &message) 
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (TRN::Engine::Node::handle->readout.find(message.id) == TRN::Engine::Node::handle->readout.end())
 		throw std::runtime_error("Readout stimulus functor is not setup for simulator #" + std::to_string(message.id));
 	TRN::Engine::Node::handle->readout[message.id](message.elements, message.matrices, message.rows, message.cols);
@@ -807,5 +858,6 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::R
 
 std::shared_ptr<TRN::Engine::Worker> TRN::Engine::Worker::create( const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank, const std::shared_ptr<TRN::Backend::Driver> &driver)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	return std::make_shared<TRN::Engine::Worker>(communicator, rank, driver);
 }

@@ -18,7 +18,8 @@ namespace TRN
 
 		public :
 			virtual void start();
-			
+			void wait();
+
 		protected :
 			bool is_running();
 			virtual void initialize();

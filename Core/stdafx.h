@@ -3,7 +3,6 @@
 #include <vld.h>
 #endif 
 #include <boost/multi_array.hpp>
-#include <opencv2/core.hpp>
 #include <numeric>
 #include <string>
 #include <cassert>

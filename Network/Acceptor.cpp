@@ -21,7 +21,7 @@ TRN::Network::Acceptor::Acceptor(const std::string &host, const unsigned short &
 
 TRN::Network::Acceptor::~Acceptor()
 {
-	std::cout << __FUNCTION__ << std::endl;
+	// std::cout << __FUNCTION__ << std::endl;
 	handle.reset();
 }
 

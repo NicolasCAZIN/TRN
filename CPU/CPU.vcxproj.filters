@@ -59,10 +59,10 @@
     <ClCompile Include="Algorithm_avx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="InstructionSet.cpp">
+    <ClCompile Include="Algorithm_sse41.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Algorithm_sse41.cpp">
+    <ClCompile Include="Implementation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -95,9 +95,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Algorithm_template_method.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="InstructionSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
+
 
 #ifndef BUILD_STATIC
 # if defined(SIMULATOR_LIB)
-#  define SIMULATOR_EXPORT Q_DECL_EXPORT
+#  define SIMULATOR_EXPORT __declspec(dllexport)
 # else
-#  define SIMULATOR_EXPORT Q_DECL_IMPORT
+#  define SIMULATOR_EXPORT __declspec(dllimport)
 # endif
 #else
 # define SIMULATOR_EXPORT

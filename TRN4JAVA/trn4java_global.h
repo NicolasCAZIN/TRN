@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
+
 
 #ifndef BUILD_STATIC
 # if defined(TRN4JAVA_LIB)
-#  define TRN4JAVA_EXPORT Q_DECL_EXPORT
+#  define TRN4JAVA_EXPORT __declspec(dllexport)
 # else
-#  define TRN4JAVA_EXPORT Q_DECL_IMPORT
+#  define TRN4JAVA_EXPORT __declspec(dllimport)
 # endif
 #else
 # define TRN4JAVA_EXPORT

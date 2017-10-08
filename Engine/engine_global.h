@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
 
-#ifndef QT_STATIC
+
+#ifndef TRN_STATIC
 # if defined(ENGINE_LIB)
-#  define ENGINE_EXPORT Q_DECL_EXPORT
+#  define ENGINE_EXPORT __declspec(dllexport)
 # else
-#  define ENGINE_EXPORT Q_DECL_IMPORT
+#  define ENGINE_EXPORT __declspec(dllimport)
 # endif
 #else
 # define ENGINE_EXPORT

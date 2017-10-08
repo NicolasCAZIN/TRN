@@ -6,7 +6,7 @@ namespace TRN
 {
 	namespace CPU
 	{
-		enum Implementation
+		enum CPU_EXPORT Implementation
 		{
 			SCALAR,
 #if defined(_M_IX86) && !defined(_M_X64)
@@ -23,6 +23,8 @@ namespace TRN
 
 		};
 
+		void CPU_EXPORT query(std::string &brand, TRN::CPU::Implementation &implementation);
+
 		template<TRN::CPU::Implementation Implementation>
 		struct  Traits
 		{
@@ -30,7 +32,7 @@ namespace TRN
 		};
 
 		template<>
-		struct  Traits<SCALAR>
+		struct CPU_EXPORT  Traits<SCALAR>
 		{
 			typedef float type;
 			static const std::size_t step = 1;
@@ -45,37 +47,37 @@ namespace TRN
 #endif
 #if !defined(_M_IX86) && defined(_M_X64)
 		template<>
-		struct  Traits<SSE2>
+		struct CPU_EXPORT Traits<SSE2>
 		{
 			typedef __m128 type;
 			static const std::size_t step = 4;
 		};
 		template<>
-		struct  Traits<SSE3>
+		struct CPU_EXPORT Traits<SSE3>
 		{
 			typedef __m128 type;
 			static const std::size_t step = 4;
 		};
 		template<>
-		struct  Traits<SSE41>
+		struct CPU_EXPORT Traits<SSE41>
 		{
 			typedef __m128 type;
 			static const std::size_t step = 4;
 		};
 		template<>
-		struct  Traits<AVX>
+		struct  CPU_EXPORT Traits<AVX>
 		{
 			typedef __m256 type;
 			static const std::size_t step = 8;
 		};
 		template<>
-		struct  Traits<AVX2>
+		struct CPU_EXPORT Traits<AVX2>
 		{
 			typedef __m256 type;
 			static const std::size_t step = 8;
 		};
 		template<>
-		struct  Traits<FMA3>
+		struct CPU_EXPORT Traits<FMA3>
 		{
 			typedef __m256 type;
 			static const std::size_t step = 8;

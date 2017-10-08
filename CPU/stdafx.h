@@ -5,6 +5,7 @@
 #endif 
 #include <omp.h>
 #include <mutex>
+#include <windows.h>
 #define MKL_INT size_t
 #include <mkl.h>
 #include <cassert>

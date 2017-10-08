@@ -5,6 +5,7 @@ TRN::Engine::Node::Node(const std::shared_ptr<TRN::Engine::Communicator> &commun
 	TRN::Helper::Bridge<TRN::Engine::Communicator, std::weak_ptr>(communicator),
 	handle(std::make_unique<Handle>())
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	handle->rank = rank;
 
 }
@@ -12,11 +13,13 @@ TRN::Engine::Node::Node(const std::shared_ptr<TRN::Engine::Communicator> &commun
 
 TRN::Engine::Node::~Node()
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	handle.reset();
 }
 template <TRN::Engine::Tag tag>
 static TRN::Engine::Message<tag> unpack(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank, unsigned int &id, size_t &number)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	TRN::Engine::Message<tag> message = communicator->receive<tag>(rank);
 
 	id = message.id;
@@ -27,6 +30,7 @@ static TRN::Engine::Message<tag> unpack(const std::shared_ptr<TRN::Engine::Commu
 
 void TRN::Engine::Node::erase_functors(const unsigned int &id)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->perceived_stimulus.find(id) != handle->perceived_stimulus.end())
 		handle->perceived_stimulus.erase(id);
 	if (handle->estimated_position.find(id) != handle->estimated_position.end())
@@ -49,6 +53,7 @@ void TRN::Engine::Node::erase_functors(const unsigned int &id)
 
 void TRN::Engine::Node::receive()
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	std::string data;
 	unsigned int id = 0;
 	size_t number = 0;
@@ -61,7 +66,7 @@ void TRN::Engine::Node::receive()
 	try
 	{
 		auto tag = locked->probe(handle->rank);
-	//		PrintThread{} << "node " << handle->rank << " received tag #" << tag << std::endl;
+		//PrintThread{} << "node " << handle->rank << " received tag #" << tag << std::endl;
 		switch (tag)
 		{
 
@@ -388,7 +393,7 @@ void TRN::Engine::Node::receive()
 	catch (std::exception &e)
 	{
 		TRN::Engine::Message<TRN::Engine::LOG_ERROR> error;
-
+		std::cerr << e.what() << std::endl;
 		error.message = e.what();
 		locked->send(error, 0);
 		stop();

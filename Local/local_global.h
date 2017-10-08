@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
 
-#ifndef QT_STATIC
+
+#ifndef TRN_STATIC
 # if defined(LOCAL_LIB)
-#  define LOCAL_EXPORT Q_DECL_EXPORT
+#  define LOCAL_EXPORT __declspec(dllexport)
 # else
-#  define LOCAL_EXPORT Q_DECL_IMPORT
+#  define LOCAL_EXPORT __declspec(dllimport)
 # endif
 #else
 # define LOCAL_EXPORT

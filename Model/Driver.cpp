@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Driver.h"
-#include "CPU/InstructionSet.h"
 #include "CPU/Driver.h"
 #include "GPU/Driver.h"
 
@@ -8,55 +7,38 @@
 
 std::shared_ptr<TRN::Backend::Driver> TRN::Model::Driver::create(const int &index)
 {
+	// std::cout << __FUNCTION__ << std::endl;
 	switch (index)
 	{
 	case 0:
 	{
-		std::cout << "CPU version selected : " << TRN::CPU::InstructionSet::Brand() << std::endl;
+		std::string brand;
+		TRN::CPU::Implementation implementation;
+		TRN::CPU::query(brand, implementation);
+
+		std::cout << "CPU version selected : " << brand << std::endl;
+		switch (implementation)
+		{
 #if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
-		if (TRN::CPU::InstructionSet::FMA()) //hadd 256_dp_ps
-		{
-			std::cout << "FMA3 implementation selected" << std::endl;
-			return TRN::CPU::Driver<TRN::CPU::FMA3>::create();
-		}
-		else if (TRN::CPU::InstructionSet::AVX2()) //hadd 256_dp_ps
-		{
-			std::cout << "AVX2 implementation selected" << std::endl;
-			return TRN::CPU::Driver<TRN::CPU::AVX2>::create();
-		}
-		else if (TRN::CPU::InstructionSet::AVX()) //hadd 256_dp_ps
-		{
-				std::cout << "AVX implementation selected" << std::endl;
+			case TRN::CPU::FMA3 :
+				return TRN::CPU::Driver<TRN::CPU::FMA3>::create();
+			case TRN::CPU::AVX2:
+				return TRN::CPU::Driver<TRN::CPU::AVX2>::create();
+			case TRN::CPU::AVX:
 				return TRN::CPU::Driver<TRN::CPU::AVX>::create();
-		}
-		else if (TRN::CPU::InstructionSet::SSE41()) // hadd
-		{
-			std::cout << "SSE41 implementation selected" << std::endl;
-			return TRN::CPU::Driver<TRN::CPU::SSE41>::create();
-		}
-		else if (TRN::CPU::InstructionSet::SSE3()) // hadd
-		{
-			std::cout << "SSE3 implementation selected" << std::endl;
-			return TRN::CPU::Driver<TRN::CPU::SSE3>::create();
-		}
-		else if (TRN::CPU::InstructionSet::SSE2())
-		{
-			std::cout << "SSE2 implementation selected" << std::endl;
-			return TRN::CPU::Driver<TRN::CPU::SSE2>::create();
-		}
+			case TRN::CPU::SSE41:
+				return TRN::CPU::Driver<TRN::CPU::SSE41>::create();
+			case TRN::CPU::SSE3:
+				return TRN::CPU::Driver<TRN::CPU::SSE3>::create();
+			case TRN::CPU::SSE2:
+				return TRN::CPU::Driver<TRN::CPU::SSE2>::create();
 #endif 
 #if (defined(_M_IX86) && !defined(_M_AMD64)  && !defined(_M_X64))
-		else  if (InstructionSet::MMX() && InstructionSet::SSE())
-		{
-			std::cout << "MMX+SSE implementation selected" << std::endl;
-			return TRN::CPU::Driver<TRN::CPU::MMX_SSE>::create();
-		}
+			case TRN::CPU::MMX_SSE:
+				return TRN::CPU::Driver<TRN::CPU::SSE2>::create();
 #endif
-		else
-		{
-				//throw std::runtime_error("SCALAR fallback not yet fixed");
-			std::cout << "SCALAR implementation selected" << std::endl;
-			return TRN::CPU::Driver<TRN::CPU::SCALAR>::create();
+			case TRN::CPU::SCALAR:
+				return TRN::CPU::Driver<TRN::CPU::SCALAR>::create();
 		}
 	}
 		

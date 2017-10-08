@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
 
-#ifndef QT_STATIC
+
+#ifndef TRN_STATIC
 # if defined(VIEWMODEL_LIB)
-#  define VIEWMODEL_EXPORT Q_DECL_EXPORT
+#  define VIEWMODEL_EXPORT __declspec(dllexport)
 # else
-#  define VIEWMODEL_EXPORT Q_DECL_IMPORT
+#  define VIEWMODEL_EXPORT __declspec(dllimport)
 # endif
 #else
 # define VIEWMODEL_EXPORT

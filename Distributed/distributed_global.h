@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
+
 
 #ifndef BUILD_STATIC
 # if defined(DISTRIBUTED_LIB)
-#  define DISTRIBUTED_EXPORT Q_DECL_EXPORT
+#  define DISTRIBUTED_EXPORT __declspec(dllexport)
 # else
-#  define DISTRIBUTED_EXPORT Q_DECL_IMPORT
+#  define DISTRIBUTED_EXPORT __declspec(dllimport)
 # endif
 #else
 # define DISTRIBUTED_EXPORT
