@@ -2,12 +2,13 @@
 
 #include "engine_global.h"
 #include "Messages.h"
+#include "Executor.h"
 
 namespace TRN
 {
 	namespace Engine
 	{
-		class ENGINE_EXPORT Processor : public std::enable_shared_from_this<Processor>
+		class ENGINE_EXPORT Processor : public TRN::Engine::Executor
 		{
 		public :
 			enum Status
@@ -32,15 +33,15 @@ namespace TRN
 
 		public:
 			Processor( const int &rank);
-			~Processor();
+			virtual ~Processor();
 
 		public:
 			std::string get_name();
 			std::string get_host();
 			int get_index();
 			float get_latency();
-			bool busy();
-			void post(const std::function<void()> &job);
+
+	
 			int get_rank();
 	
 			void set_host(const std::string &host);

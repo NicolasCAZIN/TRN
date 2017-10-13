@@ -6,12 +6,12 @@ class TRN::Engine::Manager::Handle
 {
 public :
 	std::vector<std::shared_ptr<TRN::Engine::Processor>> processors;
-	std::map<int, std::shared_ptr<TRN::Engine::Processor>> associated;
+	std::map<unsigned long long, std::shared_ptr<TRN::Engine::Processor>> associated;
 	std::priority_queue<std::shared_ptr<TRN::Engine::Processor>> available;
 	std::condition_variable condition;
 	std::mutex mutex;
 
-	TRN::Helper::Queue<unsigned int> to_deallocate;
+	TRN::Helper::Queue<unsigned long long> to_deallocate;
 
 	std::thread deallocator;
 };

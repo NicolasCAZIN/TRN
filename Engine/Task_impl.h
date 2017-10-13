@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Receiver.h"
+#include "Task.h"
 
-class TRN::Engine::Receiver::Handle
+class TRN::Engine::Task::Handle
 {
 public :
 	bool running;

@@ -76,7 +76,7 @@ static inline float hsum_ps(const __m128 &__a)
 }
 
 #define blendv_ps(__a, __b, __c) (_mm_blendv_ps((__a), (__b), (__c)))
-#define cmp_ps(__a, __b, __c) (_mm_cmp_ps((__a), (__b), (__c)))
+#define cmp_lt_ps(__a, __b) (_mm_cmplt_ps((__a), (__b)))
 
 #include "Algorithm_template_method.h"
 

@@ -55,8 +55,7 @@
 
 #define blendv_ps(__a, __b, __c) ((__c) ? (__a) : (__b))
 
-#define cmp_ps_11(__a, __b) ((__a) < (__b))
-#define cmp_ps(__a, __b, __op) cmp_ps_11((__a), (__b))
+#define cmp_lt_ps(__a, __b) ((__a) < (__b)) 
 
 
 #include "Algorithm_template_method.h"

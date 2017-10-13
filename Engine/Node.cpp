@@ -17,7 +17,7 @@ TRN::Engine::Node::~Node()
 	handle.reset();
 }
 template <TRN::Engine::Tag tag>
-static TRN::Engine::Message<tag> unpack(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank, unsigned int &id, size_t &number)
+static TRN::Engine::Message<tag> unpack(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank, unsigned long long &id, size_t &number)
 {
 	// std::cout << __FUNCTION__ << std::endl;
 	TRN::Engine::Message<tag> message = communicator->receive<tag>(rank);
@@ -28,7 +28,7 @@ static TRN::Engine::Message<tag> unpack(const std::shared_ptr<TRN::Engine::Commu
 	return message;
 }
 
-void TRN::Engine::Node::erase_functors(const unsigned int &id)
+void TRN::Engine::Node::erase_functors(const unsigned long long &id)
 {
 	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->perceived_stimulus.find(id) != handle->perceived_stimulus.end())
@@ -51,11 +51,11 @@ void TRN::Engine::Node::erase_functors(const unsigned int &id)
 
 }
 
-void TRN::Engine::Node::receive()
+void TRN::Engine::Node::body()
 {
 	// std::cout << __FUNCTION__ << std::endl;
 	std::string data;
-	unsigned int id = 0;
+	unsigned long long id = 0;
 	size_t number = 0;
 	std::string cause = "";
 	bool ack_required = true;
@@ -393,9 +393,10 @@ void TRN::Engine::Node::receive()
 	catch (std::exception &e)
 	{
 		TRN::Engine::Message<TRN::Engine::LOG_ERROR> error;
+		std::cout << e.what() << std::endl;
 		std::cerr << e.what() << std::endl;
 		error.message = e.what();
 		locked->send(error, 0);
-		stop();
+		//stop();
 	}
 }

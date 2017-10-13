@@ -16,7 +16,7 @@ std::shared_ptr<TRN::Backend::Driver> TRN::Model::Driver::create(const int &inde
 		TRN::CPU::Implementation implementation;
 		TRN::CPU::query(brand, implementation);
 
-		std::cout << "CPU version selected : " << brand << std::endl;
+		std::cout << "CPU version selected : " << brand << " with instruction set " << implementation << std::endl;
 		switch (implementation)
 		{
 #if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
@@ -39,6 +39,9 @@ std::shared_ptr<TRN::Backend::Driver> TRN::Model::Driver::create(const int &inde
 #endif
 			case TRN::CPU::SCALAR:
 				return TRN::CPU::Driver<TRN::CPU::SCALAR>::create();
+
+			default :
+				throw std::runtime_error("Unexpected implementation type " + implementation);
 		}
 	}
 		

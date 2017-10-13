@@ -25,6 +25,7 @@ TRN::Engine::Worker::Worker(const std::shared_ptr<TRN::Engine::Communicator> &co
 	message.name = driver->name();
 	//std::cout << "WORKER " << message.rank << " on " << message.host << " device " << message.name << " #" << message.index << std::endl;
 	communicator->send(message, 0);
+
 }
 
 TRN::Engine::Worker::~Worker()
@@ -34,7 +35,7 @@ TRN::Engine::Worker::~Worker()
 	handle.reset();
 }
 
-void TRN::Engine::Worker::send_configured(const unsigned int &id)
+void TRN::Engine::Worker::send_configured(const unsigned long long &id)
 {
 	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->configured_required[id] == true && handle->remaining_initializations[id] == 0)
@@ -56,7 +57,6 @@ void TRN::Engine::Worker::send_configured(const unsigned int &id)
 
 void TRN::Engine::Worker::initialize()
 {
-	TRN::Engine::Receiver::initialize();
 	// std::cout << __FUNCTION__ << std::endl;
 	TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->toggle();
 }
@@ -76,6 +76,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message)
 {
+	//std::cout << "allocate " << message.id << "on rank " << TRN::Engine::Node::handle->rank << std::endl;
 	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) != handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + "already exists");
@@ -124,13 +125,17 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::A
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATE> &message)
 {
-	// std::cout << __FUNCTION__ << std::endl;
+	// 
+	//std::cout << "deallocate " << message.id << " on rank " << TRN::Engine::Node::handle->rank << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
+	{
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
+	}
+		
 	handle->simulators.erase(message.id);
 	handle->remaining_initializations.erase(message.id);
 	handle->configured_required.erase(message.id);
-
+//	std::cout << "deallocated " << message.id << " on rank " << TRN::Engine::Node::handle->rank << std::endl;
 	TRN::Engine::Message<TRN::Engine::DEALLOCATED> deallocated;
 
 	deallocated.id = message.id;

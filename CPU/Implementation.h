@@ -23,6 +23,7 @@ namespace TRN
 
 		};
 
+
 		void CPU_EXPORT query(std::string &brand, TRN::CPU::Implementation &implementation);
 
 		template<TRN::CPU::Implementation Implementation>
@@ -85,3 +86,6 @@ namespace TRN
 #endif
 	};
 };
+
+
+std::ostream CPU_EXPORT &operator << (std::ostream &ostream, const TRN::CPU::Implementation &implementation);

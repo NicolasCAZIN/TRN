@@ -1,32 +1,30 @@
 #pragma once
 
-#include "engine_global.h"
+#include "Task.h"
 
 namespace TRN
 {
 	namespace Engine
 	{
-		class ENGINE_EXPORT Executor
+		class ENGINE_EXPORT Executor : public TRN::Engine::Task
 		{
-		protected :
+		private :
 			class Handle;
 			std::unique_ptr<Handle> handle;
 
-		protected:
-			Executor();
 		public :
+			Executor();
 			virtual ~Executor();
 
-		public :
-			void post(const std::function<void(void)> &functor);
-		public:
-			void terminate();
-		public:
-			virtual void join() = 0;
+		protected :
+			virtual void body() override;
 
 		public :
-			virtual void run() = 0;
-			virtual void run_one() = 0;
+			void terminate();
+			void post(const std::function<void(void)> &command);
+
+		public :
+			static std::shared_ptr<Executor> create();
 		};
 	};
 };

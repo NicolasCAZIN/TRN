@@ -8,3 +8,4 @@
 #include <memory>
 #include <list>
 #include <functional>
+#include <algorithm>

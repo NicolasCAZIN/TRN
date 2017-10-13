@@ -7,12 +7,26 @@ TRN::Engine::Manager::Manager(const std::size_t &size):
 	if (size <= 1)
 		throw std::runtime_error("At least, one processor is required");
 	for (std::size_t k = 1; k < size; k++)
-		handle->processors.push_back(TRN::Engine::Processor::create(k));
+	{
+		auto processor = TRN::Engine::Processor::create(k);
+
+		handle->processors.push_back(processor);
+	}
 
 
+
+
+}
+
+void TRN::Engine::Manager::start()
+{
+	for (auto processor : handle->processors)
+	{
+		processor->start();
+	}
 	handle->deallocator = std::thread([&]()
 	{
-		unsigned int id;
+		unsigned long long id;
 		while (handle->to_deallocate.dequeue(id))
 		{
 			std::unique_lock<std::mutex> lock(handle->mutex);
@@ -27,14 +41,24 @@ TRN::Engine::Manager::Manager(const std::size_t &size):
 	});
 }
 
-TRN::Engine::Manager::~Manager()
+void TRN::Engine::Manager::terminate()
 {
+	for (auto processor : handle->processors)
+	{
+		processor->terminate();
+	}
 
 	handle->to_deallocate.invalidate();
 
-
 	if (handle->deallocator.joinable())
 		handle->deallocator.join();
+
+}
+
+TRN::Engine::Manager::~Manager()
+{
+
+
 	handle.reset();
 }
 std::vector<std::shared_ptr<TRN::Engine::Processor>> TRN::Engine::Manager::get_processors()
@@ -67,7 +91,7 @@ void TRN::Engine::Manager::update_processor(const int &rank, const std::string h
 	}
 	//PrintThread{} << "no more simulations pending" << std::endl;
 }*/
-std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::allocate(const unsigned int &id)
+std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::allocate(const unsigned long long &id)
 {
 	std::unique_lock<std::mutex> lock(handle->mutex);
 	if (handle->associated.find(id) != handle->associated.end())
@@ -91,12 +115,12 @@ std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::allocate(const uns
 	return processor;
 }
 
-void TRN::Engine::Manager::deallocate(const unsigned int &id)
+void TRN::Engine::Manager::deallocate(const unsigned long long &id)
 {
 	handle->to_deallocate.enqueue(id);
 }
 
-std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::retrieve(const unsigned int &id)
+std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::retrieve(const unsigned long long &id)
 {
 	std::unique_lock<std::mutex> lock(handle->mutex);
 	

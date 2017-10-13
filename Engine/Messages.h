@@ -96,7 +96,7 @@ namespace TRN
 		struct Header
 		{
 			size_t number;
-			unsigned int id;
+			unsigned long long id;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)

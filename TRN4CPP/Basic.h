@@ -42,18 +42,17 @@ namespace TRN4CPP
 				void TRN4CPP_EXPORT  	initialize(int argc, char *argv[]);
 			};
 		};
-		namespace Execution
-		{
-			extern TRN4CPP_EXPORT const bool DEFAULT_BLOCKING;
 
-			void TRN4CPP_EXPORT		initialize(const bool &blocking = DEFAULT_BLOCKING);
-		};
 
 
 	};
 
 	namespace Simulation
 	{
+		void TRN4CPP_EXPORT encode(const unsigned short &experiment_number, const unsigned short &condition_number, const unsigned int &simulation_number, unsigned long long &id);
+		void TRN4CPP_EXPORT decode(const unsigned long long &id, unsigned short &experiment_number, unsigned short &condition_number, unsigned int &simulation_number);
+		
+
 		extern TRN4CPP_EXPORT const std::string DEFAULT_TAG;
 	};
 

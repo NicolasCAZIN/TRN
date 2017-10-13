@@ -9,7 +9,7 @@ namespace TRN
 	{
 		namespace Frontend
 		{
-			std::shared_ptr<TRN::Engine::Frontend> VIEWMODEL_EXPORT  create(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const std::shared_ptr<TRN::Engine::Executor> &to_caller);
+			std::shared_ptr<TRN::Engine::Frontend> VIEWMODEL_EXPORT  create(const std::shared_ptr<TRN::Engine::Communicator> &communicator);
 		};
 	};
 

@@ -110,7 +110,7 @@ std::list<std::pair<int, std::string>> TRN::GPU::enumerate_devices()
 					checkCudaErrors(cudaGetDeviceProperties(&prop, k));
 
 					auto device_number = k + 1;
-					auto name = prop.name + std::string(" #") + std::to_string(device_number);
+					auto name = prop.name;// +std::string(" #") + std::to_string(device_number);
 					enumerated.push_back(std::make_pair(device_number, name));
 				}
 				break;

@@ -6,67 +6,76 @@
 
 #include "ViewModel/Communicator.h"
 #include "ViewModel/Frontend.h"
-#include "ViewModel/Executor.h"
 
-const bool TRN4CPP::Engine::Execution::DEFAULT_BLOCKING = false;
 const std::string TRN4CPP::Simulation::DEFAULT_TAG = "";
 const std::string TRN4CPP::Engine::Backend::Remote::DEFAULT_HOST = "127.0.0.1";
 const unsigned short TRN4CPP::Engine::Backend::Remote::DEFAULT_PORT = 12345;
 std::shared_ptr<TRN::Engine::Frontend> frontend;
-std::shared_ptr<TRN::Engine::Executor> executor;
 
 extern boost::shared_ptr<TRN4CPP::Plugin::Simplified::Interface> simplified;
 extern boost::shared_ptr<TRN4CPP::Plugin::Custom::Interface> custom;
 extern std::vector<boost::shared_ptr<TRN4CPP::Plugin::Callbacks::Interface>> callbacks;
 
 
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_raw;
-extern std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_mutator;
-extern std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduler;
-extern std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedforward;
-extern std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedback;
-extern std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_readout;
-extern std::function<void(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> on_recurrent;
+extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
+extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_raw;
+extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_mutator;
+extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduler;
+extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedforward;
+extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedback;
+extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_readout;
+extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> on_recurrent;
 
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_mean_square_error;
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_frechet_distance;
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_mean_square_error;
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_frechet_distance;
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> on_performances;
-extern std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_states;
-extern std::function<void(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_weights;
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduling;
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_position;
-extern std::function<void(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_stimulus;
+extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_mean_square_error;
+extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_frechet_distance;
+extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_mean_square_error;
+extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_frechet_distance;
+extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> on_performances;
+extern std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_states;
+extern std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_weights;
+extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduling;
+extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_position;
+extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_stimulus;
 
-
-void TRN4CPP::Engine::Execution::initialize(const bool &blocking)
+union Identifier
 {
-	if (executor)
-		throw std::runtime_error("An executor is already setup");
-	if (blocking)
+	struct
 	{
-		executor = TRN::ViewModel::Executor::Blocking::create();
-		std::cout << "TRN initialized with a Blocking executor" << std::endl;
-	}
-	else
-	{
-		executor = TRN::ViewModel::Executor::NonBlocking::create();
-		std::cout << "TRN initialized with a NonBlocking executor" << std::endl;
-	}
+		unsigned long long simulation_number : 32;
+		unsigned long long condition_number : 16;
+		unsigned long long experiment_number : 16;
+	};
+
+	unsigned long long id;
+};
+
+void  TRN4CPP::Simulation::encode(const unsigned short &experiment_number, const unsigned short &condition_number, const unsigned int &simulation_number, unsigned long long &id)
+{
+	Identifier identifier;
+
+	identifier.experiment_number = experiment_number;
+	identifier.condition_number = condition_number;
+	identifier.simulation_number = simulation_number;
+	id = identifier.id;
 }
+void TRN4CPP::Simulation::decode(const unsigned long long &id, unsigned short &experiment_number, unsigned short &condition_number, unsigned int &simulation_number)
+{
+	Identifier identifier;
+
+	identifier.id = id;
+	experiment_number = identifier.experiment_number;
+	condition_number = identifier.condition_number;
+	simulation_number = identifier.simulation_number;
+}
+
+
+
 static void initialize_frontend(const std::shared_ptr<TRN::Engine::Communicator> &communicator = TRN::ViewModel::Communicator::Local::create({ 0 }))
 {
 	if (frontend)
 		throw std::runtime_error("A Frontend is already setup");
-	if (!executor)
-	{
-		std::cerr << "Executor is not ininitialized. Initializing non-blocking executor" << std::endl;
-		TRN4CPP::Engine::Execution::initialize(false);
-	}
 
-	frontend = TRN::ViewModel::Frontend::create(communicator, executor);
+	frontend = TRN::ViewModel::Frontend::create(communicator);
 	
 	frontend->start();
 	std::cout << "TRN successfully initialized" << std::endl;
@@ -93,12 +102,6 @@ void TRN4CPP::Engine::initialize()
 		std::cout << "Initializing TRN" << std::endl;
 		std::vector<std::string> tokens;
 
-		auto blocking = std::getenv("TRN_INITIALIZE_EXECUTOR");
-		if (!blocking)
-			blocking = "false";
-		boost::to_lower(blocking);
-		boost::lexical_cast<bool>(blocking);
-		TRN4CPP::Engine::Execution::initialize(blocking);
 		auto arguments = std::getenv("TRN_INITIALIZE_DISTRIBUTED");
 		if (arguments)
 		{
@@ -154,17 +157,9 @@ void TRN4CPP::Engine::initialize()
 }
 void TRN4CPP::Engine::uninitialize()
 {
-	if (frontend)
-	{
-		frontend->halt();
-		
-		frontend.reset();
-	}
-	if (executor)
-	{
-		executor->terminate();
-		executor.reset();
-	}
+
+
+
 	if (simplified)
 	{
 		simplified->uninitialize();
@@ -183,6 +178,18 @@ void TRN4CPP::Engine::uninitialize()
 		}
 		callbacks.clear();
 	}
+
+
+
+	if (frontend)
+	{
+		frontend->halt();
+		frontend.reset();
+	}
+
+
+
+
 
 	on_feedforward = NULL;
 	on_feedback = NULL;

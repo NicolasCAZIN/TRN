@@ -82,6 +82,7 @@
       <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -131,10 +132,10 @@
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-      <WholeProgramOptimization>false</WholeProgramOptimization>
-      <Optimization>Disabled</Optimization>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <Optimization>MaxSpeed</Optimization>
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <StructMemberAlignment>Default</StructMemberAlignment>
@@ -147,7 +148,7 @@
       <AdditionalLibraryDirectories>$(BOOST_ROOT)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -177,7 +178,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Blocking.cpp" />
     <ClCompile Include="Executor.cpp" />
     <ClCompile Include="Broker.cpp" />
     <ClCompile Include="Communicator.cpp" />
@@ -185,10 +185,9 @@
     <ClCompile Include="Frontend.cpp" />
     <ClCompile Include="Manager.cpp" />
     <ClCompile Include="Node.cpp" />
-    <ClCompile Include="NonBlocking.cpp" />
     <ClCompile Include="Processor.cpp" />
     <ClCompile Include="Proxy.cpp" />
-    <ClCompile Include="Receiver.cpp" />
+    <ClCompile Include="Task.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -198,6 +197,7 @@
     <ClCompile Include="Worker.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Command.h" />
     <ClInclude Include="Executor.h" />
     <ClInclude Include="Executor_impl.h" />
     <ClInclude Include="Broker.h" />
@@ -211,18 +211,15 @@
     <ClInclude Include="Manager_impl.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="Node_impl.h" />
-    <ClInclude Include="NonBlocking.h" />
-    <ClInclude Include="NonBlocking_impl.h" />
     <ClInclude Include="Processor.h" />
     <ClInclude Include="Processor_impl.h" />
     <ClInclude Include="Messages.h" />
     <ClInclude Include="Manager.h" />
     <ClInclude Include="Proxy.h" />
     <ClInclude Include="Proxy_impl.h" />
-    <ClInclude Include="Receiver.h" />
-    <ClInclude Include="Receiver_impl.h" />
+    <ClInclude Include="Task.h" />
+    <ClInclude Include="Task_impl.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="Blocking.h" />
     <ClInclude Include="Worker.h" />
     <ClInclude Include="Worker_impl.h" />
   </ItemGroup>

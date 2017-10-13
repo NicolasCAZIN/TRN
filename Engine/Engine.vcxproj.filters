@@ -53,22 +53,16 @@
     <ClCompile Include="Proxy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Receiver.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Executor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Blocking.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="NonBlocking.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Broker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Frontend.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Task.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -118,25 +112,7 @@
     <ClInclude Include="Proxy_impl.h">
       <Filter>Header Files\private</Filter>
     </ClInclude>
-    <ClInclude Include="Receiver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Receiver_impl.h">
-      <Filter>Header Files\private</Filter>
-    </ClInclude>
     <ClInclude Include="Executor_impl.h">
-      <Filter>Header Files\private</Filter>
-    </ClInclude>
-    <ClInclude Include="Executor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Blocking.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="NonBlocking.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="NonBlocking_impl.h">
       <Filter>Header Files\private</Filter>
     </ClInclude>
     <ClInclude Include="Broker_impl.h">
@@ -150,6 +126,18 @@
     </ClInclude>
     <ClInclude Include="Frontend_impl.h">
       <Filter>Header Files\private</Filter>
+    </ClInclude>
+    <ClInclude Include="Command.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Task.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Task_impl.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
+    <ClInclude Include="Executor.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

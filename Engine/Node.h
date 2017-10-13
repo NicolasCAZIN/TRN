@@ -2,14 +2,14 @@
 
 #include "engine_global.h"
 #include "Communicator.h"
-#include "Receiver.h"
+#include "Task.h"
 #include "Helper/Bridge.h"
 
 namespace TRN
 {
 	namespace Engine
 	{
-		class ENGINE_EXPORT Node : public TRN::Engine::Receiver, 
+		class ENGINE_EXPORT Node : public TRN::Engine::Task, 
 									public TRN::Helper::Bridge<TRN::Engine::Communicator, std::weak_ptr>
 		{
 		protected :
@@ -23,8 +23,8 @@ namespace TRN
 			virtual ~Node();
 
 		private:
-			void receive() override;
-			void erase_functors(const unsigned int &id);
+			void body() override;
+			void erase_functors(const unsigned long long &id);
 
 
 		protected:

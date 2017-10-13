@@ -20,10 +20,6 @@
 #include "ViewModel/Node.h"
 
 static int DEFAULT_INDEX = 0;
-static int DEFAULT_SEED = 0;
-
-
-
 
 int main(int argc, char *argv[])
 {
@@ -33,7 +29,7 @@ int main(int argc, char *argv[])
 		boost::program_options::options_description desc("Allowed options");
 		desc.add_options()
 			("help,h", "produce help message")
-			("index,i", boost::program_options::value<int>(), "local device index. 0 for cpu, 1 for first gpu, 2 for second gpu ...")
+			("index,i", boost::program_options::value<int>()->default_value(DEFAULT_INDEX), "local device index. 0 for cpu, 1 for first gpu, 2 for second gpu ...")
 			;
 
 		boost::program_options::variables_map vm;
@@ -52,7 +48,7 @@ int main(int argc, char *argv[])
 		
 		auto worker = TRN::ViewModel::Node::Worker::create(communicator, communicator->rank(), index);
 		worker->start();
-		worker->wait();
+		worker->join();
 		std::cout << argv[0] << " EXITED" << std::endl;
 		return 0;
 	}

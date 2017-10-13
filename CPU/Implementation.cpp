@@ -1,6 +1,44 @@
 #include "stdafx.h"
 #include "Implementation.h"
 
+std::ostream &operator << (std::ostream &stream, const TRN::CPU::Implementation &implementation)
+{
+	switch (implementation)
+	{
+		case	TRN::CPU::Implementation::SCALAR :
+			stream << "SCALAR";
+			break;
+#if defined(_M_IX86) && !defined(_M_X64)
+		case	TRN::CPU::Implementation::MMX_SSE : //exp_sp compiled with MMX
+			stream << "MMX_SSE";
+			break;
+#endif
+#if !defined(_M_IX86) && defined(_M_X64)
+		case	TRN::CPU::Implementation::SSE2 : //exp_sp compiled with SSE2
+			stream << "SSE2";
+			break;
+		case	TRN::CPU::Implementation::SSE3 : //hadd, exp_sp compiled with SSE2
+			stream << "SSE3";
+			break;
+		case	TRN::CPU::Implementation::SSE41 :// dp_ps, exp_ps compiled with SSE2
+			stream << "SSE41";
+			break;
+		case	TRN::CPU::Implementation::AVX : // 256_dp_ps, exp256_ps compiled with SSE2
+			stream << "AVX";
+			break;
+		case	TRN::CPU::Implementation::AVX2 : // exp256_ps compiled with avx2
+			stream << "AVX2";
+			break;
+		case TRN::CPU::Implementation::FMA3 ://256_fmadd 
+			stream << "FMA3";
+			break;
+		default :
+			throw std::runtime_error("Unexpected implementation type " + std::to_string(implementation));
+#endif
+	}
+	return stream;
+}
+
 void TRN::CPU::query(std::string &brand, TRN::CPU::Implementation &implementation)
 {
 	int nIds_;

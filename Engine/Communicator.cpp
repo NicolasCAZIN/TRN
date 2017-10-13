@@ -20,7 +20,6 @@ std::string TRN::Engine::Communicator::host()
 
 
 
-
 template <TRN::Engine::Tag tag>
 void TRN::Engine::Communicator::send(const TRN::Engine::Message<tag> &message, const int &destination)
 {
@@ -28,7 +27,7 @@ void TRN::Engine::Communicator::send(const TRN::Engine::Message<tag> &message, c
 	boost::archive::binary_oarchive archive(archive_stream);
 	archive << message;
 
-	//std::unique_lock<std::mutex> lock(handle->mutex);
+
 	send(destination, tag, compress<RAW>(archive_stream.str()));
 }
 template <TRN::Engine::Tag tag>

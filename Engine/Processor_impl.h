@@ -17,6 +17,5 @@ public :
 	std::mutex mutex;
 	std::condition_variable cond;
 	Status status;
-	TRN::Helper::Queue<std::function<void()>> pending;
-	std::thread receive;
+	
 };

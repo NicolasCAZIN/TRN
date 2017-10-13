@@ -3,11 +3,10 @@
 #include "Node_impl.h"
 #include "Broker_impl.h"
 
-#include "NonBlocking.h"
 
 TRN::Engine::Proxy::Proxy(const std::shared_ptr<TRN::Engine::Communicator> &frontend_proxy, const std::shared_ptr<TRN::Engine::Communicator> &proxy_workers, const std::shared_ptr<TRN::Helper::Visitor<TRN::Engine::Proxy>> &visitor) :
 	TRN::Engine::Node(frontend_proxy, -1),
-	TRN::Engine::Broker(proxy_workers, TRN::Engine::NonBlocking::create()),
+	TRN::Engine::Broker(proxy_workers),
 	handle(std::make_unique<Handle>())
 {
 	handle->frontend_proxy = frontend_proxy;
@@ -43,7 +42,7 @@ void TRN::Engine::Proxy::start()
 	TRN::Engine::Broker::start();
 }
 
-void TRN::Engine::Proxy::callback_ack(const unsigned int &id, const std::size_t &number, const bool &success, const std::string &cause)
+void TRN::Engine::Proxy::callback_ack(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)
 {
 	/*TRN::Engine::Message<TRN::Engine::Tag::ACK> message;
 
@@ -54,7 +53,7 @@ void TRN::Engine::Proxy::callback_ack(const unsigned int &id, const std::size_t 
 
 	handle->frontend_proxy->send(message, 0);*/
 }
-void TRN::Engine::Proxy::callback_configured(const unsigned int &id)
+void TRN::Engine::Proxy::callback_configured(const unsigned long long &id)
 {
 
 	TRN::Engine::Message<TRN::Engine::Tag::CONFIGURED> message;
@@ -75,7 +74,7 @@ void TRN::Engine::Proxy::callback_processor(const int &rank, const std::string &
 
 	handle->frontend_proxy->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_allocated(const unsigned int &id, const int &rank)
+void TRN::Engine::Proxy::callback_allocated(const unsigned long long &id, const int &rank)
 {
 	TRN::Engine::Message<TRN::Engine::Tag::ALLOCATED> message;
 
@@ -83,7 +82,7 @@ void TRN::Engine::Proxy::callback_allocated(const unsigned int &id, const int &r
 
 	handle->frontend_proxy->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_deallocated(const unsigned int &id, const int &rank)
+void TRN::Engine::Proxy::callback_deallocated(const unsigned long long &id, const int &rank)
 {
 	TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATED> message;
 
@@ -104,21 +103,21 @@ void TRN::Engine::Proxy::callback_completed()
 {
 	std::cout << "SIMULATIONS COMPLETED" << std::endl;
 }
-void TRN::Engine::Proxy::callback_trained(const unsigned int &id)
+void TRN::Engine::Proxy::callback_trained(const unsigned long long &id)
 {
 	TRN::Engine::Message<TRN::Engine::Tag::TRAINED> message;
 
 	message.id = id;
 	handle->frontend_proxy->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_primed(const unsigned int &id)
+void TRN::Engine::Proxy::callback_primed(const unsigned long long &id)
 {
 	TRN::Engine::Message<TRN::Engine::Tag::PRIMED> message;
 
 	message.id = id;
 	handle->frontend_proxy->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_tested(const unsigned int &id)
+void TRN::Engine::Proxy::callback_tested(const unsigned long long &id)
 {
 	TRN::Engine::Message<TRN::Engine::Tag::TESTED> message;
 
@@ -137,7 +136,7 @@ void TRN::Engine::Proxy::callback_warning(const std::string &message)
 {
 	std::cerr << "WARNING : " << message << std::endl;
 }
-void TRN::Engine::Proxy::callback_measurement_readout_mean_square_error(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+void TRN::Engine::Proxy::callback_measurement_readout_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::MEASUREMENT_READOUT_MEAN_SQUARE_ERROR> message;
 
@@ -153,7 +152,7 @@ void TRN::Engine::Proxy::callback_measurement_readout_mean_square_error(const un
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_measurement_readout_frechet_distance(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+void TRN::Engine::Proxy::callback_measurement_readout_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::MEASUREMENT_READOUT_FRECHET_DISTANCE> message;
 
@@ -168,7 +167,7 @@ void TRN::Engine::Proxy::callback_measurement_readout_frechet_distance(const uns
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_measurement_readout_custom(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
+void TRN::Engine::Proxy::callback_measurement_readout_custom(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::MEASUREMENT_READOUT_CUSTOM> message;
 
@@ -187,7 +186,7 @@ void TRN::Engine::Proxy::callback_measurement_readout_custom(const unsigned int 
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_measurement_position_mean_square_error(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+void TRN::Engine::Proxy::callback_measurement_position_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> message;
 
@@ -202,7 +201,7 @@ void TRN::Engine::Proxy::callback_measurement_position_mean_square_error(const u
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_measurement_position_frechet_distance(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+void TRN::Engine::Proxy::callback_measurement_position_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::MEASUREMENT_POSITION_FRECHET_DISTANCE> message;
 
@@ -217,7 +216,7 @@ void TRN::Engine::Proxy::callback_measurement_position_frechet_distance(const un
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_measurement_position_custom(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
+void TRN::Engine::Proxy::callback_measurement_position_custom(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::MEASUREMENT_POSITION_CUSTOM> message;
 
@@ -235,7 +234,7 @@ void TRN::Engine::Proxy::callback_measurement_position_custom(const unsigned int
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_performances(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
+void TRN::Engine::Proxy::callback_performances(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
 {
 	TRN::Engine::Message<TRN::Engine::PERFORMANCES> message;
 
@@ -250,7 +249,7 @@ void TRN::Engine::Proxy::callback_performances(const unsigned int &id, const std
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_states(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
+void TRN::Engine::Proxy::callback_states(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::STATES> message;
 
@@ -268,7 +267,7 @@ void TRN::Engine::Proxy::callback_states(const unsigned int &id, const std::stri
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_weights(const unsigned int &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
+void TRN::Engine::Proxy::callback_weights(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::WEIGHTS> message;
 
@@ -285,7 +284,7 @@ void TRN::Engine::Proxy::callback_weights(const unsigned int &id, const std::str
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_position(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
+void TRN::Engine::Proxy::callback_position(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::POSITION> message;
 	message.id = id;
@@ -298,7 +297,7 @@ void TRN::Engine::Proxy::callback_position(const unsigned int &id, const std::si
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_stimulus(const unsigned int &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
+void TRN::Engine::Proxy::callback_stimulus(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::STIMULUS> message;
 	message.id = id;
@@ -311,7 +310,7 @@ void TRN::Engine::Proxy::callback_stimulus(const unsigned int &id, const std::si
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_mutator(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
+void TRN::Engine::Proxy::callback_mutator(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
 	TRN::Engine::Message<TRN::Engine::Tag::MUTATOR_CUSTOM> message;
 
@@ -324,7 +323,7 @@ void TRN::Engine::Proxy::callback_mutator(const unsigned int &id, const unsigned
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_scheduler(const unsigned int &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)
+void TRN::Engine::Proxy::callback_scheduler(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
 	TRN::Engine::Message<TRN::Engine::Tag::SCHEDULER_CUSTOM> message;
 	message.trial = trial;
@@ -339,7 +338,7 @@ void TRN::Engine::Proxy::callback_scheduler(const unsigned int &id, const unsign
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_scheduling(const unsigned int &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
+void TRN::Engine::Proxy::callback_scheduling(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
 	TRN::Engine::Message<TRN::Engine::SCHEDULING> scheduling;
 
@@ -353,7 +352,7 @@ void TRN::Engine::Proxy::callback_scheduling(const unsigned int &id, const std::
 	if (locked)
 		locked->send(scheduling, 0);
 }
-void TRN::Engine::Proxy::callback_feedforward(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
+void TRN::Engine::Proxy::callback_feedforward(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::Tag::FEEDFORWARD_DIMENSIONS> message;
 
@@ -366,7 +365,7 @@ void TRN::Engine::Proxy::callback_feedforward(const unsigned int &id, const unsi
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_feedback(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
+void TRN::Engine::Proxy::callback_feedback(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_DIMENSIONS> message;
 
@@ -379,7 +378,7 @@ void TRN::Engine::Proxy::callback_feedback(const unsigned int &id, const unsigne
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_readout(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
+void TRN::Engine::Proxy::callback_readout(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::Tag::READOUT_DIMENSIONS> message;
 
@@ -392,7 +391,7 @@ void TRN::Engine::Proxy::callback_readout(const unsigned int &id, const unsigned
 	if (locked)
 		locked->send(message, 0);
 }
-void TRN::Engine::Proxy::callback_recurrent(const unsigned int &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
+void TRN::Engine::Proxy::callback_recurrent(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
 	TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_DIMENSIONS> message;
 

@@ -14,10 +14,10 @@ public :
 	size_t count;
 	std::size_t active;
 	bool completed;
-	std::set<unsigned int> simulations;
+	std::set<unsigned long long> simulations;
 	std::shared_ptr<TRN::Engine::Manager> manager;
 	std::shared_ptr<TRN::Engine::Communicator> communicator;
-	std::map<unsigned int, std::shared_ptr<TRN::Engine::Executor>> from_caller;
+	std::map<unsigned long long, std::shared_ptr<TRN::Engine::Executor>> from_caller;
 	std::shared_ptr<TRN::Engine::Executor> to_caller;
 	std::mutex number;
 	std::mutex mutex;

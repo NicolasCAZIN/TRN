@@ -10,28 +10,12 @@ TRN::Engine::Processor::Processor(const int &rank) :
 	handle->latency = 0.0f;
 	handle->status = TRN::Engine::Processor::Status::Deallocated;
 	handle->rank = rank;
-	handle->receive = std::thread([this]()
-	{
-		std::function<void()> job;
 
-		while (handle->pending.dequeue(job))
-		{
-			job();
-		}
-		//PrintThread{} << "executor ended" << std::endl;
-	});
 }
 
 TRN::Engine::Processor::~Processor()
 {
-	handle->pending.invalidate();
-	if (handle->receive.joinable())
-		handle->receive.join();
 	handle.reset();
-}
-bool TRN::Engine::Processor::busy()
-{
-	return !handle->pending.empty();
 }
 
 int TRN::Engine::Processor::get_rank()
@@ -39,10 +23,7 @@ int TRN::Engine::Processor::get_rank()
 	return handle->rank;
 }
 
-void TRN::Engine::Processor::post(const std::function<void()> &job)
-{
-	handle->pending.enqueue(job);
-}
+
 void TRN::Engine::Processor::wait(const std::function<bool(const TRN::Engine::Processor::Status &status)> &functor)
 {
 	std::unique_lock<std::mutex> lock(handle->mutex);

@@ -6,26 +6,25 @@ namespace TRN
 {
 	namespace Engine
 	{
-		class ENGINE_EXPORT Receiver
+		class ENGINE_EXPORT Task
 		{
 		private :
 			class Handle;
 			std::unique_ptr<Handle> handle;
 
 		protected :
-			Receiver();
-			virtual ~Receiver();
+			Task();
+		public :
+			virtual ~Task() ;
 
 		public :
 			virtual void start();
-			void wait();
+			void join();
 
 		protected :
-			bool is_running();
 			virtual void initialize();
-			virtual void receive() = 0;
+			virtual void body() = 0;
 			virtual void uninitialize();
-			void join();
 			void stop();
 		};
 	}

@@ -1,8 +1,9 @@
 #include "stdafx.h"
 
 #if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
-#include "Algorithm.h"
 
+#include "Algorithm.h"
+#undef __AVX2__
 #include "avx_mathfun.h"
 
 
@@ -74,7 +75,7 @@ static inline float hsum_ps(const __m256 &__a)
 }
 
 #define blendv_ps(__a, __b, __c) (_mm256_blendv_ps((__a), (__b), (__c)))
-#define cmp_ps(__a, __b, __c) (_mm256_cmp_ps((__a), (__b), (__c)))
+#define cmp_lt_ps(__a, __b) (_mm256_cmp_ps((__a), (__b), _CMP_LT_OQ))
 
 #include "Algorithm_template_method.h"
 
