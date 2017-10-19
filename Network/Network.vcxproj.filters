@@ -67,6 +67,9 @@
     <ClInclude Include="Proxy_impl.h">
       <Filter>Header Files\private</Filter>
     </ClInclude>
+    <ClInclude Include="Peer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="network_global.h">

@@ -9,7 +9,7 @@ namespace TRN
 {
 	namespace Engine
 	{
-		class ENGINE_EXPORT Node : public TRN::Engine::Task, 
+		class ENGINE_EXPORT Node : public virtual TRN::Engine::Task, 
 									public TRN::Helper::Bridge<TRN::Engine::Communicator, std::weak_ptr>
 		{
 		protected :

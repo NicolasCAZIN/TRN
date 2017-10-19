@@ -9,6 +9,8 @@ TRN::Engine::Task::Task() :
 
 TRN::Engine::Task::~Task()
 {
+	if (!handle)
+		throw std::runtime_error("Handle is already destroyed");
 	if (handle->running)
 		throw std::runtime_error("Thread is still running");
 	handle.reset();
@@ -16,6 +18,8 @@ TRN::Engine::Task::~Task()
 
 void TRN::Engine::Task::start()
 {
+	if (handle->running)
+		throw std::runtime_error("Thread is already running");
 	handle->running = true;
 	handle->thread = std::thread([&]() 
 	{
@@ -43,6 +47,7 @@ void TRN::Engine::Task::join()
 {
 	if (handle->thread.joinable())
 		handle->thread.join();
+
 }
 void TRN::Engine::Task::initialize()
 {

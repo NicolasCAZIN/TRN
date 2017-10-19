@@ -65,6 +65,9 @@
     <ClCompile Include="Task.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Backend.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -138,6 +141,12 @@
     </ClInclude>
     <ClInclude Include="Executor.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Backend.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Backend_impl.h">
+      <Filter>Header Files\private</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

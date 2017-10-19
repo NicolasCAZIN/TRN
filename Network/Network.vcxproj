@@ -191,6 +191,7 @@
     <ClInclude Include="Acceptor_impl.h" />
     <ClInclude Include="Messages.h" />
     <ClInclude Include="network_global.h" />
+    <ClInclude Include="Peer.h" />
     <ClInclude Include="Proxy_impl.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>

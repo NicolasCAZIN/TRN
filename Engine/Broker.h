@@ -11,7 +11,7 @@ namespace TRN
 {
 	namespace Engine
 	{
-		class ENGINE_EXPORT Broker : public TRN::Engine::Task
+		class ENGINE_EXPORT Broker : public virtual TRN::Engine::Task
 		{
 		protected :
 			class Handle;

@@ -49,38 +49,46 @@ namespace TRN
 			bool front(Data &data)
 			{
 				std::unique_lock<std::mutex> lock(mutex);
-				while (valid && queue.empty())
+				while (true)
 				{
-					cond.wait(lock);
+					while (valid && queue.empty())
+					{
+						cond.wait(lock);
+					}
+					if (!queue.empty())
+					{
+						data = queue.front();
+						return true;
+					}
+					else if (!valid)
+					{
+						return false;
+					}
 				}
-				if (!valid)
-				{
-					return false;
-				}
-				else
-				{
-					data = queue.front();
-					return true;
-				}
+
 			}
 
 			bool dequeue(Data &data)
 			{
 				std::unique_lock<std::mutex> lock(mutex);
-				while (valid && queue.empty())
+				while (true)
 				{
-					cond.wait(lock);
+					while (valid && queue.empty())
+					{
+						cond.wait(lock);
+					}
+					if (!queue.empty())
+					{
+						data = queue.front();
+						queue.pop();
+						return true;
+					}
+					else if (!valid)
+					{
+						return false;
+					}
 				}
-				if (!valid)
-				{
-					return false;
-				}
-				else
-				{
-					data = queue.front();
-					queue.pop();
-					return true;
-				}
+			
 			}
 		};
 	};

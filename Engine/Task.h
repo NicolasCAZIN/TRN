@@ -18,13 +18,14 @@ namespace TRN
 			virtual ~Task() ;
 
 		public :
-			virtual void start();
-			void join();
-
+			 void start();
+			 void join();
+			 
 		protected :
 			virtual void initialize();
 			virtual void body() = 0;
 			virtual void uninitialize();
+
 			void stop();
 		};
 	}

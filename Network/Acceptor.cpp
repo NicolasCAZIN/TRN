@@ -2,19 +2,20 @@
 #include "Acceptor_impl.h"
 
 
-TRN::Network::Acceptor::Acceptor(const std::string &host, const unsigned short &port,
-	const std::function <void(const std::shared_ptr<TRN::Network::Manager> &manager, const std::shared_ptr<TRN::Network::Connection> &connection)> &on_accept) :
+TRN::Network::Acceptor::Acceptor(const std::string &address, const  unsigned short &port,
+	const std::function <std::shared_ptr<TRN::Network::Peer> (const std::shared_ptr<TRN::Network::Manager> &manager,
+		const std::shared_ptr<TRN::Network::Connection> &connection, const std::function <void(const std::shared_ptr<TRN::Network::Peer> &peer)> &on_terminated)> &on_accept) :
 	handle(std::make_unique<Handle>(TRN::Network::Manager::create(), on_accept))
 {
 
 	boost::asio::ip::tcp::resolver resolver(handle->manager->get_io_service());
-	boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve({ host, std::to_string(port) });
+	boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve({ address, std::to_string(port) });
 	handle->acceptor.open(endpoint.protocol());
 	handle->acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
 	handle->acceptor.bind(endpoint);
 	handle->acceptor.listen();
 
-	std::cout << "listening on " << host << ":" << port << std::endl;
+	std::cout << "listening on " << address << ":" << port << std::endl;
 
 	accept();
 }
@@ -45,7 +46,21 @@ void TRN::Network::Acceptor::accept()
 
 		if (!error)
 		{
-			handle->on_accept(handle->manager, connection);
+			auto peer = handle->on_accept(handle->manager, connection, [&](const std::shared_ptr<TRN::Network::Peer> &peer)
+			{
+				handle->manager->get_io_service().post([=]()
+				{
+					peer->stop();
+					handle->peers.erase(peer);
+					std::cout << "peer destroyed" << std::endl;
+				});
+			});
+		
+			handle->peers.insert(peer);
+			peer->start();
+			std::cout << "peer created" << std::endl;
+
+
 		}
 
 		accept();
@@ -68,7 +83,7 @@ void TRN::Network::Acceptor::await_stop()
 
 
 std::shared_ptr<TRN::Network::Acceptor> TRN::Network::Acceptor::create(const std::string &address, const  unsigned short &port,
-	const std::function <void(const std::shared_ptr<TRN::Network::Manager> &manager, const std::shared_ptr<TRN::Network::Connection> &connection)> &on_accept)
+	const std::function <std::shared_ptr<TRN::Network::Peer>(const std::shared_ptr<TRN::Network::Manager> &manager, const std::shared_ptr<TRN::Network::Connection> &connection, const std::function <void(const std::shared_ptr<TRN::Network::Peer> &peer)> &on_terminated)> &on_accept)
 {
 	return std::make_shared<TRN::Network::Acceptor>(address, port, on_accept);
 }

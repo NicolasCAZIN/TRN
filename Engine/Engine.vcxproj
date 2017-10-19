@@ -178,6 +178,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Backend.cpp" />
     <ClCompile Include="Executor.cpp" />
     <ClCompile Include="Broker.cpp" />
     <ClCompile Include="Communicator.cpp" />
@@ -197,6 +198,8 @@
     <ClCompile Include="Worker.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Backend.h" />
+    <ClInclude Include="Backend_impl.h" />
     <ClInclude Include="Command.h" />
     <ClInclude Include="Executor.h" />
     <ClInclude Include="Executor_impl.h" />
