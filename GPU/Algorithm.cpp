@@ -9,15 +9,15 @@ TRN::GPU::Algorithm::Algorithm(const std::shared_ptr<Context> context):
 	handle(std::make_unique<TRN::GPU::Algorithm::Handle>())
 {
 	handle->context = context;
-	checkCudaErrors(cudaMalloc(&handle->max_value, sizeof(float)));
-	checkCudaErrors(cudaMalloc(&handle->argmax_value, 2 * sizeof(float)));
+	/*checkCudaErrors(cudaMalloc(&handle->max_value, sizeof(float)));
+	checkCudaErrors(cudaMalloc(&handle->argmax_value, 2 * sizeof(float)));*/
 }
 
 TRN::GPU::Algorithm::~Algorithm()
 {
-	checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+	/*checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
 	checkCudaErrors(cudaFree(handle->max_value));
-	checkCudaErrors(cudaFree(handle->argmax_value));
+	checkCudaErrors(cudaFree(handle->argmax_value));*/
 
 	handle.reset();
 }

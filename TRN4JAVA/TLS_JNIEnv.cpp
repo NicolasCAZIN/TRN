@@ -11,7 +11,7 @@ struct TLS_JNIEnv
 	TLS_JNIEnv()
 	{
 		assert(vm != NULL);
-		std::cout << "Attaching " << boost::this_thread::get_id() << std::endl;
+	//	std::cout << "Attaching " << boost::this_thread::get_id() << std::endl;
 		vm->AttachCurrentThread((void **)&env, NULL);
 		assert(env != NULL);
 		_detach = true;
@@ -28,7 +28,7 @@ struct TLS_JNIEnv
 		if (_detach)
 		{
 			assert(vm != NULL);
-			std::cout << "Detaching " << boost::this_thread::get_id() << std::endl;
+		//	std::cout << "Detaching " << boost::this_thread::get_id() << std::endl;
 			vm->DetachCurrentThread();
 		}
 	}

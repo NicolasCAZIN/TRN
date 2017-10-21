@@ -95,15 +95,23 @@ void TRN4CPP::Engine::Backend::Distributed::initialize(int argc, char *argv[])
 	std::cout << "Initializing TRN with a distributed backend" << std::endl;
 	initialize_frontend(TRN::ViewModel::Communicator::Distributed::create(argc, argv));
 }
+
+std::string getEnvVar(std::string const& key)
+{
+	char const* val = std::getenv(key.c_str());
+	return val == NULL ? std::string() : std::string(val);
+}
+
 void TRN4CPP::Engine::initialize()
 {
-	if (std::getenv("TRN_INITIALIZE"))
+	std::string initialize = getEnvVar("TRN_INITIALIZE");
+	if (!initialize.empty())
 	{
 		std::cout << "Initializing TRN" << std::endl;
 		std::vector<std::string> tokens;
 
-		auto arguments = std::getenv("TRN_INITIALIZE_DISTRIBUTED");
-		if (arguments)
+		std::string arguments = getEnvVar("TRN_INITIALIZE_DISTRIBUTED");
+		if (!arguments.empty())
 		{
 			boost::split(tokens, arguments, boost::is_any_of(" "));
 			int argc = tokens.size();
@@ -117,8 +125,8 @@ void TRN4CPP::Engine::initialize()
 		}
 		else
 		{
-			auto host_port = std::getenv("TRN_INITIALIZE_REMOTE");
-			if (host_port)
+			std::string  host_port = getEnvVar("TRN_INITIALIZE_REMOTE");
+			if (!host_port.empty())
 			{
 				boost::split(tokens, host_port, boost::is_any_of("@: "));
 				std::string host;
@@ -126,10 +134,16 @@ void TRN4CPP::Engine::initialize()
 				switch (tokens.size())
 				{
 					case 2:
-						host = tokens[0];
-						if (host.empty())
-							host = "127.0.0.1";
-						port = boost::lexical_cast<unsigned short>(tokens[1]);
+						
+						if (tokens[0].empty())
+							host = TRN4CPP::Engine::Backend::Remote::DEFAULT_HOST;
+						else
+							host = tokens[0];
+						if (tokens[1].empty())
+							port = TRN4CPP::Engine::Backend::Remote::DEFAULT_PORT;
+						else
+							port = boost::lexical_cast<unsigned short>(tokens[1]);
+
 						break;
 					default :
 						throw std::runtime_error("Malformed host:port enironment variable");
@@ -138,10 +152,8 @@ void TRN4CPP::Engine::initialize()
 			}
 			else
 			{
-				auto devices = std::getenv("TRN_INITIALIZE_LOCAL");
-				if (!devices)
-					devices = "";
-
+				std::string devices = getEnvVar("TRN_INITIALIZE_LOCAL");
+			
 				std::vector<unsigned int> indices;
 
 				boost::split(tokens, devices, boost::is_any_of(",;: "));

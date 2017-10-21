@@ -193,12 +193,12 @@ int main(int argc, char *argv[])
 		{
 			throw std::runtime_error("No backend were selected");
 		}
-
+		
 		auto host = vm["host"].as<std::string>();
 		auto port = vm["port"].as<unsigned short>();
 	
 		auto mediator = std::make_shared<Mediator>();
-
+		
 		auto acceptor = TRN::Network::Acceptor::create(host, port, [&](const std::shared_ptr<TRN::Network::Manager> &manager, const std::shared_ptr<TRN::Network::Connection> &connection, const std::function <void(const std::shared_ptr<TRN::Network::Peer> &peer)> &on_terminated)
 		{
 			class Adapter : public TRN::Helper::Adapter<TRN::Network::Peer, TRN::Engine::Proxy>

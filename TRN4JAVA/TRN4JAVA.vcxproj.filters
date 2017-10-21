@@ -29,19 +29,10 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TRN4JAVA_Api.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TRN4JAVA_Api_Initializer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TRN4JAVA_Api_Loop.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TRN4JAVA_Api_Scheduler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="TLS_JNIEnv.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TRN4JAVA.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -49,25 +40,31 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TRN4JAVA_Api.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Api_Initializer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Api_Loop.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Api_Matrix.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Api_Performances.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Api_Scheduler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TLS_JNIEnv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Backend.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Backend_Local.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Backend_Remote.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Loop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Loop_Position.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Loop_Stimulus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -77,7 +74,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="TRN4JAVA\Api.java">
+    <None Include="TRN4JAVA\Simulation.java">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="TRN4JAVA\Engine.java">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

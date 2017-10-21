@@ -2,7 +2,6 @@
 #ifdef USE_VLD
 #include <vld.h>
 #endif 
-#include <QString>
 #include <boost/thread.hpp>
 #include <boost/thread/tss.hpp>
 #include <jni.h>

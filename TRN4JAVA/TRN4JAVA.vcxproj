@@ -143,8 +143,10 @@
       <Message>Generating JNI interfaces</Message>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>gather_dll.bat "$(SolutionDir)" $(Platform) $(Configuration)</Command>
-      <Message>Gather dlls</Message>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
     </PostBuildEvent>
     <CustomBuildStep>
       <Command>
@@ -221,8 +223,10 @@
       <Message>Generating JNI interfaces</Message>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>gather_dll.bat "$(SolutionDir)" $(Platform) $(Configuration)</Command>
-      <Message>Gather dlls</Message>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
     </PostBuildEvent>
     <CustomBuildStep>
       <Command>
@@ -241,21 +245,20 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="TRN4JAVA_Api.cpp" />
-    <ClCompile Include="TRN4JAVA_Api_Initializer.cpp" />
-    <ClCompile Include="TRN4JAVA_Api_Loop.cpp" />
-    <ClCompile Include="TRN4JAVA_Api_Scheduler.cpp" />
+    <ClCompile Include="TRN4JAVA.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TLS_JNIEnv.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="TRN4JAVA_Api.h" />
-    <ClInclude Include="TRN4JAVA_Api_Initializer.h" />
-    <ClInclude Include="TRN4JAVA_Api_Loop.h" />
-    <ClInclude Include="TRN4JAVA_Api_Matrix.h" />
-    <ClInclude Include="TRN4JAVA_Api_Performances.h" />
-    <ClInclude Include="TRN4JAVA_Api_Scheduler.h" />
+    <ClInclude Include="TRN4JAVA_Engine.h" />
+    <ClInclude Include="TRN4JAVA_Engine_Backend.h" />
+    <ClInclude Include="TRN4JAVA_Engine_Backend_Local.h" />
+    <ClInclude Include="TRN4JAVA_Engine_Backend_Remote.h" />
     <ClInclude Include="trn4java_global.h" />
+    <ClInclude Include="TRN4JAVA_Simulation.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Loop.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Loop_Position.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Loop_Stimulus.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TRN4CPP\TRN4CPP.vcxproj">
@@ -263,7 +266,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="TRN4JAVA\Api.java" />
+    <None Include="TRN4JAVA\Engine.java" />
+    <None Include="TRN4JAVA\Simulation.java" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
