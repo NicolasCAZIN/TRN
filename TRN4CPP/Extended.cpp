@@ -91,11 +91,11 @@ void TRN4CPP::Simulation::train(const unsigned long long &id, const std::string 
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->train(id, label, incoming, expected);
 }
-void TRN4CPP::Simulation::test(const unsigned long long &id, const std::string &sequence, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const unsigned int &supplementary_generations)
+void TRN4CPP::Simulation::test(const unsigned long long &id, const std::string &sequence, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const bool &autonomous, const unsigned int &supplementary_generations)
 {
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
-	frontend->test(id, sequence, incoming, expected, preamble, supplementary_generations);
+	frontend->test(id, sequence, incoming, expected, preamble, autonomous, supplementary_generations);
 }
 void TRN4CPP::Simulation::declare_sequence(const unsigned long long &id, const std::string &label, const std::string &tag, const std::vector<float> &sequence, const std::size_t &observations)
 {

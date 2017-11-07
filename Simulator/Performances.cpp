@@ -102,11 +102,11 @@ void TRN::Simulator::Performances::train(const std::string &label, const std::st
 	handle->start = std::chrono::high_resolution_clock::now();
 	decorated->train(label, incoming, expected);
 }
-void TRN::Simulator::Performances::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations)
+void TRN::Simulator::Performances::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
 {
 	handle->start = std::chrono::high_resolution_clock::now();
 	handle->preamble = preamble;
-	decorated->test(label, incoming, expected, preamble, supplementary_generations);
+	decorated->test(label, incoming, expected, preamble, autonomous, supplementary_generations);
 }
 
 

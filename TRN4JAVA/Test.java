@@ -5,6 +5,18 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+import java.awt.Font;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.axis.*;
+import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.ApplicationFrame;
+import org.jfree.ui.RefineryUtilities;
 
 import TRN4JAVA.Engine;
 import TRN4JAVA.Engine.Backend.Local;
@@ -159,6 +171,66 @@ public class Test
 		}
 	}
 	
+	
+	
+	public static class Arena extends TRN4JAVA.Simulation.Measurement.Raw
+	{
+		@Override
+		public void		callback(final long id, final long trial, final long evaluation, final float primed[], final float predicted [], final float expected[], final long preamble, final long batch_size, final long rows, final long cols)
+		{
+			/*System.out.println(id);
+			System.out.println(trial);
+			System.out.println(evaluation);
+			System.out.println(batch_size);
+			System.out.println(rows);
+			System.out.println(cols);*/
+
+			final XYSeriesCollection collection = new XYSeriesCollection();
+			for (long batch = 0; batch < batch_size; batch++)
+			{
+				final XYSeries series = new XYSeries("Rat #" + Long.toString(batch + 1), false);
+				for (long row = 0; row < rows; row++)
+				{ 
+					int offset = (int)(batch * rows * cols + row * cols);
+					float x = predicted[offset+ 0];
+					float y = predicted[offset+ 1];
+					series.add(x, y);
+				}
+				
+				collection.addSeries(series);
+				
+			
+			}
+			
+			final ApplicationFrame frame = new ApplicationFrame("Plot");
+			final JFreeChart chart = ChartFactory.createXYLineChart(
+				"Arena",
+				"X", 
+				"Y", 
+				collection,
+				PlotOrientation.VERTICAL,
+				true,
+				true,
+				false
+			);
+			XYPlot xyPlot = (XYPlot) chart.getPlot();
+			ValueAxis domainAxis = xyPlot.getDomainAxis();
+			ValueAxis rangeAxis = xyPlot.getRangeAxis();
+
+			domainAxis.setRange(-1.0, 1.0);
+			//domainAxis.setTickUnit(new NumberTickUnit(0.1));
+			rangeAxis.setRange(-1.0, 1.0);
+			//rangeAxis.setTickUnit(new NumberTickUnit(0.1));
+			final ChartPanel chartPanel = new ChartPanel(chart);
+			chartPanel.setPreferredSize(new java.awt.Dimension(1000, 1000));
+			frame.setContentPane(chartPanel);
+			
+			frame.pack();
+			RefineryUtilities.centerFrameOnScreen(frame);
+			frame.setVisible(true);
+		}
+	}
+	
 	public static class Rat 
 	{
 		public static class Position extends TRN4JAVA.Simulation.Loop
@@ -169,6 +241,7 @@ public class Test
 				this.rat = rat;
 			}
 			@Override
+			
 			public void callback(final long id, final long trial, final long evaluation, final float prediction[], final long rows, final long cols)
 			{
 				new Thread(new Runnable() {
@@ -251,12 +324,15 @@ public class Test
 			}
 		
 			Rat rat = new Rat(place_cells);
-			int indices[]={1};
+			Arena arena = new Arena();
+			int indices[]={0};
 			
 			TRN4JAVA.Engine.Backend.Local.initialize(indices);
 
 			TRN4JAVA.Simulation.Loop.Position.install(rat.position);	
 			TRN4JAVA.Simulation.Loop.Stimulus.install(rat.stimulus);	
+			
+			TRN4JAVA.Simulation.Measurement.Position.Raw.install(arena);
 			TRN4JAVA.Simulation.compute(experiment);
 			
 			TRN4JAVA.Engine.uninitialize();

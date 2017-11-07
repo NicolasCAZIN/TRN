@@ -5,6 +5,7 @@
 #include "Algorithm.cuh"
 
 
+
 TRN::GPU::Algorithm::Algorithm(const std::shared_ptr<Context> context):
 	handle(std::make_unique<TRN::GPU::Algorithm::Handle>())
 {

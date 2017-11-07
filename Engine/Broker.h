@@ -40,7 +40,7 @@ namespace TRN
 			void 	allocate(const unsigned long long &id);
 			void 	deallocate(const unsigned long long &id);
 			void 	train(const unsigned long long &id, const std::string &label, const std::string &incoming, const std::string &expected);
-			void 	test(const unsigned long long &id, const std::string &sequence, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const unsigned int &supplementary_generations);
+			void 	test(const unsigned long long &id, const std::string &sequence, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const bool &autonomous, const unsigned int &supplementary_generations);
 			void 	declare_sequence(const unsigned long long &id, const std::string &label, const std::string &tag,
 				const std::vector<float> &sequence, const std::size_t &observations);
 			void 	declare_set(const unsigned long long &id, const std::string &label, const std::string &tag,

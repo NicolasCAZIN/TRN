@@ -212,6 +212,7 @@ namespace TRN
 			std::string incoming;
 			std::string expected;
 			unsigned int preamble;
+			bool autonomous;
 			unsigned int supplementary_generations;
 
 			template<class Archive>
@@ -222,6 +223,7 @@ namespace TRN
 				ar & incoming;
 				ar & expected;
 				ar & preamble;
+				ar & autonomous;
 				ar & supplementary_generations;
 			}
 

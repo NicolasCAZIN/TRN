@@ -99,9 +99,9 @@ void TRN::Simulator::States::train(const std::string &sequence, const std::strin
 {
 	decorated->train(sequence, incoming, expected);
 }
-void TRN::Simulator::States::test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations)
+void TRN::Simulator::States::test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
 {
-	decorated->test(sequence, incoming, expected, preamble, supplementary_generations);
+	decorated->test(sequence, incoming, expected, preamble, autonomous, supplementary_generations);
 }
 void TRN::Simulator::States::initialize()
 {

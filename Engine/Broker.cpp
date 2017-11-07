@@ -561,7 +561,7 @@ void TRN::Engine::Broker::train(const unsigned long long &id, const std::string 
 		});
 	});
 }
-void TRN::Engine::Broker::test(const unsigned long long &id, const std::string &label, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const unsigned int &supplementary_generations)
+void TRN::Engine::Broker::test(const unsigned long long &id, const std::string &label, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const bool &autonomous, const unsigned int &supplementary_generations)
 {
 	retrieve_simulation(id)->post([=]()
 	{
@@ -576,6 +576,7 @@ void TRN::Engine::Broker::test(const unsigned long long &id, const std::string &
 			message.incoming = incoming;
 			message.expected = expected;
 			message.preamble = preamble;
+			message.autonomous = autonomous;
 			message.supplementary_generations = supplementary_generations;
 			send(processor->get_rank(), message, [this, id]()
 			{

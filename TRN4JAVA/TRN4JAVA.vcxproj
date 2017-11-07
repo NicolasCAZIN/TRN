@@ -223,10 +223,8 @@
       <Message>Generating JNI interfaces</Message>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>
-      </Command>
-      <Message>
-      </Message>
+      <Command>make_jar.bat</Command>
+      <Message>Generating JAR file</Message>
     </PostBuildEvent>
     <CustomBuildStep>
       <Command>
@@ -259,6 +257,30 @@
     <ClInclude Include="TRN4JAVA_Simulation_Loop.h" />
     <ClInclude Include="TRN4JAVA_Simulation_Loop_Position.h" />
     <ClInclude Include="TRN4JAVA_Simulation_Loop_Stimulus.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Position.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Position_FrechetDistance.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Position_MeanSquareError.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Position_Raw.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Processed.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Raw.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Readout.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Readout_FrechetDistance.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Readout_MeanSquareError.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Readout_Raw.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Recording.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Recording_Performances.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Recording_Scheduling.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Recording_States.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Recording_Weights.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedback.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedforward.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Readout.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Recurrent.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Scheduler.h" />
+    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Mutator.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TRN4CPP\TRN4CPP.vcxproj">

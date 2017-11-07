@@ -48,7 +48,7 @@ namespace TRN
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Matrix> &sequence) = 0;
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Set> &batch) = 0;
 			virtual void train(const std::string &sequences, const std::string &incoming, const std::string &expected) = 0;
-			virtual void test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations) = 0;
+			virtual void test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations) = 0;
 			virtual void initialize();
 			virtual void uninitialize();
 		};

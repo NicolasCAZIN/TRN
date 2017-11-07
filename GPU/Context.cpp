@@ -6,7 +6,6 @@ const std::size_t TRN::GPU::Context::DEFAULT_DIMS = 1;
 const std::size_t TRN::GPU::Context::DEFAULT_DYNAMIC_MEMORY_SIZE = 0;
 
 
-
 TRN::GPU::Context::Context(const int &device) :
 	handle(std::make_unique<TRN::GPU::Context::Handle>())
 {

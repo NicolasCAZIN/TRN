@@ -2,6 +2,8 @@
 #include "Memory_impl.h"
 #include "Driver.cuh"
 
+template class GPU_EXPORT std::unique_ptr<TRN::GPU::Memory::Handle>;
+
 TRN::GPU::Memory::Memory(const std::shared_ptr<TRN::GPU::Context> context) : handle(std::make_unique<TRN::GPU::Memory::Handle>(context))
 {
 

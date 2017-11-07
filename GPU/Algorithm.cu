@@ -13,6 +13,8 @@
 #define BLOCK_Y 32
 #define warpSize 32
 
+
+
 /*template< typename T >
 void check(T result, char const *const func, const char *const file, int const line)
 {
@@ -32,11 +34,11 @@ void check(T result, char const *const func, const char *const file, int const l
 
 //#define checkCudaErrors(val)           throw_on_cuda_error ( (val), #val, __FILE__, __LINE__ )
 
-__inline__ __device__
+/*__inline__ __device__
 static bool isnan(float4 v)
 {
 	return isnan(v.x) || isnan(v.y) || isnan(v.z) || isnan(v.w);
-}
+}*/
 
 #define warpSize 32
 __inline__ __device__
@@ -74,7 +76,7 @@ float4 expf(const float4 &a)
 
 	return b;
 }
-__global__
+/*__global__
 static void scale_kernel(float ** __restrict__ a,
 	const int batch_size, const int rows, const int cols, const int stride, const float scale)
 
@@ -89,7 +91,7 @@ static void scale_kernel(float ** __restrict__ a,
 			}
 		}
 	}
-}
+}*/
 
 
 __global__
@@ -436,7 +438,7 @@ static inline void batched_update_reservoir
 
 	checkCudaErrors(cudaGetLastError());
 }
-__device__
+/*__device__
 static const char *dev_cudaGetErrorEnum(cudaError_t error)
 {
 	switch (error)
@@ -612,7 +614,7 @@ static const char *dev_cudaGetErrorEnum(cudaError_t error)
 		case cudaErrorProfilerAlreadyStopped:
 			return "cudaErrorProfilerAlreadyStopped";
 
-			/* Since CUDA 4.0*/
+		
 		case cudaErrorAssert:
 			return "cudaErrorAssert";
 
@@ -625,7 +627,7 @@ static const char *dev_cudaGetErrorEnum(cudaError_t error)
 		case cudaErrorHostMemoryNotRegistered:
 			return "cudaErrorHostMemoryNotRegistered";
 
-			/* Since CUDA 5.0 */
+	
 		case cudaErrorOperatingSystem:
 			return "cudaErrorOperatingSystem";
 
@@ -653,7 +655,7 @@ static const char *dev_cudaGetErrorEnum(cudaError_t error)
 		case cudaErrorNotSupported:
 			return "cudaErrorNotSupported";
 
-			/* Since CUDA 6.0 */
+		
 		case cudaErrorHardwareStackError:
 			return "cudaErrorHardwareStackError";
 
@@ -672,7 +674,6 @@ static const char *dev_cudaGetErrorEnum(cudaError_t error)
 		case cudaErrorIllegalAddress:
 			return "cudaErrorIllegalAddress";
 
-			/* Since CUDA 6.5*/
 		case cudaErrorInvalidPtx:
 			return "cudaErrorInvalidPtx";
 
@@ -685,14 +686,14 @@ static const char *dev_cudaGetErrorEnum(cudaError_t error)
 		case cudaErrorApiFailureBase:
 			return "cudaErrorApiFailureBase";
 
-			/* Since CUDA 8.0*/
+		
 		case cudaErrorNvlinkUncorrectable:
 			return "cudaErrorNvlinkUncorrectable";
 	}
 
 	return "<unknown>";
 }
-
+*/
 template< typename T >
 __device__
 void dev_check(T result, char const *const func, const char *const file, int const line)
@@ -767,7 +768,7 @@ static void copy_states<true>(const cudaStream_t &stream, const std::size_t &bat
 	checkCudaErrors(cudaStreamSynchronize(x_ro));*/
 	checkCudaErrors(cudaStreamSynchronize(stream));
 
-	std::size_t offset = 0;
+//	std::size_t offset = 0;
 	float *states_ts = &states[ts * states_stride];
 
 	for (std::size_t batch = 0; batch < batch_size; batch++)
@@ -822,7 +823,7 @@ static inline void initialize_states<true>(const cudaStream_t &stream, unsigned 
 	seed += batch_size * batched_ptr_rows * batched_ptr_cols;
 }
 
-static inline void sgemm_nt(
+/*static inline void sgemm_nt(
 	const cublasHandle_t handle, const int batch_size,
 	const float alpha, const float beta,
 	const float **a, const int a_rows, const int a_cols, const int a_stride,
@@ -832,7 +833,9 @@ static inline void sgemm_nt(
 {
 	auto op_a_rows = a_rows;
 	auto op_a_cols = a_cols;
+#ifdef _DEBUG
 	auto op_b_rows = b_cols;
+#endif
 	auto op_b_cols = b_rows;
 
 	assert(op_a_rows == c_rows);
@@ -853,7 +856,7 @@ static inline void sgemm_nt(
 		batch_size
 	));
 }
-
+*/
 static inline void sgemm_tn(
 	const cublasHandle_t handle, const int batch_size,
 	const float alpha, const float beta,
@@ -864,7 +867,9 @@ static inline void sgemm_tn(
 {
 	auto op_a_rows = a_cols;
 	auto op_a_cols = a_rows;
+#ifdef _DEBUG
 	auto op_b_rows = b_rows;
+#endif
 	auto op_b_cols = b_cols;
 
 	assert(op_a_rows == c_rows);
@@ -885,7 +890,7 @@ static inline void sgemm_tn(
 		batch_size
 	));
 }
-static inline void sgemm_nn(
+/*static inline void sgemm_nn(
 	const cublasHandle_t handle, const int batch_size,
 	const float alpha, const float beta,
 	const float **a, const int a_rows, const int a_cols, const int a_stride,
@@ -895,7 +900,9 @@ static inline void sgemm_nn(
 {
 	auto op_a_rows = a_rows;
 	auto op_a_cols = a_cols;
+#ifdef _DEBUG
 	auto op_b_rows = b_rows;
+#endif
 	auto op_b_cols = b_cols;
 
 	assert(op_a_rows == c_rows);
@@ -915,7 +922,7 @@ static inline void sgemm_nn(
 		c, c_stride,
 		batch_size
 	));
-}
+}*/
 
 __global__
 static void update_readout_error_kernel(
@@ -1486,6 +1493,16 @@ void compute_place_cell_location_probability(
 	}
 }
 
+
+static void add_kernel( const float * __restrict__ a, const float * __restrict__ b, float *c, int width)
+{
+	for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < width; idx += gridDim.x * blockDim.x)
+	{
+		c[idx] = a[idx] + b[idx];
+	}
+
+}
+
 __global__
 static void inside_circle_kernel(
 	const int batch_size, const int rows, const int cols, const int location_probability_stride,
@@ -1582,40 +1599,6 @@ struct normalize_functor
 };
 
 
-
-
-
-__global__
-void select_location_kernel(const int batch_size, 
-	const float * __restrict__ x_grid, const int x_grid_rows, const int x_grid_cols, const int x_grid_stride,
-	const float *__restrict__ y_grid, const int y_grid_rows, const int y_grid_cols, const int y_grid_stride,
-	float **__restrict__ batched_location_probability, const int batched_location_probability_rows, const int batched_location_probability_cols, const int batched_location_probability_stride,
-	float ** __restrict__ batched_predicted_location, const int batched_predicted_location_rows, const int batched_predicted_location_cols, const int batched_predicted_location_stride
-
-)
-{
-#ifndef __DEBUG
-	for (int batch = blockIdx.x * blockDim.x + threadIdx.x; batch < batch_size; batch += gridDim.x * blockDim.x)
-	{
-
-
-		float *predicted_position = batched_predicted_location[batch];
-		float *location_probability = batched_location_probability[batch];
-		int idx = -1;
-		{
-			cublasHandle_t handle;
-			dev_checkCudaErrors(cublasCreate(&handle));
-			dev_checkCudaErrors(cublasIsamax(handle, batched_location_probability_stride * batched_location_probability_rows, location_probability, 1, &idx));
-			dev_checkCudaErrors(cublasDestroy(handle));
-		}
-
-		int row = idx / batched_location_probability_stride;
-		int col = idx % batched_location_probability_stride;
-		predicted_position[0] = x_grid[col];
-		predicted_position[1] = y_grid[row];
-	}
-#endif
-}
 
 
 

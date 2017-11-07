@@ -57,7 +57,7 @@ namespace TRN4CPP
 		void TRN4CPP_EXPORT  	deallocate(const unsigned long long &id);
 
 		void TRN4CPP_EXPORT  	train(const unsigned long long &id, const std::string &label, const std::string &incoming, const std::string &expected);
-		void TRN4CPP_EXPORT  	test(const unsigned long long &id, const std::string &sequence, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const unsigned int &supplementary_generations = 0);
+		void TRN4CPP_EXPORT  	test(const unsigned long long &id, const std::string &sequence, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const bool &autonomous, const unsigned int &supplementary_generations = 0);
 
 		void TRN4CPP_EXPORT  	declare_sequence(const unsigned long long &id, const std::string &label, const std::string &tag, const std::vector<float> &sequence, const std::size_t &observations);
 		void TRN4CPP_EXPORT  	declare_set(const unsigned long long &id, const std::string &label, const std::string &tag, const std::vector<std::string> &labels);

@@ -67,6 +67,78 @@
     <ClInclude Include="TRN4JAVA_Simulation_Loop_Stimulus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Position.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Position_FrechetDistance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Position_MeanSquareError.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Position_Raw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Processed.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Raw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Readout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Readout_FrechetDistance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Readout_MeanSquareError.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Readout_Raw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Recording.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Recording_Performances.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Recording_Scheduling.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Recording_States.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Recording_Weights.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedback.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedforward.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Readout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Recurrent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Scheduler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Mutator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="trn4java_global.h">

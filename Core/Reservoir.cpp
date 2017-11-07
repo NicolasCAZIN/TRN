@@ -89,6 +89,14 @@ TRN::Core::Reservoir::Reservoir(
 	
 	handle->gather_states = false;
 
+
+
+	driver->get_algorithm()->preallocate(stimulus, reservoir, prediction, batch_size);
+}
+
+
+void TRN::Core::Reservoir::start()
+{
 	handle->thread = std::thread([&]()
 	{
 		get_implementor()->toggle();
@@ -99,11 +107,9 @@ TRN::Core::Reservoir::Reservoir(
 		}
 	}
 	);
-
-	driver->get_algorithm()->preallocate(stimulus, reservoir, prediction, batch_size);
 }
 
-TRN::Core::Reservoir::~Reservoir()
+void TRN::Core::Reservoir::stop()
 {
 	synchronize();
 	handle->prediction.invalidate();
@@ -111,7 +117,10 @@ TRN::Core::Reservoir::~Reservoir()
 	{
 		handle->thread.join();
 	}
+}
 
+TRN::Core::Reservoir::~Reservoir()
+{
 	handle.reset();
 }
 
@@ -174,7 +183,7 @@ void TRN::Core::Reservoir::initialize(const std::shared_ptr<TRN::Core::Initializ
 	readout->initialize(handle->seed, handle->batched_W_ro);
 }
 
-void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::size_t &preamble, const std::size_t &supplementary_generations)
+void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::size_t &preamble, const bool &autonomous_generation, const std::size_t &supplementary_generations)
 {
 	if (!expected)
 		throw std::invalid_argument("target expected is empty");
@@ -231,6 +240,7 @@ void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incomi
 
 	handle->target_expected = expected;
 	handle->cycle = preamble;
+	handle->autonomous_generation = autonomous_generation;
 	handle->max_cycle = expected->get_rows() + supplementary_generations;
 	handle->prediction.enqueue(std::make_tuple(handle->batched_X_ro, handle->trial-1, handle->evaluation));
 }
@@ -253,8 +263,10 @@ void TRN::Core::Reservoir::update(const TRN::Core::Message::Payload<TRN::Core::M
 		for (std::size_t batch = 0; batch < handle->batch_size; batch++)
 		{
 			auto sub_u_ffwd = TRN::Core::Matrix::create(implementor, 1, handle->reservoir_size);
-			auto sub_incoming = incoming.get_stimulus()->get_matrices(batch);
-			handle->batched_incoming->update(batch, sub_incoming);
+			if (handle->autonomous_generation)
+				handle->batched_incoming->update(batch, incoming.get_stimulus()->get_matrices(batch));
+			else
+				handle->batched_incoming->update(batch, TRN::Core::Matrix::create(implementor, handle->target_expected, handle->cycle - 1, 0, 1, handle->target_expected->get_cols()));
 			handle->batched_expected->update(batch, sub_expected);
 			handle->batched_u_ffwd->update(batch, sub_u_ffwd);
 		}

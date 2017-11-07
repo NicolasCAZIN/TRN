@@ -45,7 +45,7 @@ namespace TRN
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Matrix> &sequence) override;
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Set> &set) override;
 			virtual void train(const std::string &sequence, const std::string &incoming, const std::string &expected) override;
-			virtual void test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations) override;
+			virtual void test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations) override;
 			virtual void initialize() override;
 			virtual void uninitialize() override;
 		public:

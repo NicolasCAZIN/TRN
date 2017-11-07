@@ -131,7 +131,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::D
 	{
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	}
-		
+	handle->simulators[message.id]->uninitialize();
 	handle->simulators.erase(message.id);
 	handle->remaining_initializations.erase(message.id);
 	handle->configured_required.erase(message.id);
@@ -155,7 +155,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::T
 	// std::cout << __FUNCTION__ << std::endl;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	handle->simulators[message.id]->test(message.label, message.incoming, message.expected, message.preamble, message.supplementary_generations);
+	handle->simulators[message.id]->test(message.label, message.incoming, message.expected, message.preamble, message.autonomous, message.supplementary_generations);
 
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::DECLARE_SEQUENCE> &message)

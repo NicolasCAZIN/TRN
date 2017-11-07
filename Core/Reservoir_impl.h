@@ -42,14 +42,11 @@ public:
 	unsigned long seed;
 	float leak_rate;
 	float initial_state_scale;
-
+	std::thread thread;
 	bool gather_states;
-
+	bool autonomous_generation;
 	TRN::Helper::Queue<std::tuple<std::shared_ptr<TRN::Core::Batch>, size_t, size_t> > prediction;
 	
-	std::mutex mutex;
-	std::condition_variable end_of_test;
-	std::thread thread;
 	std::shared_ptr<TRN::Core::Message::Payload<TRN::Core::Message::STATES>> states;
 	std::shared_ptr<TRN::Core::Matrix> target_expected;
 	size_t cycle;

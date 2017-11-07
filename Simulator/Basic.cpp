@@ -122,7 +122,7 @@ void TRN::Simulator::Basic::train(const std::string &label, const std::string &i
 	handle->pending.push(sequence);
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::SET>>::notify(sequence);
 }
-void TRN::Simulator::Basic::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations)
+void TRN::Simulator::Basic::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
 {
 	if (!handle->initialized)
 		throw std::logic_error("Simulator is not initialized");
@@ -142,7 +142,7 @@ void TRN::Simulator::Basic::test(const std::string &label, const std::string &in
 
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::CYCLES>>::notify(cycles);
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TARGET_SEQUENCE>>::notify(target_sequence);
-	handle->reservoir->test(incoming_sequence, expected_sequence, preamble, supplementary_generations);
+	handle->reservoir->test(incoming_sequence, expected_sequence, preamble, autonomous, supplementary_generations);
 }
 void TRN::Simulator::Basic::initialize()
 {
@@ -194,12 +194,14 @@ void TRN::Simulator::Basic::initialize()
 	}
 
 	handle->reservoir->initialize(handle->feedforward, handle->recurrent, handle->feedback, handle->readout);
+	handle->reservoir->start();
 	handle->initialized = true;
 }
 void TRN::Simulator::Basic::uninitialize()
 {
 	if (handle->initialized)
 	{
+
 		if (!handle->loop)
 			throw std::logic_error("No Loop object have been configured");
 		if (!handle->reservoir)
@@ -212,7 +214,8 @@ void TRN::Simulator::Basic::uninitialize()
 			throw std::logic_error("No Initializer object have been configured for the readout weights");
 		if (!handle->scheduler)
 			throw std::logic_error("No Scheduler object have been configured for the readout weights");
-
+		
+		handle->reservoir->stop();
 //		handle->loop->detach(handle->reservoir);
 		//handle->reservoir->detach(handle->loop);
 		//handle->loop->reset_delegate();

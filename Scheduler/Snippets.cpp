@@ -84,6 +84,8 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 				integral[l] = cumsum;
 				cumsum += reward_elements[batch_offsets[l + c]];
 			}
+			if (cumsum == 0.0f)
+				throw std::runtime_error("no reward present in sequence " + payload.get_label() + " with tag " + handle->tag);
 			for (int l = 0; l < batch_durations[k] - handle->snippets_size; l++)
 			{
 				score.push_back((integral[l + handle->snippets_size] - integral[l]));
@@ -106,6 +108,8 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 		std::iota(snippet.begin(), snippet.end(), possible_offsets[random_offset()]);
 		offsets.insert(offsets.end(), snippet.begin(), snippet.end());
 	}
+	if (std::any_of(offsets.begin(), offsets.end(), [](const int &offset) {return offset < 0; }))
+		throw std::runtime_error("offset can't be negative");
 	handle->seed += offsets.size() * durations.size();
 	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_trial(), TRN::Core::Scheduling::create(offsets, durations)));
 }

@@ -140,34 +140,34 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 		throw std::invalid_argument("Unexpected file extension \"" + extension + "\"");
 
 
-	const std::string id_attribute = prefix + "ID";
-	const std::string tests_attribute = prefix + "TESTS";
-	const std::string trials_attribute = prefix + "TRIALS";
-	const std::string type_attribute = prefix + "TYPE";
-	const std::string batch_size_attribute = prefix + "BATCH_SIZE";
-	const std::string batch_number_attribute = prefix + "BATCH_NUMBER";
-	const std::string stimulus_size_attribute = prefix + "STIMULUS_SIZE";
-	const std::string reservoir_size_attribute = prefix + "RESERVOIR_SIZE";
-	const std::string prediction_size_attribute = prefix + "PREDICTION_SIZE";
-	const std::string leak_rate_attribute = prefix + "LEAK_RATE";
-	const std::string learning_rate_attribute = prefix + "LEARNING_RATE";
-	const std::string initial_state_scale_attribute = prefix + "INITIAL_STATE_SCALE";
-	const std::string rows_attribute = prefix + "ROWS";
-	const std::string cols_attribute = prefix + "COLS";
-	const std::string seed_attribute = prefix + "SEED";
-	const std::string rate_attribute = prefix + "RATE";
-	const std::string size_attribute = prefix + "SIZE";
-	const std::string number_attribute = prefix + "NUMBER";
-	const std::string mu_attribute = prefix + "MU";
-	const std::string sigma_attribute = prefix + "SIGMA";
-	const std::string scale_attribute = prefix + "SCALE";
-	const std::string label_attribute = prefix + "LABEL";
-	const std::string radius_attribute = prefix + "RADIUS";
-	const std::string tag_attribute = prefix + "TAG";
-	const std::string a_attribute = prefix + "A";
-	const std::string b_attribute = prefix + "B";
-	const std::string sparsity_attribute = prefix + "SPARSITY";
-	const std::string response_attribute = prefix + "RESPONSE";
+	const std::string id_attribute = prefix + "id";
+	const std::string tests_attribute = prefix + "tests";
+	const std::string trials_attribute = prefix + "trials";
+	const std::string type_attribute = prefix + "type";
+	const std::string batch_size_attribute = prefix + "batch_size";
+	const std::string batch_number_attribute = prefix + "batch_number";
+	const std::string stimulus_size_attribute = prefix + "stimulus_size";
+	const std::string reservoir_size_attribute = prefix + "reservoir_size";
+	const std::string prediction_size_attribute = prefix + "prediction_size";
+	const std::string leak_rate_attribute = prefix + "leak_rate";
+	const std::string learning_rate_attribute = prefix + "learning_rate";
+	const std::string initial_state_scale_attribute = prefix + "initial_state_scale";
+	const std::string rows_attribute = prefix + "rows";
+	const std::string cols_attribute = prefix + "cols";
+	const std::string seed_attribute = prefix + "seed";
+	const std::string rate_attribute = prefix + "rate";
+	const std::string size_attribute = prefix + "size";
+	const std::string number_attribute = prefix + "number";
+	const std::string mu_attribute = prefix + "mu";
+	const std::string sigma_attribute = prefix + "sigma";
+	const std::string scale_attribute = prefix + "scale";
+	const std::string label_attribute = prefix + "label";
+	const std::string radius_attribute = prefix + "radius";
+	const std::string tag_attribute = prefix + "tag";
+	const std::string a_attribute = prefix + "a";
+	const std::string b_attribute = prefix + "b";
+	const std::string sparsity_attribute = prefix + "sparsity";
+	const std::string response_attribute = prefix + "response";
 	const std::string x_min_attribute = prefix + "x_min";
 	const std::string x_max_attribute = prefix + "x_max";
 	const std::string y_min_attribute = prefix + "y_min";
@@ -184,6 +184,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 	const std::string expected_attribute = prefix + "expected";
 	const std::string preamble_attribute = prefix + "preamble";
 	const std::string repeat_attribute = prefix + "repeat";
+	const std::string autonomous_attribute = prefix + "autonomous";
 	const std::string supplementary_attribute = prefix + "supplementary";
 	const std::string filename_attribute = prefix + "filename";
 	const std::string path_attribute = prefix + "path";
@@ -352,6 +353,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 													tags.push_back(tag.get_value<std::string>());
 												}
 											}
+											
 											for (auto tag : tags)
 											{
 												//
@@ -890,10 +892,11 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 													auto incoming = _test.get_child(incoming_attribute).get_value<std::string>();
 													auto expected = _test.get_child(expected_attribute).get_value<std::string>();
 													auto repeat = _test.get_child(repeat_attribute).get_value<std::size_t>();
+													auto autonomous = _test.get_child(autonomous_attribute).get_value<bool>();
 													for (std::size_t k = 0; k < repeat; k++)
 													{
 														
-														frontend->test(id, label, incoming, expected, preamble, supplementary);
+														frontend->test(id, label, incoming, expected, preamble, autonomous, supplementary);
 													}
 
 												}

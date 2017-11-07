@@ -33,9 +33,10 @@ void TRN::Core::Simulator::initialize()
 			throw std::runtime_error("Scheduler is not initialized");
 		scheduler->attach(shared_from_this());
 	}
+
 }
 
 void TRN::Core::Simulator::uninitialize()
 {
-
+	
 }

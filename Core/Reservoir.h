@@ -49,6 +49,8 @@ namespace TRN
 							const std::shared_ptr<TRN::Core::Initializer> &readout);
 			void initialize();
 			void synchronize();
+			void start();
+			void stop();
 
 		public :
 			std::size_t get_batch_size();
@@ -58,7 +60,7 @@ namespace TRN
 			std::size_t get_stimulus_size();
 			std::size_t get_prediction_size();
 		public :
-			void test(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::size_t &preamble, const std::size_t &supplementary_generations);
+			void test(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::size_t &preamble, const bool &autonomous_generation, const std::size_t &supplementary_generations);
 			void train(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Scheduling> &scheduling);
 				
 		protected:

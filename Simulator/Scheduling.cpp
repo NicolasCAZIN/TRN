@@ -94,9 +94,9 @@ void TRN::Simulator::Scheduling::train(const std::string &label, const std::stri
 
 	decorated->train(label, incoming, expected);
 }
-void TRN::Simulator::Scheduling::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const std::size_t &supplementary_generations)
+void TRN::Simulator::Scheduling::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
 {
-	decorated->test(label, incoming, expected, preamble, supplementary_generations);
+	decorated->test(label, incoming, expected, preamble, autonomous, supplementary_generations);
 }
 
 

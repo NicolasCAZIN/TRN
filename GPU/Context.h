@@ -8,19 +8,19 @@ namespace TRN
 {
 	namespace GPU
 	{
-		class GPU_EXPORT Context
+		class Context
 		{
 		private: 
 			static const std::size_t DEFAULT_DIV;
 			static const std::size_t DEFAULT_DIMS;
 			static const std::size_t DEFAULT_DYNAMIC_MEMORY_SIZE;
-			class Handle;
 
-			mutable std::unique_ptr<Handle> handle;
+			class Handle;
+			std::unique_ptr<Handle> handle;
 
 		public :
-			Context(const int &device);
-			~Context();
+			GPU_EXPORT Context(const int &device);
+			GPU_EXPORT ~Context();
 
 #ifdef GPU_LIB
 		public :
@@ -34,7 +34,7 @@ namespace TRN
 			template < class T >
 			static void get_block_dims(T func, const std::vector < std::size_t> &dimensions, dim3 &grid, dim3 &block, const std::size_t &div = DEFAULT_DIV, const std::size_t &dynamic_memory_size = DEFAULT_DYNAMIC_MEMORY_SIZE)
 			{
-				std::size_t dim_x, dim_y, dim_z;
+//				std::size_t dim_x, dim_y, dim_z;
 				int minGridSize, maxBlockSize;
 
 				checkCudaErrors(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &maxBlockSize, func, dynamic_memory_size));
@@ -45,9 +45,9 @@ namespace TRN
 				checkCudaErrors(cudaGetDevice(&device));
 				checkCudaErrors(cudaGetDeviceProperties(&prop, device));*/
 
-				const std::size_t WARP_PER_BLOCK = 2;
-				const std::size_t THREAD_PER_WARP = 32;
-				const std::size_t THREADS_PER_BLOCK = WARP_PER_BLOCK * THREAD_PER_WARP;
+//				const std::size_t WARP_PER_BLOCK = 2;
+				//const std::size_t THREAD_PER_WARP = 32;
+//				const std::size_t THREADS_PER_BLOCK = WARP_PER_BLOCK * THREAD_PER_WARP;
 				maxBlockSize /= div;
 	
 				//auto number_of_blocks = maxBlockSize / THREADS_PER_BLOCK;
@@ -146,7 +146,7 @@ namespace TRN
 #endif
 
 		public :
-			static std::shared_ptr<Context> create(const int &device);
+			static std::shared_ptr<Context> GPU_EXPORT create(const int &device);
 		};
 
 	};

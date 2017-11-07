@@ -58,7 +58,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::TR
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::TEST> &message)
 {
-	handle->backend->test(message.id, message.label, message.incoming, message.expected, message.preamble, message.supplementary_generations);
+	handle->backend->test(message.id, message.label, message.incoming, message.expected, message.preamble, message.autonomous, message.supplementary_generations);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::DECLARE_SEQUENCE> &message)
 {
