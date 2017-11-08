@@ -17,8 +17,8 @@ namespace TRN
 
 		public:
 			
-			virtual void uniform(unsigned long &seed, float **ptr, const std::size_t &batch_size, const std::size_t *rows, const std::size_t *cols, const std::size_t *strides, const float &a = DEFAULT_A, const float &b = DEFAULT_B, const float &sparsity = DEFAULT_SPARSITY) = 0;
-			virtual void gaussian(unsigned long &seed, float **ptr, const std::size_t &batch_size, const std::size_t *rows, const std::size_t *cols, const std::size_t *strides, const float &mu = DEFAULT_MU, const float &sigma = DEFAULT_SIGMA) = 0;
+			virtual void uniform(unsigned long &seed, float **ptr, const std::size_t &batch_size, const std::size_t *rows, const std::size_t *cols, const std::size_t *strides, const bool &blank_diagonal, const float &a = DEFAULT_A, const float &b = DEFAULT_B, const float &sparsity = DEFAULT_SPARSITY) = 0;
+			virtual void gaussian(unsigned long &seed, float **ptr, const std::size_t &batch_size, const std::size_t *rows, const std::size_t *cols, const std::size_t *strides, const bool &blank_diagonal, const float &mu = DEFAULT_MU, const float &sigma = DEFAULT_SIGMA) = 0;
 		};
 	};
 };

@@ -819,7 +819,7 @@ static inline void initialize_states<true>(const cudaStream_t &stream, unsigned 
 	float **batched_ptr, const std::size_t &batched_ptr_rows, const std::size_t &batched_ptr_cols, const std::size_t &batched_ptr_stride,
 	const float &initial_state_scale)
 {
-	random_uniform(stream, seed, -initial_state_scale, initial_state_scale, 0.0f, batch_size, batched_ptr_rows, batched_ptr_cols, batched_ptr, batched_ptr_stride);
+	random_uniform(stream, seed, -initial_state_scale, initial_state_scale, 0.0f, batch_size, batched_ptr_rows, batched_ptr_cols, batched_ptr, batched_ptr_stride, false);
 	seed += batch_size * batched_ptr_rows * batched_ptr_cols;
 }
 

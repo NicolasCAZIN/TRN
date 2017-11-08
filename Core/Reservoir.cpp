@@ -175,10 +175,10 @@ void TRN::Core::Reservoir::initialize(const std::shared_ptr<TRN::Core::Initializ
 		throw std::invalid_argument("Feedback initializer is not initialized");
 	if (!readout)
 		throw std::invalid_argument("Readout initializer is not initialized");
-
+	// blank self connection
 	handle->trial = 1;
 	feedforward->initialize(handle->seed, handle->batched_W_ffwd);
-	recurrent->initialize(handle->seed, handle->batched_W_rec);	
+	recurrent->initialize(handle->seed, handle->batched_W_rec, true);	
 	feedback->initialize(handle->seed, handle->batched_W_fbck);
 	readout->initialize(handle->seed, handle->batched_W_ro);
 }

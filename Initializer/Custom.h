@@ -20,7 +20,7 @@ namespace TRN
 			virtual ~Custom();
 
 		public:
-			virtual void initialize(unsigned long &seed, std::shared_ptr<TRN::Core::Batch> &batch) override;
+			virtual void initialize(unsigned long &seed, std::shared_ptr<TRN::Core::Batch> &batch, const bool &blank_diagonal) override;
 
 		public:
 			static std::shared_ptr<Custom> create(const std::shared_ptr<TRN::Backend::Driver> &driver, 

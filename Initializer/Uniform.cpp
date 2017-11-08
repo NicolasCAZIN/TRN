@@ -28,9 +28,9 @@ TRN::Initializer::Uniform::~Uniform()
 	handle.reset();
 }
 
-void TRN::Initializer::Uniform::initialize(unsigned long &seed, std::shared_ptr<TRN::Core::Batch> &batch)
+void TRN::Initializer::Uniform::initialize(unsigned long &seed, std::shared_ptr<TRN::Core::Batch> &batch, const bool &blank_diagonal)
 {
-	implementor->get_random()->uniform(seed,  batch->get_elements(), batch->get_size(), batch->get_rows(), batch->get_cols(), batch->get_strides(), handle->a, handle->b, handle->sparsity);
+	implementor->get_random()->uniform(seed,  batch->get_elements(), batch->get_size(), batch->get_rows(), batch->get_cols(), batch->get_strides(), blank_diagonal, handle->a, handle->b, handle->sparsity);
 }
 
 std::shared_ptr<TRN::Initializer::Uniform> TRN::Initializer::Uniform::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const float &a, const float &b, const float &sparsity)

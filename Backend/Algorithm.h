@@ -13,6 +13,7 @@ namespace TRN
 
 		public:
 
+
 			virtual void preallocate(const std::size_t &stimulus_size, const std::size_t &reservoir_size,
 				const std::size_t &prediction_size, const std::size_t &batch_size) = 0;
 

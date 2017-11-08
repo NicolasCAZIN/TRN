@@ -18,7 +18,7 @@ namespace TRN
 			virtual ~Gaussian();
 
 		public:
-			virtual void initialize(unsigned long &seed, std::shared_ptr<TRN::Core::Batch> &batch) override;
+			virtual void initialize(unsigned long &seed, std::shared_ptr<TRN::Core::Batch> &batch, const bool &blank_diagonal) override;
 
 		public:
 			static std::shared_ptr<Gaussian> create(const std::shared_ptr<TRN::Backend::Driver> &driver,  const float &mu, const float &sigma);

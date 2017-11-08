@@ -15,7 +15,7 @@ static void batched_random_uniform_kernel(
 	const float offset,
 	const float scale,
 	const int batch_size, const int rows, const int cols,
-	float ** __restrict__ x, const int x_stride
+	float ** __restrict__ x, const int x_stride, bool blank_diagonal
 )
 {
 	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
@@ -27,7 +27,12 @@ static void batched_random_uniform_kernel(
 			{
 				curandStatePhilox4_32_10_t s;
 				curand_init(seed + col * rows + row + batch * rows * cols, 0, 0, &s);
-				reinterpret_cast<float4 *>(&X[row * x_stride])[col] = curand_uniform4(&s) * scale + offset;
+				float4 r = curand_uniform4(&s) * scale + offset;
+				if (blank_diagonal && (row >> 0x2) == col)
+				{
+					((float *)&r.x)[row & 0x3] = 0.0f;
+				}
+				reinterpret_cast<float4 *>(&X[row * x_stride])[col] = r;
 			}
 		}
 	}
@@ -40,7 +45,7 @@ static void batched_random_uniform_sparse_kernel(
 	const float scale,
 	const float sparsity,
 	const int batch_size, const int rows, const int cols,
-	float ** __restrict__ x, const int x_stride
+	float ** __restrict__ x, const int x_stride, bool blank_diagonal
 )
 {
 	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
@@ -61,6 +66,10 @@ static void batched_random_uniform_sparse_kernel(
 				value.y = dice.y < sparsity ? 0.0f : value.y;
 				value.z = dice.z < sparsity ? 0.0f : value.z;
 				value.w = dice.w < sparsity ? 0.0f : value.w;
+				if (blank_diagonal && (row >> 0x2) == col)
+				{
+					((float *)&value.x)[row & 0x3] = 0.0f;
+				}
 				reinterpret_cast<float4 *>(&X[row * x_stride])[col] = value;
 			}
 		}
@@ -70,7 +79,7 @@ void random_uniform(const cudaStream_t &stream,
 	const unsigned long &seed,
 	const float &a, const float &b, const float &sparsity,
 	const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
-	float **x, const std::size_t &x_stride)
+	float **x, const std::size_t &x_stride, const bool &blank_diagonal)
 {
 	auto scale = b - a;
 	auto offset = a;
@@ -89,14 +98,14 @@ void random_uniform(const cudaStream_t &stream,
 		batched_random_uniform_sparse_kernel << < grid, block, 0, stream >> > (
 			seed,
 			offset, scale, sparsity,
-			batch_size, rows, cols, x, x_stride);
+			batch_size, rows, cols, x, x_stride, blank_diagonal);
 	}
 	else
 	{
 		batched_random_uniform_kernel << < grid, block, 0, stream >> > (
 			seed,
 			offset, scale,
-			batch_size, rows, cols, x, x_stride);
+			batch_size, rows, cols, x, x_stride, blank_diagonal);
 	}
 
 	checkCudaErrors(cudaGetLastError());
@@ -108,7 +117,7 @@ static void batched_random_gaussian_kernel(
 	const float mu,
 	const float sigma,
 	const int batch_size, const int rows, const int cols,
-	float ** __restrict__ x, const int x_stride
+	float ** __restrict__ x, const int x_stride, bool blank_diagonal
 )
 {
 	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
@@ -120,7 +129,12 @@ static void batched_random_gaussian_kernel(
 			{
 				curandStatePhilox4_32_10_t s;
 				curand_init(seed + col * rows + row + batch * rows * cols, 0, 0, &s);
-				reinterpret_cast<float4 *>(&X[row * x_stride])[col] = curand_normal4(&s) * sigma + mu;
+				float4 r = curand_normal4(&s) * sigma + mu;
+				if (blank_diagonal && (row >> 0x2) == col)
+				{
+					((float *)&r.x)[row & 0x3] = 0.0f;
+				}
+				reinterpret_cast<float4 *>(&X[row * x_stride])[col] = r;
 			}
 		}
 	}
@@ -129,7 +143,7 @@ void random_gaussian(const cudaStream_t &stream,
 	const unsigned long &seed,
 	const float &mu, const float &sigma,
 	const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
-	float **x, const std::size_t &x_stride)
+	float **x, const std::size_t &x_stride, const bool &blank_diagonal)
 {
 	dim3 grid, block;
 
@@ -143,7 +157,7 @@ void random_gaussian(const cudaStream_t &stream,
 	batched_random_gaussian_kernel << < grid, block, 0, stream >> > (
 		seed,
 		mu, sigma,
-		batch_size, rows, cols, x, x_stride);
+		batch_size, rows, cols, x, x_stride, blank_diagonal);
 
 	checkCudaErrors(cudaGetLastError());
 }

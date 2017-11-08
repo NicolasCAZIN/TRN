@@ -26,9 +26,9 @@ TRN::Initializer::Gaussian::~Gaussian()
 	handle.reset();
 }
 
-void TRN::Initializer::Gaussian::initialize(unsigned long &seed, std::shared_ptr<TRN::Core::Batch> &batch)
+void TRN::Initializer::Gaussian::initialize(unsigned long &seed, std::shared_ptr<TRN::Core::Batch> &batch, const bool &blank_diagonal)
 {
-	implementor->get_random()->gaussian(seed, batch->get_elements(), batch->get_size(), batch->get_rows(), batch->get_cols(), batch->get_strides(), handle->mu, handle->sigma);
+	implementor->get_random()->gaussian(seed, batch->get_elements(), batch->get_size(), batch->get_rows(), batch->get_cols(), batch->get_strides(), blank_diagonal, handle->mu, handle->sigma);
 }
 
 std::shared_ptr<TRN::Initializer::Gaussian> TRN::Initializer::Gaussian::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const float &mu, const float &sigma)

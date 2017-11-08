@@ -17,18 +17,18 @@ TRN::GPU::Random::~Random()
 
 
 
-void TRN::GPU::Random::uniform(unsigned long &seed, float **ptr, const std::size_t &batch_size, const std::size_t *rows, const std::size_t *cols, const std::size_t *strides, const float &a, const float &b, const float &sparsity)
+void TRN::GPU::Random::uniform(unsigned long &seed, float **ptr, const std::size_t &batch_size, const std::size_t *rows, const std::size_t *cols, const std::size_t *strides, const bool &blank_diagonal, const float &a, const float &b, const float &sparsity)
 {
-	random_uniform(handle->context->get_stream(), seed, a, b, sparsity, batch_size, *rows, *cols, ptr, *strides);
+	random_uniform(handle->context->get_stream(), seed, a, b, sparsity, batch_size, *rows, *cols, ptr, *strides, blank_diagonal && *rows == *cols);
 
 	for (int batch = 0; batch < batch_size; batch++)
 	{
 		seed += rows[batch] * cols[batch];
 	}
 }
-void TRN::GPU::Random::gaussian(unsigned long &seed, float **ptr, const std::size_t &batch_size, const std::size_t *rows, const std::size_t *cols, const std::size_t *strides, const float &mu, const float &sigma)
+void TRN::GPU::Random::gaussian(unsigned long &seed, float **ptr, const std::size_t &batch_size, const std::size_t *rows, const std::size_t *cols, const std::size_t *strides, const bool &blank_diagonal, const float &mu, const float &sigma)
 {
-	random_gaussian(handle->context->get_stream(), seed, mu, sigma, batch_size, *rows, *cols, ptr, *strides);
+	random_gaussian(handle->context->get_stream(), seed, mu, sigma, batch_size, *rows, *cols, ptr, *strides, blank_diagonal && *rows == *cols);
 	
 	for (int batch = 0; batch < batch_size; batch++)
 	{

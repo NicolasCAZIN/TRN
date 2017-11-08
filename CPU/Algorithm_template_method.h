@@ -1476,7 +1476,7 @@ struct initialize_states<Implementation, true>
 {
 	void operator () (const std::size_t &batch_size, unsigned long &seed, float **batched_ptr, const std::size_t *batched_rows, const std::size_t *batched_cols, const std::size_t *batched_strides, const float &initial_state_scale)
 	{
-		TRN::CPU::Random::uniform_implementation(seed, batched_ptr, batch_size, batched_rows, batched_cols, batched_strides, -initial_state_scale, initial_state_scale, 0.0f);
+		TRN::CPU::Random::uniform_implementation(seed, batched_ptr, batch_size, batched_rows, batched_cols, batched_strides, false, -initial_state_scale, initial_state_scale, 0.0f);
 	
 		for (int k = 0; k < batch_size; k++)
 			seed += batch_size * batched_rows[k] * batched_cols[k];
