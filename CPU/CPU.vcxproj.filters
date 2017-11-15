@@ -82,15 +82,6 @@
     <ClInclude Include="Driver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sse_mathfun.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="avx_mathfun.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="neon_mathfun.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Implementation.h">
       <Filter>Header Files</Filter>
     </ClInclude>

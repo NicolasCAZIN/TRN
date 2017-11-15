@@ -2,8 +2,7 @@
 
 #if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
 #include "Algorithm.h"
-#define USE_SSE2
-#include "sse_mathfun.h"
+
 
 
 
@@ -56,15 +55,6 @@ static inline __m128 sqr_ps(const __m128 &__a)
 	return mul_ps(__a, __a);
 }
 #define mul_add_ps(__a, __b, __c) (add_ps(mul_ps((__a), (__b)), (__c)))
-static inline __m128 tanh_ps(const __m128 &__a)
-{
-
-	const v4sf one = _mm_set1_ps(1.0f);
-	const v4sf two = _mm_set1_ps(2.0f);
-	auto e = ::exp_ps(_mm_mul_ps(__a, two));
-	return _mm_div_ps(_mm_sub_ps(e, one), _mm_add_ps(e, one));
-}
-#define exp_ps(__a) (::exp_ps(__a))
 
 static inline float hsum_ps(const __m128 &__a)
 {

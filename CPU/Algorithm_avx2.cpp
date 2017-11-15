@@ -3,7 +3,6 @@
 #if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
 #include "Algorithm.h"
 
-#include "avx_mathfun.h"
 
 
 
@@ -57,14 +56,6 @@ static inline __m256 sqr_ps(const __m256 &__a)
 	return mul_ps(__a, __a);
 }
 #define mul_add_ps(__a, __b, __c) (add_ps(mul_ps((__a), (__b)), (__c)))
-static inline __m256 tanh_ps(const __m256 &__a)
-{
-	const v8sf one = _mm256_set1_ps(1.0f);
-	const v8sf two = _mm256_set1_ps(2.0f);
- auto e = ::exp256_ps(_mm256_mul_ps(__a, two));
-  return _mm256_div_ps(_mm256_sub_ps(e, one), _mm256_add_ps(e, one));
-}
-#define exp_ps(__a) (::exp256_ps(__a))
 
 static inline float hsum_ps(const __m256 &__a)
 {	

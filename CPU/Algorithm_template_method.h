@@ -505,7 +505,7 @@ static inline void 	circle(VSLStreamStatePtr &stream, const float &scale, float 
 }
 
 template <TRN::CPU::Implementation Implementation>
-static inline float location_hypothesis(const float *firing_rate_row, const std::size_t &cols,
+static inline void location_hypothesis(const float *firing_rate_row, const std::size_t &cols,
 	const typename TRN::CPU::Traits<Implementation>::type  &__prediction,
 	const typename TRN::CPU::Traits<Implementation>::type  &__inv_sigma2,
 	float *hypothesis_row)
@@ -516,28 +516,21 @@ static inline float location_hypothesis(const float *firing_rate_row, const std:
 	{
 		for (; col + _8 - 1 < cols; col += _8)
 		{
-			auto __h0 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _0]))), __inv_sigma2));
-			__acc = add_ps(__h0, __acc);
+			auto __h0 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _0]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _0], __h0);
-			auto __h1 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _1]))), __inv_sigma2));
-			__acc = add_ps(__h1, __acc);
+			auto __h1 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _1]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _1], __h1);
-			auto __h2 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _2]))), __inv_sigma2));
-			__acc = add_ps(__h2, __acc);
+			auto __h2 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _2]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _2], __h2);
-			auto __h3 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _3]))), __inv_sigma2));
-			__acc = add_ps(__h3, __acc);
+			auto __h3 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _3]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _3], __h3);			
-			auto __h4 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _4]))), __inv_sigma2));
-			__acc = add_ps(__h4, __acc);
+			auto __h4 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _4]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _4], __h4);
-			auto __h5 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _5]))), __inv_sigma2));
-			__acc = add_ps(__h5, __acc);
+			auto __h5 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _5]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _5], __h5);
-			auto __h6 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _6]))), __inv_sigma2));
-			__acc = add_ps(__h6, __acc);
+			auto __h6 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _6]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _6], __h6);
-			auto __h7 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _7]))), __inv_sigma2));
+			auto __h7 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _7]))), __inv_sigma2);
 			__acc = add_ps(__h7, __acc);
 			stream_ps(&hypothesis_row[col + _7], __h7);
 		}
@@ -546,17 +539,13 @@ static inline float location_hypothesis(const float *firing_rate_row, const std:
 	{
 		for (; col + _4 - 1 < cols; col += _4)
 		{
-			auto __h0 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _0]))), __inv_sigma2));
-			__acc = add_ps(__h0, __acc);
+			auto __h0 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _0]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _0], __h0);
-			auto __h1 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _1]))), __inv_sigma2));
-			__acc = add_ps(__h1, __acc);
+			auto __h1 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _1]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _1], __h1);
-			auto __h2 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _2]))), __inv_sigma2));
-			__acc = add_ps(__h2, __acc);
+			auto __h2 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _2]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _2], __h2);
-			auto __h3 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _3]))), __inv_sigma2));
-			__acc = add_ps(__h3, __acc);
+			auto __h3 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _3]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _3], __h3);
 		}
 	}
@@ -564,11 +553,9 @@ static inline float location_hypothesis(const float *firing_rate_row, const std:
 	{
 		for (; col + _2 - 1 < cols; col += _2)
 		{
-			auto __h0 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _0]))), __inv_sigma2));
-			__acc = add_ps(__h0, __acc);
+			auto __h0 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _0]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _0], __h0);
-			auto __h1 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _1]))), __inv_sigma2));
-			__acc = add_ps(__h1, __acc);
+			auto __h1 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _1]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _1], __h1);
 		}
 	}
@@ -576,14 +563,10 @@ static inline float location_hypothesis(const float *firing_rate_row, const std:
 	{
 		for (; col  < cols; col += _1)
 		{
-			auto __h0 = exp_ps(mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _0]))), __inv_sigma2));
-			__acc = add_ps(__h0, __acc);
+			auto __h0 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _0]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _0], __h0);
 		}
 	}
-
-
-	return hsum_ps(__acc);
 }
 
 template <TRN::CPU::Implementation Implementation>
@@ -609,7 +592,7 @@ void TRN::CPU::Algorithm<Implementation>::place_cell_location_probability(
 		const std::size_t firing_rate_map_stride = firing_rate_map_strides[place_cell];
 		auto firing_rate_k = firing_rate_map[place_cell];
 		auto hypothesis_k = hypothesis_map[batch][place_cell];
-		float sum = 0.0f;
+
 		const float &p = prediction[batch][place_cell];
 		const auto &__prediction = set1_ps(p);
 
@@ -618,8 +601,10 @@ void TRN::CPU::Algorithm<Implementation>::place_cell_location_probability(
 			auto firing_rate_row = &firing_rate_k[row * firing_rate_map_stride];
 			auto hypothesis_row = &hypothesis_k[row * hypothesis_map_stride];
 
-			sum += location_hypothesis<Implementation>(firing_rate_row, hypothesis_map_stride, __prediction, ___inv_sigma2, hypothesis_row);
+			location_hypothesis<Implementation>(firing_rate_row, hypothesis_map_stride, __prediction, ___inv_sigma2, hypothesis_row);
 		}
+		vsExp(rows * hypothesis_map_stride, hypothesis_k, hypothesis_k);
+		float sum =  cblas_sasum(rows * hypothesis_map_stride, hypothesis_k, 1);
 		scale[batch][place_cell] = 1.0f / (sum * (float)place_cells_number);
 	}
 
@@ -798,8 +783,7 @@ void TRN::CPU::Algorithm<Implementation>::select_most_probable_location(const st
 		float *predicted_location = batched_predicted_location[batch];
 		const std::size_t rows = batched_location_probability_rows[batch];
 		const std::size_t stride = batched_location_probability_strides[batch];
-		auto it = std::max_element(location_probability, location_probability + rows * stride);
-		auto idx = std::distance(location_probability, it);
+		auto idx = cblas_isamax(rows * stride, location_probability, 1);
 		std::size_t col = idx % stride;
 		std::size_t row = idx / stride;
 		float x = x_grid[col];
@@ -975,42 +959,34 @@ static inline void update_reservoir(
 			{
 				auto __p0 = load_ps(&p[row + _0]);
 				__p0 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _0]), load_ps(&u_ffwd[row + _0])), __p0), __p0);
-				stream_ps(&x_res[row + _0], tanh_ps(__p0));
 				stream_ps(&p[row + _0], __p0);
 			
 				auto __p1 = load_ps(&p[row + _1]);
 				__p1 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _1]), load_ps(&u_ffwd[row + _1])), __p1), __p1);
-				stream_ps(&x_res[row + _1], tanh_ps(__p1));
 				stream_ps(&p[row + _1], __p1);
 
 				auto __p2 = load_ps(&p[row + _2]);
 				__p2 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _2]), load_ps(&u_ffwd[row + _2])), __p2), __p2);
-				stream_ps(&x_res[row + _2], tanh_ps(__p2));
 				stream_ps(&p[row + _2], __p2);
 
 				auto __p3 = load_ps(&p[row + _3]);
 				__p3 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _3]), load_ps(&u_ffwd[row + _3])), __p3), __p3);
-				stream_ps(&x_res[row + _3], tanh_ps(__p3));
 				stream_ps(&p[row + _3], __p3);
 
 				auto __p4 = load_ps(&p[row + _4]);
 				__p4 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _4]), load_ps(&u_ffwd[row + _4])), __p4), __p4);
-				stream_ps(&x_res[row + _4], tanh_ps(__p4));
 				stream_ps(&p[row + _4], __p4);
 
 				auto __p5 = load_ps(&p[row + _5]);
 				__p5 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _5]), load_ps(&u_ffwd[row + _5])), __p5), __p5);
-				stream_ps(&x_res[row + _5], tanh_ps(__p5));
 				stream_ps(&p[row + _5], __p5);
 
 				auto __p6 = load_ps(&p[row + _6]);
 				__p6 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _6]), load_ps(&u_ffwd[row + _6])), __p6), __p6);
-				stream_ps(&x_res[row + _6], tanh_ps(__p6));
 				stream_ps(&p[row + _6], __p6);
 
 				auto __p7 = load_ps(&p[row + _7]);
 				__p7 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _7]), load_ps(&u_ffwd[row + _7])), __p7), __p7);
-				stream_ps(&x_res[row + _7], tanh_ps(__p7));
 				stream_ps(&p[row + _7], __p7);
 			}
 		}
@@ -1020,22 +996,18 @@ static inline void update_reservoir(
 			{
 				auto __p0 = load_ps(&p[row + _0]);
 				__p0 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _0]), load_ps(&u_ffwd[row + _0])), __p0), __p0);
-				stream_ps(&x_res[row + _0], tanh_ps(__p0));
 				stream_ps(&p[row + _0], __p0);
 
 				auto __p1 = load_ps(&p[row + _1]);
 				__p1 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _1]), load_ps(&u_ffwd[row + _1])), __p1), __p1);
-				stream_ps(&x_res[row + _1], tanh_ps(__p1));
 				stream_ps(&p[row + _1], __p1);
 
 				auto __p2 = load_ps(&p[row + _2]);
 				__p2 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _2]), load_ps(&u_ffwd[row + _2])), __p2), __p2);
-				stream_ps(&x_res[row + _2], tanh_ps(__p2));
 				stream_ps(&p[row + _2], __p2);
 
 				auto __p3 = load_ps(&p[row + _3]);
 				__p3 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _3]), load_ps(&u_ffwd[row + _3])), __p3), __p3);
-				stream_ps(&x_res[row + _3], tanh_ps(__p3));
 				stream_ps(&p[row + _3], __p3);
 			}
 		}
@@ -1045,12 +1017,10 @@ static inline void update_reservoir(
 			{
 				auto __p0 = load_ps(&p[row + _0]);
 				__p0 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _0]), load_ps(&u_ffwd[row + _0])), __p0), __p0);
-				stream_ps(&x_res[row + _0], tanh_ps(__p0));
 				stream_ps(&p[row + _0], __p0);
 
 				auto __p1 = load_ps(&p[row + _1]);
 				__p1 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _1]), load_ps(&u_ffwd[row + _1])), __p1), __p1);
-				stream_ps(&x_res[row + _1], tanh_ps(__p1));
 				stream_ps(&p[row + _1], __p1);
 			}
 		}
@@ -1060,10 +1030,10 @@ static inline void update_reservoir(
 			{
 				auto __p0 = load_ps(&p[row + _0]);
 				__p0 = mul_add_ps(leak_rate, sub_ps(add_ps(load_ps(&u[row + _0]), load_ps(&u_ffwd[row + _0])), __p0), __p0);
-				stream_ps(&x_res[row + _0], tanh_ps(__p0));
 				stream_ps(&p[row + _0], __p0);
 			}
 		}
+		vsTanh(rows, p, x_res);
 	}
 }
 
@@ -1102,42 +1072,34 @@ static inline void update_reservoir_no_input(
 			{
 				auto __p0 = load_ps(&p[row + _0]);
 				__p0 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _0]), __p0), __p0);
-				stream_ps(&x_res[row + _0], tanh_ps(__p0));
 				stream_ps(&p[row + _0], __p0);
 
 				auto __p1 = load_ps(&p[row + _1]);
 				__p1 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _1]), __p1), __p1);
-				stream_ps(&x_res[row + _1], tanh_ps(__p1));
 				stream_ps(&p[row + _1], __p1);
 
 				auto __p2 = load_ps(&p[row + _2]);
 				__p2 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _2]), __p2), __p2);
-				stream_ps(&x_res[row + _2], tanh_ps(__p2));
 				stream_ps(&p[row + _2], __p2);
 
 				auto __p3 = load_ps(&p[row + _3]);
 				__p3 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _3]), __p3), __p3);
-				stream_ps(&x_res[row + _3], tanh_ps(__p3));
 				stream_ps(&p[row + _3], __p3);
 
 				auto __p4 = load_ps(&p[row + _4]);
 				__p4 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _4]), __p4), __p4);
-				stream_ps(&x_res[row + _4], tanh_ps(__p4));
 				stream_ps(&p[row + _4], __p4);
 
 				auto __p5 = load_ps(&p[row + _5]);
 				__p5 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _5]), __p5), __p5);
-				stream_ps(&x_res[row + _5], tanh_ps(__p5));
 				stream_ps(&p[row + _5], __p5);
 
 				auto __p6 = load_ps(&p[row + _6]);
 				__p6 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _6]), __p6), __p6);
-				stream_ps(&x_res[row + _6], tanh_ps(__p6));
 				stream_ps(&p[row + _6], __p6);
 
 				auto __p7 = load_ps(&p[row + _7]);
 				__p7 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _7]), __p7), __p7);
-				stream_ps(&x_res[row + _7], tanh_ps(__p7));
 				stream_ps(&p[row + _7], __p7);
 			}
 		}
@@ -1147,22 +1109,18 @@ static inline void update_reservoir_no_input(
 			{
 				auto __p0 = load_ps(&p[row + _0]);
 				__p0 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _0]),  __p0), __p0);
-				stream_ps(&x_res[row + _0], tanh_ps(__p0));
 				stream_ps(&p[row + _0], __p0);
 
 				auto __p1 = load_ps(&p[row + _1]);
 				__p1 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _1]),  __p1), __p1);
-				stream_ps(&x_res[row + _1], tanh_ps(__p1));
 				stream_ps(&p[row + _1], __p1);
 
 				auto __p2 = load_ps(&p[row + _2]);
 				__p2 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _2]),  __p2), __p2);
-				stream_ps(&x_res[row + _2], tanh_ps(__p2));
 				stream_ps(&p[row + _2], __p2);
 
 				auto __p3 = load_ps(&p[row + _3]);
 				__p3 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _3]), __p3), __p3);
-				stream_ps(&x_res[row + _3], tanh_ps(__p3));
 				stream_ps(&p[row + _3], __p3);
 			}
 		}
@@ -1172,12 +1130,10 @@ static inline void update_reservoir_no_input(
 			{
 				auto __p0 = load_ps(&p[row + _0]);
 				__p0 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _0]),  __p0), __p0);
-				stream_ps(&x_res[row + _0], tanh_ps(__p0));
 				stream_ps(&p[row + _0], __p0);
 
 				auto __p1 = load_ps(&p[row + _1]);
 				__p1 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _1]), __p1), __p1);
-				stream_ps(&x_res[row + _1], tanh_ps(__p1));
 				stream_ps(&p[row + _1], __p1);
 			}
 		}
@@ -1187,10 +1143,10 @@ static inline void update_reservoir_no_input(
 			{
 				auto __p0 = load_ps(&p[row + _0]);
 				__p0 = mul_add_ps(leak_rate, sub_ps(load_ps(&u[row + _0]), __p0), __p0);
-				stream_ps(&x_res[row + _0], tanh_ps(__p0));
 				stream_ps(&p[row + _0], __p0);
 			}
 		}
+		vsTanh(rows, p, x_res);
 	}
 }
 
@@ -1253,47 +1209,7 @@ static inline void batched_update_readout_activation(const std::size_t &batch_si
 	
 		float *x = batched_x[batch];
 		auto cols = batched_x_cols[batch];
-
-		std::size_t col = 0;
-		if (cols - col > _8)
-		{
-			for (; col + _8 - 1 < cols; col += _8)
-			{
-				stream_ps(&x[col + _0], tanh_ps(load_ps(&x[col + _0])));
-				stream_ps(&x[col + _1], tanh_ps(load_ps(&x[col + _1])));
-				stream_ps(&x[col + _2], tanh_ps(load_ps(&x[col + _2])));
-				stream_ps(&x[col + _3], tanh_ps(load_ps(&x[col + _3])));
-				stream_ps(&x[col + _4], tanh_ps(load_ps(&x[col + _4])));
-				stream_ps(&x[col + _5], tanh_ps(load_ps(&x[col + _5])));
-				stream_ps(&x[col + _6], tanh_ps(load_ps(&x[col + _6])));
-				stream_ps(&x[col + _7], tanh_ps(load_ps(&x[col + _7])));
-			}
-		}
-		if (cols - col > _4)
-		{
-			for (; col + _4 - 1 < cols; col += _4)
-			{
-				stream_ps(&x[col + _0], tanh_ps(load_ps(&x[col + _0])));
-				stream_ps(&x[col + _1], tanh_ps(load_ps(&x[col + _1])));
-				stream_ps(&x[col + _2], tanh_ps(load_ps(&x[col + _2])));
-				stream_ps(&x[col + _3], tanh_ps(load_ps(&x[col + _3])));
-			}
-		}
-		if (cols - col > _2)
-		{
-			for (; col + _2 - 1 < cols; col += _2)
-			{
-				stream_ps(&x[col + _0], tanh_ps(load_ps(&x[col + _0])));
-				stream_ps(&x[col + _1], tanh_ps(load_ps(&x[col + _1])));
-			}
-		}
-		if (cols - col > 0)
-		{
-			for (; col + _1 - 1 < cols; col += _1)
-			{
-				stream_ps(&x[col + _0], tanh_ps(load_ps(&x[col + _0])));
-			}
-		}
+		vsTanh(cols, x, x);
 	}
 }
 

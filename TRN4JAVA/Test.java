@@ -109,15 +109,22 @@ public class Test
 			System.loadLibrary("boost_system-vc120-mt-1_56");
 
 	
+	
+			System.loadLibrary("boost_chrono-vc140-mt-1_62");
+			System.loadLibrary("boost_date_time-vc140-mt-1_62");
 			System.loadLibrary("boost_filesystem-vc140-mt-1_62");
-			System.loadLibrary("boost_iostreams-vc140-mt-1_62");
-			System.loadLibrary("boost_mpi-vc140-mt-1_62");
+      System.loadLibrary("boost_thread-vc140-mt-1_62");
 			System.loadLibrary("boost_program_options-vc140-mt-1_62");
 			System.loadLibrary("boost_serialization-vc140-mt-1_62");
 			System.loadLibrary("boost_system-vc140-mt-1_62");
 			System.loadLibrary("boost_zlib-vc140-mt-1_62");
 			System.loadLibrary("boost_bzip2-vc140-mt-1_62");
-
+      System.loadLibrary("boost_log-vc140-mt-1_62");
+	  	System.loadLibrary("boost_regex-vc140-mt-1_62");
+			System.loadLibrary("boost_log_setup-vc140-mt-1_62");
+			System.loadLibrary("boost_iostreams-vc140-mt-1_62");
+			System.loadLibrary("boost_mpi-vc140-mt-1_62");
+			
 			System.loadLibrary("Backend");
 			System.loadLibrary("GPU");
 			System.loadLibrary("CPU");
