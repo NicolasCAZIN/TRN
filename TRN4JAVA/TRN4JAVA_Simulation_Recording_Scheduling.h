@@ -15,6 +15,14 @@ extern "C" {
 JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_00024Recording_00024Scheduling_install
   (JNIEnv *, jclass, jobject);
 
+/*
+ * Class:     TRN4JAVA_Simulation_Recording_Scheduling
+ * Method:    configure
+ * Signature: (JLTRN4JAVA/Simulation/Recording/Scheduling;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_00024Recording_00024Scheduling_configure
+  (JNIEnv *, jclass, jlong, jobject);
+
 #ifdef __cplusplus
 }
 #endif

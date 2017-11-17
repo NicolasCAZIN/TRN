@@ -16,6 +16,19 @@ extern boost::shared_ptr<TRN4CPP::Plugin::Simplified::Interface> simplified;
 extern boost::shared_ptr<TRN4CPP::Plugin::Custom::Interface> custom;
 extern std::vector<boost::shared_ptr<TRN4CPP::Plugin::Callbacks::Interface>> callbacks;
 
+extern std::function<void()> on_completed;
+extern std::function<void(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)> on_ack;
+extern std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> on_processor;
+extern std::function<void(const unsigned long long &id, const int &rank)> on_allocated;
+extern std::function<void(const unsigned long long &id, const int &rank)> on_deallocated;
+extern std::function<void(const int &rank)> on_quit;
+extern std::function<void(const unsigned long long &id)> on_trained;
+extern std::function<void(const unsigned long long &id)> on_primed;
+extern std::function<void(const unsigned long long &id)> on_tested;
+extern std::function<void(const unsigned long long &id)> on_configured;
+extern std::function<void(const std::string &message) > on_error;
+extern std::function<void(const std::string &message) > on_information;
+extern std::function<void(const std::string &message) > on_warning;
 
 extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
 extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_raw;
@@ -76,7 +89,19 @@ static void initialize_frontend(const std::shared_ptr<TRN::Engine::Communicator>
 		throw std::runtime_error("A Frontend is already setup");
 
 	frontend = TRN::ViewModel::Frontend::create(communicator);
-	
+	frontend->install_ack(on_ack);
+	frontend->install_completed(on_completed);
+	frontend->install_processor(on_processor);
+	frontend->install_allocated(on_allocated);
+	frontend->install_deallocated(on_deallocated);
+	frontend->install_quit(on_quit);
+	frontend->install_trained(on_trained);
+	frontend->install_tested(on_tested);
+	frontend->install_primed(on_primed);
+	frontend->install_configured(on_configured);
+	frontend->install_error(on_error);
+	frontend->install_information(on_information);
+	frontend->install_warning(on_warning);
 	frontend->start();
 	std::cout << "TRN successfully initialized" << std::endl;
 }

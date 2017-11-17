@@ -15,6 +15,14 @@ extern "C" {
 JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_00024Recording_00024Weights_install
   (JNIEnv *, jclass, jobject);
 
+/*
+ * Class:     TRN4JAVA_Simulation_Recording_Weights
+ * Method:    configure
+ * Signature: (JLTRN4JAVA/Simulation/Recording/Weights;ZZ)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_00024Recording_00024Weights_configure
+  (JNIEnv *, jclass, jlong, jobject, jboolean, jboolean);
+
 #ifdef __cplusplus
 }
 #endif

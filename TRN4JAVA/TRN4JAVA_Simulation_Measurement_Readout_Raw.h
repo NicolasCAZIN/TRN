@@ -15,6 +15,14 @@ extern "C" {
 JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_00024Measurement_00024Readout_00024Raw_install
   (JNIEnv *, jclass, jobject);
 
+/*
+ * Class:     TRN4JAVA_Simulation_Measurement_Readout_Raw
+ * Method:    configure
+ * Signature: (JJLTRN4JAVA/Simulation/Measurement/Raw;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_00024Measurement_00024Readout_00024Raw_configure
+  (JNIEnv *, jclass, jlong, jlong, jobject);
+
 #ifdef __cplusplus
 }
 #endif

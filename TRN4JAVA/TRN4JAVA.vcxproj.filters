@@ -139,6 +139,105 @@
     <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Mutator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Loop_Copy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Loop_Custom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Loop_SpatialFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedback_Custom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedback_Gaussian.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedback_Uniform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedforward_Custom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedforward_Gaussian.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedforward_Uniform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Readout_Custom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Readout_Gaussian.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Readout_Uniform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Recurrent_Custom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Recurrent_Gaussian.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Recurrent_Uniform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_WidrowHoff.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Custom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Mutator_Custom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Mutator_Reverse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Mutator_Shuffle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Snippets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Tiled.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Execution.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Events.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Events_Ack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Events_Allocated.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Events_Configured.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Events_Primed.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Events_Processor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Events_Tested.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Events_Trained.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Events_Deallocated.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Engine_Events_Completed.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="trn4java_global.h">

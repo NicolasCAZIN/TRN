@@ -15,6 +15,14 @@ extern "C" {
 JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_00024Recording_00024Performances_install
   (JNIEnv *, jclass, jobject);
 
+/*
+ * Class:     TRN4JAVA_Simulation_Recording_Performances
+ * Method:    configure
+ * Signature: (JLTRN4JAVA/Simulation/Recording/Performances;ZZZ)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_00024Recording_00024Performances_configure
+  (JNIEnv *, jclass, jlong, jobject, jboolean, jboolean, jboolean);
+
 #ifdef __cplusplus
 }
 #endif

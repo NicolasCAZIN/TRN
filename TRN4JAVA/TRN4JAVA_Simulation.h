@@ -23,6 +23,70 @@ JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_declare
 JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_compute
   (JNIEnv *, jclass, jstring);
 
+/*
+ * Class:     TRN4JAVA_Simulation
+ * Method:    allocate
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_allocate
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     TRN4JAVA_Simulation
+ * Method:    deallocate
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_deallocate
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     TRN4JAVA_Simulation
+ * Method:    train
+ * Signature: (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_train
+  (JNIEnv *, jclass, jlong, jstring, jstring, jstring);
+
+/*
+ * Class:     TRN4JAVA_Simulation
+ * Method:    test
+ * Signature: (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;IZI)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_test
+  (JNIEnv *, jclass, jlong, jstring, jstring, jstring, jint, jboolean, jint);
+
+/*
+ * Class:     TRN4JAVA_Simulation
+ * Method:    declare_sequence
+ * Signature: (JLjava/lang/String;Ljava/lang/String;[FJ)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_declare_1sequence
+  (JNIEnv *, jclass, jlong, jstring, jstring, jfloatArray, jlong);
+
+/*
+ * Class:     TRN4JAVA_Simulation
+ * Method:    declare_set
+ * Signature: (JLjava/lang/String;Ljava/lang/String;[Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_declare_1set
+  (JNIEnv *, jclass, jlong, jstring, jstring, jobjectArray);
+
+/*
+ * Class:     TRN4JAVA_Simulation
+ * Method:    configure_begin
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_configure_1begin
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     TRN4JAVA_Simulation
+ * Method:    configure_end
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Simulation_configure_1end
+  (JNIEnv *, jclass, jlong);
+
 #ifdef __cplusplus
 }
 #endif

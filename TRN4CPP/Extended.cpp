@@ -6,7 +6,19 @@
 
 
 
-
+std::function<void()> on_completed;
+std::function<void(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)> on_ack;
+std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> on_processor;
+std::function<void(const unsigned long long &id, const int &rank)> on_allocated;
+std::function<void(const unsigned long long &id, const int &rank)> on_deallocated;
+std::function<void(const int &rank)> on_quit;
+std::function<void(const unsigned long long &id)> on_trained;
+std::function<void(const unsigned long long &id)> on_primed;
+std::function<void(const unsigned long long &id)> on_tested;
+std::function<void(const unsigned long long &id)> on_configured;
+std::function<void(const std::string &message) > on_error;
+std::function<void(const std::string &message) > on_information;
+std::function<void(const std::string &message) > on_warning;
 
 extern std::shared_ptr<TRN::Engine::Frontend> frontend;
 
@@ -19,58 +31,58 @@ void TRN4CPP::Engine::Execution::run()
 
 void TRN4CPP::Engine::Events::Completed::install(const std::function<void()> &functor)
 {
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-	frontend->install_completed(functor);
+	if (frontend)
+		throw std::runtime_error("Frontend is already initialized");
+	on_completed = functor;
 }
 void TRN4CPP::Engine::Events::Ack::install(const std::function<void(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)> &functor)
 {
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-	frontend->install_ack(functor);
+	if (frontend)
+		throw std::runtime_error("Frontend is already initialized");
+	on_ack = functor;
 }
 void TRN4CPP::Engine::Events::Allocated::install(const std::function<void(const unsigned long long &id, const int &rank)> &functor)
 {
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-	frontend->install_allocated(functor);
+	if (frontend)
+		throw std::runtime_error("Frontend is already initialized");
+	on_allocated = functor;
 }
 void TRN4CPP::Engine::Events::Configured::install(const std::function<void(const unsigned long long &id)> &functor)
 {
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-	frontend->install_configured(functor);
+	if (frontend)
+		throw std::runtime_error("Frontend is already initialized");
+	on_configured = functor;
 }
 void TRN4CPP::Engine::Events::Trained::install(const std::function<void(const unsigned long long &id)> &functor)
 {
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-	frontend->install_trained(functor);
+	if (frontend)
+		throw std::runtime_error("Frontend is already initialized");
+	on_trained = functor;
 }
 void TRN4CPP::Engine::Events::Primed::install(const std::function<void(const unsigned long long &id)> &functor)
 {
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-	frontend->install_primed(functor);
+	if (frontend)
+		throw std::runtime_error("Frontend is already initialized");
+	on_primed = functor;
 }
 void TRN4CPP::Engine::Events::Tested::install(const std::function<void(const unsigned long long &id)> &functor)
 {
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-	frontend->install_tested(functor);
+	if (frontend)
+		throw std::runtime_error("Frontend is already initialized");
+	on_tested = functor;
 }
 
 void TRN4CPP::Engine::Events::Deallocated::install(const std::function<void(const unsigned long long &id, const int &rank)> &functor)
 {
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-	frontend->install_deallocated(functor);
+	if (frontend)
+		throw std::runtime_error("Frontend is already initialized");
+	on_deallocated = functor;
 }
 void TRN4CPP::Engine::Events::Processor::install(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &functor)
 {
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-	frontend->install_processor(functor);
+	if (frontend)
+		throw std::runtime_error("Frontend is already initialized");
+	on_processor = functor;
 }
 void TRN4CPP::Simulation::allocate(const unsigned long long &id)
 {

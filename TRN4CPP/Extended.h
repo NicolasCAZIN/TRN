@@ -278,18 +278,6 @@ namespace TRN4CPP
 				void TRN4CPP_EXPORT  	configure(const unsigned long long &id, const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor);
 			};
 		};
-	
-
-
-	
-
-
-	
-
-
-	
-
-
 	};
 
 
