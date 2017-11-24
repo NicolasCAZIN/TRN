@@ -30,7 +30,7 @@ namespace TRN4CPP
 			};
 			namespace Ack
 			{
-				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)> &functor);
+				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)> &functor);
 			};
 			namespace Processor
 			{
@@ -117,7 +117,7 @@ namespace TRN4CPP
 				};
 				namespace Punch
 				{
-					void TRN4CPP_EXPORT  	configure(const unsigned long long &id, const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &number);
+					void TRN4CPP_EXPORT  	configure(const unsigned long long &id, const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &counter);
 				};
 				namespace Custom
 				{

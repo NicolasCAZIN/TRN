@@ -21,7 +21,7 @@ namespace TRN
 
 			namespace Punch
 			{
-				std::shared_ptr<TRN::Core::Mutator> MODEL_EXPORT create(const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &number);
+				std::shared_ptr<TRN::Core::Mutator> MODEL_EXPORT create(const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &counter);
 			};
 
 			namespace Custom

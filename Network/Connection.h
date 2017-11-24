@@ -13,9 +13,9 @@ namespace TRN
 
 
 			/// Constructor.
-			Connection(boost::asio::io_service &io_service) : socket_(io_service)
+			Connection(boost::asio::io_service &io_service) : socket_(io_service), id(0)
 			{
-		
+			
 			}
 		
 			~Connection()
@@ -30,6 +30,20 @@ namespace TRN
 			boost::asio::ip::tcp::socket& socket()
 			{
 				return socket_;
+			}
+
+			void set_id(const unsigned short &id)
+			{
+				if (this->id != 0)
+					throw std::runtime_error("Connection is already identified");
+				this->id = id;
+			}
+
+			unsigned short get_id()
+			{
+				if (id == 0)
+					throw std::runtime_error("Connection is not identified");
+				return id;
 			}
 
 			template <typename T>
@@ -199,6 +213,7 @@ namespace TRN
 			}
 			*/
 		private:
+			unsigned short id;
 			/// The underlying socket.
 			boost::asio::ip::tcp::socket socket_;
 			boost::asio::io_service io_service;

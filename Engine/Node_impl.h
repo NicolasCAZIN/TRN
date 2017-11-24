@@ -6,7 +6,10 @@ class TRN::Engine::Node::Handle
 {
 public :
 	//std::string name;
+	bool disposed;
 	bool configured_required;
+	std::set<unsigned short> frontends;
+	bool quit_required;
 	std::size_t remaining_initializations;
 	std::map<unsigned long long, std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)>> perceived_stimulus;
 	std::map<unsigned long long, std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &estimated_position, const std::size_t &rows, const std::size_t &cols)>> estimated_position;
@@ -17,4 +20,5 @@ public :
 	std::map<unsigned long long, std::function<void(const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)>> readout;
 	std::map<unsigned long long, std::function<void(const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)>> recurrent;
 	int rank;
+
 };

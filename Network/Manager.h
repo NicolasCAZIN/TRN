@@ -23,6 +23,7 @@ namespace TRN
 			boost::asio::io_service &get_io_service();
 
 		public :
+			
 			void stop();
 			void start(const std::shared_ptr<TRN::Network::Connection> connection);
 			void stop(const std::shared_ptr<TRN::Network::Connection> connection);

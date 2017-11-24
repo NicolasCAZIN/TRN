@@ -17,11 +17,13 @@ namespace TRN
 			Frontend(const std::shared_ptr<TRN::Engine::Communicator> &communicator);
 			virtual ~Frontend();
 
-		
+		protected :
+			virtual void initialize() override;
+			virtual void uninitialize() override;
 
 		public:
 			void install_completed(const std::function<void()> &functor);
-			void install_ack(const std::function<void(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)> &functor);
+			void install_ack(const std::function<void(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)> &functor);
 			void install_processor(const std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> &functor);
 			void install_allocated(const std::function<void(const unsigned long long &id, const int &rank)> &functor);
 			void install_deallocated(const std::function<void(const unsigned long long &id, const int &rank)> &functor);
@@ -61,11 +63,11 @@ namespace TRN
 		protected:
 			virtual void callback_completed() override;
 			virtual void callback_configured(const unsigned long long &id) override;
-			virtual void callback_ack(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause) override;
+			virtual void callback_ack(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause) override;
 			virtual void callback_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name) override;
 			virtual void callback_allocated(const unsigned long long &id, const int &rank) override;
 			virtual void callback_deallocated(const unsigned long long &id, const int &rank) override;
-			virtual void callback_quit(const int &rank) override;
+			virtual void callback_exit(const int &rank, const bool &terminated) override;
 			virtual void callback_trained(const unsigned long long &id) override;
 			virtual void callback_primed(const unsigned long long &id) override;
 			virtual void callback_tested(const unsigned long long &id) override;

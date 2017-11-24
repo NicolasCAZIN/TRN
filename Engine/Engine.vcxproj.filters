@@ -65,7 +65,10 @@
     <ClCompile Include="Task.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Backend.cpp">
+    <ClCompile Include="Messages.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Dispatcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -142,10 +145,10 @@
     <ClInclude Include="Executor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Backend.h">
+    <ClInclude Include="Dispatcher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Backend_impl.h">
+    <ClInclude Include="Dispatcher_impl.h">
       <Filter>Header Files\private</Filter>
     </ClInclude>
   </ItemGroup>

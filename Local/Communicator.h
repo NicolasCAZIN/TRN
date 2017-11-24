@@ -21,7 +21,7 @@ namespace TRN
 
 		public :
 			void append(std::shared_ptr<TRN::Engine::Worker> &worker);
-
+			virtual void dispose() override;
 		protected :
 			virtual int rank() override;
 			virtual std::size_t size() override;

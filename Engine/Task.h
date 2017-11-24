@@ -19,13 +19,14 @@ namespace TRN
 
 		public :
 			 void start();
-			 void join();
+
+		
 			 
 		protected :
 			virtual void initialize();
 			virtual void body() = 0;
 			virtual void uninitialize();
-
+			void join();
 			void stop();
 		};
 	}

@@ -6,7 +6,7 @@ class TRN::Engine::Frontend::Handle
 {
 public:
 	std::function<void()> on_completed;
-	std::function<void(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)> on_ack;
+	std::function<void(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)> on_ack;
 	std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> on_processor;
 	std::function<void(const unsigned long long &id, const int &rank)> on_allocated;
 	std::function<void(const unsigned long long &id, const int &rank)> on_deallocated;

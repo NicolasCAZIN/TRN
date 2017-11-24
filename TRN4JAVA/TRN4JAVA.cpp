@@ -359,10 +359,10 @@ static void event_callback(jobject object, jmethodID method)
 	auto env = TRN4JAVA::getJNIEnv();
 	env->CallVoidMethod(object, method);
 }
-static void event_ack_callback(jobject object, jmethodID method, const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)
+static void event_ack_callback(jobject object, jmethodID method, const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)
 {
 	auto env = TRN4JAVA::getJNIEnv();
-	env->CallVoidMethod(object, method, (jlong)id, (jlong)number, (jboolean)success, to_jstring(env, cause));
+	env->CallVoidMethod(object, method, (jlong)id, (jlong)counter, (jboolean)success, to_jstring(env, cause));
 }
 static void event_simulation_state_callback(jobject object, jmethodID method, const unsigned long long &id)
 {

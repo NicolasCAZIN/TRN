@@ -49,8 +49,8 @@ namespace TRN4CPP
 
 	namespace Simulation
 	{
-		void TRN4CPP_EXPORT encode(const unsigned short &experiment_number, const unsigned short &condition_number, const unsigned int &simulation_number, unsigned long long &id);
-		void TRN4CPP_EXPORT decode(const unsigned long long &id, unsigned short &experiment_number, unsigned short &condition_number, unsigned int &simulation_number);
+		void TRN4CPP_EXPORT encode(const unsigned short &frontend, const unsigned short &condition_number, const unsigned int &simulation_number, unsigned long long &id);
+		void TRN4CPP_EXPORT decode(const unsigned long long &id, unsigned short &frontend, unsigned short &condition_number, unsigned int &simulation_number);
 		
 
 		extern TRN4CPP_EXPORT const std::string DEFAULT_TAG;

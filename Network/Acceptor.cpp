@@ -7,7 +7,7 @@ TRN::Network::Acceptor::Acceptor(const std::string &address, const  unsigned sho
 		const std::shared_ptr<TRN::Network::Connection> &connection, const std::function <void(const std::shared_ptr<TRN::Network::Peer> &peer)> &on_terminated)> &on_accept) :
 	handle(std::make_unique<Handle>(TRN::Network::Manager::create(), on_accept))
 {
-
+	
 	boost::asio::ip::tcp::resolver resolver(handle->manager->get_io_service());
 	boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve({ address, std::to_string(port) });
 	handle->acceptor.open(endpoint.protocol());

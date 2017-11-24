@@ -27,7 +27,7 @@ TRN::Core::Set::Set(const std::shared_ptr<TRN::Backend::Driver> &driver, const s
 		
 			std::vector<int> sequence_offsets(rows);
 
-			std::iota(sequence_offsets.begin(), sequence_offsets.end(), concatenated_rows);
+			std::iota(sequence_offsets.begin(), sequence_offsets.end(), (int)concatenated_rows);
 			
 			offsets.insert(offsets.end(), sequence_offsets.begin(), sequence_offsets.end());
 			concatenated_rows += rows;

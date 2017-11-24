@@ -2,6 +2,7 @@
 
 #include "Node.h"
 #include "Broker.h"
+#include "Dispatcher.h"
 #include "Helper/Visitor.h"
 namespace TRN
 {
@@ -16,18 +17,23 @@ namespace TRN
 			std::unique_ptr<Handle> handle;
 
 		public:
-			Proxy(const std::shared_ptr<TRN::Engine::Communicator> &frontend_proxy, const std::shared_ptr<TRN::Engine::Communicator> &proxy_workers, const std::shared_ptr<TRN::Helper::Visitor<TRN::Engine::Proxy>> &visitor);
+			Proxy(
+				const std::shared_ptr<TRN::Engine::Communicator> &frontend_proxy,
+				const std::shared_ptr<TRN::Engine::Communicator> &proxy_workers,
+				const std::shared_ptr<TRN::Engine::Dispatcher> &backend, const std::shared_ptr<TRN::Helper::Visitor<TRN::Engine::Proxy>> &visitor, const unsigned short &number);
 			virtual ~Proxy();
 
 		protected :
 			virtual void uninitialize() override;
 			virtual void initialize() override;
 	
+		private:
+			unsigned long long global_id(const unsigned long long &local_id);
 			
-
 		public:
-			//virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::READY> &message) override;
-			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message) override;
+			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message) override;
+			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::START> &message) override;
+			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::STOP> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATE> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::TRAIN> &message) override;
@@ -77,7 +83,12 @@ namespace TRN
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::READOUT_WEIGHTS> &message) override;
 
-			static std::shared_ptr<Proxy> create(const std::shared_ptr<TRN::Engine::Communicator> &frontend_proxy, const std::shared_ptr<TRN::Engine::Communicator> &proxy_workers, const std::shared_ptr<TRN::Helper::Visitor<TRN::Engine::Proxy>> &visitor);
+
+
+			static std::shared_ptr<Proxy> create(
+				const std::shared_ptr<TRN::Engine::Communicator> &frontend_proxy,
+				const std::shared_ptr<TRN::Engine::Communicator> &proxy_workers,
+				const std::shared_ptr<TRN::Engine::Dispatcher> &dispatcher, const std::shared_ptr<TRN::Helper::Visitor<TRN::Engine::Proxy>> &visitor, const unsigned short &number);
 		};
 	};
 };

@@ -17,7 +17,7 @@ extern boost::shared_ptr<TRN4CPP::Plugin::Custom::Interface> custom;
 extern std::vector<boost::shared_ptr<TRN4CPP::Plugin::Callbacks::Interface>> callbacks;
 
 extern std::function<void()> on_completed;
-extern std::function<void(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)> on_ack;
+extern std::function<void(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)> on_ack;
 extern std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> on_processor;
 extern std::function<void(const unsigned long long &id, const int &rank)> on_allocated;
 extern std::function<void(const unsigned long long &id, const int &rank)> on_deallocated;
@@ -50,35 +50,15 @@ extern std::function<void(const unsigned long long &id, const std::size_t &trial
 extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_position;
 extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_stimulus;
 
-union Identifier
+
+
+void  TRN4CPP::Simulation::encode(const unsigned short &frontend, const unsigned short &condition_number, const unsigned int &simulation_number, unsigned long long &id)
 {
-	struct
-	{
-		unsigned long long simulation_number : 32;
-		unsigned long long condition_number : 16;
-		unsigned long long experiment_number : 16;
-	};
-
-	unsigned long long id;
-};
-
-void  TRN4CPP::Simulation::encode(const unsigned short &experiment_number, const unsigned short &condition_number, const unsigned int &simulation_number, unsigned long long &id)
-{
-	Identifier identifier;
-
-	identifier.experiment_number = experiment_number;
-	identifier.condition_number = condition_number;
-	identifier.simulation_number = simulation_number;
-	id = identifier.id;
+	TRN::Engine::encode(frontend, condition_number, simulation_number, id);
 }
-void TRN4CPP::Simulation::decode(const unsigned long long &id, unsigned short &experiment_number, unsigned short &condition_number, unsigned int &simulation_number)
+void TRN4CPP::Simulation::decode(const unsigned long long &id, unsigned short &frontend, unsigned short &condition_number, unsigned int &simulation_number)
 {
-	Identifier identifier;
-
-	identifier.id = id;
-	experiment_number = identifier.experiment_number;
-	condition_number = identifier.condition_number;
-	simulation_number = identifier.simulation_number;
+	TRN::Engine::decode(id, frontend, condition_number, simulation_number);
 }
 
 
@@ -195,8 +175,6 @@ void TRN4CPP::Engine::initialize()
 void TRN4CPP::Engine::uninitialize()
 {
 
-
-
 	if (simplified)
 	{
 		simplified->uninitialize();
@@ -220,13 +198,9 @@ void TRN4CPP::Engine::uninitialize()
 
 	if (frontend)
 	{
-		frontend->halt();
+		frontend->quit();
 		frontend.reset();
 	}
-
-
-
-
 
 	on_feedforward = NULL;
 	on_feedback = NULL;

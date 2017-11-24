@@ -20,7 +20,8 @@ namespace TRN
 			Communicator(const std::shared_ptr<TRN::Network::Manager> &manager, const std::shared_ptr<TRN::Network::Connection> &connection, const int &rank, const std::size_t &size);
 			virtual ~Communicator();
 
-
+		public :
+			virtual void dispose() override;
 		public:
 			virtual int rank() override;
 			virtual std::size_t size() override;

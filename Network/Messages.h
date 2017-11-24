@@ -12,12 +12,14 @@ namespace TRN
 			int tag;
 			int destination;
 
+
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & payload;
 				ar & tag;
 				ar & destination;
+		
 			}
 		};
 

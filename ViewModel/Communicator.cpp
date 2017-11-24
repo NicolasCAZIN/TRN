@@ -32,7 +32,7 @@ std::shared_ptr<TRN::Engine::Communicator> TRN::ViewModel::Communicator::Local::
 	for (int k = 0; k < local_indexes.size(); k++)
 	{
 		auto index = local_indexes[k];
-		auto worker = TRN::ViewModel::Node::Worker::create(communicator, k + 1, index);
+		auto worker = TRN::ViewModel::Node::Backend::create(communicator, k + 1, index);
 		worker->start();
 		communicator->append(worker);
 	}

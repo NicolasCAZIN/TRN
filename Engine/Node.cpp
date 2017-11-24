@@ -7,23 +7,37 @@ TRN::Engine::Node::Node(const std::shared_ptr<TRN::Engine::Communicator> &commun
 {
 	// std::cout << __FUNCTION__ << std::endl;
 	handle->rank = rank;
-
+	handle->quit_required = false;
+	handle->disposed = false;
 }
 
 
 TRN::Engine::Node::~Node()
 {
+	auto communicator = TRN::Engine::Node::implementor.lock();
+	if (communicator)
+	{
+		communicator->dispose();
+	}
 	// std::cout << __FUNCTION__ << std::endl;
 	handle.reset();
 }
+
+void TRN::Engine::Node::dispose()
+{
+	
+	join();
+}
+
 template <TRN::Engine::Tag tag>
-static TRN::Engine::Message<tag> unpack(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank, unsigned long long &id, size_t &number)
+static TRN::Engine::Message<tag> unpack(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank, unsigned long long &id, size_t &counter, unsigned short &number)
 {
 	// std::cout << __FUNCTION__ << std::endl;
 	TRN::Engine::Message<tag> message = communicator->receive<tag>(rank);
 
 	id = message.id;
-	number = message.number;
+	counter = message.counter;
+//	number = message.number;
 
 	return message;
 }
@@ -47,7 +61,20 @@ void TRN::Engine::Node::erase_functors(const unsigned long long &id)
 		handle->readout.erase(id);
 	if (handle->recurrent.find(id) != handle->recurrent.end())
 		handle->recurrent.erase(id);
+}
 
+
+
+void TRN::Engine::Node::uninitialize()
+{
+	// std::cout << __FUNCTION__ << std::endl;
+	TRN::Engine::Message<TRN::Engine::Tag::EXIT> exit;
+
+	exit.terminated = true;
+	exit.rank = handle->rank;
+	auto communicator = TRN::Engine::Node::implementor.lock();
+	if (communicator)
+		communicator->send(exit, 0);
 
 }
 
@@ -56,7 +83,8 @@ void TRN::Engine::Node::body()
 	// std::cout << __FUNCTION__ << std::endl;
 	std::string data;
 	unsigned long long id = 0;
-	size_t number = 0;
+	size_t counter = 0;
+	unsigned short number;
 	std::string cause = "";
 	bool ack_required = true;
 
@@ -69,308 +97,349 @@ void TRN::Engine::Node::body()
 		//PrintThread{} << "node " << handle->rank << " received tag #" << tag << std::endl;
 		switch (tag)
 		{
-
-			case TRN::Engine::COMPLETED:
+			case TRN::Engine::START:
 			{
 				ack_required = false;
-				process(locked->receive<TRN::Engine::COMPLETED>(handle->rank));
-				stop();
+				auto message = locked->receive<TRN::Engine::START>(handle->rank);
+				process(message);
+			/*	if (handle->frontends.find(message.frontend_number) != handle->frontends.end())
+					throw std::runtime_error("Frontend " + std::to_string(message.frontend_number) + " is already declared");*/
+				handle->frontends.insert(message.number);
 			}
 			break;
-		/*	case TRN::Engine::READY:
+			case TRN::Engine::STOP:
 			{
-				process(unpack<TRN::Engine::READY>(locked, handle->rank, id, number));
+				ack_required = false;
+				auto message = locked->receive<TRN::Engine::STOP>(handle->rank);
+				process(message);
+
+				if (handle->frontends.find(message.number) == handle->frontends.end())
+					throw std::runtime_error("Frontend " + std::to_string(message.number) + " is not declared");
+				handle->frontends.erase(message.number);
+
+				if (handle->quit_required)
+				{
+					std::cout << "Quit is required" << std::endl;
+					if (handle->frontends.empty())
+					{
+						std::cout << "No more frontends. Stopping worker" << std::endl;
+						stop();
+					}
+					else
+					{
+						std::cout << "Frontends are still using workers. Nothing will happen" << std::endl;
+					}
+				}
 			}
-			break;*/
+			break;
+			case TRN::Engine::QUIT:
+			{
+				ack_required = false;
+				process(locked->receive<TRN::Engine::QUIT>(handle->rank));
+				handle->quit_required = true;
+
+				if (handle->rank != -1)
+				{
+					TRN::Engine::Message<TRN::Engine::EXIT> exit;
+
+					exit.rank = handle->rank;
+					exit.terminated = false;
+					auto communicator = TRN::Engine::Node::implementor.lock();
+					if (communicator)
+						communicator->send(exit, 0);
+				}
+			}
+			break;
+
 			case TRN::Engine::ALLOCATE:
 			{
-				process(unpack<TRN::Engine::ALLOCATE>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::ALLOCATE>(locked, handle->rank, id, counter, number));
 			}
-				break;
+			break;
 
 			case TRN::Engine::DEALLOCATE:
 			{	
-				process(unpack<TRN::Engine::DEALLOCATE>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::DEALLOCATE>(locked, handle->rank, id, counter, number));
 				erase_functors(id);
 			}
-				break;
+			break;
 
 			case TRN::Engine::TRAIN:
 			{	
-				process(unpack<TRN::Engine::TRAIN>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::TRAIN>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::TEST:
 			{	
-				process(unpack<TRN::Engine::TEST>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::TEST>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::DECLARE_SEQUENCE:
 			{	
-				process(unpack<TRN::Engine::DECLARE_SEQUENCE>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::DECLARE_SEQUENCE>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::DECLARE_SET:
 			{	
-				process(unpack<TRN::Engine::DECLARE_SET>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::DECLARE_SET>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::SETUP_STATES:
 			{	
-				process(unpack<TRN::Engine::SETUP_STATES>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::SETUP_STATES>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::SETUP_WEIGHTS:
 			{	
-				process(unpack<TRN::Engine::SETUP_WEIGHTS>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::SETUP_WEIGHTS>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::SETUP_PERFORMANCES:
 			{	
-				process(unpack<TRN::Engine::SETUP_PERFORMANCES>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::SETUP_PERFORMANCES>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::SETUP_SCHEDULING:
 			{	
-				process(unpack<TRN::Engine::SETUP_SCHEDULING>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::SETUP_SCHEDULING>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_BEGIN:
 			{	
 			
-				process(unpack<TRN::Engine::CONFIGURE_BEGIN>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_BEGIN>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_END:
 			{	
 		
-				process(unpack<TRN::Engine::CONFIGURE_END>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_END>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_MEASUREMENT_READOUT_MEAN_SQUARE_ERROR:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_MEASUREMENT_READOUT_MEAN_SQUARE_ERROR>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_MEASUREMENT_READOUT_MEAN_SQUARE_ERROR>(locked, handle->rank, id, counter, number));
 			}
 				break;
 						
 			case TRN::Engine::CONFIGURE_MEASUREMENT_READOUT_FRECHET_DISTANCE:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_MEASUREMENT_READOUT_FRECHET_DISTANCE>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_MEASUREMENT_READOUT_FRECHET_DISTANCE>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_MEASUREMENT_READOUT_CUSTOM:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_MEASUREMENT_READOUT_CUSTOM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_MEASUREMENT_READOUT_CUSTOM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_MEASUREMENT_POSITION_CUSTOM:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_MEASUREMENT_POSITION_CUSTOM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_MEASUREMENT_POSITION_CUSTOM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_RESERVOIR_WIDROW_HOFF:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_RESERVOIR_WIDROW_HOFF>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_RESERVOIR_WIDROW_HOFF>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_LOOP_COPY:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_LOOP_COPY>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_LOOP_COPY>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_LOOP_SPATIAL_FILTER:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_LOOP_SPATIAL_FILTER>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_LOOP_SPATIAL_FILTER>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_LOOP_CUSTOM:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_LOOP_CUSTOM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_LOOP_CUSTOM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_SCHEDULER_TILED:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_SCHEDULER_TILED>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_SCHEDULER_TILED>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_SCHEDULER_SNIPPETS:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_SCHEDULER_SNIPPETS>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_SCHEDULER_SNIPPETS>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_SCHEDULER_CUSTOM:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_SCHEDULER_CUSTOM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_SCHEDULER_CUSTOM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_MUTATOR_SHUFFLE:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_MUTATOR_SHUFFLE>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_MUTATOR_SHUFFLE>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_MUTATOR_REVERSE:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_MUTATOR_REVERSE>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_MUTATOR_REVERSE>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_MUTATOR_PUNCH:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_MUTATOR_PUNCH>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_MUTATOR_PUNCH>(locked, handle->rank, id, counter, number));
 			}
 				break;
 				
 			case TRN::Engine::CONFIGURE_MUTATOR_CUSTOM:
 			{
-				process(unpack<TRN::Engine::CONFIGURE_MUTATOR_CUSTOM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_MUTATOR_CUSTOM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_FEEDFORWARD_UNIFORM:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_FEEDFORWARD_UNIFORM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_FEEDFORWARD_UNIFORM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 				
 			case TRN::Engine::CONFIGURE_FEEDFORWARD_GAUSSIAN:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_FEEDFORWARD_GAUSSIAN>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_FEEDFORWARD_GAUSSIAN>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_FEEDFORWARD_CUSTOM:
 			{
 
-				process(unpack<TRN::Engine::CONFIGURE_FEEDFORWARD_CUSTOM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_FEEDFORWARD_CUSTOM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_FEEDBACK_UNIFORM:
 			{
-				process(unpack<TRN::Engine::CONFIGURE_FEEDBACK_UNIFORM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_FEEDBACK_UNIFORM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_FEEDBACK_GAUSSIAN:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_FEEDBACK_GAUSSIAN>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_FEEDBACK_GAUSSIAN>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_FEEDBACK_CUSTOM:
 			{
-				process(unpack<TRN::Engine::CONFIGURE_FEEDBACK_CUSTOM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_FEEDBACK_CUSTOM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_RECURRENT_UNIFORM:
 			{
-				process(unpack<TRN::Engine::CONFIGURE_RECURRENT_UNIFORM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_RECURRENT_UNIFORM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_RECURRENT_GAUSSIAN:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_RECURRENT_GAUSSIAN>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_RECURRENT_GAUSSIAN>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_RECURRENT_CUSTOM:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_RECURRENT_CUSTOM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_RECURRENT_CUSTOM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 				
 			case TRN::Engine::CONFIGURE_READOUT_UNIFORM:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_READOUT_UNIFORM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_READOUT_UNIFORM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_READOUT_GAUSSIAN:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_READOUT_GAUSSIAN>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_READOUT_GAUSSIAN>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::CONFIGURE_READOUT_CUSTOM:
 			{	
-				process(unpack<TRN::Engine::CONFIGURE_READOUT_CUSTOM>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::CONFIGURE_READOUT_CUSTOM>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::POSITION:
 			{	
-				process(unpack<TRN::Engine::POSITION>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::POSITION>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::STIMULUS:
 			{	
-				process(unpack<TRN::Engine::STIMULUS>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::STIMULUS>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::SCHEDULING:
 			{	
-				process(unpack<TRN::Engine::SCHEDULING>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::SCHEDULING>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::FEEDFORWARD_WEIGHTS:
 			{	
-				process(unpack<TRN::Engine::FEEDFORWARD_WEIGHTS>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::FEEDFORWARD_WEIGHTS>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::RECURRENT_WEIGHTS:
 			{	
-				process(unpack<TRN::Engine::RECURRENT_WEIGHTS>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::RECURRENT_WEIGHTS>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::FEEDBACK_WEIGHTS:
 			{	
-				process(unpack<TRN::Engine::FEEDBACK_WEIGHTS>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::FEEDBACK_WEIGHTS>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
 			case TRN::Engine::READOUT_WEIGHTS:
 			{
-				process(unpack<TRN::Engine::READOUT_WEIGHTS>(locked, handle->rank, id, number));
+				process(unpack<TRN::Engine::READOUT_WEIGHTS>(locked, handle->rank, id, counter, number));
 			}
 				break;
 
@@ -382,7 +451,8 @@ void TRN::Engine::Node::body()
 			TRN::Engine::Message<TRN::Engine::ACK> ack;
 
 			ack.id = id;
-			ack.number = number;
+			//ack.number = number;
+			ack.counter = counter;
 			ack.cause = cause;
 			ack.success = cause.empty();
 			//PrintThread{} << handle->name << " sent ack to broker" << std::endl;

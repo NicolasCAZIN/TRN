@@ -129,7 +129,9 @@ public :
 	{
 		if (association.find(proxy) == association.end())
 			throw std::runtime_error("proxy was not registered");
+	
 		association[proxy]();
+	
 		association.erase(proxy);
 	}
 
@@ -155,7 +157,7 @@ int main(int argc, char *argv[])
 			("index,i", boost::program_options::value<std::vector<unsigned int>>()->multitoken()->composing()->default_value({ (unsigned int)0 }), "Local devices indicex. 0 for cpu (default), 1 for first gpu, 2 for second gpu ... ")
 			("port,p", boost::program_options::value<unsigned short>()->default_value(12345), "TCP port")
 			("host,h", boost::program_options::value<std::string>()->default_value("127.0.0.1"), "hostname or IPv4 address")
-			("backend,b", boost::program_options::value<Backend>()->default_value(Backend::Local), "Backend type [local|remote|distributed]")
+			("backend,b", boost::program_options::value<Backend>()->default_value(Backend::Local), "Backend type [local|distributed]")
 			;
 
 		boost::program_options::variables_map vm;
@@ -194,6 +196,9 @@ int main(int argc, char *argv[])
 			throw std::runtime_error("No backend were selected");
 		}
 		
+		auto dispatcher = TRN::Engine::Dispatcher::create(worker_communicator);
+		dispatcher->start();
+
 		auto host = vm["host"].as<std::string>();
 		auto port = vm["port"].as<unsigned short>();
 	
@@ -201,6 +206,8 @@ int main(int argc, char *argv[])
 		
 		auto acceptor = TRN::Network::Acceptor::create(host, port, [&](const std::shared_ptr<TRN::Network::Manager> &manager, const std::shared_ptr<TRN::Network::Connection> &connection, const std::function <void(const std::shared_ptr<TRN::Network::Peer> &peer)> &on_terminated)
 		{
+		
+
 			class Adapter : public TRN::Helper::Adapter<TRN::Network::Peer, TRN::Engine::Proxy>
 			{
 		
@@ -219,7 +226,7 @@ int main(int argc, char *argv[])
 
 				void stop() override
 				{
-					adaptee->join();
+					adaptee->dispose();
 				}
 			};
 
@@ -228,18 +235,30 @@ int main(int argc, char *argv[])
 			std::cout << "SERVER local " << socket.local_endpoint().address().to_string() << ":" << socket.local_endpoint().port() <<
 				" remote " << socket.remote_endpoint().address().to_string() << ":" << socket.remote_endpoint().port() << std::endl;
 
+		
+
 			connection->write(worker_communicator->size());
-			auto client_communicator = TRN::Remote::Communicator::create(manager, connection, worker_communicator->rank(), worker_communicator->size());
 			
-			auto proxy = TRN::ViewModel::Node::Proxy::create(client_communicator, worker_communicator, mediator);
+			auto client_communicator = TRN::Remote::Communicator::create(manager, connection, worker_communicator->rank(), worker_communicator->size());
+
+			auto frontend_number = connection->get_id();
+			dispatcher->register_frontend(frontend_number, client_communicator);
+
+			auto proxy = TRN::ViewModel::Node::Proxy::create(client_communicator, worker_communicator, dispatcher, mediator, frontend_number);
 			auto adapter = std::make_shared<Adapter>(proxy);
-			mediator->bind(proxy, adapter, on_terminated);
+			mediator->bind(proxy, adapter, [=](const std::shared_ptr<TRN::Network::Peer> &peer)
+			{
+				dispatcher->unregister_frontend(frontend_number);
+				manager->start(connection);
+				on_terminated(peer);
+			});
 			return adapter;
 		});
 	
 
 		acceptor->run();
 	
+		dispatcher->dispose();
 
 		return 0;
 	}

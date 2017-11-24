@@ -13,11 +13,27 @@ TRN::Engine::Frontend::~Frontend()
 	handle.reset();
 }
 
+void TRN::Engine::Frontend::initialize()
+{
+	TRN::Engine::Broker::initialize();
+	TRN::Engine::Message<TRN::Engine::START> start;
+	start.number = 0;
+
+	TRN::Engine::Broker::handle->communicator->broadcast(start);
+}
+void TRN::Engine::Frontend::uninitialize()
+{
+	TRN::Engine::Message<TRN::Engine::STOP> stop;
+	stop.number = 0;
+
+	TRN::Engine::Broker::handle->communicator->broadcast(stop);
+	TRN::Engine::Broker::uninitialize();
+}
 void TRN::Engine::Frontend::install_completed(const std::function<void()> &functor)
 {
 	handle->on_completed = functor;
 }
-void TRN::Engine::Frontend::install_ack(const std::function<void(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)> &functor)
+void TRN::Engine::Frontend::install_ack(const std::function<void(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)> &functor)
 {
 	handle->on_ack = functor;
 }
@@ -165,10 +181,10 @@ void TRN::Engine::Frontend::callback_completed()
 		handle->on_completed();
 }
 
-void TRN::Engine::Frontend::callback_ack(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)
+void TRN::Engine::Frontend::callback_ack(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)
 {
 	if (handle->on_ack)
-		handle->on_ack(id, number, success, cause);
+		handle->on_ack(id, counter, success, cause);
 }
 void TRN::Engine::Frontend::callback_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)
 {
@@ -187,9 +203,10 @@ void TRN::Engine::Frontend::callback_deallocated(const unsigned long long &id, c
 
 
 }
-void TRN::Engine::Frontend::callback_quit(const int &rank)
+void TRN::Engine::Frontend::callback_exit(const int &rank, const bool &terminated)
 {
-	if (handle->on_quit)
+	std::cout << "Worker #" << rank << " terminated " << terminated << std::endl;
+	if (handle->on_quit && terminated)
 		handle->on_quit(rank);
 }
 void TRN::Engine::Frontend::callback_configured(const unsigned long long &id)

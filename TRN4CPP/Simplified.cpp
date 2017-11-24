@@ -194,14 +194,12 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 	std::size_t total_simulations = 0;
 
 
-	unsigned short experiment_number;
 	unsigned short condition_number;
 	unsigned int simulation_number;
 
 	try
 	{
 		bool experiment_done = false;
-		experiment_number = 1;
 		for (auto property_element : properties)
 		{
 			if (boost::iequals(property_element.first, experiment_name))
@@ -294,7 +292,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 							std::size_t reservoir_size;
 							std::size_t prediction_size;
 							unsigned long long id;
-							TRN4CPP::Simulation::encode(experiment_number, condition_number, simulation_number, id);
+							TRN4CPP::Simulation::encode(0, condition_number, simulation_number, id);
 
 							frontend->allocate(id);
 							//
@@ -656,8 +654,8 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																auto seed = simulation_number + _mutator.get_child(seed_attribute).get_value<unsigned long>();
 																auto rate = _mutator.get_child(rate_attribute).get_value<float>();
 																auto size = _mutator.get_child(size_attribute).get_value<std::size_t>();
-																auto number = _mutator.get_child(number_attribute).get_value<std::size_t>();
-																frontend->configure_mutator_punch(id, seed, rate, size, number);
+																auto counter = _mutator.get_child(number_attribute).get_value<std::size_t>();
+																frontend->configure_mutator_punch(id, seed, rate, size, counter);
 																//
 															}
 															else if (boost::iequals(mutator_type, shuffle_type))
@@ -914,10 +912,9 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 					}
 				}
 				experiment_done = true;
-				experiment_number++;
 			}
 		}
-		frontend->join();
+		frontend->dispose();
 	}
 	catch (std::exception &e)
 	{

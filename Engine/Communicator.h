@@ -19,7 +19,9 @@ namespace TRN
 		public :
 			virtual ~Communicator();
 
+
 		public :
+			virtual void dispose() = 0;
 			std::string host();
 			virtual std::size_t size() = 0;
 			virtual int rank() = 0;

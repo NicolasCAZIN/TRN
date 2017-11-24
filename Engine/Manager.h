@@ -19,6 +19,7 @@ namespace TRN
 		public :
 			virtual ~Manager();
 			void start();
+			void dispose();
 			void terminate();
 		public:
 			void update_processor(const int &rank, const std::string host, const unsigned int &index, const std::string name);

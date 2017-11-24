@@ -46,9 +46,9 @@ int main(int argc, char *argv[])
 		auto communicator = TRN::ViewModel::Communicator::Distributed::create(argc, argv);
 
 		
-		auto worker = TRN::ViewModel::Node::Worker::create(communicator, communicator->rank(), index);
+		auto worker = TRN::ViewModel::Node::Backend::create(communicator, communicator->rank(), index);
 		worker->start();
-		worker->join();
+		worker->dispose();
 		std::cout << argv[0] << " EXITED" << std::endl;
 		return 0;
 	}

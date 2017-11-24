@@ -14,8 +14,31 @@ TRN::Engine::Broker::Broker(const std::shared_ptr<TRN::Engine::Communicator> &co
 }
 TRN::Engine::Broker::~Broker()
 {
-
+	handle->communicator->dispose();
 	handle.reset();
+}
+
+
+
+void TRN::Engine::Broker::dispose()
+{
+	handle->manager->dispose();
+	
+}
+void TRN::Engine::Broker::quit()
+{
+	dispose();
+	TRN::Engine::Message<TRN::Engine::QUIT> message;
+
+	handle->communicator->broadcast(message);
+	join();
+	handle->to_caller->post([=]()
+	{
+
+		//handle->from_caller->terminate();
+		//callback_quit();
+	});
+
 }
 void TRN::Engine::Broker::initialize()
 {
@@ -25,12 +48,14 @@ void TRN::Engine::Broker::initialize()
 
 void TRN::Engine::Broker::uninitialize()
 {
+	handle->manager->terminate();
+	handle->to_caller->terminate();
 	for (auto from_caller : handle->from_caller)
 	{
 		from_caller.second->terminate();
 	}
-	handle->to_caller->terminate();
-	handle->manager->terminate();
+
+
 }
 void TRN::Engine::Broker::body()
 {
@@ -38,14 +63,28 @@ void TRN::Engine::Broker::body()
 	//PrintThread{} << "BROKER received tag " << tag << " " << __FUNCTION__ << std::endl;
 	switch (tag)
 	{
-		case TRN::Engine::QUIT:
+		case TRN::Engine::EXIT:
 		{
-			auto message = handle->communicator->receive<TRN::Engine::QUIT>(0);
-			handle->to_caller->post([=]() 
+			auto message = handle->communicator->receive<TRN::Engine::EXIT>(0);
+			handle->to_caller->post([=]()
 			{
-				callback_quit(message.rank);
+				callback_exit(message.rank, message.terminated);
 			});
 
+			if (message.terminated)
+			{
+				handle->to_caller->post([=]()
+				{
+					callback_information("Worker #" + std::to_string(message.rank) + " exited");
+				});
+			}
+			else
+			{
+				handle->to_caller->post([=]()
+				{
+					callback_information("Worker #" + std::to_string(message.rank) + " took into account quit request but did not quit yet");
+				});
+			}
 			handle->active--;
 			if (handle->active == 0)
 			{
@@ -53,9 +92,14 @@ void TRN::Engine::Broker::body()
 				{
 					callback_information("Broker stopped");
 				});
-		
+
+
 				stop();
 			}
+	
+	
+
+		
 		}
 		break;
 		case TRN::Engine::WORKER:
@@ -79,10 +123,10 @@ void TRN::Engine::Broker::body()
 			if (message.success)
 			{
 				std::unique_lock<std::recursive_mutex> lock(handle->ack);
-				if (handle->on_ack_map.find(message.number) == handle->on_ack_map.end())
-					throw std::runtime_error("Ack functor for message #" + std::to_string(message.number) + " is not setup");
-				handle->on_ack_map[message.number]();
-				handle->on_ack_map.erase(message.number);
+				if (handle->on_ack_map.find(message.counter) == handle->on_ack_map.end())
+					throw std::runtime_error("Ack functor for message #" + std::to_string(message.counter) + " is not setup");
+				handle->on_ack_map[message.counter]();
+				handle->on_ack_map.erase(message.counter);
 			}
 			else
 			{
@@ -90,7 +134,7 @@ void TRN::Engine::Broker::body()
 			}
 			handle->to_caller->post([=]()
 			{
-				callback_ack(message.id, message.number, message.success, message.cause);
+				callback_ack(message.id, message.counter, message.success, message.cause);
 			});
 		}
 		break;
@@ -422,57 +466,34 @@ void TRN::Engine::Broker::remove_simulation(const unsigned long long &id)
 	handle->from_caller[id]->terminate();
 	handle->from_caller.erase(id);
 	//	PrintThread{} << "id " << id << " deallocate DONE" << std::endl;
-	if (handle->simulations.empty())
-	{
-		completed();
-	}
 }
 
 
 std::size_t TRN::Engine::Broker::generate_number()
 {
-	std::unique_lock<std::mutex> lock(handle->number);
-	std::size_t number = handle->count;
+	std::unique_lock<std::mutex> lock(handle->counter);
+	std::size_t counter = handle->count;
 	handle->count++;
-	return number;
+	return counter;
 }
 
 template<TRN::Engine::Tag tag>
 void TRN::Engine::Broker::send(const int &rank, TRN::Engine::Message<tag> &message, const std::function<void()> &functor)
 {
-	message.number = generate_number();
+	message.counter = generate_number();
 
 	std::unique_lock<std::recursive_mutex> lock(handle->ack);
 	////PrintThread{} << "acquiring functor lock for id " << message.id << std::endl;
 
-	if (handle->on_ack_map.find(message.number) != handle->on_ack_map.end())
-		throw std::runtime_error("Ack functor for message #" + std::to_string(message.number) + " is already setup");
-	handle->on_ack_map[message.number] = functor;
+	if (handle->on_ack_map.find(message.counter) != handle->on_ack_map.end())
+		throw std::runtime_error("Ack functor for message #" + std::to_string(message.counter) + " is already setup");
+	handle->on_ack_map[message.counter] = functor;
 
 	handle->communicator->send(message, rank);
 }
-void TRN::Engine::Broker::halt()
-{
-	completed();
-	join();
-}
-void TRN::Engine::Broker::completed()
-{
-	if (!handle->completed)
-	{
-		TRN::Engine::Message<TRN::Engine::COMPLETED> message;
-		handle->communicator->broadcast(message);
-		handle->to_caller->post([=]()
-		{
-
-			//handle->from_caller->terminate();
-			callback_completed();
-		});
-		handle->completed = true;
-	}
 
 
-}
+
 /*void TRN::Engine::Broker::ready(const unsigned long long &id)
 {
 	retrieve_simulation(id)->post([=]()
@@ -1108,7 +1129,7 @@ void TRN::Engine::Broker::configure_mutator_reverse(const unsigned long long &id
 		});
 	});
 }
-void TRN::Engine::Broker::configure_mutator_punch(const unsigned long long &id, const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &number)
+void TRN::Engine::Broker::configure_mutator_punch(const unsigned long long &id, const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &counter)
 {
 	retrieve_simulation(id)->post([=]()
 	{
@@ -1122,7 +1143,7 @@ void TRN::Engine::Broker::configure_mutator_punch(const unsigned long long &id, 
 			message.seed = seed;
 			message.rate = rate;
 			message.size = size;
-			message.repetition = number;
+			message.repetition = counter;
 			send(processor->get_rank(), message, [id]()
 			{
 				////PrintThread{} << "id " << id << " configure scheduler snippets acked" << std::endl;

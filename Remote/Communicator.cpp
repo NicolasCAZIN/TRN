@@ -27,12 +27,17 @@ TRN::Remote::Communicator::Communicator(const std::shared_ptr<TRN::Network::Mana
 TRN::Remote::Communicator::~Communicator()
 {
 	// std::cout << __FUNCTION__ << std::endl;
-	handle->manager->stop(handle->connection);
+
 
 
 /*	if (handle->transmit.joinable())
 		handle->transmit.join();*/
 	handle.reset();
+}
+
+void TRN::Remote::Communicator::dispose()
+{
+	handle->manager->stop(handle->connection);
 }
 
 int TRN::Remote::Communicator::rank()

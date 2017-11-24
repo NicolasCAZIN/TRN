@@ -11,13 +11,18 @@ TRN::Local::Communicator::Communicator(const int &max_rank) :
 
 TRN::Local::Communicator::~Communicator()
 {
-	for (auto queue : handle->queues)
-		queue->invalidate();
-	for (auto worker : handle->workers)
-		worker->join();
+
 	handle->workers.clear();
 	handle.reset();
 }
+void TRN::Local::Communicator::dispose()
+{
+	for (auto queue : handle->queues)
+		queue->invalidate();
+	for (auto worker : handle->workers)
+		worker->dispose();
+}
+
 int TRN::Local::Communicator::rank()
 {
 	return 0;

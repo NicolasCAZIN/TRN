@@ -6,9 +6,29 @@ namespace TRN
 {
 	namespace Engine
 	{
+		union Identifier
+		{
+			struct
+			{
+				unsigned long long simulation_number : 32;
+				unsigned long long condition_number : 16;
+				unsigned long long number : 16;
+			};
+
+			unsigned long long id;
+		};
+
+
+		void  ENGINE_EXPORT encode(const unsigned short &number, const unsigned short &condition_number, const unsigned int &simulation_number, unsigned long long &id);
+		void ENGINE_EXPORT decode(const unsigned long long &id, unsigned short &number, unsigned short &condition_number, unsigned int &simulation_number);
+
 		enum Tag
 		{
+	
 			QUIT = 0,
+			EXIT,
+			STOP,
+			START,
 			/*READY,*/
 
 			/* technical / worker -> client */
@@ -76,7 +96,7 @@ namespace TRN
 			WEIGHTS,
 			PERFORMANCES,
 			CONFIGURED,
-			COMPLETED,
+
 			TRAINED,
 			TESTED,
 			PRIMED,
@@ -93,16 +113,49 @@ namespace TRN
 			LOG_ERROR
 		};
 
-		struct Header
+		struct Base
 		{
-			size_t number;
+			size_t counter;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & counter;
+			}
+		};
+
+		struct FromFrontend : public Base
+		{
+			unsigned short number;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Base>(*this);
+				ar & number;
+			}
+		};
+
+		struct Simulation : public Base
+		{
 			unsigned long long id;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & number;
+				ar & boost::serialization::base_object<Base>(*this);
 				ar & id;
+			}
+		};
+
+		struct FromBackend
+		{
+			int rank;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & rank;
 			}
 		};
 
@@ -110,17 +163,58 @@ namespace TRN
 		struct Message
 		{
 		};
+
 		template <>
-		struct Message<TRN::Engine::Tag::CONFIGURED> : public Header
+		struct Message<TRN::Engine::Tag::START> : public FromFrontend
+		{
+
+		};
+
+		template <>
+		struct Message<TRN::Engine::Tag::STOP> : public FromFrontend
+		{
+		};
+
+		template <>
+		struct Message<TRN::Engine::Tag::EXIT> : public FromBackend
+		{
+			bool terminated;
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<FromBackend>(*this);
+				ar & terminated;
+			}
+		};
+
+		template <>
+		struct Message<TRN::Engine::Tag::WORKER> : public FromBackend
+		{
+			std::string host;
+			std::string name;
+			unsigned int index;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<FromBackend>(*this);
+				ar & host;
+				ar & name;
+				ar & index;
+			}
+		};
+
+		template <>
+		struct Message<TRN::Engine::Tag::CONFIGURED> : public Simulation
 		{
 		};
 		template <>
-		struct Message<TRN::Engine::Tag::ALLOCATED> : public Header
+		struct Message<TRN::Engine::Tag::ALLOCATED> : public Simulation
 		{
 
 		};
 		template <>
-		struct Message<TRN::Engine::Tag::DEALLOCATED> : public Header
+		struct Message<TRN::Engine::Tag::DEALLOCATED> : public Simulation
 		{
 
 		};
@@ -128,44 +222,21 @@ namespace TRN
 		struct Message<TRN::Engine::Tag::READY> : public Header
 		{
 		};*/
-		template <>
-		struct Message<TRN::Engine::Tag::COMPLETED>
-		{
-			template<class Archive>
-			void serialize(Archive & ar, const unsigned int version)
-			{
-			}
-		};
+
+	
+		
+
 		template <>
 		struct Message<TRN::Engine::Tag::QUIT>
 		{
-			int rank;
-
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & rank;
 			}
 		};
-		template <>
-		struct Message<TRN::Engine::Tag::WORKER>
-		{
-			std::string host;
-			std::string name;
-			unsigned int index;
-			int rank;
 
-			template<class Archive>
-			void serialize(Archive & ar, const unsigned int version)
-			{
-				ar & host;
-				ar & name;
-				ar & index;
-				ar & rank;
-			}
-		};
 		template<>
-		struct Message<TRN::Engine::Tag::ACK> : public Header
+		struct Message<TRN::Engine::Tag::ACK> : public Simulation
 		{
 			bool success;
 			std::string cause;
@@ -173,23 +244,23 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & success;
 				ar & cause;
 			}
 		};
 		template<>
-		struct Message<TRN::Engine::Tag::ALLOCATE> : public Header
+		struct Message<TRN::Engine::Tag::ALLOCATE> : public Simulation
 		{
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::DEALLOCATE> : public Header
+		struct Message<TRN::Engine::Tag::DEALLOCATE> : public Simulation
 		{
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::TRAIN> : public Header
+		struct Message<TRN::Engine::Tag::TRAIN> : public Simulation
 		{
 			std::string label;
 			std::string incoming;
@@ -198,7 +269,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & label;
 				ar & incoming;
 				ar & expected;
@@ -206,7 +277,7 @@ namespace TRN
 		};
 	
 		template<>
-		struct Message<TRN::Engine::Tag::TEST> : public Header
+		struct Message<TRN::Engine::Tag::TEST> : public Simulation
 		{
 			std::string label;
 			std::string incoming;
@@ -218,7 +289,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & label;
 				ar & incoming;
 				ar & expected;
@@ -230,7 +301,7 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::DECLARE_SEQUENCE> : public Header
+		struct Message<TRN::Engine::Tag::DECLARE_SEQUENCE> : public Simulation
 		{
 			std::string label;
 			std::string tag;
@@ -240,7 +311,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & label;
 				ar & tag;
 				ar & sequence;
@@ -249,7 +320,7 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::DECLARE_SET> : public Header
+		struct Message<TRN::Engine::Tag::DECLARE_SET> : public Simulation
 		{
 			std::string label;
 			std::string tag;
@@ -258,14 +329,14 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & label;
 				ar & tag;
 				ar & labels;
 			}
 		};
 
-		struct Setup : public Header
+		struct Setup : public Simulation
 		{
 			bool train;
 			bool prime;
@@ -274,7 +345,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & train;
 				ar & prime;
 				ar & generate;
@@ -287,7 +358,7 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::SETUP_WEIGHTS> : public Header
+		struct Message<TRN::Engine::Tag::SETUP_WEIGHTS> : public Simulation
 		{
 			bool train;
 			bool initialization;
@@ -295,7 +366,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & train;
 				ar & initialization;
 			}
@@ -306,28 +377,28 @@ namespace TRN
 		{
 		};
 		template<>
-		struct Message<TRN::Engine::Tag::SETUP_SCHEDULING> : public Header
+		struct Message<TRN::Engine::Tag::SETUP_SCHEDULING> : public Simulation
 		{
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_BEGIN> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_BEGIN> : public Simulation
 		{
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_END> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_END> : public Simulation
 		{
 		};
 
-		struct ConfigureMeasurement : public Header
+		struct ConfigureMeasurement : public Simulation
 		{
 			std::size_t batch_size;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & batch_size;
 			}
 		};
@@ -358,7 +429,7 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_RESERVOIR_WIDROW_HOFF> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_RESERVOIR_WIDROW_HOFF> : public Simulation
 		{
 			std::size_t stimulus_size;
 			std::size_t prediction_size;
@@ -372,7 +443,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & stimulus_size;
 				ar & prediction_size;
 				ar & reservoir_size;
@@ -385,7 +456,7 @@ namespace TRN
 		};
 
 
-		struct Loop : public Header
+		struct Loop : public Simulation
 		{
 			std::size_t stimulus_size;
 			std::size_t batch_size;
@@ -393,7 +464,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & stimulus_size;
 				ar & batch_size;
 			}
@@ -441,20 +512,20 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_TILED> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_TILED> : public Simulation
 		{
 			std::size_t epochs;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & epochs;
 			}
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_SNIPPETS> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_SNIPPETS> : public Simulation
 		{
 			unsigned long seed;
 			unsigned int snippets_size;
@@ -464,7 +535,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & snippets_size;
 				ar & time_budget;
 				ar & seed;
@@ -475,27 +546,27 @@ namespace TRN
 
 
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_CUSTOM> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_CUSTOM> : public Simulation
 		{
 			std::string tag;
 			unsigned long seed;
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & tag;
 				ar & seed;
 			}
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE> : public Simulation
 		{
 			unsigned long seed;
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & seed;
 			}
 		};
@@ -531,7 +602,7 @@ namespace TRN
 		{
 		};
 
-		struct Gaussian : public Header
+		struct Gaussian : public Simulation
 		{
 			float mu;
 			float sigma;
@@ -539,13 +610,13 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & mu;
 				ar & sigma;
 			}
 		};
 
-		struct Uniform : public Header
+		struct Uniform : public Simulation
 		{
 			float a;
 			float b;
@@ -554,7 +625,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & a;
 				ar & b;
 				ar & sparsity;
@@ -572,7 +643,7 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_CUSTOM> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_CUSTOM> : public Simulation
 		{
 		};
 
@@ -587,7 +658,7 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_CUSTOM> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_CUSTOM> : public Simulation
 		{
 		};
 
@@ -602,7 +673,7 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM> : public Simulation
 		{
 		};
 
@@ -617,10 +688,10 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_READOUT_CUSTOM> : public Header
+		struct Message<TRN::Engine::Tag::CONFIGURE_READOUT_CUSTOM> : public Simulation
 		{
 		};
-		struct Dimensions : public Header
+		struct Dimensions : public Simulation
 		{
 			std::size_t matrices;
 			std::size_t rows;
@@ -630,7 +701,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & matrices;
 				ar & rows;
 				ar & cols;
@@ -689,7 +760,7 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::SCHEDULING> : public Header
+		struct Message<TRN::Engine::Tag::SCHEDULING> : public Simulation
 		{
 			std::vector<int> offsets;
 			std::vector<int> durations;
@@ -700,7 +771,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & offsets;
 				ar & durations;
 				ar & is_from_mutator;
@@ -711,7 +782,7 @@ namespace TRN
 
 
 		template<>
-		struct Message<TRN::Engine::Tag::MUTATOR_CUSTOM> : public Header
+		struct Message<TRN::Engine::Tag::MUTATOR_CUSTOM> : public Simulation
 		{
 			std::size_t trial;
 			std::vector<int> offsets;
@@ -721,7 +792,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & trial;
 				ar & offsets;
 				ar & durations;
@@ -825,7 +896,7 @@ namespace TRN
 	
 
 		template<>
-		struct Message<TRN::Engine::Tag::PERFORMANCES> : public Header
+		struct Message<TRN::Engine::Tag::PERFORMANCES> : public Simulation
 		{
 			std::size_t trial;
 			std::size_t evaluation;
@@ -836,7 +907,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & trial;
 				ar & evaluation;
 				ar & cycles_per_second;
@@ -846,15 +917,15 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::TRAINED> : public Header
+		struct Message<TRN::Engine::Tag::TRAINED> : public Simulation
 		{
 		};
 		template<>
-		struct Message<TRN::Engine::Tag::TESTED> : public Header
+		struct Message<TRN::Engine::Tag::TESTED> : public Simulation
 		{
 		};
 		template<>
-		struct Message<TRN::Engine::Tag::PRIMED> : public Header
+		struct Message<TRN::Engine::Tag::PRIMED> : public Simulation
 		{
 		};
 	
@@ -946,14 +1017,14 @@ namespace TRN
 
 
 		template<>
-		struct Message<TRN::Engine::Tag::LOG_INFORMATION> : public Header
+		struct Message<TRN::Engine::Tag::LOG_INFORMATION> : public Simulation
 		{
 			std::string message;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Header>(*this);
+				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & message;
 			}
 		};

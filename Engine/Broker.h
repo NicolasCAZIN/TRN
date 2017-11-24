@@ -23,7 +23,8 @@ namespace TRN
 			virtual ~Broker();
 
 		public :
-			void halt();
+			void dispose();
+			void quit();
 
 		protected :
 			virtual void initialize() override;
@@ -31,9 +32,8 @@ namespace TRN
 			virtual void body() override;
 
 
-		protected :
-			void	completed();
-	
+
+		
 		protected :
 			//void ready(const unsigned long long &id);
 		public  :
@@ -85,7 +85,7 @@ namespace TRN
 
 			void 	configure_mutator_shuffle(const unsigned long long &id, const unsigned long &seed);
 			void 	configure_mutator_reverse(const unsigned long long &id, const unsigned long &seed, const float &rate, const std::size_t &size);
-			void 	configure_mutator_punch(const unsigned long long &id, const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &number);
+			void 	configure_mutator_punch(const unsigned long long &id, const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &counter);
 
 			void 	configure_mutator_custom(const unsigned long long &id, const unsigned long &seed);
 
@@ -109,11 +109,11 @@ namespace TRN
 		protected:
 		
 			virtual void callback_completed() = 0;
-			virtual void callback_ack(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause) = 0;
+			virtual void callback_ack(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause) = 0;
 			virtual void callback_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name) = 0;
 			virtual void callback_allocated(const unsigned long long &id, const int &rank) = 0;
 			virtual void callback_deallocated(const unsigned long long &id, const int &rank) = 0;
-			virtual void callback_quit(const int &rank) = 0;
+			virtual void callback_exit(const int &rank, const bool &terminated) = 0;
 			virtual void callback_configured(const unsigned long long &id) = 0;
 			virtual void callback_trained(const unsigned long long &id) = 0;
 			virtual void callback_primed(const unsigned long long &id) = 0;

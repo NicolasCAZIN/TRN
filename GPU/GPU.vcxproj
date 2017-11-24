@@ -116,11 +116,11 @@
       <NvccCompilation>compile</NvccCompilation>
       <Include>
       </Include>
-      <GPUDebugInfo>true</GPUDebugInfo>
+      <GPUDebugInfo>false</GPUDebugInfo>
     </CudaCompile>
     <CudaLink>
       <UseHostLibraryDependencies>true</UseHostLibraryDependencies>
-      <GPUDebugInfo>true</GPUDebugInfo>
+      <GPUDebugInfo>false</GPUDebugInfo>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
       <AdditionalDependencies>

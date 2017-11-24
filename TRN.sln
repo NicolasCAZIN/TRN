@@ -199,6 +199,8 @@ Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Applications", "Application
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Library", "Library\Library.vdproj", "{62EDF3D3-4B0D-42FF-B9B7-97D9F5FA1163}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Dummy", "Dummy\Dummy.vcxproj", "{9CE63F8D-859B-4112-8395-BDAEA9D19979}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -504,6 +506,14 @@ Global
 		{62EDF3D3-4B0D-42FF-B9B7-97D9F5FA1163}.Release|x64.ActiveCfg = Release
 		{62EDF3D3-4B0D-42FF-B9B7-97D9F5FA1163}.Release|x86.ActiveCfg = Release
 		{62EDF3D3-4B0D-42FF-B9B7-97D9F5FA1163}.Release|x86.Build.0 = Release
+		{9CE63F8D-859B-4112-8395-BDAEA9D19979}.Debug|x64.ActiveCfg = Debug|x64
+		{9CE63F8D-859B-4112-8395-BDAEA9D19979}.Debug|x64.Build.0 = Debug|x64
+		{9CE63F8D-859B-4112-8395-BDAEA9D19979}.Debug|x86.ActiveCfg = Debug|Win32
+		{9CE63F8D-859B-4112-8395-BDAEA9D19979}.Debug|x86.Build.0 = Debug|Win32
+		{9CE63F8D-859B-4112-8395-BDAEA9D19979}.Release|x64.ActiveCfg = Release|x64
+		{9CE63F8D-859B-4112-8395-BDAEA9D19979}.Release|x64.Build.0 = Release|x64
+		{9CE63F8D-859B-4112-8395-BDAEA9D19979}.Release|x86.ActiveCfg = Release|Win32
+		{9CE63F8D-859B-4112-8395-BDAEA9D19979}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -557,6 +567,7 @@ Global
 		{D8F650D9-2632-4ABE-8852-6B23883E93CE} = {1412188B-B1A8-40FA-842C-C8F20F67AB3C}
 		{F1B66ABA-6190-47A4-81F7-18ACA40908EB} = {A803379A-D14E-46D8-8F3E-B0098A1EFCF2}
 		{62EDF3D3-4B0D-42FF-B9B7-97D9F5FA1163} = {A803379A-D14E-46D8-8F3E-B0098A1EFCF2}
+		{9CE63F8D-859B-4112-8395-BDAEA9D19979} = {74DCF5C7-E5D5-49DC-82AE-CCBD6E788FFD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		Qt5Version = $(DefaultQtVersion)

@@ -14,7 +14,7 @@ $(LocalDebuggerEnvironment)
     <LocalDebuggerEnvironment>PATH=$(QTDIR)\bin%3b$(VCRedistPaths)%PATH%
 $(LocalDebuggerEnvironment)
     </LocalDebuggerEnvironment>
-    <LocalDebuggerCommandArguments>--backend local --index 1</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>--host 0.0.0.0 --port 12345 --backend local --index 1 2 3 4</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -30,7 +30,7 @@ $(LocalDebuggerEnvironment)
     <LocalDebuggerEnvironment>PATH=$(QTDIR)\bin%3b$(VCRedistPaths)%PATH%
 $(LocalDebuggerEnvironment)
     </LocalDebuggerEnvironment>
-    <LocalDebuggerCommandArguments>--backend local --index 1 3 2 4</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>--host 0.0.0.0 --port 12345 --backend local --index 1 2 3 4</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

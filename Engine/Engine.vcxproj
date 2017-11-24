@@ -178,13 +178,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Backend.cpp" />
+    <ClCompile Include="Dispatcher.cpp" />
     <ClCompile Include="Executor.cpp" />
     <ClCompile Include="Broker.cpp" />
     <ClCompile Include="Communicator.cpp" />
     <ClCompile Include="Compressor.cpp" />
     <ClCompile Include="Frontend.cpp" />
     <ClCompile Include="Manager.cpp" />
+    <ClCompile Include="Messages.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="Processor.cpp" />
     <ClCompile Include="Proxy.cpp" />
@@ -198,8 +199,8 @@
     <ClCompile Include="Worker.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Backend.h" />
-    <ClInclude Include="Backend_impl.h" />
+    <ClInclude Include="Dispatcher.h" />
+    <ClInclude Include="Dispatcher_impl.h" />
     <ClInclude Include="Command.h" />
     <ClInclude Include="Executor.h" />
     <ClInclude Include="Executor_impl.h" />

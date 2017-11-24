@@ -9,5 +9,6 @@ public :
 	std::shared_ptr<TRN::Engine::Compressor> compressor;
 	typedef  std::pair<TRN::Engine::Tag, std::string> Blob;
 	std::string host;
+	unsigned short offset;
 
 };

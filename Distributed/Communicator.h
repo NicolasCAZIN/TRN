@@ -19,6 +19,9 @@ namespace TRN
 			Communicator(int argc, char *argv[]);
 			virtual ~Communicator();
 
+		public :
+			virtual void dispose() override;
+
 		protected:
 			virtual int rank() override;
 			virtual std::size_t size() override;

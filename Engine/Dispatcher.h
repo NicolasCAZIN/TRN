@@ -7,27 +7,30 @@ namespace TRN
 {
 	namespace Engine
 	{
-		class ENGINE_EXPORT Backend : public TRN::Engine::Broker
+		class ENGINE_EXPORT Dispatcher :
+			public TRN::Engine::Broker
 		{
-		private:
+		private :
 			class Handle;
 			std::unique_ptr<Handle> handle;
 
-		public:
-			Backend(const std::shared_ptr<TRN::Engine::Communicator> &to_frontend, const std::shared_ptr<TRN::Engine::Communicator> &to_workers);
-			virtual ~Backend();
+		public :
+			Dispatcher(const std::shared_ptr<TRN::Engine::Communicator> &to_workers);
+			virtual ~Dispatcher();
 
 
+		public :
+			void register_frontend(const unsigned short &frontend, const std::shared_ptr<TRN::Engine::Communicator> &communicator);
+			void unregister_frontend(const unsigned short &frontend);
 
-
-		protected:
+		protected :
 			virtual void callback_completed() override;
 			virtual void callback_configured(const unsigned long long &id) override;
-			virtual void callback_ack(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause) override;
+			virtual void callback_ack(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause) override;
 			virtual void callback_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name) override;
 			virtual void callback_allocated(const unsigned long long &id, const int &rank) override;
 			virtual void callback_deallocated(const unsigned long long &id, const int &rank) override;
-			virtual void callback_quit(const int &rank) override;
+			virtual void callback_exit(const int &rank, const bool &terminated) override;
 			virtual void callback_trained(const unsigned long long &id) override;
 			virtual void callback_primed(const unsigned long long &id) override;
 			virtual void callback_tested(const unsigned long long &id) override;
@@ -57,8 +60,10 @@ namespace TRN
 			virtual void callback_feedback(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols) override;
 			virtual void callback_readout(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols) override;
 			virtual void callback_recurrent(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols) override;
-		public:
-			static std::shared_ptr<Backend> create(const std::shared_ptr<TRN::Engine::Communicator> &to_frontend, const std::shared_ptr<TRN::Engine::Communicator> &to_workers);
+
+
+		public :
+			static std::shared_ptr<TRN::Engine::Dispatcher> create(const std::shared_ptr<TRN::Engine::Communicator> &to_workers);
 		};
-	};
+	}
 };

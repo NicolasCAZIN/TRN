@@ -10,9 +10,11 @@ TRN::Distributed::Communicator::Communicator(int argc, char *argv[]) :
 		throw std::runtime_error("At least, one MPI worker is required");
 
 
-
 }
-
+void TRN::Distributed::Communicator::dispose()
+{
+	handle->world.abort(0);
+}
 TRN::Distributed::Communicator::~Communicator()
 {
 	// std::cout << __FUNCTION__ << std::endl;

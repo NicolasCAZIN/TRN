@@ -192,11 +192,10 @@ void Callbacks::callback_measurement_readout_raw(const unsigned long long &id, c
 
 	unsigned int simulation_number;
 	unsigned short condition_number;
-	unsigned short experiment_number;
+	unsigned short number;
 	
-	TRN4CPP::Simulation::decode(id, experiment_number, condition_number, simulation_number);
+	TRN4CPP::Simulation::decode(id, number, condition_number, simulation_number);
 
-	auto mx_experiment = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_experiment) = experiment_number; measurement["experiment"] = mx_experiment;
 	auto mx_condition = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_condition) = condition_number; measurement["condition"] = mx_condition;
 	auto mx_simulation = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT32_CLASS, mxComplexity::mxREAL); *(unsigned int *)mxGetData(mx_simulation) = simulation_number; measurement["simulation"] = mx_simulation;
 
@@ -219,11 +218,10 @@ void Callbacks::callback_measurement_position_raw(const unsigned long long &id, 
 
 	unsigned int simulation_number;
 	unsigned short condition_number;
-	unsigned short experiment_number;
+	unsigned short number;
 
-	TRN4CPP::Simulation::decode(id, experiment_number, condition_number, simulation_number);
+	TRN4CPP::Simulation::decode(id, number, condition_number, simulation_number);
 
-	auto mx_experiment = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_experiment) = experiment_number; measurement["experiment"] = mx_experiment;
 	auto mx_condition = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_condition) = condition_number; measurement["condition"] = mx_condition;
 	auto mx_simulation = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT32_CLASS, mxComplexity::mxREAL); *(unsigned int *)mxGetData(mx_simulation) = simulation_number; measurement["simulation"] = mx_simulation;
 
@@ -243,11 +241,10 @@ void Callbacks::callback_measurement_readout_mean_square_error(const unsigned lo
 
 	unsigned int simulation_number;
 	unsigned short condition_number;
-	unsigned short experiment_number;
+	unsigned short number;
 
-	TRN4CPP::Simulation::decode(id, experiment_number, condition_number, simulation_number);
+	TRN4CPP::Simulation::decode(id, number, condition_number, simulation_number);
 
-	auto mx_experiment = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_experiment) = experiment_number; measurement["experiment"] = mx_experiment;
 	auto mx_condition = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_condition) = condition_number; measurement["condition"] = mx_condition;
 	auto mx_simulation = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT32_CLASS, mxComplexity::mxREAL); *(unsigned int *)mxGetData(mx_simulation) = simulation_number; measurement["simulation"] = mx_simulation;
 
@@ -265,11 +262,10 @@ void Callbacks::callback_measurement_readout_frechet_distance(const unsigned lon
 
 	unsigned int simulation_number;
 	unsigned short condition_number;
-	unsigned short experiment_number;
+	unsigned short number;
 
-	TRN4CPP::Simulation::decode(id, experiment_number, condition_number, simulation_number);
+	TRN4CPP::Simulation::decode(id, number, condition_number, simulation_number);
 
-	auto mx_experiment = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_experiment) = experiment_number; measurement["experiment"] = mx_experiment;
 	auto mx_condition = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_condition) = condition_number; measurement["condition"] = mx_condition;
 	auto mx_simulation = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT32_CLASS, mxComplexity::mxREAL); *(unsigned int *)mxGetData(mx_simulation) = simulation_number; measurement["simulation"] = mx_simulation;
 
@@ -287,11 +283,10 @@ void Callbacks::callback_measurement_position_mean_square_error(const unsigned l
 
 	unsigned int simulation_number;
 	unsigned short condition_number;
-	unsigned short experiment_number;
+	unsigned short number;
 
-	TRN4CPP::Simulation::decode(id, experiment_number, condition_number, simulation_number);
+	TRN4CPP::Simulation::decode(id, number, condition_number, simulation_number);
 
-	auto mx_experiment = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_experiment) = experiment_number; measurement["experiment"] = mx_experiment;
 	auto mx_condition = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_condition) = condition_number; measurement["condition"] = mx_condition;
 	auto mx_simulation = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT32_CLASS, mxComplexity::mxREAL); *(unsigned int *)mxGetData(mx_simulation) = simulation_number; measurement["simulation"] = mx_simulation;
 
@@ -309,11 +304,10 @@ void Callbacks::callback_measurement_position_frechet_distance(const unsigned lo
 
 	unsigned int simulation_number;
 	unsigned short condition_number;
-	unsigned short experiment_number;
+	unsigned short number;
 
-	TRN4CPP::Simulation::decode(id, experiment_number, condition_number, simulation_number);
+	TRN4CPP::Simulation::decode(id, number, condition_number, simulation_number);
 
-	auto mx_experiment = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_experiment) = experiment_number; measurement["experiment"] = mx_experiment;
 	auto mx_condition = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_condition) = condition_number; measurement["condition"] = mx_condition;
 	auto mx_simulation = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT32_CLASS, mxComplexity::mxREAL); *(unsigned int *)mxGetData(mx_simulation) = simulation_number; measurement["simulation"] = mx_simulation;
 
@@ -331,11 +325,10 @@ void Callbacks::callback_performances(const unsigned long long &id, const std::s
 	std::map<std::string, mxArray *> performances;
 	unsigned int simulation_number;
 	unsigned short condition_number;
-	unsigned short experiment_number;
+	unsigned short number;
 
-	TRN4CPP::Simulation::decode(id, experiment_number, condition_number, simulation_number);
+	TRN4CPP::Simulation::decode(id, number, condition_number, simulation_number);
 
-	auto mx_experiment = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_experiment) = experiment_number; performances["experiment"] = mx_experiment;
 	auto mx_condition = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_condition) = condition_number; performances["condition"] = mx_condition;
 	auto mx_simulation = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT32_CLASS, mxComplexity::mxREAL); *(unsigned int *)mxGetData(mx_simulation) = simulation_number; performances["simulation"] = mx_simulation;
 
@@ -353,11 +346,10 @@ void Callbacks::callback_states(const unsigned long long &id, const std::string 
 	std::map<std::string, mxArray *> states;
 	unsigned int simulation_number;
 	unsigned short condition_number;
-	unsigned short experiment_number;
+	unsigned short number;
 
-	TRN4CPP::Simulation::decode(id, experiment_number, condition_number, simulation_number);
+	TRN4CPP::Simulation::decode(id, number, condition_number, simulation_number);
 
-	auto mx_experiment = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_experiment) = experiment_number; states["experiment"] = mx_experiment;
 	auto mx_condition = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_condition) = condition_number; states["condition"] = mx_condition;
 	auto mx_simulation = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT32_CLASS, mxComplexity::mxREAL); *(unsigned int *)mxGetData(mx_simulation) = simulation_number; states["simulation"] = mx_simulation;
 
@@ -376,11 +368,10 @@ void Callbacks::callback_weights(const unsigned long long &id, const std::string
 	std::map<std::string, mxArray *> weights;
 	unsigned int simulation_number;
 	unsigned short condition_number;
-	unsigned short experiment_number;
+	unsigned short number;
 
-	TRN4CPP::Simulation::decode(id, experiment_number, condition_number, simulation_number);
+	TRN4CPP::Simulation::decode(id, number, condition_number, simulation_number);
 
-	auto mx_experiment = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_experiment) = experiment_number; weights["experiment"] = mx_experiment;
 	auto mx_condition = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_condition) = condition_number; weights["condition"] = mx_condition;
 	auto mx_simulation = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT32_CLASS, mxComplexity::mxREAL); *(unsigned int *)mxGetData(mx_simulation) = simulation_number; weights["simulation"] = mx_simulation;
 
@@ -399,11 +390,10 @@ void Callbacks::callback_scheduling(const unsigned long long &id, const std::siz
 	std::map<std::string, mxArray *> scheduling;
 	unsigned int simulation_number;
 	unsigned short condition_number;
-	unsigned short experiment_number;
+	unsigned short number;
 
-	TRN4CPP::Simulation::decode(id, experiment_number, condition_number, simulation_number);
+	TRN4CPP::Simulation::decode(id, number, condition_number, simulation_number);
 
-	auto mx_experiment = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_experiment) = experiment_number; scheduling["experiment"] = mx_experiment;
 	auto mx_condition = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_condition) = condition_number; scheduling["condition"] = mx_condition;
 	auto mx_simulation = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT32_CLASS, mxComplexity::mxREAL); *(unsigned int *)mxGetData(mx_simulation) = simulation_number; scheduling["simulation"] = mx_simulation;
 

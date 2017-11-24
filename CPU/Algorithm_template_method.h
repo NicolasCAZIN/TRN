@@ -510,7 +510,6 @@ static inline void location_hypothesis(const float *firing_rate_row, const std::
 	const typename TRN::CPU::Traits<Implementation>::type  &__inv_sigma2,
 	float *hypothesis_row)
 {
-	auto __acc = setzero_ps();
 	std::size_t col = 0;
 	if (cols - col > _8)
 	{
@@ -531,7 +530,6 @@ static inline void location_hypothesis(const float *firing_rate_row, const std::
 			auto __h6 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _6]))), __inv_sigma2);
 			stream_ps(&hypothesis_row[col + _6], __h6);
 			auto __h7 = mul_ps(sqr_ps(sub_ps(__prediction, load_ps(&firing_rate_row[col + _7]))), __inv_sigma2);
-			__acc = add_ps(__h7, __acc);
 			stream_ps(&hypothesis_row[col + _7], __h7);
 		}
 	}
@@ -595,17 +593,20 @@ void TRN::CPU::Algorithm<Implementation>::place_cell_location_probability(
 
 		const float &p = prediction[batch][place_cell];
 		const auto &__prediction = set1_ps(p);
-
+		float sum = 0.0f;
 		for (std::size_t row = 0; row < rows; row++)
 		{
 			auto firing_rate_row = &firing_rate_k[row * firing_rate_map_stride];
 			auto hypothesis_row = &hypothesis_k[row * hypothesis_map_stride];
 
 			location_hypothesis<Implementation>(firing_rate_row, hypothesis_map_stride, __prediction, ___inv_sigma2, hypothesis_row);
+			vsExp(cols, hypothesis_row, hypothesis_row);
+			sum += cblas_sasum(cols, hypothesis_row, 1);
 		}
-		vsExp(rows * hypothesis_map_stride, hypothesis_k, hypothesis_k);
-		float sum =  cblas_sasum(rows * hypothesis_map_stride, hypothesis_k, 1);
-		scale[batch][place_cell] = 1.0f / (sum * (float)place_cells_number);
+		if (sum > 0.0f)
+			scale[batch][place_cell] = 1.0f / (sum * (float)place_cells_number);
+		else
+			scale[batch][place_cell] = 0.0f;
 	}
 
 

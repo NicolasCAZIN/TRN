@@ -7,7 +7,7 @@
 
 
 std::function<void()> on_completed;
-std::function<void(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)> on_ack;
+std::function<void(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)> on_ack;
 std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> on_processor;
 std::function<void(const unsigned long long &id, const int &rank)> on_allocated;
 std::function<void(const unsigned long long &id, const int &rank)> on_deallocated;
@@ -26,7 +26,7 @@ void TRN4CPP::Engine::Execution::run()
 {
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
-	frontend->join();
+	frontend->dispose();
 }
 
 void TRN4CPP::Engine::Events::Completed::install(const std::function<void()> &functor)
@@ -35,7 +35,7 @@ void TRN4CPP::Engine::Events::Completed::install(const std::function<void()> &fu
 		throw std::runtime_error("Frontend is already initialized");
 	on_completed = functor;
 }
-void TRN4CPP::Engine::Events::Ack::install(const std::function<void(const unsigned long long &id, const std::size_t &number, const bool &success, const std::string &cause)> &functor)
+void TRN4CPP::Engine::Events::Ack::install(const std::function<void(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)> &functor)
 {
 	if (frontend)
 		throw std::runtime_error("Frontend is already initialized");
@@ -278,11 +278,11 @@ void TRN4CPP::Simulation::Scheduler::Mutator::Reverse::configure(const unsigned 
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->configure_mutator_reverse(id, seed, rate, size);
 }
-void TRN4CPP::Simulation::Scheduler::Mutator::Punch::configure(const unsigned long long &id, const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &number)
+void TRN4CPP::Simulation::Scheduler::Mutator::Punch::configure(const unsigned long long &id, const unsigned long &seed, const float &rate, const std::size_t &size, const std::size_t &counter)
 {
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
-	frontend->configure_mutator_punch(id, seed, rate, size, number);
+	frontend->configure_mutator_punch(id, seed, rate, size, counter);
 }
 void TRN4CPP::Simulation::Scheduler::Mutator::Custom::configure(const unsigned long long &id, const unsigned long &seed,
 	const std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,

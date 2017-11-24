@@ -25,9 +25,11 @@ namespace TRN
 		public :
 			virtual void initialize() override;
 
+
 		protected :
-		//	virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::READY> &message) override;
-			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message) override;
+			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message) override;
+			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::START> &message) override;
+			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::STOP> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATE> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::TRAIN> &message) override;

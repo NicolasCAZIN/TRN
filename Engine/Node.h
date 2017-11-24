@@ -12,7 +12,7 @@ namespace TRN
 		class ENGINE_EXPORT Node : public virtual TRN::Engine::Task, 
 									public TRN::Helper::Bridge<TRN::Engine::Communicator, std::weak_ptr>
 		{
-		protected :
+		protected:
 			class Handle;
 			std::unique_ptr<Handle> handle;
 
@@ -22,14 +22,19 @@ namespace TRN
 		public:
 			virtual ~Node();
 
+	
+		public :
+			void dispose();
 		private:
 			void body() override;
 			void erase_functors(const unsigned long long &id);
-
+		protected :
+			virtual void uninitialize() override;
 
 		protected:
-//			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::READY> &message) = 0;
-			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message) = 0;
+			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message) = 0;
+			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::START> &message) = 0;
+			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::STOP> &message) = 0;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message) = 0;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATE> &message) = 0;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::TRAIN> &message) = 0;

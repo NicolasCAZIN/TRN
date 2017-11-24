@@ -36,13 +36,14 @@ void TRN::Engine::Manager::start()
 			handle->associated.erase(id);
 
 			lock.unlock();
-			handle->condition.notify_one();
+			handle->condition.notify_all();
 		}
 	});
 }
 
 void TRN::Engine::Manager::terminate()
 {
+	dispose();
 	for (auto processor : handle->processors)
 	{
 		processor->terminate();
@@ -77,7 +78,7 @@ void TRN::Engine::Manager::update_processor(const int &rank, const std::string h
 	std::unique_lock<std::mutex> lock(handle->mutex);
 	handle->available.emplace(processor);
 	lock.unlock();
-	handle->condition.notify_one();
+	handle->condition.notify_all();
 }
 
 /*void TRN::Engine::Manager::wait_not_allocated()
@@ -110,11 +111,19 @@ std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::allocate(const uns
 	handle->associated[id] = processor;
 
 	lock.unlock();
-	handle->condition.notify_one();
+	handle->condition.notify_all();
 	
 	return processor;
 }
+void TRN::Engine::Manager::dispose()
+{
+	std::unique_lock<std::mutex> lock(handle->mutex);
 
+	while (!handle->associated.empty())
+		handle->condition.wait(lock);
+
+	lock.unlock();
+}
 void TRN::Engine::Manager::deallocate(const unsigned long long &id)
 {
 	handle->to_deallocate.enqueue(id);

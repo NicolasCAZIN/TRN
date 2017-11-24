@@ -17,14 +17,7 @@ TRN::Engine::Worker::Worker(const std::shared_ptr<TRN::Engine::Communicator> &co
 {
 	// std::cout << __FUNCTION__ << std::endl;
 	//TRN::Engine::Node::handle->name = "WORKER";
-	TRN::Engine::Message<TRN::Engine::Tag::WORKER> message;
 
-	message.host = communicator->host();
-	message.rank = rank;
-	message.index = driver->index();
-	message.name = driver->name();
-	//std::cout << "WORKER " << message.rank << " on " << message.host << " device " << message.name << " #" << message.index << std::endl;
-	communicator->send(message, 0);
 
 }
 
@@ -60,19 +53,29 @@ void TRN::Engine::Worker::initialize()
 	// std::cout << __FUNCTION__ << std::endl;
 	TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->toggle();
 }
-/*void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::READY> &message)
+void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message)
+{
+
+}
+
+void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::START> &message)
 {
 
 
-}*/
-void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::COMPLETED> &message)
+	TRN::Engine::Message<TRN::Engine::Tag::WORKER> worker;
+
+	auto communicator = TRN::Engine::Node::implementor.lock();
+	worker.host = communicator->host();
+	worker.rank = TRN::Engine::Node::handle->rank;
+	worker.index = TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->index();
+	worker.name = TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->name();
+	if (communicator)
+		communicator->send(worker, 0);
+}
+
+void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::STOP> &message)
 {
-	// std::cout << __FUNCTION__ << std::endl;
-	TRN::Engine::Message<TRN::Engine::QUIT> quit;
-	quit.rank = TRN::Engine::Node::handle->rank;
-	auto locked = TRN::Engine::Node::implementor.lock();
-	if (locked)
-		locked->send(quit, 0);
+	
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message)
 {
