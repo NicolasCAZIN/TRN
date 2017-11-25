@@ -44,10 +44,19 @@ unsigned long long TRN::Engine::Proxy::global_id(const unsigned long long &local
 
 void TRN::Engine::Proxy::initialize()
 {
+	TRN::Engine::Message<TRN::Engine::START> start;
+	start.number = handle->number;
+
+	handle->to_workers->broadcast(start);
+
 	handle->start = std::clock();
 }
 void TRN::Engine::Proxy::uninitialize()
 {
+	TRN::Engine::Message<TRN::Engine::STOP> stop;
+	stop.number = handle->number;
+	handle->to_workers->broadcast(stop);
+
 	auto uptime = (std::clock() - handle->start) / (float)CLOCKS_PER_SEC;
 	std::cout << "Proxy uptime : " + std::to_string(uptime) + " seconds" << std::endl;
 	
@@ -56,22 +65,16 @@ void TRN::Engine::Proxy::uninitialize()
 
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message)
 {
-	//handle->dispatcher->quit();
+	handle->dispatcher->quit();
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::START> &message)
 {
-	TRN::Engine::Message<TRN::Engine::START> start;
-	start.number = handle->number;
-	
-	handle->to_workers->broadcast(start);
+
 }
 
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::STOP> &message)
 {
-	TRN::Engine::Message<TRN::Engine::STOP> stop;
-	stop.number = handle->number;
-	handle->to_workers->broadcast(stop);
-
+	stop();
 	//handle->dispatcher->dispose();
 	std::cout << "BACKEND JOINED" << std::endl;
 }

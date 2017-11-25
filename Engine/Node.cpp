@@ -7,7 +7,7 @@ TRN::Engine::Node::Node(const std::shared_ptr<TRN::Engine::Communicator> &commun
 {
 	// std::cout << __FUNCTION__ << std::endl;
 	handle->rank = rank;
-	handle->quit_required = false;
+
 	handle->disposed = false;
 }
 
@@ -102,9 +102,7 @@ void TRN::Engine::Node::body()
 				ack_required = false;
 				auto message = locked->receive<TRN::Engine::START>(handle->rank);
 				process(message);
-			/*	if (handle->frontends.find(message.frontend_number) != handle->frontends.end())
-					throw std::runtime_error("Frontend " + std::to_string(message.frontend_number) + " is already declared");*/
-				handle->frontends.insert(message.number);
+
 			}
 			break;
 			case TRN::Engine::STOP:
@@ -113,41 +111,14 @@ void TRN::Engine::Node::body()
 				auto message = locked->receive<TRN::Engine::STOP>(handle->rank);
 				process(message);
 
-				if (handle->frontends.find(message.number) == handle->frontends.end())
-					throw std::runtime_error("Frontend " + std::to_string(message.number) + " is not declared");
-				handle->frontends.erase(message.number);
-
-				if (handle->quit_required)
-				{
-					std::cout << "Quit is required" << std::endl;
-					if (handle->frontends.empty())
-					{
-						std::cout << "No more frontends. Stopping worker" << std::endl;
-						stop();
-					}
-					else
-					{
-						std::cout << "Frontends are still using workers. Nothing will happen" << std::endl;
-					}
-				}
+				
 			}
 			break;
 			case TRN::Engine::QUIT:
 			{
 				ack_required = false;
 				process(locked->receive<TRN::Engine::QUIT>(handle->rank));
-				handle->quit_required = true;
-
-				if (handle->rank != -1)
-				{
-					TRN::Engine::Message<TRN::Engine::EXIT> exit;
-
-					exit.rank = handle->rank;
-					exit.terminated = false;
-					auto communicator = TRN::Engine::Node::implementor.lock();
-					if (communicator)
-						communicator->send(exit, 0);
-				}
+				
 			}
 			break;
 

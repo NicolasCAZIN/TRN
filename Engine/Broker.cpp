@@ -44,6 +44,8 @@ void TRN::Engine::Broker::initialize()
 {
 	handle->to_caller->start();
 	handle->manager->start();
+
+
 }
 
 void TRN::Engine::Broker::uninitialize()

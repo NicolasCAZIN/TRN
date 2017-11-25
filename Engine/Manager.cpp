@@ -11,6 +11,7 @@ TRN::Engine::Manager::Manager(const std::size_t &size):
 		auto processor = TRN::Engine::Processor::create(k);
 
 		handle->processors.push_back(processor);
+		handle->updated[k] = false;
 	}
 
 
@@ -69,15 +70,19 @@ std::vector<std::shared_ptr<TRN::Engine::Processor>> TRN::Engine::Manager::get_p
 
 void TRN::Engine::Manager::update_processor(const int &rank, const std::string host, const unsigned int &index, const std::string name)
 {
-
-	auto processor = handle->processors[rank - 1];
-	processor->set_host(host);
-	processor->set_name(name);
-	processor->set_index(index);
-
 	std::unique_lock<std::mutex> lock(handle->mutex);
-	handle->available.emplace(processor);
-	lock.unlock();
+	auto processor = handle->processors[rank - 1];
+	if (!handle->updated[rank - 1])
+	{
+		processor->set_host(host);
+		processor->set_name(name);
+		processor->set_index(index);
+
+		handle->updated[rank - 1] = true;
+		handle->available.emplace(processor);
+		lock.unlock();
+
+	}
 	handle->condition.notify_all();
 }
 

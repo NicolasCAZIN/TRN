@@ -6,6 +6,7 @@ class TRN::Engine::Manager::Handle
 {
 public :
 	std::vector<std::shared_ptr<TRN::Engine::Processor>> processors;
+	std::map<int, bool> updated;
 	std::map<unsigned long long, std::shared_ptr<TRN::Engine::Processor>> associated;
 	std::priority_queue<std::shared_ptr<TRN::Engine::Processor>> available;
 	std::condition_variable condition;

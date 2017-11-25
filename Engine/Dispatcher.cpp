@@ -38,17 +38,6 @@ void TRN::Engine::Dispatcher::unregister_frontend(const unsigned short &frontend
 	handle->to_frontend.erase(frontend);
 }
 
-void TRN::Engine::Dispatcher::callback_ack(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)
-{
-	/*TRN::Engine::Message<TRN::Engine::Tag::ACK> message;
-
-	message.id = id;
-	message.number = number;
-	message.success = success;
-	message.cause = cause;
-
-	TRN::Engine::Broker::handle->communicator->send(message, 0);*/
-}
 
 template <typename Message>
 static void send_to_frontend(std::map<unsigned short, std::shared_ptr<TRN::Engine::Communicator>> &to_frontend, Message &message)
@@ -67,6 +56,16 @@ static void send_to_frontend(std::map<unsigned short, std::shared_ptr<TRN::Engin
 	if (to_frontend.find(frontend_number) == to_frontend.end())
 		throw std::invalid_argument("Frontend #" + std::to_string(frontend_number) + "is not registered");
 	to_frontend[frontend_number]->send(message, 0);
+}
+void TRN::Engine::Dispatcher::callback_ack(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)
+{
+	/*TRN::Engine::Message<TRN::Engine::Tag::ACK> message;
+
+	message.counter = counter;
+	message.success = success;
+	message.cause = cause;
+
+	send_to_frontend(handle->to_frontend, message, id);*/
 }
 
 void TRN::Engine::Dispatcher::callback_configured(const unsigned long long &id)
@@ -130,17 +129,29 @@ void TRN::Engine::Dispatcher::callback_tested(const unsigned long long &id)
 
 	send_to_frontend(handle->to_frontend,message, id);
 }
-void TRN::Engine::Dispatcher::callback_error(const std::string &message)
+void TRN::Engine::Dispatcher::callback_error(const std::string &string)
 {
-	std::cerr << "ERROR : " << message << std::endl;
+	std::cerr << "ERROR : " << string << std::endl;
+	TRN::Engine::Message<TRN::Engine::Tag::LOG_ERROR> message;
+	message.message = string;
+
+	send_to_frontend(handle->to_frontend, message);
 }
-void TRN::Engine::Dispatcher::callback_information(const std::string &message)
+void TRN::Engine::Dispatcher::callback_information(const std::string &string)
 {
-	std::cout << "INFORMATION : " << message << std::endl;
+	std::cerr << "INFORMATION : " << string << std::endl;
+	TRN::Engine::Message<TRN::Engine::Tag::LOG_INFORMATION> message;
+	message.message = string;
+
+	send_to_frontend(handle->to_frontend, message);
 }
-void TRN::Engine::Dispatcher::callback_warning(const std::string &message)
+void TRN::Engine::Dispatcher::callback_warning(const std::string &string)
 {
-	std::cerr << "WARNING : " << message << std::endl;
+	std::cerr << "WARNING : " << string << std::endl;
+	TRN::Engine::Message<TRN::Engine::Tag::LOG_WARNING> message;
+	message.message = string;
+
+	send_to_frontend(handle->to_frontend, message);
 }
 void TRN::Engine::Dispatcher::callback_measurement_readout_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
