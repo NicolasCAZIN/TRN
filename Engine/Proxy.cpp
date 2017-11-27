@@ -12,10 +12,15 @@ TRN::Engine::Proxy::Proxy(
 	TRN::Engine::Node(frontend_proxy, -1),
 	handle(std::make_unique<Handle>())
 {
+	
+	for (int rank = 1; rank < proxy_workers->size(); rank++)
+		handle->stopped[rank] = false;
 	handle->to_workers = proxy_workers;
+	handle->to_frontend = frontend_proxy;
 	handle->number = number;
 	handle->dispatcher = dispatcher;
 	handle->visitor = visitor;
+	handle->quit_broadcasted = false;
 }
 
 TRN::Engine::Proxy::~Proxy()
@@ -48,14 +53,11 @@ void TRN::Engine::Proxy::initialize()
 	start.number = handle->number;
 
 	handle->to_workers->broadcast(start);
-
 	handle->start = std::clock();
 }
 void TRN::Engine::Proxy::uninitialize()
 {
-	TRN::Engine::Message<TRN::Engine::STOP> stop;
-	stop.number = handle->number;
-	handle->to_workers->broadcast(stop);
+	TRN::Engine::Node::uninitialize();
 
 	auto uptime = (std::clock() - handle->start) / (float)CLOCKS_PER_SEC;
 	std::cout << "Proxy uptime : " + std::to_string(uptime) + " seconds" << std::endl;
@@ -65,18 +67,89 @@ void TRN::Engine::Proxy::uninitialize()
 
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message)
 {
-	handle->dispatcher->quit();
+	if (!handle->quit_broadcasted)
+	{
+		TRN::Engine::Message<TRN::Engine::Tag::QUIT> quit;
+
+		quit.terminate = false;
+		quit.number = handle->number;
+		handle->to_workers->broadcast(quit);
+		handle->quit_broadcasted = true;
+		std::cout << "PROXY #" << std::to_string(handle->number) << "QUIT BROADCASTED" << std::endl;
+	}
 }
+
+void TRN::Engine::Proxy::update(const TRN::Engine::Message<TRN::Engine::EXIT> &message)
+{
+	if (message.number == handle->number)
+	{
+		std::cout << "PROXY #" << std::to_string(handle->number) << "RECEIVED EXIT RESPONSE FROM RANK " << message.rank << " QUIT BROADCASTED " << handle->quit_broadcasted << std::endl;
+		if (handle->quit_broadcasted && !handle->stopped[message.rank])
+		{
+
+			handle->stopped[message.rank] = true;
+
+			TRN::Engine::Message<TRN::Engine::Tag::EXIT> exit;
+
+			exit.rank = message.rank;
+			exit.number = 0;
+
+			handle->to_frontend->send(exit, 0);
+
+
+			TRN::Engine::Message<TRN::Engine::STOP> stop;
+			stop.number = handle->number;
+			handle->to_workers->broadcast(stop);
+
+
+			if (std::all_of(handle->stopped.begin(), handle->stopped.end(), [](const std::pair<int, bool> &p)
+			{
+				return p.second;
+			}))
+			{
+				std::cout << "PROXY #" << std::to_string(handle->number) << "RECEIVED EXIT RESPONSES" << std::endl;
+			}
+		}
+	}	
+}
+
+/*
+
+
+*/
+
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::START> &message)
 {
-
+	if (handle->frontends.find(message.number) == handle->frontends.end())
+		handle->frontends[message.number] = 0;
+	handle->frontends[message.number]++;
+	if (handle->frontends.size() != 1)
+		throw std::invalid_argument("Only one frontend per proxy is allowed");
 }
 
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::STOP> &message)
 {
-	stop();
-	//handle->dispatcher->dispose();
-	std::cout << "BACKEND JOINED" << std::endl;
+	if (handle->frontends.find(message.number) == handle->frontends.end())
+		throw std::invalid_argument("Frontend # " + std::to_string(message.number) + "was not started");
+	handle->frontends[message.number]--;
+	if (handle->frontends[message.number] == 0)
+	{
+		for (auto p : handle->stopped)
+		{
+			if (!p.second)
+				throw std::runtime_error("Stopped not declared to worker# " + std::to_string(p.first));
+			TRN::Engine::Message<TRN::Engine::Tag::TERMINATED> terminated;
+
+			terminated.rank = p.first;
+
+			handle->to_frontend->send(message, 0);
+		}
+		handle->to_frontend->dispose();
+		//handle->dispatcher->dispose();
+		stop();
+		std::cout << "PROXY #"  << std::to_string(handle->number) << "JOINED" << std::endl;
+
+	}
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message)
 {

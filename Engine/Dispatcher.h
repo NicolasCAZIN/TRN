@@ -2,13 +2,15 @@
 
 #include "engine_global.h"
 #include "Broker.h"
+#include "Helper/Observer.h"
 
 namespace TRN
 {
 	namespace Engine
 	{
 		class ENGINE_EXPORT Dispatcher :
-			public TRN::Engine::Broker
+			public TRN::Engine::Broker,
+			public TRN::Helper::Observable<	TRN::Engine::Message<TRN::Engine::EXIT>>
 		{
 		private :
 			class Handle;
@@ -23,6 +25,8 @@ namespace TRN
 			void register_frontend(const unsigned short &frontend, const std::shared_ptr<TRN::Engine::Communicator> &communicator);
 			void unregister_frontend(const unsigned short &frontend);
 
+	
+
 		protected :
 			virtual void callback_completed() override;
 			virtual void callback_configured(const unsigned long long &id) override;
@@ -30,7 +34,8 @@ namespace TRN
 			virtual void callback_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name) override;
 			virtual void callback_allocated(const unsigned long long &id, const int &rank) override;
 			virtual void callback_deallocated(const unsigned long long &id, const int &rank) override;
-			virtual void callback_exit(const int &rank, const bool &terminated) override;
+			virtual void callback_exit(const unsigned short &number, const int &rank) override;
+			virtual void callback_terminated(const int &rank) override;
 			virtual void callback_trained(const unsigned long long &id) override;
 			virtual void callback_primed(const unsigned long long &id) override;
 			virtual void callback_tested(const unsigned long long &id) override;

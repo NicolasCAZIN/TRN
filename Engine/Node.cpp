@@ -65,18 +65,6 @@ void TRN::Engine::Node::erase_functors(const unsigned long long &id)
 
 
 
-void TRN::Engine::Node::uninitialize()
-{
-	// std::cout << __FUNCTION__ << std::endl;
-	TRN::Engine::Message<TRN::Engine::Tag::EXIT> exit;
-
-	exit.terminated = true;
-	exit.rank = handle->rank;
-	auto communicator = TRN::Engine::Node::implementor.lock();
-	if (communicator)
-		communicator->send(exit, 0);
-
-}
 
 void TRN::Engine::Node::body()
 {
@@ -102,7 +90,7 @@ void TRN::Engine::Node::body()
 				ack_required = false;
 				auto message = locked->receive<TRN::Engine::START>(handle->rank);
 				process(message);
-
+		
 			}
 			break;
 			case TRN::Engine::STOP:
@@ -111,14 +99,12 @@ void TRN::Engine::Node::body()
 				auto message = locked->receive<TRN::Engine::STOP>(handle->rank);
 				process(message);
 
-				
 			}
 			break;
 			case TRN::Engine::QUIT:
 			{
 				ack_required = false;
 				process(locked->receive<TRN::Engine::QUIT>(handle->rank));
-				
 			}
 			break;
 

@@ -27,6 +27,7 @@ namespace TRN
 	
 			QUIT = 0,
 			EXIT,
+			TERMINATED,
 			STOP,
 			START,
 			/*READY,*/
@@ -113,38 +114,29 @@ namespace TRN
 			LOG_ERROR
 		};
 
-		struct Base
-		{
-			size_t counter;
 
-			template<class Archive>
-			void serialize(Archive & ar, const unsigned int version)
-			{
-				ar & counter;
-			}
-		};
 
-		struct FromFrontend : public Base
+		struct FromFrontend 
 		{
 			unsigned short number;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Base>(*this);
 				ar & number;
 			}
 		};
 
-		struct Simulation : public Base
+		struct Simulation : public FromFrontend
 		{
 			unsigned long long id;
-
+			size_t counter;
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Base>(*this);
+				ar & boost::serialization::base_object<FromFrontend>(*this);
 				ar & id;
+				ar & counter;
 			}
 		};
 
@@ -178,12 +170,22 @@ namespace TRN
 		template <>
 		struct Message<TRN::Engine::Tag::EXIT> : public FromBackend
 		{
-			bool terminated;
+			unsigned short number;
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & boost::serialization::base_object<FromBackend>(*this);
-				ar & terminated;
+				ar & number;
+			}
+		};
+
+		template <>
+		struct Message<TRN::Engine::Tag::TERMINATED> : public FromBackend
+		{
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<FromBackend>(*this);
 			}
 		};
 
@@ -227,11 +229,15 @@ namespace TRN
 		
 
 		template <>
-		struct Message<TRN::Engine::Tag::QUIT>
+		struct Message<TRN::Engine::Tag::QUIT> : public FromFrontend
 		{
+			bool terminate;
+
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
+				ar & boost::serialization::base_object<FromFrontend>(*this);
+				ar & terminate;
 			}
 		};
 

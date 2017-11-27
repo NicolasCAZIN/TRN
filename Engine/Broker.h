@@ -113,7 +113,8 @@ namespace TRN
 			virtual void callback_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name) = 0;
 			virtual void callback_allocated(const unsigned long long &id, const int &rank) = 0;
 			virtual void callback_deallocated(const unsigned long long &id, const int &rank) = 0;
-			virtual void callback_exit(const int &rank, const bool &terminated) = 0;
+			virtual void callback_exit(const unsigned short &number, const int &rank) = 0;
+			virtual void callback_terminated(const int &rank) = 0;
 			virtual void callback_configured(const unsigned long long &id) = 0;
 			virtual void callback_trained(const unsigned long long &id) = 0;
 			virtual void callback_primed(const unsigned long long &id) = 0;

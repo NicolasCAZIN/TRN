@@ -14,7 +14,6 @@ public :
 	size_t count;
 	std::size_t active;
 	bool completed;
-
 	std::set<unsigned long long> simulations;
 	std::shared_ptr<TRN::Engine::Manager> manager;
 	std::shared_ptr<TRN::Engine::Communicator> communicator;

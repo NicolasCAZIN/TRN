@@ -28,8 +28,7 @@ namespace TRN
 		private:
 			void body() override;
 			void erase_functors(const unsigned long long &id);
-		protected :
-			virtual void uninitialize() override;
+
 
 		protected:
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message) = 0;

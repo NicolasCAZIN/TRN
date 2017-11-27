@@ -15,7 +15,6 @@ TRN::Engine::Worker::Worker(const std::shared_ptr<TRN::Engine::Communicator> &co
 	TRN::Engine::Node(communicator, rank),
 	handle(std::make_unique<Handle>())
 {
-	handle->quit_required = false;
 	// std::cout << __FUNCTION__ << std::endl;
 	//TRN::Engine::Node::handle->name = "WORKER";
 
@@ -54,14 +53,35 @@ void TRN::Engine::Worker::initialize()
 	// std::cout << __FUNCTION__ << std::endl;
 	TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->toggle();
 }
+
+
+void TRN::Engine::Worker::uninitialize()
+{
+	TRN::Engine::Message<TRN::Engine::Tag::TERMINATED> terminated;
+
+	terminated.rank = TRN::Engine::Node::handle->rank;
+	auto communicator = TRN::Engine::Node::implementor.lock();
+	if (communicator)
+		communicator->send(terminated, 0);
+}
+
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message)
 {
-	handle->quit_required = true;
-
+	if (handle->frontends.find(message.number) == handle->frontends.end())
+		throw std::runtime_error("Frontend " + std::to_string(message.number) + " is not declared");
+	if (!message.terminate)
+	{
+		handle->quit_not_required.insert(message.number);
+	}
 	TRN::Engine::Message<TRN::Engine::EXIT> exit;
 
+	
+
 	exit.rank = TRN::Engine::Node::handle->rank;
-	exit.terminated = false;
+	exit.number = message.number;
+
+	//std::cout << "SEND EXIT rank "<< exit.rank << std::endl;
+
 	auto communicator = TRN::Engine::Node::implementor.lock();
 	if (communicator)
 		communicator->send(exit, 0);
@@ -86,23 +106,16 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::S
 
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::STOP> &message)
 {
-
+//	std::cout << "STOP worker " << TRN::Engine::Node::handle->rank << ", frontend " << message.number << std::endl;
 	if (handle->frontends.find(message.number) == handle->frontends.end())
 		throw std::runtime_error("Frontend " + std::to_string(message.number) + " is not declared");
+
 	handle->frontends.erase(message.number);
 
-	if (handle->quit_required)
+	if (handle->quit_not_required.empty() && handle->frontends.empty())
 	{
-		std::cout << "Quit is required" << std::endl;
-		if (handle->frontends.empty())
-		{
-			std::cout << "No more frontends. Stopping worker" << std::endl;
-			stop();
-		}
-		else
-		{
-			std::cout << "Frontends are still using workers. Nothing will happen" << std::endl;
-		}
+		std::cout << "No more frontends. Stopping worker" << std::endl;
+		stop();
 	}
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message)

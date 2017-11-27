@@ -97,16 +97,20 @@ void TRN::Engine::Dispatcher::callback_deallocated(const unsigned long long &id,
 
 	send_to_frontend(handle->to_frontend,message, id);
 }
-void TRN::Engine::Dispatcher::callback_exit(const int &rank, const bool &terminated)
+void TRN::Engine::Dispatcher::callback_exit(const unsigned short &number, const int &rank)
 {
-	TRN::Engine::Message<TRN::Engine::Tag::EXIT> message;
+	TRN::Engine::Message<TRN::Engine::EXIT> message;
 
+	message.number = number;
 	message.rank = rank;
-	message.terminated = terminated;
-	
-	send_to_frontend(handle->to_frontend, message);
-}
 
+	notify(message);
+
+}
+void TRN::Engine::Dispatcher::callback_terminated(const int &rank)
+{
+	std::cout << "Worker #" << rank << "terminated" << std::endl;
+}
 void TRN::Engine::Dispatcher::callback_completed()
 {
 	std::cout << "SIMULATIONS COMPLETED" << std::endl;

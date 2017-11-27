@@ -35,7 +35,7 @@ namespace TRN
 			
 	
 		public:
-			void attach(const std::shared_ptr<TRN::Helper::Observer<Subject>> observer) 
+			void attach(const std::shared_ptr<TRN::Helper::Observer<Subject>> &observer) 
 			{
 				observers.push_back(observer);
 				//Slot f();
@@ -43,6 +43,7 @@ namespace TRN
 				
 			}
 
+	
 		protected :
 			void notify(const Subject subject)
 			{

@@ -4,12 +4,15 @@
 #include "Broker.h"
 #include "Dispatcher.h"
 #include "Helper/Visitor.h"
+#include "Helper/Observer.h"
+
 namespace TRN
 {
 	namespace Engine
 	{
 		class ENGINE_EXPORT Proxy : 
 			public std::enable_shared_from_this<TRN::Engine::Proxy>,
+			public TRN::Helper::Observer<	TRN::Engine::Message<TRN::Engine::EXIT>>,
 			public TRN::Engine::Node
 		{
 		private:
@@ -27,6 +30,9 @@ namespace TRN
 			virtual void uninitialize() override;
 			virtual void initialize() override;
 	
+		protected:
+			virtual void update(const TRN::Engine::Message<TRN::Engine::EXIT> &message) override;
+
 		private:
 			unsigned long long global_id(const unsigned long long &local_id);
 			

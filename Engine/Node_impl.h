@@ -6,6 +6,7 @@ class TRN::Engine::Node::Handle
 {
 public :
 	//std::string name;
+
 	bool disposed;
 	bool configured_required;
 

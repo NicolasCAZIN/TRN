@@ -24,7 +24,7 @@ namespace TRN
 
 		public :
 			virtual void initialize() override;
-
+			virtual void uninitialize() override;
 
 		protected :
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message) override;

@@ -55,7 +55,7 @@ TRN::Engine::Message<tag> TRN::Engine::Communicator::receive(const int &destinat
 template void TRN::Engine::Communicator::broadcast(const TRN::Engine::Message<TRN::Engine::Tag::STOP> &message);
 template void TRN::Engine::Communicator::broadcast(const TRN::Engine::Message<TRN::Engine::Tag::START> &message);
 template void TRN::Engine::Communicator::broadcast(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message);
-
+template TRN::Engine::Message<TRN::Engine::Tag::TERMINATED> TRN::Engine::Communicator::receive<TRN::Engine::Tag::TERMINATED>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::EXIT> TRN::Engine::Communicator::receive<TRN::Engine::Tag::EXIT>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::QUIT> TRN::Engine::Communicator::receive<TRN::Engine::Tag::QUIT>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::START> TRN::Engine::Communicator::receive<TRN::Engine::Tag::START>(const int &destination);
@@ -141,6 +141,7 @@ template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::En
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::STOP> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::EXIT> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::TERMINATED> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATED> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATED> &message, const int &destination);
 

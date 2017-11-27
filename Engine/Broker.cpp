@@ -4,6 +4,7 @@
 TRN::Engine::Broker::Broker(const std::shared_ptr<TRN::Engine::Communicator> &communicator) :
 	handle(std::make_unique<Handle>())
 {
+
 	handle->communicator = communicator;
 	handle->manager = TRN::Engine::Manager::create(communicator->size());
 	handle->count = 0;
@@ -14,7 +15,7 @@ TRN::Engine::Broker::Broker(const std::shared_ptr<TRN::Engine::Communicator> &co
 }
 TRN::Engine::Broker::~Broker()
 {
-	handle->communicator->dispose();
+	
 	handle.reset();
 }
 
@@ -23,33 +24,26 @@ TRN::Engine::Broker::~Broker()
 void TRN::Engine::Broker::dispose()
 {
 	handle->manager->dispose();
-	
+	handle->communicator->dispose();
 }
 void TRN::Engine::Broker::quit()
 {
-	dispose();
+	handle->manager->dispose();
 	TRN::Engine::Message<TRN::Engine::QUIT> message;
-
+	message.terminate = true;
 	handle->communicator->broadcast(message);
+	handle->communicator->dispose();
 	join();
-	handle->to_caller->post([=]()
-	{
-
-		//handle->from_caller->terminate();
-		//callback_quit();
-	});
-
 }
 void TRN::Engine::Broker::initialize()
 {
 	handle->to_caller->start();
 	handle->manager->start();
-
-
 }
 
 void TRN::Engine::Broker::uninitialize()
 {
+
 	handle->manager->terminate();
 	handle->to_caller->terminate();
 	for (auto from_caller : handle->from_caller)
@@ -57,7 +51,7 @@ void TRN::Engine::Broker::uninitialize()
 		from_caller.second->terminate();
 	}
 
-
+	handle->communicator->dispose();
 }
 void TRN::Engine::Broker::body()
 {
@@ -68,46 +62,35 @@ void TRN::Engine::Broker::body()
 		case TRN::Engine::EXIT:
 		{
 			auto message = handle->communicator->receive<TRN::Engine::EXIT>(0);
+
 			handle->to_caller->post([=]()
 			{
-				callback_exit(message.rank, message.terminated);
+				callback_exit(message.number, message.rank);
 			});
-
-			if (message.terminated)
-			{
-				handle->to_caller->post([=]()
-				{
-					callback_information("Worker #" + std::to_string(message.rank) + " exited");
-				});
-			}
-			else
-			{
-				handle->to_caller->post([=]()
-				{
-					callback_information("Worker #" + std::to_string(message.rank) + " took into account quit request but did not quit yet");
-				});
-			}
-			handle->active--;
-			if (handle->active == 0)
-			{
-				handle->to_caller->post([=]()
-				{
-					callback_information("Broker stopped");
-				});
-
-
-				stop();
-			}
-	
-	
-
-		
 		}
 		break;
+
+		case TRN::Engine::TERMINATED:
+		{
+			auto message = handle->communicator->receive<TRN::Engine::TERMINATED>(0);
+
+			handle->to_caller->post([=]()
+			{
+				callback_terminated( message.rank);
+			});
+
+			handle->active--;
+	
+			if (handle->active == 0)
+			{	
+				stop();
+			}
+		}
+		break;
+
 		case TRN::Engine::WORKER:
 		{
 			auto message = handle->communicator->receive<TRN::Engine::WORKER>(0);
-
 
 			handle->manager->update_processor(message.rank, message.host, message.index, message.name);
 			handle->to_caller->post([=]()

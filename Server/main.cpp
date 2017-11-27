@@ -246,11 +246,17 @@ int main(int argc, char *argv[])
 
 			auto proxy = TRN::ViewModel::Node::Proxy::create(client_communicator, worker_communicator, dispatcher, mediator, frontend_number);
 			auto adapter = std::make_shared<Adapter>(proxy);
+			dispatcher->attach(proxy);
 			mediator->bind(proxy, adapter, [=](const std::shared_ptr<TRN::Network::Peer> &peer)
 			{
-				dispatcher->unregister_frontend(frontend_number);
-				manager->start(connection);
+			
+
+
 				on_terminated(peer);
+				manager->stop(connection);
+				dispatcher->unregister_frontend(frontend_number);
+				std::cout << "Connection #" << connection->get_id() << "stopped" << std::endl;
+	
 			});
 			return adapter;
 		});
