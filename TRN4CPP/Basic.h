@@ -4,6 +4,33 @@
 
 namespace TRN4CPP
 {
+	namespace Logging
+	{
+		namespace Severity
+		{
+			namespace Trace
+			{
+				void TRN4CPP_EXPORT setup();
+			}
+			namespace Debug
+			{
+				void TRN4CPP_EXPORT setup();
+			}
+			namespace Information
+			{
+				void TRN4CPP_EXPORT setup();
+			}
+			namespace Warning
+			{
+				void TRN4CPP_EXPORT setup();
+			}
+			namespace Error
+			{
+				void TRN4CPP_EXPORT setup();
+			}
+		}
+	};
+
 	namespace Plugin
 	{
 		namespace Basic
@@ -42,9 +69,6 @@ namespace TRN4CPP
 				void TRN4CPP_EXPORT  	initialize(int argc, char *argv[]);
 			};
 		};
-
-
-
 	};
 
 	namespace Simulation
@@ -52,13 +76,8 @@ namespace TRN4CPP
 		void TRN4CPP_EXPORT encode(const unsigned short &frontend, const unsigned short &condition_number, const unsigned int &simulation_number, unsigned long long &id);
 		void TRN4CPP_EXPORT decode(const unsigned long long &id, unsigned short &frontend, unsigned short &condition_number, unsigned int &simulation_number);
 		
-
 		extern TRN4CPP_EXPORT const std::string DEFAULT_TAG;
 	};
-
-
-
-
 };
 
 

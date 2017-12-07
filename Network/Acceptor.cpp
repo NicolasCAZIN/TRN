@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Acceptor_impl.h"
-
+#include "Helper/Logger.h"
 
 TRN::Network::Acceptor::Acceptor(const std::string &address, const  unsigned short &port,
 	const std::function <std::shared_ptr<TRN::Network::Peer> (const std::shared_ptr<TRN::Network::Manager> &manager,
@@ -15,14 +15,14 @@ TRN::Network::Acceptor::Acceptor(const std::string &address, const  unsigned sho
 	handle->acceptor.bind(endpoint);
 	handle->acceptor.listen();
 
-	std::cout << "listening on " << address << ":" << port << std::endl;
+	INFORMATION_LOGGER <<   "listening on " << address << ":" << port ;
 
 	accept();
 }
 
 TRN::Network::Acceptor::~Acceptor()
 {
-	// std::cout << __FUNCTION__ << std::endl;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	handle.reset();
 }
 
@@ -52,13 +52,13 @@ void TRN::Network::Acceptor::accept()
 				{
 					peer->stop();
 					handle->peers.erase(peer);
-					std::cout << "peer destroyed" << std::endl;
+					INFORMATION_LOGGER <<   "peer destroyed" ;
 				});
 			});
 		
 			handle->peers.insert(peer);
 			peer->start();
-			std::cout << "peer created" << std::endl;
+			INFORMATION_LOGGER <<   "peer created" ;
 
 
 		}

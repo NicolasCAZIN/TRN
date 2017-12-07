@@ -1481,7 +1481,7 @@ static inline void update_model(
 				batched_error, batched_error_rows, batched_error_cols, batched_error_strides,
 				batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides
 				);
-			//std::cout << d << std::endl;
+			//INFORMATION d ;
 			copy_states<gather_states>(batch_size, t, ts,
 				stimulus_size, reservoir_size, prediction_size,
 				stimulus_stride, reservoir_stride, prediction_stride,

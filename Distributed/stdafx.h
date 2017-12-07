@@ -17,6 +17,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <set>
 #include <iostream>
 #include <boost/mpi.hpp>
 #include <boost/serialization/vector.hpp>

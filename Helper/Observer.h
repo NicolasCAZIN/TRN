@@ -15,10 +15,6 @@ namespace TRN
 		public:
 			Observer(){}
 			//friend class TRN::Helper::Observable<Subject>;
-			virtual ~Observer()
-			{
-		
-			}
 		public:
 			virtual void update(const Subject &subject) = 0;
 		};

@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <sstream>
 #include <list>
 #include <map>
 #include <functional>

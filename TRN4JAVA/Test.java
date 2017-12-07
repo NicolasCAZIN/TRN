@@ -18,9 +18,6 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
 
-import TRN4JAVA.Engine;
-import TRN4JAVA.Engine.Backend.Local;
-import TRN4JAVA.Simulation;
 
 public class Test
 {
@@ -180,7 +177,7 @@ public class Test
 	
 	
 	
-	public static class Arena extends TRN4JAVA.Simulation.Measurement.Raw
+	public static class Arena extends TRN4JAVA.Callbacks.Simulation.Measurement.Raw
 	{
 		@Override
 		public void		callback(final long id, final long trial, final long evaluation, final float primed[], final float predicted [], final float expected[], final long preamble, final long batch_size, final long rows, final long cols)
@@ -240,7 +237,7 @@ public class Test
 	
 	public static class Rat 
 	{
-		public static class Position extends TRN4JAVA.Simulation.Loop
+		public static class Position extends TRN4JAVA.Custom.Simulation.Loop
 		{
 			private Rat rat;
 			public Position(Rat rat)
@@ -260,7 +257,7 @@ public class Test
 			}
 		};
 		
-		public static class Stimulus extends TRN4JAVA.Simulation.Loop
+		public static class Stimulus extends TRN4JAVA.Custom.Simulation.Loop
 		{
 			private Rat rat;
 			public Stimulus(Rat rat)
@@ -304,6 +301,18 @@ public class Test
 		}
 	};
 	
+	public final static  float [] noise(float []data)
+	{
+		float result[] = new float[data.length];
+		
+		for (int k = 0; k < data.length; k++)
+		{
+			float v = (float)data[k] + (float)((float)Math.random() * 2.0f - 1.0f)*0.001f;
+			result[k] = v;
+		}
+			
+		return result;
+	}
 	
 	public final static void main(String args[])
 	{
@@ -412,7 +421,7 @@ public class Test
 			
 			/*
 			*/
-			TRN4JAVA.Engine.Events.Processor.install(new TRN4JAVA.Engine.Events.Processor()
+			TRN4JAVA.Advanced.Engine.Events.Processor.install(new TRN4JAVA.Advanced.Engine.Events.Processor()
 			{
 				@Override
 				public void callback(final int rank, final String host, final int index, final String name)
@@ -421,7 +430,7 @@ public class Test
 				}
 			});
 			
-			class Handler extends TRN4JAVA.Engine.Events.Deallocated 
+			class Handler extends TRN4JAVA.Advanced.Engine.Events.Deallocated 
 			{
 				private java.util.concurrent.BlockingQueue<Long> queue = new java.util.concurrent.ArrayBlockingQueue<Long>(1);
 				private int expected;
@@ -469,8 +478,9 @@ public class Test
 			
 			Handler deallocated_handler = new Handler(1);
 		
-			TRN4JAVA.Engine.Events.Deallocated.install(deallocated_handler);
-			TRN4JAVA.Engine.Events.Trained.install(new TRN4JAVA.Engine.Events.Trained()
+			TRN4JAVA.Basic.Logging.Severity.Information.setup();
+			TRN4JAVA.Advanced.Engine.Events.Deallocated.install(deallocated_handler);
+			TRN4JAVA.Advanced.Engine.Events.Trained.install(new TRN4JAVA.Advanced.Engine.Events.Trained()
 			{
 				@Override
 				public void callback(final long id)
@@ -478,7 +488,7 @@ public class Test
 					System.out.println("Simulation " + id + " is trained");
 				}
 			});
-			TRN4JAVA.Engine.Events.Tested.install(new TRN4JAVA.Engine.Events.Tested()
+			TRN4JAVA.Advanced.Engine.Events.Tested.install(new TRN4JAVA.Advanced.Engine.Events.Tested()
 			{
 				@Override
 				public void callback(final long id)
@@ -486,7 +496,7 @@ public class Test
 					System.out.println("Simulation " + id + " is tested");
 				}
 			});
-			TRN4JAVA.Engine.Events.Primed.install(new TRN4JAVA.Engine.Events.Primed()
+			TRN4JAVA.Advanced.Engine.Events.Primed.install(new TRN4JAVA.Advanced.Engine.Events.Primed()
 			{
 				@Override
 				public void callback(final long id)
@@ -494,7 +504,7 @@ public class Test
 					System.out.println("Simulation " + id + " is primed");
 				}
 			});
-			TRN4JAVA.Engine.Events.Completed.install(new TRN4JAVA.Engine.Events.Completed()
+			TRN4JAVA.Advanced.Engine.Events.Completed.install(new TRN4JAVA.Advanced.Engine.Events.Completed()
 			{
 				@Override
 				public void callback()
@@ -502,7 +512,7 @@ public class Test
 					System.out.println("Simulations completed");
 				}
 			});
-			TRN4JAVA.Engine.Events.Allocated.install(new TRN4JAVA.Engine.Events.Allocated()
+			TRN4JAVA.Advanced.Engine.Events.Allocated.install(new TRN4JAVA.Advanced.Engine.Events.Allocated()
 			{
 				@Override
 				public void callback(final long id, final int rank)
@@ -518,63 +528,61 @@ public class Test
 					System.out.println("Simulation " + id + " ack for message " + number + " success " + success + " cause " + cause);
 				}
 			});*/
-			TRN4JAVA.Engine.Backend.Local.initialize(indices);
+			TRN4JAVA.Basic.Engine.Backend.Local.initialize(indices);
 
-			TRN4JAVA.Simulation.allocate(ID);
 			
-			TRN4JAVA.Simulation.configure_begin(ID);
+			TRN4JAVA.Callbacks.Plugin.initialize("C:\\TRN\\Simulator", "Monitor", new java.util.HashMap<String, String>());
+			TRN4JAVA.Extended.Simulation.allocate(ID);
+			
+			TRN4JAVA.Extended.Simulation.configure_begin(ID);
 			
 			
 			
-			TRN4JAVA.Simulation.Scheduler.Snippets.configure(ID, SEED, SNIPPETS_SIZE, TIME_BUDGET, REWARD_TAG);
-			TRN4JAVA.Simulation.Reservoir.WidrowHoff.configure(ID, STIMULUS_SIZE, PREDICTION_SIZE, RESERVOIR_SIZE, LEAK_RATE, INITIAL_STATE_SCALE, LEARNING_RATE, SEED, BATCH_SIZE);
-			TRN4JAVA.Simulation.Reservoir.Weights.Feedforward.Uniform.configure(ID, -1.0f, 1.0f, 0.0f);
-			TRN4JAVA.Simulation.Reservoir.Weights.Feedback.Uniform.configure(ID, -1.0f, 1.0f, 0.0f);
-			TRN4JAVA.Simulation.Reservoir.Weights.Recurrent.Uniform.configure(ID, -1.0f/(float)Math.sqrt(RESERVOIR_SIZE), 1.0f/(float)Math.sqrt(RESERVOIR_SIZE), 0.0f);
-			TRN4JAVA.Simulation.Reservoir.Weights.Readout.Uniform.configure(ID, -1e-3f, 1e-3f, 0.0f);
-			TRN4JAVA.Simulation.Loop.SpatialFilter.configure(ID, BATCH_SIZE, STIMULUS_SIZE, SEED, rat.position, rat.stimulus,
+			TRN4JAVA.Extended.Simulation.Scheduler.Snippets.configure(ID, SEED, SNIPPETS_SIZE, TIME_BUDGET, REWARD_TAG);
+			TRN4JAVA.Extended.Simulation.Reservoir.WidrowHoff.configure(ID, STIMULUS_SIZE, PREDICTION_SIZE, RESERVOIR_SIZE, LEAK_RATE, INITIAL_STATE_SCALE, LEARNING_RATE, SEED, BATCH_SIZE);
+			TRN4JAVA.Extended.Simulation.Reservoir.Weights.Feedforward.Uniform.configure(ID, -1.0f, 1.0f, 0.0f);
+			TRN4JAVA.Extended.Simulation.Reservoir.Weights.Feedback.Uniform.configure(ID, -1.0f, 1.0f, 0.0f);
+			TRN4JAVA.Extended.Simulation.Reservoir.Weights.Recurrent.Uniform.configure(ID, -1.0f/(float)Math.sqrt(RESERVOIR_SIZE), 1.0f/(float)Math.sqrt(RESERVOIR_SIZE), 0.0f);
+			TRN4JAVA.Extended.Simulation.Reservoir.Weights.Readout.Uniform.configure(ID, -1e-3f, 1e-3f, 0.0f);
+			TRN4JAVA.Advanced.Simulation.Loop.SpatialFilter.configure(ID, BATCH_SIZE, STIMULUS_SIZE, SEED, rat.position, rat.stimulus,
 				ROWS, COLS,			
 				X_MIN, X_MAX, Y_MIN, Y_MAX, 
 				response, SIGMA, RADIUS, SCALE,  POSITION_TAG);
 				
 				
 				
-			TRN4JAVA.Simulation.Recording.Performances.configure(ID, new TRN4JAVA.Simulation.Recording.Performances()
-			{
-				@Override	
-				public void		callback(final long id, final long trial, final long evaluation, final String phase, final float cycles_per_second, final float gflops_per_second)
-				{
-					System.out.println("id = " + id + ", trial = " + trial + ", evaluation = " + evaluation + ", phase = " + phase + ", cycles_per_second = " + cycles_per_second + ", Gflops/s = " + gflops_per_second);
-				}
+			TRN4JAVA.Extended.Simulation.Recording.Performances.configure(ID, true, true, true);
 
-			}, true, true, true);
-
-			TRN4JAVA.Simulation.Measurement.Position.Raw.configure(ID, BATCH_SIZE, arena);
-			TRN4JAVA.Simulation.configure_end(ID);
+			TRN4JAVA.Advanced.Simulation.Measurement.Position.Raw.configure(ID, BATCH_SIZE, arena);
+			TRN4JAVA.Extended.Simulation.configure_end(ID);
 		
 			
-			TRN4JAVA.Simulation.declare_sequence(ID, TRAJECTORY, INCOMING_TAG, incoming, T - 1);
-			TRN4JAVA.Simulation.declare_sequence(ID, TRAJECTORY, EXPECTED_TAG, expected, T - 1);
-			TRN4JAVA.Simulation.declare_sequence(ID, TRAJECTORY, POSITION_TAG, position, T - 1);
-			TRN4JAVA.Simulation.declare_sequence(ID, TRAJECTORY, REWARD_TAG, reward, T - 1);
+			TRN4JAVA.Extended.Simulation.declare_sequence(ID, TRAJECTORY, INCOMING_TAG, incoming, T - 1);
+			TRN4JAVA.Extended.Simulation.declare_sequence(ID, TRAJECTORY, EXPECTED_TAG, expected, T - 1);
+			TRN4JAVA.Extended.Simulation.declare_sequence(ID, TRAJECTORY, POSITION_TAG, position, T - 1);
+			TRN4JAVA.Extended.Simulation.declare_sequence(ID, TRAJECTORY, REWARD_TAG, reward, T - 1);
 			
-			TRN4JAVA.Simulation.declare_set(ID, TRAINING_SET, INCOMING_TAG, TRAINING_SEQUENCES);
-			TRN4JAVA.Simulation.declare_set(ID, TRAINING_SET, EXPECTED_TAG, TRAINING_SEQUENCES);
-			TRN4JAVA.Simulation.declare_set(ID, TRAINING_SET, POSITION_TAG, TRAINING_SEQUENCES);
-			TRN4JAVA.Simulation.declare_set(ID, TRAINING_SET, REWARD_TAG, TRAINING_SEQUENCES);
+			TRN4JAVA.Extended.Simulation.declare_set(ID, TRAINING_SET, INCOMING_TAG, TRAINING_SEQUENCES);
+			TRN4JAVA.Extended.Simulation.declare_set(ID, TRAINING_SET, EXPECTED_TAG, TRAINING_SEQUENCES);
+			TRN4JAVA.Extended.Simulation.declare_set(ID, TRAINING_SET, POSITION_TAG, TRAINING_SEQUENCES);
+			TRN4JAVA.Extended.Simulation.declare_set(ID, TRAINING_SET, REWARD_TAG, TRAINING_SEQUENCES);
 			
-			for (int trial = 0; trial < TRIALS; trial++)
-			{
+			TRN4JAVA.Extended.Simulation.train(ID, TRAINING_SET, INCOMING_TAG, EXPECTED_TAG);
+		
+		
+			TRN4JAVA.Extended.Simulation.declare_sequence(ID, TRAJECTORY+"_bis", INCOMING_TAG, noise(incoming), T - 1);
+			TRN4JAVA.Extended.Simulation.declare_sequence(ID, TRAJECTORY+"_bis", EXPECTED_TAG, noise(expected), T - 1);
+			TRN4JAVA.Extended.Simulation.declare_sequence(ID, TRAJECTORY+"_bis", POSITION_TAG, noise(position), T - 1);
+			TRN4JAVA.Extended.Simulation.declare_sequence(ID, TRAJECTORY+"_bis", REWARD_TAG, noise(reward), T - 1);
+		
+			TRN4JAVA.Extended.Simulation.test(ID, TRAJECTORY, INCOMING_TAG, EXPECTED_TAG, PREAMBLE, true, 0);
 			
-				TRN4JAVA.Simulation.train(ID, TRAINING_SET, INCOMING_TAG, EXPECTED_TAG);
-				TRN4JAVA.Simulation.test(ID, TRAJECTORY, INCOMING_TAG, EXPECTED_TAG, PREAMBLE, true, 0);
-			}
-			TRN4JAVA.Simulation.deallocate(ID);
+			TRN4JAVA.Extended.Simulation.deallocate(ID);
 	
 			deallocated_handler.wait_condition();
 			//TRN4JAVA.Engine.Execution.run();
 			
-			TRN4JAVA.Engine.uninitialize();
+			TRN4JAVA.Basic.Engine.uninitialize();
 		}
 		catch (Exception e)
 		{

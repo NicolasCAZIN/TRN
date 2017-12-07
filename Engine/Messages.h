@@ -2,10 +2,15 @@
 
 #include "engine_global.h"
 
+
+
 namespace TRN
 {
 	namespace Engine
 	{
+
+
+
 		union Identifier
 		{
 			struct
@@ -18,22 +23,22 @@ namespace TRN
 			unsigned long long id;
 		};
 
+		unsigned int ENGINE_EXPORT checksum(const std::vector<float> &sequence);
 
 		void  ENGINE_EXPORT encode(const unsigned short &number, const unsigned short &condition_number, const unsigned int &simulation_number, unsigned long long &id);
 		void ENGINE_EXPORT decode(const unsigned long long &id, unsigned short &number, unsigned short &condition_number, unsigned int &simulation_number);
 
 		enum Tag
 		{
-	
-			QUIT = 0,
+			INVALID = 0,
+			QUIT,
 			EXIT,
 			TERMINATED,
 			STOP,
 			START,
 			/*READY,*/
-
+			CACHED,
 			/* technical / worker -> client */
-			ACK,
 			WORKER,
 			/* technical / client -> worker */
 		
@@ -151,6 +156,8 @@ namespace TRN
 			}
 		};
 
+
+
 		template <enum TRN::Engine::Tag>
 		struct Message
 		{
@@ -188,7 +195,18 @@ namespace TRN
 				ar & boost::serialization::base_object<FromBackend>(*this);
 			}
 		};
+		template <>
+		struct Message<TRN::Engine::Tag::CACHED> : public FromBackend
+		{
+			std::set<unsigned int> checksums;
 
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<FromBackend>(*this);
+				ar & checksums;
+			}
+		};
 		template <>
 		struct Message<TRN::Engine::Tag::WORKER> : public FromBackend
 		{
@@ -241,20 +259,6 @@ namespace TRN
 			}
 		};
 
-		template<>
-		struct Message<TRN::Engine::Tag::ACK> : public Simulation
-		{
-			bool success;
-			std::string cause;
-
-			template<class Archive>
-			void serialize(Archive & ar, const unsigned int version)
-			{
-				ar & boost::serialization::base_object<Simulation>(*this);
-				ar & success;
-				ar & cause;
-			}
-		};
 		template<>
 		struct Message<TRN::Engine::Tag::ALLOCATE> : public Simulation
 		{
@@ -311,16 +315,17 @@ namespace TRN
 		{
 			std::string label;
 			std::string tag;
-			std::vector<float> sequence;
 			std::size_t observations;
-
+			unsigned int checksum;
+			std::vector<float> sequence;
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & boost::serialization::base_object<Simulation>(*this);
+				ar & checksum;
+				ar & sequence;
 				ar & label;
 				ar & tag;
-				ar & sequence;
 				ar & observations;
 			}
 		};
@@ -488,22 +493,24 @@ namespace TRN
 			std::size_t cols;
 			std::pair<float, float> x;
 			std::pair<float, float> y;
-			std::vector<float> response;
 			float sigma;
 			float radius;
 			float scale;
 			std::string tag;
 			unsigned long seed;
+			unsigned int checksum;
+			std::vector<float> sequence;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & boost::serialization::base_object<Loop>(*this);
+				ar & checksum;
+				ar & sequence;
 				ar & rows;
 				ar & cols;
 				ar & x;
 				ar & y;
-				ar & response;
 				ar & sigma;
 				ar & radius;
 				ar & scale;
@@ -1048,3 +1055,5 @@ namespace TRN
 
 	};
 };
+
+ENGINE_EXPORT std::ostream  & operator << (std::ostream &os, const TRN::Engine::Tag &tag);

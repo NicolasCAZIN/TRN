@@ -1,23 +1,28 @@
 #include "stdafx.h"
 #include "Executor_impl.h"
+#include "Helper/Logger.h"
 
 TRN::Engine::Executor::Executor() :
 	handle(std::make_unique<Handle>())
 {
+	TRACE_LOGGER;
 }
 
 TRN::Engine::Executor::~Executor()
 {
+	TRACE_LOGGER;
 	handle.reset();
 }
 void TRN::Engine::Executor::terminate()
 {
+	TRACE_LOGGER;
 	handle->commands.invalidate();
 	join();
 }
 
 void TRN::Engine::Executor::body()
 {
+	TRACE_LOGGER;
 	std::function<void(void)> command;
 	if (TRN::Engine::Executor::handle->commands.dequeue(command))
 	{

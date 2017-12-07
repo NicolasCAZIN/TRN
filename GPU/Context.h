@@ -98,7 +98,7 @@ namespace TRN
 
 
 				/*auto gridSize = grid.x * grid.y * grid.z;
-				std::cout << "gridSize = " << gridSize << ", minGridSize = " << minGridSize << std::endl;*/
+				INFORMATION "gridSize = " << gridSize << ", minGridSize = " << minGridSize ;*/
 			}
 
 			template < class T, typename UnaryFunction >

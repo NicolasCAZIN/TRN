@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Custom.h"
+#include "Helper/Logger.h"
 
 class TRN::Initializer::Custom::Handle
 {
@@ -44,7 +45,7 @@ TRN::Initializer::Custom::Custom(const std::shared_ptr<TRN::Backend::Driver> &dr
 		}
 		catch (std::exception &e)
 		{
-			std::cerr << e.what() << std::endl;
+			ERROR_LOGGER << e.what() ;
 		}
 	};
 }

@@ -20,7 +20,7 @@ namespace TRN
 		
 			~Connection()
 			{
-				// std::cout << __FUNCTION__ << std::endl;
+				// INFORMATION_LOGGER <<   __FUNCTION__ ;
 				socket_.cancel();
 				socket_.close();
 	

@@ -3,6 +3,7 @@
 #include <vld.h>
 #endif 
 
+#include <sstream>
 #include <list>
 #include <iostream>
 #include <cassert>
@@ -10,5 +11,6 @@
 #include <algorithm>
 #include <vector>
 #include <memory>
+#include <mutex>
 #include <random>
 #include <numeric>

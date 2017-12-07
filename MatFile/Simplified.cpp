@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Simplified.h"
-
+#include "Helper/Logger.h"
 const std::string FILENAME_TOKEN = "FILENAME";
 const std::string MAPPING_TOKEN = "MAPPING";
 const std::string VARIABLE_TOKEN = "VARIABLE";
@@ -17,6 +17,7 @@ struct Simplified::Handle
 	std::map<std::pair<std::string, std::string>, Matrix> fields;
 	std::function<void(const std::string &label, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::string &tag)> declare;
 };
+
 
 void Simplified::initialize(const std::map<std::string, std::string> &arguments)
 {

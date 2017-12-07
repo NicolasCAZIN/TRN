@@ -24,7 +24,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
-
+#include <boost/optional.hpp>
 
 #include "ViewModel/Communicator.h"
 #include "ViewModel/Node.h"
@@ -34,7 +34,7 @@
 #include "Helper/Visitor.h"
 #include "Helper/Queue.h"
 #include "Helper/Adapter.h"
-
+#include "Helper/Logger.h"
 struct Node
 {
 	std::vector<int> ranks;
@@ -44,10 +44,7 @@ struct Node
 };
 
 
-static void on_allocation(const unsigned long long &id, const int &rank)
-{
-	std::cout << "id #" << id << " allocated on " << rank << std::endl;
-}
+
 std::map<std::pair<std::string, unsigned int>, Node> nodes;
 
 std::map<int, std::pair<std::string, unsigned int>> processor_node;
@@ -158,6 +155,7 @@ int main(int argc, char *argv[])
 			("port,p", boost::program_options::value<unsigned short>()->default_value(12345), "TCP port")
 			("host,h", boost::program_options::value<std::string>()->default_value("127.0.0.1"), "hostname or IPv4 address")
 			("backend,b", boost::program_options::value<Backend>()->default_value(Backend::Local), "Backend type [local|distributed]")
+			("logging,l", boost::program_options::value<TRN::Helper::Logger::Severity>()->default_value(TRN::Helper::Logger::Severity::INFORMATION_LEVEL), "Logging severity level filtering [TRACE|DEBUG|INFORMATION|WARNING|ERROR]")
 			;
 
 		boost::program_options::variables_map vm;
@@ -166,10 +164,10 @@ int main(int argc, char *argv[])
 
 		if (vm.count("help"))
 		{
-			std::cout << desc << "\n";
+			std::cerr <<   desc << "\n";
 			return 1;
 		}
-
+		TRN::Helper::Logger::setup(vm["logging"].as<TRN::Helper::Logger::Severity>());
 
 		std::shared_ptr<TRN::Engine::Communicator> worker_communicator;
 	
@@ -177,7 +175,7 @@ int main(int argc, char *argv[])
 		{
 			case Backend::Local:
 			{
-				std::cout << "Local backend selected" << std::endl;
+				INFORMATION_LOGGER <<   "Local backend selected" ;
 
 				auto index_list = vm["index"].as<std::vector<unsigned int>>();
 				worker_communicator = TRN::ViewModel::Communicator::Local::create(index_list);
@@ -185,7 +183,7 @@ int main(int argc, char *argv[])
 			break;
 			case Backend::Distributed:
 			{
-				std::cout << "Distributed backend selected" << std::endl;
+				INFORMATION_LOGGER <<   "Distributed backend selected" ;
 				worker_communicator = TRN::ViewModel::Communicator::Distributed::create(argc, argv);
 			}
 			break;
@@ -232,8 +230,8 @@ int main(int argc, char *argv[])
 
 			auto &socket = connection->socket();
 			assert(socket.is_open());
-			std::cout << "SERVER local " << socket.local_endpoint().address().to_string() << ":" << socket.local_endpoint().port() <<
-				" remote " << socket.remote_endpoint().address().to_string() << ":" << socket.remote_endpoint().port() << std::endl;
+			INFORMATION_LOGGER <<   "SERVER local " << socket.local_endpoint().address().to_string() << ":" << socket.local_endpoint().port() <<
+				" remote " << socket.remote_endpoint().address().to_string() << ":" << socket.remote_endpoint().port() ;
 
 		
 
@@ -255,7 +253,7 @@ int main(int argc, char *argv[])
 				on_terminated(peer);
 				manager->stop(connection);
 				dispatcher->unregister_frontend(frontend_number);
-				std::cout << "Connection #" << connection->get_id() << "stopped" << std::endl;
+				INFORMATION_LOGGER <<   "Connection #" << connection->get_id() << " stopped" ;
 	
 			});
 			return adapter;
@@ -271,7 +269,7 @@ int main(int argc, char *argv[])
 	catch (std::exception &e)
 	{
 
-		std::cerr << e.what() << std::endl;
+		ERROR_LOGGER << e.what() ;
 		return -1;
 	}
 }

@@ -43,6 +43,7 @@ void TRN::Local::Communicator::send(const int &destination, const TRN::Engine::T
 
 std::string TRN::Local::Communicator::receive(const int &destination, const TRN::Engine::Tag &tag)
 {
+
 	//std::lock_guard<std::recursive_mutex> lock(handle->mutex);
 	std::shared_ptr<TRN::Local::Communicator::Handle::Blob> blob;
 	if (!handle->queues[destination]->dequeue(blob))
@@ -54,16 +55,21 @@ std::string TRN::Local::Communicator::receive(const int &destination, const TRN:
 	return blob->second;
 }
 
-TRN::Engine::Tag TRN::Local::Communicator::probe(const int &destination)
+boost::optional<TRN::Engine::Tag> TRN::Local::Communicator::probe(const int &destination)
 {
 	//std::lock_guard<std::recursive_mutex> lock(handle->mutex);
 	//status(__FUNCTION__, "begin");
+
 	std::shared_ptr<TRN::Local::Communicator::Handle::Blob> blob;
 
-	if (!handle->queues[destination]->front(blob))
-		throw std::runtime_error("received blob is invalid");
-
-	return  blob->first;
+	if (handle->queues[destination]->front(blob))
+	{
+		return 	boost::optional<TRN::Engine::Tag>(blob->first);
+	}
+	else
+	{
+		return 	boost::optional<TRN::Engine::Tag>();
+	}
 }
 
 void TRN::Local::Communicator::append(std::shared_ptr<TRN::Engine::Worker> &worker)

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Node.h"
-
+#include "Cache.h"
 class TRN::Engine::Node::Handle
 {
 public :
@@ -9,7 +9,7 @@ public :
 
 	bool disposed;
 	bool configured_required;
-
+	std::shared_ptr<TRN::Engine::Cache> cache;
 	std::size_t remaining_initializations;
 	std::map<unsigned long long, std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)>> perceived_stimulus;
 	std::map<unsigned long long, std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &estimated_position, const std::size_t &rows, const std::size_t &cols)>> estimated_position;

@@ -3,10 +3,12 @@
 #include "Engine/Frontend.h"
 #include "Callbacks.h"
 #include "Custom.h"
+#include "Extended.h"
 
-extern std::shared_ptr<TRN::Engine::Frontend> frontend;
+#include "Helper/Logger.h"
+//extern std::shared_ptr<TRN::Engine::Frontend> frontend;
 
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
+/*extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
 extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_raw;
 extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_mutator;
 extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduler;
@@ -25,7 +27,7 @@ extern std::function<void(const unsigned long long &id, const std::string &phase
 extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduling;
 extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_position;
 extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_stimulus;
-
+*/
 static const std::string experiment_name = "EXPERIMENT";
 static const std::string declaration_name = "DECLARATION";
 static const std::string configuration_name = "CONFIGURATION";
@@ -100,6 +102,7 @@ void TRN4CPP::Plugin::Simplified::initialize(const std::string &library_path, co
 	simplified = boost::dll::import<TRN4CPP::Plugin::Simplified::Interface>(path, "plugin_simplified", boost::dll::load_mode::append_decorations);
 	simplified->initialize(arguments);
 	simplified->install_variable(std::bind(&TRN4CPP::Simulation::declare, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
+	INFORMATION_LOGGER << "Simplified plugin " << name << " loaded from path " << library_path;
 }
 
 
@@ -115,10 +118,7 @@ void TRN4CPP::Simulation::declare(const std::string &label, const std::vector<fl
 
 void TRN4CPP::Simulation::compute(const std::string &filename)
 {
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-
-	std::cout << "Reading file " << filename << std::endl;
+	INFORMATION_LOGGER <<   "Reading file " << filename ;
 	auto extension = boost::filesystem::extension(filename);
 	boost::to_upper(extension);
 
@@ -293,8 +293,8 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 							std::size_t prediction_size;
 							unsigned long long id;
 							TRN4CPP::Simulation::encode(0, condition_number, simulation_number, id);
-
-							frontend->allocate(id);
+							TRN4CPP::Simulation::allocate(id);
+						
 							//
 							bool configured = false;
 							bool declared = false;
@@ -325,7 +325,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														throw std::runtime_error("Sequence having label " + label + " and tag " + tag + "does not exist");
 													auto data = sequences_map[key];
 													//
-													frontend->declare_sequence(id, label, tag, data.elements, data.rows);
+													TRN4CPP::Simulation::declare_sequence(id, label, tag, data.elements, data.rows);
 												}
 											}
 										}
@@ -354,9 +354,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 											
 											for (auto tag : tags)
 											{
-												//
-												frontend->declare_set(id, label, tag, labels);
-
+												TRN4CPP::Simulation::declare_set(id, label, tag, labels);
 											}
 
 										}
@@ -368,8 +366,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 								{
 									if (configured)
 										throw std::runtime_error("Simulation #" + std::to_string(id) + " is already configured");
-									
-									frontend->configure_begin(id);
+									TRN4CPP::Simulation::configure_begin(id);
 									//
 									auto _configuration = simulation_element.second;
 									for (auto configuration_element : _configuration)
@@ -399,7 +396,8 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 													if (boost::iequals(reservoir_type, widrowhoff_type))
 													{
 														auto learning_rate = _reservoir.get_child(learning_rate_attribute).get_value<float>();
-														frontend->configure_reservoir_widrow_hoff(id, stimulus_size, prediction_size, reservoir_size, leak_rate, initial_state_scale, learning_rate, seed, batch_size);
+
+														TRN4CPP::Simulation::Reservoir::WidrowHoff::configure(id, stimulus_size, prediction_size, reservoir_size, leak_rate, initial_state_scale, learning_rate, seed, batch_size);
 														//
 													}
 													else
@@ -421,7 +419,8 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																{
 																	auto mu = _weights.get_child(mu_attribute).get_value<float>();
 																	auto sigma = _weights.get_child(sigma_attribute).get_value<float>();
-																	frontend->configure_feedforward_gaussian(id, mu, sigma);
+																	
+																	TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Gaussian::configure(id, mu, sigma);
 																	
 																	feedforward_initialized = true;
 																}
@@ -430,16 +429,14 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																	auto a = _weights.get_child(a_attribute).get_value<float>();
 																	auto b = _weights.get_child(b_attribute).get_value<float>();
 																	auto sparsity = _weights.get_child(sparsity_attribute).get_value<float>();
-																	frontend->configure_feedforward_uniform(id, a, b, sparsity);
+																	TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Uniform::configure(id, a, b, sparsity);
 																	
 																	feedforward_initialized = true;
 																}
 																else if (boost::iequals(type, custom_type))
 																{
-																	if (!on_feedforward)
-																		throw std::runtime_error("Feedforward functor must be installed first");
-																	frontend->install_feedforward(id, on_feedforward);
-																	frontend->configure_feedforward_custom(id);
+																	TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Custom::configure(id);
+															
 																	//
 																	feedforward_initialized = true;
 																}
@@ -450,7 +447,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																{
 																	auto mu = _weights.get_child(mu_attribute).get_value<float>();
 																	auto sigma = _weights.get_child(sigma_attribute).get_value<float>();
-																	frontend->configure_feedback_gaussian(id, mu, sigma);
+																	TRN4CPP::Simulation::Reservoir::Weights::Feedback::Gaussian::configure(id, mu, sigma);
 																	//
 																	feedback_initialized = true;
 																}
@@ -459,16 +456,13 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																	auto a = _weights.get_child(a_attribute).get_value<float>();
 																	auto b = _weights.get_child(b_attribute).get_value<float>();
 																	auto sparsity = _weights.get_child(sparsity_attribute).get_value<float>();
-																	frontend->configure_feedback_uniform(id, a, b, sparsity);
+																	TRN4CPP::Simulation::Reservoir::Weights::Feedback::Uniform::configure(id, a, b, sparsity);
 																	//
 																	feedback_initialized = true;
 																}
 																else if (boost::iequals(type, custom_type))
 																{
-																	if (!on_feedback)
-																		throw std::runtime_error("Feedback functor must be installed first");
-																	frontend->install_feedback(id, on_feedback);
-																	frontend->configure_feedback_custom(id);
+																	TRN4CPP::Simulation::Reservoir::Weights::Feedback::Custom::configure(id);
 																	//
 																	feedback_initialized = true;
 																}
@@ -479,7 +473,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																{
 																	auto mu = _weights.get_child(mu_attribute).get_value<float>();
 																	auto sigma = _weights.get_child(sigma_attribute).get_value<float>();
-																	frontend->configure_recurrent_gaussian(id, mu, sigma);
+																	TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Gaussian::configure(id, mu, sigma);
 																	//
 																	recurrent_initialized = true;
 																}
@@ -488,16 +482,13 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																	auto a = _weights.get_child(a_attribute).get_value<float>();
 																	auto b = _weights.get_child(b_attribute).get_value<float>();
 																	auto sparsity = _weights.get_child(sparsity_attribute).get_value<float>();
-																	frontend->configure_recurrent_uniform(id, a, b, sparsity);
+																	TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Uniform::configure(id, a, b, sparsity);
 																	//
 																	recurrent_initialized = true;
 																}
 																else if (boost::iequals(type, custom_type))
 																{
-																	if (!on_recurrent)
-																		throw std::runtime_error("Recurrent functor must be installed first");
-																	frontend->install_recurrent(id, on_recurrent);
-																	frontend->configure_recurrent_custom(id);
+																	TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::configure(id);
 																	//
 																	recurrent_initialized = true;
 																}
@@ -510,7 +501,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																{
 																	auto mu = _initializer.get_child(mu_attribute).get_value<float>();
 																	auto sigma = _initializer.get_child(sigma_attribute).get_value<float>();
-																	frontend->configure_readout_gaussian(id, mu, sigma);
+																	TRN4CPP::Simulation::Reservoir::Weights::Readout::Gaussian::configure(id, mu, sigma);
 																	//
 																	readout_initialized = true;
 																}
@@ -519,16 +510,13 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																	auto a = _initializer.get_child(a_attribute).get_value<float>();
 																	auto b = _initializer.get_child(b_attribute).get_value<float>();
 																	auto sparsity = _initializer.get_child(sparsity_attribute).get_value<float>();
-																	frontend->configure_readout_uniform(id, a, b, sparsity);
+																	TRN4CPP::Simulation::Reservoir::Weights::Readout::Uniform::configure(id, a, b, sparsity);
 																	//
 																	readout_initialized = true;
 																}
 																else if (boost::iequals(type, custom_type))
 																{
-																	if (!on_readout)
-																		throw std::runtime_error("Readout functor must be installed first");
-																	frontend->install_readout(id, on_readout);
-																	frontend->configure_readout_custom(id);
+																	TRN4CPP::Simulation::Reservoir::Weights::Readout::Custom::configure(id);
 																	//
 																	readout_initialized = true;
 																}
@@ -558,24 +546,16 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 													auto loop_type = _loop.get_child(type_attribute).get_value<std::string>();
 													if (boost::iequals(loop_type, copy_type))
 													{
-														frontend->configure_loop_copy(id, batch_size, stimulus_size);
+														TRN4CPP::Simulation::Loop::Copy::configure(id, batch_size, stimulus_size);
 														//
 													}
 													else if (boost::iequals(loop_type, custom_type))
 													{
-														if (!on_stimulus)
-															throw std::runtime_error("Stimulus callback must be installed first");
-														frontend->install_stimulus(id, on_stimulus);
-														frontend->configure_loop_custom(id, batch_size, stimulus_size);
+														TRN4CPP::Simulation::Loop::Custom::configure(id, batch_size, stimulus_size);
 														//
 													}
 													else if (boost::iequals(loop_type, spatial_filter_type))
 													{
-														if (!on_stimulus)
-															throw std::runtime_error("Stimulus callback must be installed first");
-														if (!on_position)
-															throw std::runtime_error("Position callback must be installed first");
-
 														auto seed = simulation_number + _loop.get_child(seed_attribute).get_value<unsigned long>();
 														auto sigma = _loop.get_child(sigma_attribute).get_value<float>();
 														auto scale = _loop.get_child(scale_attribute).get_value<float>();
@@ -595,10 +575,8 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														auto cols = response_matrix.cols;
 														auto rows = response_matrix.rows / stimulus_size;
 														auto firing_rate_map = response_matrix.elements;
-														frontend->install_stimulus(id, on_stimulus);
-														frontend->install_position(id, on_position);
-														frontend->configure_loop_spatial_filter(id, batch_size, stimulus_size, seed, rows, cols, x, y, firing_rate_map, sigma, radius, scale, tag);
-														//
+
+														TRN4CPP::Simulation::Loop::SpatialFilter::configure(id, batch_size, stimulus_size, seed, rows, cols, x, y, firing_rate_map, sigma, radius, scale, tag);
 													}
 												}
 												/// SCHEDULER
@@ -609,8 +587,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 													if (boost::iequals(scheduler_type, tiled_type))
 													{
 														auto epochs = _scheduler.get_child(epochs_attribute).get_value<unsigned int>();
-														frontend->configure_scheduler_tiled(id, epochs);
-														//
+														TRN4CPP::Simulation::Scheduler::Tiled::configure(id, epochs);
 													}
 													else if (boost::iequals(scheduler_type, snippets_type))
 													{
@@ -618,18 +595,13 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														auto snippets_size = _scheduler.get_child(snippets_size_attribute).get_value<std::size_t>();
 														auto time_budget = _scheduler.get_child(time_budget_attribute).get_value<std::size_t>();
 														auto tag = _scheduler.get(tag_attribute, DEFAULT_TAG);
-														frontend->configure_scheduler_snippets(id, seed, snippets_size, time_budget, tag);
-														//
+														TRN4CPP::Simulation::Scheduler::Snippets::configure(id, seed, snippets_size, time_budget, tag);
 													}
 													else if (boost::iequals(scheduler_type, custom_type))
 													{
 														auto seed = simulation_number + _scheduler.get_child(seed_attribute).get_value<unsigned long>();
 														auto tag = _scheduler.get_child(seed_attribute).get_value<std::string>(DEFAULT_TAG);
-														if (!on_scheduler)
-															throw std::runtime_error("Scheduler callback must be installed first");
-														frontend->install_scheduler(id, on_scheduler);
-														frontend->configure_scheduler_custom(id, seed, tag);
-														//
+														TRN4CPP::Simulation::Scheduler::Custom::configure(id, seed, tag);
 													}
 													bool mutator_initialized = false;
 													for (auto scheduler_element : _scheduler)
@@ -646,7 +618,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																auto rate = _mutator.get_child(rate_attribute).get_value<float>();
 																auto size = _mutator.get_child(size_attribute).get_value<std::size_t>();
 																//auto number = _mutator.get_child(number_attribute).get_value<std::size_t>();
-																frontend->configure_mutator_reverse(id, seed, rate, size);
+																TRN4CPP::Simulation::Scheduler::Mutator::Reverse::configure(id, seed, rate, size);
 																//
 															}
 															else if (boost::iequals(mutator_type, punch_type))
@@ -655,26 +627,21 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																auto rate = _mutator.get_child(rate_attribute).get_value<float>();
 																auto size = _mutator.get_child(size_attribute).get_value<std::size_t>();
 																auto counter = _mutator.get_child(number_attribute).get_value<std::size_t>();
-																frontend->configure_mutator_punch(id, seed, rate, size, counter);
+																TRN4CPP::Simulation::Scheduler::Mutator::Punch::configure(id, seed, rate, size, counter);
 																//
 															}
 															else if (boost::iequals(mutator_type, shuffle_type))
 															{
 																auto seed = simulation_number + _mutator.get_child(seed_attribute).get_value<unsigned long>();
 
-																frontend->configure_mutator_shuffle(id, seed);
+																TRN4CPP::Simulation::Scheduler::Mutator::Shuffle::configure(id, seed);
 																//
 															}
 															else if (boost::iequals(mutator_type, custom_type))
 															{
-																if (mutator_initialized)
-																	throw std::runtime_error("Custom mutator is already initialized");
-																if (!on_mutator)
-																	throw std::runtime_error("Mutator callback must be installed first");
 																auto seed = simulation_number + _mutator.get_child(seed_attribute).get_value<unsigned long>();
 
-																frontend->install_mutator(id, on_mutator);
-																frontend->configure_mutator_custom(id, seed);
+																TRN4CPP::Simulation::Scheduler::Mutator::Custom::configure(id, seed);
 																//
 																mutator_initialized = true;
 															}
@@ -698,35 +665,17 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														auto measurement_type = _measurement.get_child(type_attribute).get_value<std::string>();
 														if (boost::iequals(measurement_type, mean_square_error_type))
 														{
-															if (readout_mean_square_error_initialized)
-																throw std::runtime_error("Readout mean square error is already initialized");
-															if (!on_measurement_readout_mean_square_error)
-																throw std::runtime_error("Readout mean square error callback must be installed first");
-															frontend->install_measurement_readout_mean_square_error(id, on_measurement_readout_mean_square_error);
-															frontend->configure_measurement_readout_mean_square_error(id, batch_size);
-															//
+															TRN4CPP::Simulation::Measurement::Readout::MeanSquareError::configure(id, batch_size);
 															readout_mean_square_error_initialized = true;
 														}
 														else if (boost::iequals(measurement_type, frechet_distance_type))
 														{
-															if (readout_frechet_distance_initialized)
-																throw std::runtime_error("Readout frechet distance is already initialized");
-															if (!on_measurement_readout_frechet_distance)
-																throw std::runtime_error("Readout frechet distance callback must be installed first");
-															frontend->install_measurement_readout_frechet_distance(id, on_measurement_readout_frechet_distance);
-															frontend->configure_measurement_readout_frechet_distance(id, batch_size);
-															//
+															TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::configure(id, batch_size);
 															readout_frechet_distance_initialized = true;
 														}
 														else if (boost::iequals(measurement_type, custom_type))
 														{
-															if (readout_custom_initialized)
-																throw std::runtime_error("Readout custom is already initialized");
-															if (!on_measurement_readout_raw)
-																throw std::runtime_error("Readout custom callback must be installed first");
-															frontend->install_measurement_readout_custom(id, on_measurement_readout_raw);
-															frontend->configure_measurement_readout_custom(id, batch_size);
-															//
+															TRN4CPP::Simulation::Measurement::Readout::Custom::configure(id, batch_size);
 															readout_custom_initialized = true;
 														}
 													}
@@ -735,35 +684,17 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														auto measurement_type = _measurement.get_child(type_attribute).get_value<std::string>();
 														if (boost::iequals(measurement_type, mean_square_error_type))
 														{
-															if (position_mean_square_error_initialized)
-																throw std::runtime_error("Position mean square error is already initialized");
-															if (!on_measurement_position_mean_square_error)
-																throw std::runtime_error("Position mean square error callback must be installed first");
-															frontend->install_measurement_position_mean_square_error(id, on_measurement_position_mean_square_error);
-															frontend->configure_measurement_position_mean_square_error(id, batch_size);
-															//
+															TRN4CPP::Simulation::Measurement::Position::MeanSquareError::configure(id, batch_size);
 															position_mean_square_error_initialized = true;
 														}
 														else if (boost::iequals(measurement_type, frechet_distance_type))
 														{
-															if (position_frechet_distance_initialized)
-																throw std::runtime_error("Position frechet distance is already initialized");
-															if (!on_measurement_position_frechet_distance)
-																throw std::runtime_error("Position frechet distance callback must be installed first");
-															frontend->install_measurement_position_frechet_distance(id, on_measurement_position_frechet_distance);
-															frontend->configure_measurement_position_frechet_distance(id, batch_size);
-															//
+															TRN4CPP::Simulation::Measurement::Position::FrechetDistance::configure(id, batch_size);
 															position_frechet_distance_initialized = true;
 														}
 														else if (boost::iequals(measurement_type, custom_type))
 														{
-															if (position_custom_initialized)
-																throw std::runtime_error("Position custom is already initialized");
-															if (!on_measurement_position_raw)
-																throw std::runtime_error("Position custom callback must be installed first");
-															frontend->install_measurement_position_custom(id, on_measurement_position_raw);
-															frontend->configure_measurement_position_custom(id, batch_size);
-															//
+															TRN4CPP::Simulation::Measurement::Position::Custom::configure(id, batch_size);
 															position_custom_initialized = true;
 														}
 													}
@@ -779,36 +710,14 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														auto prime = _measurement.get_child(prime_attribute).get_value<bool>();
 														auto generate = _measurement.get_child(generate_attribute).get_value<bool>();
 
-														if (!on_states)
-															throw std::runtime_error("States callback must be installed first");
-														if (!train && !prime && !generate)
-														{
-															std::cerr << "States decorator won't be installed because no experiment stage (train, prime, generate) is selected" << std::endl;
-														}
-														else
-														{
-															frontend->install_states(id, on_states);
-															frontend->setup_states(id, train, prime, generate);
-															//
-														}
+														TRN4CPP::Simulation::Recording::States::configure(id, train, prime, generate);
 													}
 													else if (boost::iequals(measurement_target, weights_type))
 													{
 														auto train = _measurement.get_child(train_attribute).get_value<bool>();
 														auto initialization = _measurement.get_child(initialize_attribute).get_value<bool>();
 
-														if (!on_weights)
-															throw std::runtime_error("Weights callback must be installed first");
-														if (!train && !initialization)
-														{
-															std::cerr << "Weights decorator won't be installed because no experiment stage (initializen, train) is selected" << std::endl;
-														}
-														else
-														{
-															frontend->install_weights(id, on_weights);
-															frontend->setup_weights(id, initialization, train);
-															//
-														}
+														TRN4CPP::Simulation::Recording::Weights::configure(id, initialization, train);
 													}
 													else if (boost::iequals(measurement_target, performances_type))
 													{
@@ -816,26 +725,11 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														auto prime = _measurement.get_child(prime_attribute).get_value<bool>();
 														auto generate = _measurement.get_child(generate_attribute).get_value<bool>();
 
-														if (!on_performances)
-															throw std::runtime_error("Performances callback must be installed first");
-														if (!train && !prime && !generate)
-														{
-															std::cerr << "Performances decorator won't be installed because no experiment stage (train, prime, generate) is selected" << std::endl;
-														}
-														else
-														{
-															frontend->install_performances(id, on_performances);
-															frontend->setup_performances(id, train, prime, generate);
-															//
-														}
+														TRN4CPP::Simulation::Recording::Performances::configure(id, train, prime, generate);
 													}
 													else if (boost::iequals(measurement_target, scheduling_type))
 													{
-														if (!on_scheduling)
-															throw std::runtime_error("Scheduling callback must be installed first");
-														frontend->install_scheduling(id, on_scheduling);
-														frontend->setup_scheduling(id);
-														//
+														TRN4CPP::Simulation::Recording::Scheduling::configure(id);
 													}
 												}
 											}
@@ -843,7 +737,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 										}
 									}
 									
-									frontend->configure_end(id);
+									TRN4CPP::Simulation::configure_end(id);
 
 									//
 									configured = true;
@@ -875,7 +769,8 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 													auto incoming = _train.get_child(incoming_attribute).get_value<std::string>();
 													auto expected = _train.get_child(expected_attribute).get_value<std::string>();
 													
-													frontend->train(id, label, incoming, expected);
+												
+													TRN4CPP::Simulation::train(id, label, incoming, expected);
 
 													trained = true;
 												}
@@ -893,8 +788,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 													auto autonomous = _test.get_child(autonomous_attribute).get_value<bool>();
 													for (std::size_t k = 0; k < repeat; k++)
 													{
-														
-														frontend->test(id, label, incoming, expected, preamble, autonomous, supplementary);
+														TRN4CPP::Simulation::test(id, label, incoming, expected, preamble, autonomous, supplementary);
 													}
 
 												}
@@ -905,8 +799,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 
 								}
 							}
-							
-							frontend->deallocate(id);
+							TRN4CPP::Simulation::deallocate(id);
 						}
 						condition_number++;
 					}
@@ -914,10 +807,10 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 				experiment_done = true;
 			}
 		}
-		frontend->dispose();
+		TRN4CPP::Engine::Execution::run();
 	}
 	catch (std::exception &e)
 	{
-		std::cerr << e.what() << std::endl;
+		ERROR_LOGGER << e.what() ;
 	}
 }

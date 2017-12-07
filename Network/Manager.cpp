@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Manager_impl.h"
-//#include "Helper/Logger.h"
+#include "Helper/Logger.h"
 
 TRN::Network::Manager::Manager() :
 	handle(std::make_unique<Handle>())
@@ -10,7 +10,7 @@ TRN::Network::Manager::Manager() :
 
 TRN::Network::Manager::~Manager()
 {
-	// std::cout << __FUNCTION__ << std::endl;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	stop();
 	handle.reset();
 }
@@ -54,7 +54,7 @@ void TRN::Network::Manager::start(const std::shared_ptr<TRN::Network::Connection
 	{
 		id = (*it)->get_id() + 1;
 	}
-	std::cout << "Connection ID = " << id << std::endl;
+	INFORMATION_LOGGER <<   "Connection ID = " << id ;
 	connection->set_id(id);
 	handle->pool.insert(connection);
 

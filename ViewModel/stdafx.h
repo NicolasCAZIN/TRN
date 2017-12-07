@@ -12,6 +12,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/utility.hpp>
+#include <boost/optional.hpp>
 #include <vector>
 #include <memory>
 #include <functional>

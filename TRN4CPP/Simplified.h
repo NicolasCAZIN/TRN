@@ -6,7 +6,6 @@
 
 namespace TRN4CPP
 {
-
 	namespace Plugin
 	{
 		namespace Simplified

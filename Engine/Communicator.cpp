@@ -1,20 +1,23 @@
 #include "stdafx.h"
 #include "Communicator_impl.h"
-
+#include "Helper/Logger.h"
 
 TRN::Engine::Communicator::Communicator() :
 	handle(std::make_unique<Handle>())
 {
+	TRACE_LOGGER;
 	handle->host = boost::asio::ip::host_name();
 }
 
 TRN::Engine::Communicator::~Communicator()
 {
+	TRACE_LOGGER;
 	handle.reset();
 }
 
 std::string TRN::Engine::Communicator::host()
 {
+	TRACE_LOGGER;
 	return handle->host;
 }
 
@@ -23,6 +26,7 @@ std::string TRN::Engine::Communicator::host()
 template <TRN::Engine::Tag tag>
 void TRN::Engine::Communicator::send(const TRN::Engine::Message<tag> &message, const int &destination)
 {
+	TRACE_LOGGER;
 	std::ostringstream archive_stream;
 	boost::archive::binary_oarchive archive(archive_stream);
 	archive << message;
@@ -33,6 +37,7 @@ void TRN::Engine::Communicator::send(const TRN::Engine::Message<tag> &message, c
 template <TRN::Engine::Tag tag>
 void TRN::Engine::Communicator::broadcast(const TRN::Engine::Message<tag> &message)
 {
+	TRACE_LOGGER;
 	for (int rank = 1; rank < size(); rank++)
 	{
 		send(message, rank);
@@ -41,6 +46,7 @@ void TRN::Engine::Communicator::broadcast(const TRN::Engine::Message<tag> &messa
 template <TRN::Engine::Tag tag>
 TRN::Engine::Message<tag> TRN::Engine::Communicator::receive(const int &destination)
 {
+	TRACE_LOGGER;
 	std::string data = decompress<RAW>(receive(destination, tag));
 
 	std::istringstream archive_stream(data);
@@ -65,7 +71,7 @@ template TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATED> TRN::Engine::Commun
 //template TRN::Engine::Message<TRN::Engine::Tag::READY> TRN::Engine::Communicator::receive<TRN::Engine::Tag::READY>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURED> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURED>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::WORKER> TRN::Engine::Communicator::receive<TRN::Engine::Tag::WORKER>(const int &destination);
-template TRN::Engine::Message<TRN::Engine::Tag::ACK> TRN::Engine::Communicator::receive<TRN::Engine::Tag::ACK>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::CACHED> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CACHED>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> TRN::Engine::Communicator::receive<TRN::Engine::Tag::ALLOCATE>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATE> TRN::Engine::Communicator::receive<TRN::Engine::Tag::DEALLOCATE>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::TRAIN> TRN::Engine::Communicator::receive<TRN::Engine::Tag::TRAIN>(const int &destination);
@@ -144,9 +150,8 @@ template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::En
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::TERMINATED> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATED> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATED> &message, const int &destination);
-
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::WORKER> &message, const int &destination);
-template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::ACK> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CACHED> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATE> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::TRAIN> &message, const int &destination);

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Basic_impl.h"
-
+#include "Helper/Logger.h"
 
 
 TRN::Simulator::Basic::Basic(const std::function<void()> &trained, const std::function<void()> &primed, const std::function<void()> &tested) :
@@ -85,6 +85,8 @@ void TRN::Simulator::Basic::declare(const std::string &label, const std::string 
 		throw std::invalid_argument("Sequence label cannot be empty");
 
 	handle->sequences[key(label, tag)] = sequence;
+
+	DEBUG_LOGGER << "Declared sequence " << label << " (" << sequence->get_rows() << "x" << sequence->get_cols() << ") with tag " << tag << " on device #" << sequence->get_implementor()->index() << " having name " << sequence->get_implementor()->name();
 }
 
 void TRN::Simulator::Basic::declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Set> &set)
@@ -94,6 +96,7 @@ void TRN::Simulator::Basic::declare(const std::string &label, const std::string 
 	if (tag.empty())
 		throw std::invalid_argument("Batch label cannot be empty");
 	handle->sets[key(label, tag)] = set;
+	DEBUG_LOGGER << "Declared set " << label << " with tag " << tag;
 }
 const std::shared_ptr<TRN::Core::Matrix>  TRN::Simulator::Basic::retrieve_sequence(const std::string &label, const std::string &tag)
 {
@@ -118,6 +121,8 @@ void TRN::Simulator::Basic::train(const std::string &label, const std::string &i
 	if (handle->sets.find(key(label, expected)) == handle->sets.end())
 		throw std::invalid_argument("Batch " + key(label, expected) + " does not exist");
 	
+	DEBUG_LOGGER << "Training simulator with set " << label << " and tags (" << incoming << ", " << expected << ")";
+
 	TRN::Core::Message::Payload<TRN::Core::Message::SET> sequence(label, incoming, expected, handle->reservoir->get_trial());
 	handle->pending.push(sequence);
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::SET>>::notify(sequence);
@@ -130,6 +135,9 @@ void TRN::Simulator::Basic::test(const std::string &label, const std::string &in
 		throw std::invalid_argument("Sequence " + key(label, incoming) + " does not exist");
 	if (handle->sequences.find(key(label, expected)) == handle->sequences.end())
 		throw std::invalid_argument("Sequence " + key(label, expected) + " does not exist");
+
+	DEBUG_LOGGER << "Testing simulator with sequence " << label << " and tags (" << incoming << ", " << expected << "), preamble " << preamble << ", autonomous generation " << autonomous;
+
 	auto incoming_sequence = retrieve_sequence(label, incoming);
 	auto expected_sequence = retrieve_sequence(label, expected);
 

@@ -1,8 +1,159 @@
 #include "stdafx.h"
 #include "Logger.h"
+#include <windows.h>
+
+static std::mutex mutex{};
+
+#define BLACK			0
+#define BLUE			1
+#define GREEN			2
+#define CYAN			3
+#define RED				4
+#define MAGENTA			5
+#define BROWN			6
+#define LIGHTGRAY		7
+#define DARKGRAY		8
+#define LIGHTBLUE		9
+#define LIGHTGREEN		10
+#define LIGHTCYAN		11
+#define LIGHTRED		12
+#define LIGHTMAGENTA	13
+#define YELLOW			14
+#define WHITE			15
+
+#define TEXT_COLOR(ForgC, BackC) ((WORD)
 
 
-BOOST_LOG_GLOBAL_LOGGER_CTOR_ARGS(sysLogger,
+struct Color
+{
+	Color( int foreground, int background, bool intensity = false) : value
+	(
+			(((background) & 0x0F) << 4) | 
+			((foreground) & 0x0F) | 
+			(intensity ? (FOREGROUND_INTENSITY) : 0)
+	)
+	{
+
+	}
+	WORD value;
+};
+static const Color NEUTRAL_COLOR(WHITE, BLACK);
+
+static const Color DATE_COLOR(YELLOW, BLUE);
+static const Color MODULE_COLOR(CYAN, BLUE);
+static const Color MESSAGE_COLOR(WHITE, BLACK, true);
+
+static const Color TRACE_COLOR(LIGHTGRAY, CYAN, true);
+static const Color DEBUG_COLOR(LIGHTGRAY, DARKGRAY, true);
+static const Color INFORMATION_COLOR(WHITE, GREEN, true);
+static const Color WARNING_COLOR(RED, YELLOW, true);
+static const Color ERROR_COLOR(WHITE, RED, true);
+
+static inline std::ostream& operator<<(std::ostream& os, const Color &color)
+{
+	if (os.rdbuf() == std::cerr.rdbuf())
+		SetConsoleTextAttribute(GetStdHandle(STD_ERROR_HANDLE), color.value);
+	else
+	
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color.value);
+	return os;
+}
+
+static inline std::ostream& operator<<(std::ostream& os, const TRN::Helper::Logger::Severity &severity)
+{
+	switch (severity)
+	{
+		case TRN::Helper::Logger::Severity::TRACE_LEVEL:
+			os << TRACE_COLOR << "TRACE      ";
+			break;
+		case TRN::Helper::Logger::Severity::DEBUG_LEVEL:
+			os << DEBUG_COLOR <<  "DEBUG      ";
+			break;
+		case TRN::Helper::Logger::Severity::INFORMATION_LEVEL:
+			os << INFORMATION_COLOR << "INFORMATION";
+			break;
+		case TRN::Helper::Logger::Severity::WARNING_LEVEL:
+			os << WARNING_COLOR << "WARNING    ";
+			break;
+		case TRN::Helper::Logger::Severity::ERROR_LEVEL:
+			os << ERROR_COLOR << "ERROR      ";
+			break;
+	}
+
+	return os;
+}
+
+static std::ostream &stream(const TRN::Helper::Logger::Severity &severity)
+{
+	if (severity >= TRN::Helper::Logger::Severity::WARNING_LEVEL)
+		return std::cerr;
+	else
+		return std::cout;
+}
+// helper class
+
+static std::string hostname;
+static TRN::Helper::Logger::Severity level = TRN::Helper::Logger::Severity::INFORMATION_LEVEL;
+
+TRN::Helper::Logger::Logger(const TRN::Helper::Logger::Severity &severity, const std::string &module) : severity(severity), module(module)
+{
+	if (hostname.empty())
+		hostname = boost::asio::ip::host_name();
+}
+
+TRN::Helper::Logger::~Logger()
+{
+	std::lock_guard<std::mutex> guard(mutex);
+	if (severity >= level)
+	{
+		auto now = boost::posix_time::microsec_clock::universal_time();
+		stream(severity) << severity << NEUTRAL_COLOR << " " << DATE_COLOR << "[" << now << "]" << NEUTRAL_COLOR << " " << MODULE_COLOR << module << "@" << hostname << NEUTRAL_COLOR << " -> " << MESSAGE_COLOR << this->str() << std::endl << std::flush;
+	}
+}
+
+
+
+void TRN::Helper::Logger::setup(const TRN::Helper::Logger::Severity &severity)
+{
+	std::lock_guard<std::mutex> guard(mutex);
+	level = severity;
+
+}
+
+std::istream &std::operator >> (std::istream &is, TRN::Helper::Logger::Severity &severity)
+{
+	std::string token;
+
+	is >> token;
+	boost::to_upper(token);
+	if (token == "ERROR")
+	{
+		severity = TRN::Helper::Logger::Severity::ERROR_LEVEL;
+	}
+	else if (token == "WARNING")
+	{
+		severity = TRN::Helper::Logger::Severity::WARNING_LEVEL;
+	}
+	else if (token == "INFORMATION")
+	{
+		severity = TRN::Helper::Logger::Severity::INFORMATION_LEVEL;
+	}
+	else if (token == "DEBUG")
+	{
+		severity = TRN::Helper::Logger::Severity::DEBUG_LEVEL;
+	}
+	else if (token == "TRACE")
+	{
+		severity = TRN::Helper::Logger::Severity::TRACE_LEVEL;
+	}
+	else
+	{
+		throw std::invalid_argument("Unexpected token " + token);
+	}
+	return is;
+}
+
+/*BOOST_LOG_GLOBAL_LOGGER_CTOR_ARGS(sysLogger,
 	boost::log::sources::severity_channel_logger_mt<boost::log::trivial::severity_level>,
 	(boost::log::keywords::channel = "SYSLF"));
 
@@ -88,8 +239,8 @@ void TRN::Helper::Logger::initialize(const std::string& configFileName) {
 				std::string err = "Caught exception initializing boost logging: ";
 				err += e.what();
 				// Since we cannot be sure of boost log state, output to cerr and cout.
-				std::cerr << "ERROR: " << err << std::endl;
-				std::cout << "ERROR: " << err << std::endl;
+				ERROR_LOGGER << "ERROR: " << err ;
+				std::cout << "ERROR: " << err ;
 				LOG_ERROR(err);
 			}
 		}
@@ -131,4 +282,4 @@ void TRN::Helper::Logger::addDataFileLog(const std::string& logFileName) {
 
 	// Add it to the core
 	boost::log::core::get()->add_sink(sink);
-}
+}*/

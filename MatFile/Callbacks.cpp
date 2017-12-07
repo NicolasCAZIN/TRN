@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Callbacks.h"
 #include "Helper/Queue.h"
-
+#include "Helper/Logger.h"
 static const std::string DEFAULT_MODE = "w7.3";
 
 static const std::string TIMEOUT_TOKEN = "TIMEOUT";
@@ -37,6 +37,7 @@ struct Callbacks::Handle
 
 void Callbacks::initialize(const std::map<std::string, std::string> &arguments)
 {
+	TRACE_LOGGER;
 	if (handle)
 		throw std::runtime_error("Handle is already allocated");
 	handle = std::make_unique<Handle>();
@@ -83,6 +84,7 @@ void Callbacks::uninitialize()
 
 void Callbacks::save(const std::size_t &version, mxArray *result)
 {
+	TRACE_LOGGER;
 	if (version > handle->version_saved)
 	{
 		try
@@ -95,7 +97,7 @@ void Callbacks::save(const std::size_t &version, mxArray *result)
 
 			auto filename = basename + "_" + std::to_string(version) + extension;
 			auto absolute_filename = (parent_directory / filename).string();
-			std::cout << "saving to file " << absolute_filename << std::endl;
+			INFORMATION_LOGGER <<   "saving to file " << absolute_filename ;
 
 			auto pmat = matOpen(absolute_filename.c_str(), handle->mode.c_str());
 			if (pmat == NULL)
@@ -109,13 +111,14 @@ void Callbacks::save(const std::size_t &version, mxArray *result)
 		}
 		catch (std::exception &e)
 		{
-			std::cerr << e.what() << std::endl;
+			ERROR_LOGGER << e.what() ;
 		}
 	}
 }
 
 void Callbacks::update()
 {
+	TRACE_LOGGER;
 	handle->version_updated++;
 	auto timestamp = std::clock();
 	auto elapsed = ( timestamp - handle->timestamp) / (float)CLOCKS_PER_SEC;
@@ -127,6 +130,7 @@ void Callbacks::update()
 		{
 			if (handle->version_updated > handle->version_saved)
 			{
+				INFORMATION_LOGGER << "Version " << handle->version_updated << " will be saved";
 				auto to_save = handle->result;
 				handle->result = mxCreateStructMatrix(1, 1, 0, NULL);
 				handle->to_save.enqueue(std::make_pair(handle->version_updated, to_save));
@@ -134,7 +138,7 @@ void Callbacks::update()
 		}
 		else
 		{
-			std::cerr << "file " << handle->filename << " is still being saved. Waiting for the next timeout" << std::endl;
+			WARNING_LOGGER << "file " << handle->filename << " is still being saved. Waiting for the next timeout" ;
 		}
 	
 		handle->timestamp = std::clock();
@@ -185,6 +189,7 @@ static void append(mxArray *root, const std::vector<std::string> &path, const st
 
 void Callbacks::callback_measurement_readout_raw(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	std::size_t predicted_size[3] = { cols, rows, pages };
 	std::size_t primed_size[2] = { cols, preamble };
 	std::size_t expected_size[2] = { cols, rows };
@@ -211,6 +216,7 @@ void Callbacks::callback_measurement_readout_raw(const unsigned long long &id, c
 }
 void Callbacks::callback_measurement_position_raw(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols) 
 {
+	TRACE_LOGGER;
 	std::size_t predicted_size[3] = { cols, rows, pages };
 	std::size_t primed_size[2] = { cols, preamble };
 	std::size_t expected_size[2] = { cols, rows };
@@ -237,6 +243,7 @@ void Callbacks::callback_measurement_position_raw(const unsigned long long &id, 
 }
 void Callbacks::callback_measurement_readout_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	std::map<std::string, mxArray *> measurement;
 
 	unsigned int simulation_number;
@@ -258,6 +265,7 @@ void Callbacks::callback_measurement_readout_mean_square_error(const unsigned lo
 }
 void Callbacks::callback_measurement_readout_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	std::map<std::string, mxArray *> measurement;
 
 	unsigned int simulation_number;
@@ -279,6 +287,7 @@ void Callbacks::callback_measurement_readout_frechet_distance(const unsigned lon
 }
 void Callbacks::callback_measurement_position_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	std::map<std::string, mxArray *> measurement;
 
 	unsigned int simulation_number;
@@ -300,6 +309,7 @@ void Callbacks::callback_measurement_position_mean_square_error(const unsigned l
 }
 void Callbacks::callback_measurement_position_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	std::map<std::string, mxArray *> measurement;
 
 	unsigned int simulation_number;
@@ -322,6 +332,7 @@ void Callbacks::callback_measurement_position_frechet_distance(const unsigned lo
 
 void Callbacks::callback_performances(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
 {
+	TRACE_LOGGER;
 	std::map<std::string, mxArray *> performances;
 	unsigned int simulation_number;
 	unsigned short condition_number;
@@ -343,6 +354,7 @@ void Callbacks::callback_performances(const unsigned long long &id, const std::s
 }
 void Callbacks::callback_states(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
+	TRACE_LOGGER;
 	std::map<std::string, mxArray *> states;
 	unsigned int simulation_number;
 	unsigned short condition_number;
@@ -365,6 +377,7 @@ void Callbacks::callback_states(const unsigned long long &id, const std::string 
 }
 void Callbacks::callback_weights(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
+	TRACE_LOGGER;
 	std::map<std::string, mxArray *> weights;
 	unsigned int simulation_number;
 	unsigned short condition_number;
@@ -387,6 +400,7 @@ void Callbacks::callback_weights(const unsigned long long &id, const std::string
 }
 void Callbacks::callback_scheduling(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
+	TRACE_LOGGER;
 	std::map<std::string, mxArray *> scheduling;
 	unsigned int simulation_number;
 	unsigned short condition_number;

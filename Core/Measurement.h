@@ -16,7 +16,7 @@ namespace TRN
 			{
 			protected:
 				Implementation(const std::shared_ptr<TRN::Backend::Driver> &driver);
-				virtual ~Implementation();
+				virtual ~Implementation() noexcept(false);
 
 			public:
 				virtual void compute(const std::size_t &trial, const std::size_t &evaluation, const std::shared_ptr<TRN::Core::Matrix> &primed, const std::shared_ptr<TRN::Core::Batch> &predicted, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Matrix> &error) = 0;
@@ -36,7 +36,7 @@ namespace TRN
 
 			protected :
 				Abstraction(const std::shared_ptr<TRN::Core::Measurement::Implementation> &compute, const std::size_t &batch_size);
-				virtual ~Abstraction();
+				virtual ~Abstraction() noexcept(false);
 			protected :
 				virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::TEST> &payload) override;
 			protected:

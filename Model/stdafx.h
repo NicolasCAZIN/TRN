@@ -13,4 +13,6 @@
 #include <memory>
 #include <vector>
 #include <list>
+#include <sstream>
+#include <mutex>
 #include <functional>

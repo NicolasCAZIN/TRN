@@ -160,4 +160,10 @@ void TRN::CPU::query(std::string &brand, TRN::CPU::Implementation &implementatio
 	else
 		implementation = TRN::CPU::Implementation::SCALAR;
 	brand = brand_buf;
+
+
+
+	std::string::iterator new_end = std::unique(brand.begin(), brand.end(), [](char lhs, char rhs) { return (lhs == rhs) && (lhs == ' '); });
+	brand.erase(new_end, brand.end());
+
 }

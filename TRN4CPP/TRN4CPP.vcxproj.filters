@@ -47,6 +47,9 @@
     <ClCompile Include="Simplified.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Advanced.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TRN4CPP.h">
@@ -68,6 +71,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Simplified.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Advanced.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

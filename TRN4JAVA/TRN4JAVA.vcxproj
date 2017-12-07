@@ -111,7 +111,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>USE_VLD;BOOST_ALL_DYN_LINK;TRN4JAVA_LIB;UNICODE;WIN32;WIN64;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRN_MODULE="$(ProjectName)";USE_VLD;BOOST_ALL_DYN_LINK;TRN4JAVA_LIB;UNICODE;WIN32;WIN64;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(BOOST_ROOT)\include;C:\Program Files\Java\jdk1.8.0_121\include;C:\Program Files\Java\jdk1.8.0_121\include\win32;..;.\GeneratedFiles;.;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -135,6 +135,7 @@
       <AdditionalOptions> /SUBSYSTEM:WINDOWS</AdditionalOptions>
       <StackReserveSize>
       </StackReserveSize>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PreBuildEvent>
       <Command>generate_jni.bat</Command>
@@ -193,9 +194,9 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>BOOST_ALL_DYN_LINK;QT_NO_DEBUG;NDEBUG;TRN4JAVA_LIB;UNICODE;WIN32;WIN64;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRN_MODULE="$(ProjectName)";BOOST_ALL_DYN_LINK;QT_NO_DEBUG;NDEBUG;TRN4JAVA_LIB;UNICODE;WIN32;WIN64;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(BOOST_ROOT)\include;C:\Program Files\Java\jdk1.8.0_121\include;C:\Program Files\Java\jdk1.8.0_121\include\win32;..;.\GeneratedFiles;.;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -204,17 +205,17 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)\$(ProjectName).dll</OutputFile>
       <AdditionalLibraryDirectories>$(BOOST_ROOT)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalOptions> /SUBSYSTEM:WINDOWS</AdditionalOptions>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PreBuildEvent>
       <Command>generate_jni.bat</Command>
@@ -236,93 +237,188 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="TLS_JNIEnv.cpp" />
+    <ClCompile Include="Advanced.cpp" />
+    <ClCompile Include="Basic.cpp" />
+    <ClCompile Include="Callbacks.cpp" />
+    <ClCompile Include="Convert.cpp" />
+    <ClCompile Include="Custom.cpp" />
+    <ClCompile Include="Extended.cpp" />
+    <ClCompile Include="Functor.cpp" />
+    <ClCompile Include="JNIEnv.cpp" />
+    <ClCompile Include="Simplified.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="TRN4JAVA.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TLS_JNIEnv.h" />
+    <ClInclude Include="Convert.h" />
+    <ClInclude Include="Functor.h" />
+    <ClInclude Include="JNIEnv.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="TRN4JAVA_Engine.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Backend.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Backend_Local.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Backend_Remote.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Events.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Events_Ack.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Events_Allocated.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Events_Completed.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Events_Configured.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Events_Deallocated.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Events_Primed.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Events_Processor.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Events_Tested.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Events_Trained.h" />
-    <ClInclude Include="TRN4JAVA_Engine_Execution.h" />
+    <ClInclude Include="TRN4JAVA_Advanced.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Engine.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Engine_Events.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Engine_Events_Ack.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Engine_Events_Allocated.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Engine_Events_Completed.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Engine_Events_Configured.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Engine_Events_Deallocated.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Engine_Events_Primed.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Engine_Events_Processor.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Engine_Events_Tested.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Engine_Events_Trained.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Loop.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Loop_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Loop_SpatialFilter.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Measurement.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Measurement_Position.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Measurement_Position_FrechetDistance.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Measurement_Position_MeanSquareError.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Measurement_Position_Raw.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Measurement_Readout.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Measurement_Readout_FrechetDistance.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Measurement_Readout_MeanSquareError.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Measurement_Readout_Raw.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Recording.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Recording_Performances.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Recording_Scheduling.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Recording_States.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Recording_Weights.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Reservoir.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Reservoir_Weights.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Reservoir_Weights_Feedback.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Reservoir_Weights_Feedback_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Reservoir_Weights_Feedforward.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Reservoir_Weights_Feedforward_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Reservoir_Weights_Readout.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Reservoir_Weights_Readout_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Reservoir_Weights_Recurrent.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Reservoir_Weights_Recurrent_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Scheduler.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Scheduler_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Scheduler_Mutator.h" />
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Scheduler_Mutator_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Basic.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Engine.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Engine_Backend.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Engine_Backend_Distributed.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Engine_Backend_Local.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Engine_Backend_Remote.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Logging.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Debug.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Error.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Information.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Trace.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Warning.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Simulation.h" />
+    <ClInclude Include="TRN4JAVA_Basic_Simulation_Identifier.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Plugin.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Measurement.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Measurement_Position.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Measurement_Position_FrechetDistance.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Measurement_Position_MeanSquareError.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Measurement_Position_Raw.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Measurement_Processed.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Measurement_Raw.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Measurement_Readout.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Measurement_Readout_FrechetDistance.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Measurement_Readout_MeanSquareError.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Measurement_Readout_Raw.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Recording.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Recording_Performances.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Recording_Scheduling.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Recording_States.h" />
+    <ClInclude Include="TRN4JAVA_Callbacks_Simulation_Recording_Weights.h" />
+    <ClInclude Include="TRN4JAVA_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Plugin.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Simulation.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Simulation_Loop.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Simulation_Loop_Position.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Simulation_Loop_Stimulus.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Simulation_Reservoir.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Simulation_Reservoir_Feedback.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Simulation_Reservoir_Feedforward.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Simulation_Reservoir_Readout.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Simulation_Reservoir_Recurrent.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Simulation_Reservoir_Weights.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Simulation_Scheduler.h" />
+    <ClInclude Include="TRN4JAVA_Custom_Simulation_Scheduler_Mutator.h" />
+    <ClInclude Include="TRN4JAVA_Extended.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Engine.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Engine_Execution.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Loop.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Loop_Copy.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Loop_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Loop_SpatialFilter.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Measurement.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Measurement_Position.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Measurement_Position_FrechetDistance.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Measurement_Position_MeanSquareError.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Measurement_Position_Raw.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Measurement_Readout.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Measurement_Readout_FrechetDistance.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Measurement_Readout_MeanSquareError.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Measurement_Readout_Raw.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Recording.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Recording_Performances.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Recording_Scheduling.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Recording_States.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Recording_Weights.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedback.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedback_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedback_Gaussian.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedback_Uniform.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedforward.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedforward_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedforward_Gaussian.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedforward_Uniform.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Readout.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Readout_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Readout_Gaussian.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Readout_Uniform.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Recurrent.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Recurrent_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Recurrent_Gaussian.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Recurrent_Uniform.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_WidrowHoff.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Scheduler.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Scheduler_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Scheduler_Mutator.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Scheduler_Mutator_Custom.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Scheduler_Mutator_Reverse.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Scheduler_Mutator_Shuffle.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Scheduler_Snippets.h" />
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Scheduler_Tiled.h" />
     <ClInclude Include="trn4java_global.h" />
-    <ClInclude Include="TRN4JAVA_Simulation.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Loop.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Loop_Copy.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Loop_Custom.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Loop_Position.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Loop_SpatialFilter.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Loop_Stimulus.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Measurement.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Position.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Position_FrechetDistance.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Position_MeanSquareError.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Position_Raw.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Processed.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Raw.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Readout.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Readout_FrechetDistance.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Readout_MeanSquareError.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Measurement_Readout_Raw.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Recording.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Recording_Performances.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Recording_Scheduling.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Recording_States.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Recording_Weights.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedback.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedback_Custom.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedback_Gaussian.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedback_Uniform.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedforward.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedforward_Custom.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedforward_Gaussian.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Feedforward_Uniform.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Readout.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Readout_Custom.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Readout_Gaussian.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Readout_Uniform.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Recurrent.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Recurrent_Custom.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Recurrent_Gaussian.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_Weights_Recurrent_Uniform.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Reservoir_WidrowHoff.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Scheduler.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Custom.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Mutator.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Mutator_Custom.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Mutator_Reverse.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Mutator_Shuffle.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Snippets.h" />
-    <ClInclude Include="TRN4JAVA_Simulation_Scheduler_Tiled.h" />
+    <ClInclude Include="TRN4JAVA_Simplified.h" />
+    <ClInclude Include="TRN4JAVA_Simplified_Plugin.h" />
+    <ClInclude Include="TRN4JAVA_Simplified_Simulation.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Helper\Helper.vcxproj">
+      <Project>{5046141e-b1c6-492a-9096-92a902d33bd5}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\TRN4CPP\TRN4CPP.vcxproj">
       <Project>{3e80580a-fb5c-47f2-8b25-67f324e40aa5}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="TRN4JAVA\Engine.java" />
-    <None Include="TRN4JAVA\Simulation.java" />
+    <None Include="TRN4JAVA\Callbacks.java" />
+    <None Include="TRN4JAVA\Custom.java" />
+    <None Include="TRN4JAVA\Extended.java" />
+    <None Include="TRN4JAVA\Simplified.java" />
+    <None Include="TRN4JAVA\Advanced.java" />
+    <None Include="TRN4JAVA\Basic.java" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

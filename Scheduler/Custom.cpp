@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Custom.h"
+#include "Helper/Logger.h"
 
 class TRN::Scheduler::Custom::Handle
 {
@@ -28,7 +29,7 @@ TRN::Scheduler::Custom::Custom(const unsigned long &seed,
 		}
 		catch (std::exception &e)
 		{
-			std::cerr << e.what() << std::endl;
+			ERROR_LOGGER << e.what() ;
 		}
 	};
 }
@@ -56,7 +57,7 @@ void TRN::Scheduler::Custom::update(const TRN::Core::Message::Payload<TRN::Core:
 	}
 	catch (std::exception &e)
 	{
-		std::cerr << e.what() << std::endl;
+		ERROR_LOGGER << e.what() ;
 	}
 }
 

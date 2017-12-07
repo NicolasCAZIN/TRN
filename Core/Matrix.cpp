@@ -171,9 +171,9 @@ std::shared_ptr<TRN::Core::Matrix> TRN::Core::Matrix::create(const std::shared_p
 //#include <iostream>
 std::shared_ptr<TRN::Core::Matrix> TRN::Core::Matrix::create(const std::shared_ptr<TRN::Backend::Driver> &driver,const std::shared_ptr<TRN::Core::Matrix> &matrix, const std::size_t &row, const std::size_t &col, const std::size_t &rows, const std::size_t &cols)
 {
-	/*std::cout << "row " << row;
-	std::cout << ", col " << col;
-	std::cout << ", rows " << rows;
-	std::cout << ", cols " << cols << std::endl;*/
+	/*INFORMATION "row " << row;
+	INFORMATION ", col " << col;
+	INFORMATION ", rows " << rows;
+	INFORMATION ", cols " << cols ;*/
 	return std::make_shared<TRN::Core::Matrix>(driver, matrix, row, col, rows, cols);
 }

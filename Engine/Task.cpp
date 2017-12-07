@@ -1,14 +1,17 @@
 #include "stdafx.h"
 #include "Task_impl.h"
+#include "Helper/Logger.h"
 
 TRN::Engine::Task::Task() :
 	handle(std::make_unique<Handle>())
 {
+	TRACE_LOGGER;
 	handle->running = false;
 }
 
-TRN::Engine::Task::~Task()
+TRN::Engine::Task::~Task() noexcept(false)
 {
+	TRACE_LOGGER;
 	if (!handle)
 		throw std::runtime_error("Handle is already destroyed");
 	if (handle->running)
@@ -18,6 +21,7 @@ TRN::Engine::Task::~Task()
 
 void TRN::Engine::Task::start()
 {
+	TRACE_LOGGER;
 	if (handle->running)
 		throw std::runtime_error("Thread is already running");
 	handle->running = true;
@@ -33,7 +37,7 @@ void TRN::Engine::Task::start()
 			}
 			catch (std::exception &e)
 			{
-				std::cerr << e.what() << std::endl;
+				ERROR_LOGGER << e.what() ;
 				stop();
 			}
 		}
@@ -45,22 +49,26 @@ void TRN::Engine::Task::start()
 
 void TRN::Engine::Task::join()
 {
+	TRACE_LOGGER;
 	if (handle->thread.joinable())
 		handle->thread.join();
 
 }
 void TRN::Engine::Task::initialize()
 {
-	// std::cout << __FUNCTION__ << std::endl;
+	TRACE_LOGGER;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 }
 
 void TRN::Engine::Task::uninitialize()
 {
-	// std::cout << __FUNCTION__ << std::endl;
+	TRACE_LOGGER;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 }
 
 
 void TRN::Engine::Task::stop()
 {
+	TRACE_LOGGER;
 	handle->running = false;
 }

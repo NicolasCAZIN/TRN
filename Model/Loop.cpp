@@ -16,13 +16,13 @@ std::shared_ptr<TRN::Core::Loop> TRN::Model::Loop::SpatialFilter::create(const s
 	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
 	const std::size_t &rows, const std::size_t &cols,
 	const std::pair<float, float> &x, const std::pair<float, float> &y,
-	const std::vector<float> &response,
+	const std::shared_ptr<TRN::Core::Matrix> &firing_rate_map,
 	const float &sigma,
 	const float &radius,
 	const float &scale,
 	const std::string &tag)
 {
-	return TRN::Loop::SpatialFilter::create(driver, batch_size, stimulus_size, seed, predicted_position, estimated_position, predicted_stimulus, perceived_stimulus, rows, cols, x, y, response, sigma, radius,scale, tag);
+	return TRN::Loop::SpatialFilter::create(driver, batch_size, stimulus_size, seed, predicted_position, estimated_position, predicted_stimulus, perceived_stimulus, rows, cols, x, y, firing_rate_map, sigma, radius,scale, tag);
 }
 
 std::shared_ptr<TRN::Core::Loop> TRN::Model::Loop::Custom::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &batch_size, const std::size_t &stimulus_size,

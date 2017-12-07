@@ -20,7 +20,7 @@ namespace TRN
 		public :
 			Broker(const std::shared_ptr<TRN::Engine::Communicator> &communicator);
 		public :
-			virtual ~Broker();
+			virtual ~Broker() noexcept(false);
 
 		public :
 			void dispose();
@@ -157,7 +157,7 @@ namespace TRN
 		private :
 			std::size_t generate_number();
 			template<TRN::Engine::Tag tag>
-			void send(const int &rank, TRN::Engine::Message<tag> &message, const std::function<void()> &functor);
+			void send(const int &rank, TRN::Engine::Message<tag> &message);
 			void append_simulation(const unsigned long long &id);
 			void remove_simulation(const unsigned long long &id);	
 			std::shared_ptr<TRN::Engine::Executor> retrieve_simulation(const unsigned long long &id);

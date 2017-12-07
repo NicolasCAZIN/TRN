@@ -1,20 +1,22 @@
 #include "stdafx.h"
 #include "Dispatcher_impl.h"
 #include "Broker_impl.h"
+#include "Helper/Logger.h"
+
+
+
 
 TRN::Engine::Dispatcher::Dispatcher(const std::shared_ptr<TRN::Engine::Communicator> &to_workers) :
 	TRN::Engine::Broker(to_workers),
 	handle(std::make_unique<Handle>())
 {
+	TRACE_LOGGER;
 }
 TRN::Engine::Dispatcher::~Dispatcher()
 {
+	TRACE_LOGGER;
 	handle.reset();
 }
-
-
-
-
 
 static void local_id(const unsigned long long &global_id, unsigned long long &local_id, unsigned short &frontend_number)
 {
@@ -27,12 +29,14 @@ static void local_id(const unsigned long long &global_id, unsigned long long &lo
 
 void TRN::Engine::Dispatcher::register_frontend(const unsigned short &frontend, const std::shared_ptr<TRN::Engine::Communicator> &communicator)
 {
+	TRACE_LOGGER;
 	if (handle->to_frontend.find(frontend) != handle->to_frontend.end())
 		throw std::invalid_argument("Communicator for frontend #" + std::to_string(frontend) + " is already registered");
 	handle->to_frontend[frontend] = communicator;
 }
 void TRN::Engine::Dispatcher::unregister_frontend(const unsigned short &frontend)
 {
+	TRACE_LOGGER;
 	if (handle->to_frontend.find(frontend) == handle->to_frontend.end())
 		throw std::invalid_argument("Communicator for frontend #" + std::to_string(frontend) + " is not registered");
 	handle->to_frontend.erase(frontend);
@@ -59,6 +63,7 @@ static void send_to_frontend(std::map<unsigned short, std::shared_ptr<TRN::Engin
 }
 void TRN::Engine::Dispatcher::callback_ack(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)
 {
+	TRACE_LOGGER;
 	/*TRN::Engine::Message<TRN::Engine::Tag::ACK> message;
 
 	message.counter = counter;
@@ -70,12 +75,38 @@ void TRN::Engine::Dispatcher::callback_ack(const unsigned long long &id, const s
 
 void TRN::Engine::Dispatcher::callback_configured(const unsigned long long &id)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::Tag::CONFIGURED> message;
 
 	send_to_frontend(handle->to_frontend,message, id);
 }
 void TRN::Engine::Dispatcher::callback_processor(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)
 {
+	TRACE_LOGGER;
+	TRN::Engine::Dispatcher::Handle::Processor processor(rank, index, host, name);
+
+
+	std::unique_lock<std::mutex> guard(handle->mutex);
+
+	if (handle->processors.find(rank) != handle->processors.end())
+	{
+		if (handle->processors[rank] != processor)
+		{
+			WARNING_LOGGER << "Updating definition of processor #" << rank << " to : " << processor ;	
+			handle->processors[rank] = processor;
+		}
+		else
+		{
+			DEBUG_LOGGER << "Received a supplementary declaration of the already existing processor #" << rank << " to : " << processor ;
+		}
+	}
+	else
+	{
+		INFORMATION_LOGGER << "New processor #" << rank << " declared : " << processor ;
+		handle->processors[rank] = processor;
+	}
+	guard.unlock();
+
 	TRN::Engine::Message<TRN::Engine::Tag::WORKER> message;
 
 	message.host = host;
@@ -85,20 +116,53 @@ void TRN::Engine::Dispatcher::callback_processor(const int &rank, const std::str
 
 	send_to_frontend(handle->to_frontend, message);
 }
+
+
+
 void TRN::Engine::Dispatcher::callback_allocated(const unsigned long long &id, const int &rank)
 {
+	TRACE_LOGGER;
+	unsigned short client_number;
+	unsigned short condition_number;
+	unsigned int simulation_number;
+
+	TRN::Engine::decode(id, client_number, condition_number, simulation_number);
+	std::unique_lock<std::mutex> guard(handle->mutex);
+	if (handle->processors.find(rank) == handle->processors.end())
+	{
+		throw std::invalid_argument("Processor #" + std::to_string(rank) + " does not exist");
+	}
+	INFORMATION_LOGGER << "Job # " << std::hex << id << " (client #" << std::dec << client_number << ", condition #" << condition_number << ", simulation #" << simulation_number << ") is allocated on processor " << handle->processors[rank] ;
+	guard.unlock();
+
 	TRN::Engine::Message<TRN::Engine::Tag::ALLOCATED> message;
 
 	send_to_frontend(handle->to_frontend,message, id);
 }
 void TRN::Engine::Dispatcher::callback_deallocated(const unsigned long long &id, const int &rank)
 {
+	TRACE_LOGGER;
+	unsigned short client_number;
+	unsigned short condition_number;
+	unsigned int simulation_number;
+
+	TRN::Engine::decode(id, client_number, condition_number, simulation_number);
+
+	std::unique_lock<std::mutex> guard(handle->mutex);
+	if (handle->processors.find(rank) == handle->processors.end())
+	{
+		throw std::invalid_argument("Processor #" + std::to_string(rank) + " does not exist");
+	}
+	INFORMATION_LOGGER << "Job # " << std::hex << id << " (client #" << std::dec << client_number << ", condition #" << condition_number << ", simulation #" << simulation_number << ") is deallocated from processor " << handle->processors[rank] ;
+	guard.unlock();
+
 	TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATED> message;
 
 	send_to_frontend(handle->to_frontend,message, id);
 }
 void TRN::Engine::Dispatcher::callback_exit(const unsigned short &number, const int &rank)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::EXIT> message;
 
 	message.number = number;
@@ -109,33 +173,39 @@ void TRN::Engine::Dispatcher::callback_exit(const unsigned short &number, const 
 }
 void TRN::Engine::Dispatcher::callback_terminated(const int &rank)
 {
-	std::cout << "Worker #" << rank << "terminated" << std::endl;
+	TRACE_LOGGER;
+	INFORMATION_LOGGER <<   "Worker #" << rank << "terminated" ;
 }
 void TRN::Engine::Dispatcher::callback_completed()
 {
-	std::cout << "SIMULATIONS COMPLETED" << std::endl;
+	TRACE_LOGGER;
+	INFORMATION_LOGGER <<   "SIMULATIONS COMPLETED" ;
 }
 void TRN::Engine::Dispatcher::callback_trained(const unsigned long long &id)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::Tag::TRAINED> message;
 
 	send_to_frontend(handle->to_frontend,message, id);
 }
 void TRN::Engine::Dispatcher::callback_primed(const unsigned long long &id)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::Tag::PRIMED> message;
 
 	send_to_frontend(handle->to_frontend,message, id);
 }
 void TRN::Engine::Dispatcher::callback_tested(const unsigned long long &id)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::Tag::TESTED> message;
 
 	send_to_frontend(handle->to_frontend,message, id);
 }
 void TRN::Engine::Dispatcher::callback_error(const std::string &string)
 {
-	std::cerr << "ERROR : " << string << std::endl;
+	TRACE_LOGGER;
+	ERROR_LOGGER << string ;
 	TRN::Engine::Message<TRN::Engine::Tag::LOG_ERROR> message;
 	message.message = string;
 
@@ -143,7 +213,8 @@ void TRN::Engine::Dispatcher::callback_error(const std::string &string)
 }
 void TRN::Engine::Dispatcher::callback_information(const std::string &string)
 {
-	std::cerr << "INFORMATION : " << string << std::endl;
+	TRACE_LOGGER;
+	INFORMATION_LOGGER <<  string ;
 	TRN::Engine::Message<TRN::Engine::Tag::LOG_INFORMATION> message;
 	message.message = string;
 
@@ -151,7 +222,8 @@ void TRN::Engine::Dispatcher::callback_information(const std::string &string)
 }
 void TRN::Engine::Dispatcher::callback_warning(const std::string &string)
 {
-	std::cerr << "WARNING : " << string << std::endl;
+	TRACE_LOGGER;
+	WARNING_LOGGER <<  string ;
 	TRN::Engine::Message<TRN::Engine::Tag::LOG_WARNING> message;
 	message.message = string;
 
@@ -159,6 +231,7 @@ void TRN::Engine::Dispatcher::callback_warning(const std::string &string)
 }
 void TRN::Engine::Dispatcher::callback_measurement_readout_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::MEASUREMENT_READOUT_MEAN_SQUARE_ERROR> message;
 
 	message.trial = trial;
@@ -172,6 +245,7 @@ void TRN::Engine::Dispatcher::callback_measurement_readout_mean_square_error(con
 }
 void TRN::Engine::Dispatcher::callback_measurement_readout_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::MEASUREMENT_READOUT_FRECHET_DISTANCE> message;
 
 	message.trial = trial;
@@ -184,6 +258,7 @@ void TRN::Engine::Dispatcher::callback_measurement_readout_frechet_distance(cons
 }
 void TRN::Engine::Dispatcher::callback_measurement_readout_custom(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::MEASUREMENT_READOUT_CUSTOM> message;
 
 	message.trial = trial;
@@ -200,6 +275,7 @@ void TRN::Engine::Dispatcher::callback_measurement_readout_custom(const unsigned
 }
 void TRN::Engine::Dispatcher::callback_measurement_position_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> message;
 
 	message.trial = trial;
@@ -212,6 +288,7 @@ void TRN::Engine::Dispatcher::callback_measurement_position_mean_square_error(co
 }
 void TRN::Engine::Dispatcher::callback_measurement_position_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::MEASUREMENT_POSITION_FRECHET_DISTANCE> message;
 
 	message.trial = trial;
@@ -224,6 +301,7 @@ void TRN::Engine::Dispatcher::callback_measurement_position_frechet_distance(con
 }
 void TRN::Engine::Dispatcher::callback_measurement_position_custom(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::MEASUREMENT_POSITION_CUSTOM> message;
 
 	message.trial = trial;
@@ -239,6 +317,7 @@ void TRN::Engine::Dispatcher::callback_measurement_position_custom(const unsigne
 }
 void TRN::Engine::Dispatcher::callback_performances(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::PERFORMANCES> message;
 
 	message.phase = phase;
@@ -251,6 +330,7 @@ void TRN::Engine::Dispatcher::callback_performances(const unsigned long long &id
 }
 void TRN::Engine::Dispatcher::callback_states(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::STATES> message;
 
 	message.label = label;
@@ -266,6 +346,7 @@ void TRN::Engine::Dispatcher::callback_states(const unsigned long long &id, cons
 }
 void TRN::Engine::Dispatcher::callback_weights(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::WEIGHTS> message;
 
 	message.phase = phase;
@@ -280,6 +361,7 @@ void TRN::Engine::Dispatcher::callback_weights(const unsigned long long &id, con
 }
 void TRN::Engine::Dispatcher::callback_position(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::POSITION> message;
 
 	message.trial = trial;
@@ -291,6 +373,7 @@ void TRN::Engine::Dispatcher::callback_position(const unsigned long long &id, co
 }
 void TRN::Engine::Dispatcher::callback_stimulus(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::STIMULUS> message;
 
 	message.trial = trial;
@@ -302,6 +385,7 @@ void TRN::Engine::Dispatcher::callback_stimulus(const unsigned long long &id, co
 }
 void TRN::Engine::Dispatcher::callback_mutator(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::Tag::MUTATOR_CUSTOM> message;
 
 	message.trial = trial;
@@ -312,6 +396,7 @@ void TRN::Engine::Dispatcher::callback_mutator(const unsigned long long &id, con
 }
 void TRN::Engine::Dispatcher::callback_scheduler(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::Tag::SCHEDULER_CUSTOM> message;
 	message.trial = trial;
 	message.seed = seed;
@@ -324,6 +409,7 @@ void TRN::Engine::Dispatcher::callback_scheduler(const unsigned long long &id, c
 }
 void TRN::Engine::Dispatcher::callback_scheduling(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::SCHEDULING> message;
 
 	message.trial = trial;
@@ -334,6 +420,7 @@ void TRN::Engine::Dispatcher::callback_scheduling(const unsigned long long &id, 
 }
 void TRN::Engine::Dispatcher::callback_feedforward(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::Tag::FEEDFORWARD_DIMENSIONS> message;
 
 	message.matrices = matrices;
@@ -344,6 +431,7 @@ void TRN::Engine::Dispatcher::callback_feedforward(const unsigned long long &id,
 }
 void TRN::Engine::Dispatcher::callback_feedback(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_DIMENSIONS> message;
 
 	message.matrices = matrices;
@@ -354,6 +442,7 @@ void TRN::Engine::Dispatcher::callback_feedback(const unsigned long long &id, co
 }
 void TRN::Engine::Dispatcher::callback_readout(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::Tag::READOUT_DIMENSIONS> message;
 
 	message.matrices = matrices;
@@ -364,6 +453,7 @@ void TRN::Engine::Dispatcher::callback_readout(const unsigned long long &id, con
 }
 void TRN::Engine::Dispatcher::callback_recurrent(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
+	TRACE_LOGGER;
 	TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_DIMENSIONS> message;
 
 	message.matrices = matrices;
@@ -376,5 +466,6 @@ void TRN::Engine::Dispatcher::callback_recurrent(const unsigned long long &id, c
 
 std::shared_ptr<TRN::Engine::Dispatcher> TRN::Engine::Dispatcher::create(const std::shared_ptr<TRN::Engine::Communicator> &to_workers)
 {
+	TRACE_LOGGER;
 	return std::make_shared<TRN::Engine::Dispatcher>(to_workers);
 }

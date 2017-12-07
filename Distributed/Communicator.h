@@ -27,7 +27,7 @@ namespace TRN
 			virtual std::size_t size() override;
 			virtual void send(const int &destination, const TRN::Engine::Tag &tag, const std::string &data) override;
 			virtual std::string receive(const int &destination, const TRN::Engine::Tag &tag) override;
-			virtual TRN::Engine::Tag probe(const int &destination) override;
+			virtual boost::optional<TRN::Engine::Tag> probe(const int &destination) override;
 	
 		public:
 			static std::shared_ptr<Communicator> create(int argc, char *argv[]);

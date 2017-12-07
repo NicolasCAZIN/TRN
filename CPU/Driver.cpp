@@ -48,6 +48,8 @@ std::string  TRN::CPU::Driver<Implementation>::name()
 	std::string brand;
 	TRN::CPU::Implementation implementation;
 	TRN::CPU::query(brand, implementation);
+
+
 	return brand;
 }
 template<TRN::CPU::Implementation Implementation>

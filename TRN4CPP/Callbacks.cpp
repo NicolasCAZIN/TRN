@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Callbacks.h"
 #include "Engine/Frontend.h"
-
+#include "Helper/Logger.h"
 extern std::shared_ptr<TRN::Engine::Frontend> frontend;
 
 std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
@@ -111,6 +111,7 @@ static void callback_scheduling(const unsigned long long &id, const std::size_t 
 
 void TRN4CPP::Plugin::Callbacks::initialize(const std::string &library_path, const std::string &name, const std::map<std::string, std::string>  &arguments)
 {
+	TRACE_LOGGER;
 	if (callbacks.empty())
 	{ 
 		TRN4CPP::Simulation::Measurement::Readout::Raw::install(callback_measurement_readout_raw);
@@ -133,10 +134,12 @@ void TRN4CPP::Plugin::Callbacks::initialize(const std::string &library_path, con
 	auto plugin = boost::dll::import<TRN4CPP::Plugin::Callbacks::Interface>(path, "plugin_callbacks", boost::dll::load_mode::append_decorations);
 	plugin->initialize(arguments);
 	callbacks.push_back(plugin);
+	INFORMATION_LOGGER << "Callbacks plugin " << name << " loaded from path " << library_path;
 }
 
 void TRN4CPP::Simulation::Measurement::Position::Raw::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &predicted, const std::vector<float> &primed, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
+	TRACE_LOGGER;
 	if (on_measurement_position_raw)
 		throw std::runtime_error("Position raw functor is already installed");
 	if (!frontend)
@@ -145,6 +148,7 @@ void TRN4CPP::Simulation::Measurement::Position::Raw::install(const std::functio
 }
 void TRN4CPP::Simulation::Measurement::Readout::Raw::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &predicted, const std::vector<float> &primed, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
+	TRACE_LOGGER;
 	if (on_measurement_readout_raw)
 		throw std::runtime_error("Readout raw functor is already installed");
 	if (!frontend)
@@ -155,6 +159,7 @@ void TRN4CPP::Simulation::Measurement::Readout::Raw::install(const std::function
 
 void TRN4CPP::Simulation::Recording::States::install(const std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
+	TRACE_LOGGER;
 	if (on_states)
 		throw std::runtime_error("States functor is already installed");
 	if (!frontend)
@@ -163,6 +168,7 @@ void TRN4CPP::Simulation::Recording::States::install(const std::function<void(co
 }
 void TRN4CPP::Simulation::Recording::Weights::install(const std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
+	TRACE_LOGGER;
 	if (on_weights)
 		throw std::runtime_error("Weights functor is already installed");
 	if (!frontend)
@@ -171,6 +177,7 @@ void TRN4CPP::Simulation::Recording::Weights::install(const std::function<void(c
 }
 void TRN4CPP::Simulation::Recording::Performances::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor)
 {
+	TRACE_LOGGER;
 	if (on_performances)
 		throw std::runtime_error("Performances functor is already installed");
 	if (!frontend)
@@ -179,6 +186,7 @@ void TRN4CPP::Simulation::Recording::Performances::install(const std::function<v
 }
 void TRN4CPP::Simulation::Recording::Scheduling::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
 {
+	TRACE_LOGGER;
 	if (on_scheduling)
 		throw std::runtime_error("Scheduling functor is already installed");
 	if (!frontend)
@@ -187,6 +195,7 @@ void TRN4CPP::Simulation::Recording::Scheduling::install(const std::function<voi
 }
 void TRN4CPP::Simulation::Measurement::Readout::MeanSquareError::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
+	TRACE_LOGGER;
 	if (on_measurement_readout_mean_square_error)
 		throw std::runtime_error("Readout mean square error functor is already installed");
 	if (!frontend)
@@ -195,6 +204,7 @@ void TRN4CPP::Simulation::Measurement::Readout::MeanSquareError::install(const s
 }
 void TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
+	TRACE_LOGGER;
 	if (on_measurement_readout_frechet_distance)
 		throw std::runtime_error("Readout frechet distance functor is already installed");
 	if (!frontend)
@@ -203,6 +213,7 @@ void TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::install(const s
 }
 void TRN4CPP::Simulation::Measurement::Position::MeanSquareError::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
+	TRACE_LOGGER;
 	if (on_measurement_position_mean_square_error)
 		throw std::runtime_error("Position mean square error functor is already installed");
 	if (!frontend)
@@ -211,6 +222,7 @@ void TRN4CPP::Simulation::Measurement::Position::MeanSquareError::install(const 
 }
 void TRN4CPP::Simulation::Measurement::Position::FrechetDistance::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
+	TRACE_LOGGER;
 	if (on_measurement_position_frechet_distance)
 		throw std::runtime_error("Position frechet distance functor is already installed");
 	if (!frontend)

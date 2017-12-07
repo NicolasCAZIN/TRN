@@ -25,7 +25,7 @@ namespace TRN
 			std::string host();
 			virtual std::size_t size() = 0;
 			virtual int rank() = 0;
-			virtual TRN::Engine::Tag probe(const int &destination) = 0;
+			virtual boost::optional<TRN::Engine::Tag> probe(const int &destination) = 0;
 
 			virtual void send(const int &destination, const TRN::Engine::Tag &tag, const std::string &data) = 0;
 			virtual std::string receive(const int &destination, const TRN::Engine::Tag &tag) = 0;

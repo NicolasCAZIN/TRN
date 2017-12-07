@@ -15,7 +15,7 @@ namespace TRN
 		protected :
 			Task();
 		public :
-			virtual ~Task() ;
+			virtual ~Task() noexcept(false);
 
 		public :
 			 void start();

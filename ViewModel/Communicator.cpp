@@ -8,6 +8,7 @@
 #include "Model/Driver.h"
 #include "Engine/Worker.h"
 #include "Node.h"
+#include "Helper/Logger.h"
 /*#include "Remote/Backend.h"
 #include "Distributed/Backend.h"
 */
@@ -72,7 +73,7 @@ std::shared_ptr<TRN::Engine::Communicator> TRN::ViewModel::Communicator::Remote:
 	//do connection->socket().get_io_service().run_one(); while (error == boost::asio::error::would_block);
 
 	assert(connection->socket().is_open());
-	std::cout << "API local " << connection->socket().local_endpoint().address().to_string() << ":" << connection->socket().local_endpoint().port() << " remote " << connection->socket().remote_endpoint().address().to_string() << ":" << connection->socket().remote_endpoint().port() << std::endl;
+	INFORMATION_LOGGER <<   "API local " << connection->socket().local_endpoint().address().to_string() << ":" << connection->socket().local_endpoint().port() << " remote " << connection->socket().remote_endpoint().address().to_string() << ":" << connection->socket().remote_endpoint().port() ;
 
 	std::size_t size = 0;
 	connection->read(size);

@@ -26,7 +26,7 @@ TRN::Remote::Communicator::Communicator(const std::shared_ptr<TRN::Network::Mana
 
 TRN::Remote::Communicator::~Communicator()
 {
-	// std::cout << __FUNCTION__ << std::endl;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 
 
 
@@ -67,7 +67,7 @@ std::string TRN::Remote::Communicator::receive(const int &destination, const TRN
 	std::unique_lock<std::recursive_mutex> lock(handle->read);
 	/*if (destination != handle->rank)
 		throw std::runtime_error("destination must be != than own rank " + std::to_string(handle->rank));*/
-	auto probed = probe(destination);
+	auto probed = *probe(destination);
 	if (probed != tag)
 		throw std::invalid_argument("Unexpected tag " + probed);
 
@@ -80,7 +80,7 @@ std::string TRN::Remote::Communicator::receive(const int &destination, const TRN
 	return data;
 }
 
-TRN::Engine::Tag TRN::Remote::Communicator::probe(const int &destination)
+boost::optional<TRN::Engine::Tag> TRN::Remote::Communicator::probe(const int &destination)
 {
 	std::unique_lock<std::recursive_mutex> lock(handle->read);
 	if (handle->received.tag == -1)
@@ -92,7 +92,7 @@ TRN::Engine::Tag TRN::Remote::Communicator::probe(const int &destination)
 	
 	if (destination != -1 && destination != handle->rank)
 		throw std::runtime_error("destination must be equal to own rank " + std::to_string(handle->rank));
-	return static_cast<TRN::Engine::Tag>(handle->received.tag);
+	return boost::optional<TRN::Engine::Tag> (static_cast<TRN::Engine::Tag>(handle->received.tag));
 }
 
 std::shared_ptr<TRN::Remote::Communicator> TRN::Remote::Communicator::create(const std::shared_ptr<TRN::Network::Manager> &manager, const std::shared_ptr<TRN::Network::Connection> &connection, const int &rank, const std::size_t &size)

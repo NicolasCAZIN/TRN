@@ -1,9 +1,11 @@
 #include "stdafx.h"
+#include "Helper/Logger.h"
 #include "Manager_impl.h"
 
 TRN::Engine::Manager::Manager(const std::size_t &size):
 	handle(std::make_unique<Handle>())
 {
+	TRACE_LOGGER;
 	if (size <= 1)
 		throw std::runtime_error("At least, one processor is required");
 	for (std::size_t k = 1; k < size; k++)
@@ -21,6 +23,7 @@ TRN::Engine::Manager::Manager(const std::size_t &size):
 
 void TRN::Engine::Manager::start()
 {
+	TRACE_LOGGER;
 	for (auto processor : handle->processors)
 	{
 		processor->start();
@@ -32,7 +35,7 @@ void TRN::Engine::Manager::start()
 		{
 			std::unique_lock<std::mutex> lock(handle->mutex);
 
-			//PrintThread{} << "deallocate " << id << std::endl;
+			//INFORMATION_LOGGER <<   "deallocate " << id ;
 			handle->available.emplace(handle->associated[id]);
 			handle->associated.erase(id);
 
@@ -44,6 +47,7 @@ void TRN::Engine::Manager::start()
 
 void TRN::Engine::Manager::terminate()
 {
+	TRACE_LOGGER;
 	dispose();
 	for (auto processor : handle->processors)
 	{
@@ -59,17 +63,19 @@ void TRN::Engine::Manager::terminate()
 
 TRN::Engine::Manager::~Manager()
 {
-
+	TRACE_LOGGER;
 
 	handle.reset();
 }
 std::vector<std::shared_ptr<TRN::Engine::Processor>> TRN::Engine::Manager::get_processors()
 {
+	TRACE_LOGGER;
 	return handle->processors;
 }
 
 void TRN::Engine::Manager::update_processor(const int &rank, const std::string host, const unsigned int &index, const std::string name)
 {
+	TRACE_LOGGER;
 	std::unique_lock<std::mutex> lock(handle->mutex);
 	auto processor = handle->processors[rank - 1];
 	if (!handle->updated[rank - 1])
@@ -92,13 +98,14 @@ void TRN::Engine::Manager::update_processor(const int &rank, const std::string h
 
 	while (handle->available.size() < handle->processors.size())
 	{
-		//PrintThread{} << handle->associated.size() << " simulations still pending" << std::endl;
+		//INFORMATION_LOGGER <<   handle->associated.size() << " simulations still pending" ;
 		handle->condition.wait(lock);
 	}
-	//PrintThread{} << "no more simulations pending" << std::endl;
+	//INFORMATION_LOGGER <<   "no more simulations pending" ;
 }*/
 std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::allocate(const unsigned long long &id)
 {
+	TRACE_LOGGER;
 	std::unique_lock<std::mutex> lock(handle->mutex);
 	if (handle->associated.find(id) != handle->associated.end())
 	{
@@ -107,7 +114,7 @@ std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::allocate(const uns
 
 	while (handle->available.empty())
 	{
-		//PrintThread{} << "waiting for non empty" << std::endl;
+		//INFORMATION_LOGGER <<   "waiting for non empty" ;
 		handle->condition.wait(lock);
 	}
 
@@ -122,6 +129,7 @@ std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::allocate(const uns
 }
 void TRN::Engine::Manager::dispose()
 {
+	TRACE_LOGGER;
 	std::unique_lock<std::mutex> lock(handle->mutex);
 
 	while (!handle->associated.empty())
@@ -131,16 +139,18 @@ void TRN::Engine::Manager::dispose()
 }
 void TRN::Engine::Manager::deallocate(const unsigned long long &id)
 {
+	TRACE_LOGGER;
 	handle->to_deallocate.enqueue(id);
 }
 
 std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::retrieve(const unsigned long long &id)
 {
+	TRACE_LOGGER;
 	std::unique_lock<std::mutex> lock(handle->mutex);
 	
 	while (handle->associated.find(id) == handle->associated.end())
 	{
-		//PrintThread{} << "waiting for " << id <<  " non empty" << std::endl;
+		//INFORMATION_LOGGER <<   "waiting for " << id <<  " non empty" ;
 		handle->condition.wait(lock);
 	}
 
@@ -149,5 +159,6 @@ std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::retrieve(const uns
 
 std::shared_ptr<TRN::Engine::Manager> TRN::Engine::Manager::create(const std::size_t &size)
 {
+	TRACE_LOGGER;
 	return std::make_shared<TRN::Engine::Manager>(size);
 }

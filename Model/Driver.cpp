@@ -2,12 +2,12 @@
 #include "Driver.h"
 #include "CPU/Driver.h"
 #include "GPU/Driver.h"
-
+#include "Helper/Logger.h"
 
 
 std::shared_ptr<TRN::Backend::Driver> TRN::Model::Driver::create(const int &index)
 {
-	// std::cout << __FUNCTION__ << std::endl;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	switch (index)
 	{
 	case 0:
@@ -16,7 +16,7 @@ std::shared_ptr<TRN::Backend::Driver> TRN::Model::Driver::create(const int &inde
 		TRN::CPU::Implementation implementation;
 		TRN::CPU::query(brand, implementation);
 
-		std::cout << "CPU version selected : " << brand << " with instruction set " << implementation << std::endl;
+		INFORMATION_LOGGER <<   "CPU version selected : " << brand << " with instruction set " << implementation ;
 		switch (implementation)
 		{
 #if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))

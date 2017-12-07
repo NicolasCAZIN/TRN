@@ -1,8 +1,50 @@
 #pragma once
 
 #include "helper_global.h"
+#include <omp.h>
 
-BOOST_LOG_GLOBAL_LOGGER(sysLogger, boost::log::sources::severity_channel_logger_mt<boost::log::trivial::severity_level>);
+namespace TRN
+{
+	namespace Helper
+	{
+		class  HELPER_EXPORT Logger : public std::ostringstream
+		{
+		public:
+			enum Severity
+			{
+				TRACE_LEVEL = 0,
+				DEBUG_LEVEL,
+				INFORMATION_LEVEL,
+				WARNING_LEVEL,
+				ERROR_LEVEL
+			};
+		public:
+			Logger( const TRN::Helper::Logger::Severity  &severity, const std::string &module);
+			~Logger();
+
+		private :
+			const TRN::Helper::Logger::Severity severity;
+			const std::string module;
+		public :
+			static void setup(const TRN::Helper::Logger::Severity  &severity);
+		};
+	}
+}
+
+#define LOCATION " (LOCATION Line : " << __LINE__ << ", File : " << __FILE__ <<  ", Function : " << __FUNCTION__  << ") "
+#define OMP "(OpenMP processors available : " << omp_get_num_procs() << ", thread " << omp_get_thread_num()  << "/" << omp_get_num_threads() <<"[" << omp_get_max_threads() << "]" << ") "
+#define TRACE_LOGGER TRN::Helper::Logger{TRN::Helper::Logger::TRACE_LEVEL, TRN_MODULE} << __FUNCTION__
+#define DEBUG_LOGGER  TRN::Helper::Logger{TRN::Helper::Logger::DEBUG_LEVEL, TRN_MODULE} << OMP
+#define INFORMATION_LOGGER  TRN::Helper::Logger{TRN::Helper::Logger::INFORMATION_LEVEL, TRN_MODULE}
+#define WARNING_LOGGER  TRN::Helper::Logger{TRN::Helper::Logger::WARNING_LEVEL, TRN_MODULE} << LOCATION
+#define ERROR_LOGGER  TRN::Helper::Logger{TRN::Helper::Logger::ERROR_LEVEL, TRN_MODULE} << LOCATION
+
+namespace std
+{
+	HELPER_EXPORT std::istream &operator >> (std::istream &is, TRN::Helper::Logger::Severity &severity);
+}
+
+/*BOOST_LOG_GLOBAL_LOGGER(sysLogger, boost::log::sources::severity_channel_logger_mt<boost::log::trivial::severity_level>);
 BOOST_LOG_GLOBAL_LOGGER(dataLogger, boost::log::sources::severity_channel_logger_mt<boost::log::trivial::severity_level>);
 
 namespace TRN
@@ -46,4 +88,4 @@ namespace TRN
 #define LOG_DATA_INFO(ARG)  BOOST_LOG_SEV(dataLogger::get(), boost::log::trivial::info) << ARG
 #define LOG_DATA_WARN(ARG)  BOOST_LOG_SEV(dataLogger::get(), boost::log::trivial::warning) << ARG
 #define LOG_DATA_ERROR(ARG) BOOST_LOG_SEV(dataLogger::get(), boost::log::trivial::error) << ARG
-#define LOG_DATA_FATAL(ARG) BOOST_LOG_SEV(dataLogger::get(), boost::log::trivial::fatal) << ARG
+#define LOG_DATA_FATAL(ARG) BOOST_LOG_SEV(dataLogger::get(), boost::log::trivial::fatal) << ARG*/

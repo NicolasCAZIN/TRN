@@ -5,7 +5,7 @@
 #include "Memory.h"
 #include "Random.h"
 #include "Algorithm.h"
-
+#include "Helper/Logger.h"
 
 static std::mutex mutex;
 static std::map<std::size_t, int> counter;
@@ -30,7 +30,7 @@ static void decrease_reference(const std::size_t &index)
 	{
 
 		checkCudaErrors(cudaDeviceReset());
-		std::cout << "device #" << index + 1 << " reset" << std::endl;
+		INFORMATION_LOGGER <<   "device #" << index + 1 << " reset" ;
 	}
 }
 
@@ -95,11 +95,11 @@ std::list<std::pair<int, std::string>> TRN::GPU::enumerate_devices()
 		switch (cudaGetDeviceCount(&count))
 		{
 			case cudaErrorInsufficientDriver :
-				std::cerr << "CUDA enabled device present but the actual driver is insufficient (version " << CUDA_VERSION << " expected)" << std::endl;
+				ERROR_LOGGER << "CUDA enabled device present but the actual driver is insufficient (version " << CUDA_VERSION << " expected)" ;
 				break;
 			case cudaErrorNoDevice:
 			
-				std::cerr << "No CUDA enabled device had been detected" << std::endl;
+				ERROR_LOGGER << "No CUDA enabled device had been detected" ;
 				break;
 			default :
 				for (int k = 0; k < count; k++)

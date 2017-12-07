@@ -5,7 +5,7 @@ TRN::Distributed::Communicator::Communicator(int argc, char *argv[]) :
 	handle(std::make_unique<Handle>(argc, argv))
 
 {
-	// std::cout << __FUNCTION__ << std::endl;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	if (size() <= 1)
 		throw std::runtime_error("At least, one MPI worker is required");
 
@@ -17,20 +17,20 @@ void TRN::Distributed::Communicator::dispose()
 }
 TRN::Distributed::Communicator::~Communicator()
 {
-	// std::cout << __FUNCTION__ << std::endl;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	handle.reset();
 }
 
 int TRN::Distributed::Communicator::rank()
 {
-	// std::cout << __FUNCTION__ << std::endl;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	return handle->world.rank();
 }
 
 std::size_t TRN::Distributed::Communicator::size()
 {
 
-	// std::cout << __FUNCTION__ << std::endl;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	return handle->world.size();
 }
 
@@ -41,7 +41,7 @@ void TRN::Distributed::Communicator::send(const int &destination, const TRN::Eng
 std::string TRN::Distributed::Communicator::receive(const int &destination, const TRN::Engine::Tag &tag)
 {
 
-	// std::cout << __FUNCTION__ << std::endl;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	std::string data;
 
 	handle->world.recv(boost::mpi::any_source, tag, data);
@@ -49,12 +49,11 @@ std::string TRN::Distributed::Communicator::receive(const int &destination, cons
 	return data;
 }
 
-TRN::Engine::Tag TRN::Distributed::Communicator::probe(const int &destination)
+boost::optional<TRN::Engine::Tag> TRN::Distributed::Communicator::probe(const int &destination)
 {
-	// std::cout << __FUNCTION__ << std::endl;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	auto status = handle->world.probe(boost::mpi::any_source, boost::mpi::any_tag);
-
-	return (TRN::Engine::Tag)status.tag();
+	return boost::optional<TRN::Engine::Tag>(static_cast<TRN::Engine::Tag>(status.tag()));
 }
 
 std::shared_ptr<TRN::Distributed::Communicator> TRN::Distributed::Communicator::create(int argc, char *argv[])

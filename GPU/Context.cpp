@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Context_impl.h"
+#include "Helper/Logger.h"
 
 const std::size_t TRN::GPU::Context::DEFAULT_DIV = 1;
 const std::size_t TRN::GPU::Context::DEFAULT_DIMS = 1;
@@ -45,9 +46,13 @@ TRN::GPU::Context::Context(const int &device) :
 	handle->name = name;
 	handle->max_block_size = prop.maxThreadsPerBlock;
 
-
-	std::cout << "GPU version selected : " << name << " # " << (device + 1) << std::endl;
-	
+	DEBUG_LOGGER << "Max threads per block : " << handle->max_block_size;
+	INFORMATION_LOGGER <<   "GPU version selected : " << name << " # " << (device + 1) ;
+	if (handle->max_block_size != 32 * 32)
+	{
+		ERROR_LOGGER << "maxThreadsPerBlock must be 32 * 32. Aborting";
+		abort();
+	}
 }
 
 TRN::GPU::Context::~Context()

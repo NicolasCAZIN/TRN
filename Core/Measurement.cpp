@@ -7,7 +7,7 @@ TRN::Core::Measurement::Implementation::Implementation(const std::shared_ptr<TRN
 
 }
 
-TRN::Core::Measurement::Implementation::~Implementation()
+TRN::Core::Measurement::Implementation::~Implementation() noexcept(false)
 {
 
 }
@@ -25,7 +25,7 @@ TRN::Core::Measurement::Abstraction::Abstraction(const std::shared_ptr<TRN::Core
 	handle->batched_predicted = TRN::Core::Batch::create(implementor->get_implementor(), batch_size);
 }
 
-TRN::Core::Measurement::Abstraction::~Abstraction()
+TRN::Core::Measurement::Abstraction::~Abstraction() noexcept(false)
 {
 	handle.reset();
 }

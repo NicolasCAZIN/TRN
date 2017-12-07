@@ -1201,7 +1201,7 @@ void update_model(
 		{
 			int t = offsets[ts];
 	
-			//std::cout << "t = " << t << std::endl;
+			//INFORMATION_LOGGER <<   "t = " << t ;
 			batched_reset(stream, batch_size, batched_u_rows, batched_u_cols, batched_u, batched_u_strides);
 			//isnan(stream, batch_size, batched_u, batched_u_rows, batched_u_cols, batched_u_strides);
 			batched_sgemv(stream, batch_size,
@@ -1360,13 +1360,52 @@ static void weighted_sum_inplace_kernel(
 	}
 }
 
+#ifdef PROTO
+__global__
+static void location_hypothesis_kernel(
+	const int batch_size,
+	const int place_cells_number, const int rows, const int cols,
+	const float minus_inv_sigma2,
 
+	const float   ** __restrict__ batched_firing_rate_map, const int firing_rate_stride,
+	const float  ** __restrict__ batched_prediction, const int prediction_stride,
+	float  ** __restrict__ batched_location_map, const int location_stride)
+{
+	__shared__ float firing_rate_map[256]; // per place_cell
+	__shared__ float prediction[10];
+
+
+	for (int row = blockIdx.y * blockDim.y + threadIdx.y; row < rows; row += gridDim.y * blockDim.y)
+	{
+		for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < cols; col += gridDim.x * blockDim.x)
+		{
+			float hypothesis = 0.0f;
+			for (int place_cell = 0; place_cell < place_cells_number; place_cell++)
+			{
+				if (blockIdx.x == 0 && blockIdx.y == 0)
+				{
+					if (batch == 0)
+						firing_rate_map[threadIdx.y][threadIdx.x] = batched_firing_rate_map[row * firing_rate_stride + col][place_cell];
+					if (blockIdx.z == 0)
+						prediction[threadIdx.z] = batched_prediction[batch][place_cell];
+				}
+				__syncthreads();
+
+				float value = firing_rate_map[threadIdx.y][threadIdx.x] - prediction[threadIdx.z];
+				hypothesis += expf(value * value * minus_inv_sigma2);
+			}
+			batched_location_map[batch][row * location_stride + col] = hypothesis;
+		}
+	}
+}
+}
+#else
 __global__
 static void location_hypothesis_kernel(
 	const int batch_size,
 	const int place_cells_number, const int size, const float minus_inv_sigma2,
-	 const float   ** __restrict__ batched_firing_rate_map, const int firing_rate_stride,
-	 const float  ** __restrict__ batched_prediction, const int prediction_stride,
+	const float   ** __restrict__ batched_firing_rate_map, const int firing_rate_stride,
+	const float  ** __restrict__ batched_prediction, const int prediction_stride,
 	float  *** __restrict__ batched_hypothesis_map, const int hypothesis_stride,
 	float  ** __restrict__ batched_scale, const int scale_stride)
 {
@@ -1374,7 +1413,6 @@ static void location_hypothesis_kernel(
 	{
 		float *scale = batched_scale[batch];
 		const float *prediction = batched_prediction[batch];
-	
 
 		for (int place_cell = blockIdx.y * blockDim.y + threadIdx.y; place_cell < place_cells_number; place_cell += gridDim.y * blockDim.y)
 		{
@@ -1398,13 +1436,10 @@ static void location_hypothesis_kernel(
 				atomicAdd(&scale[place_cell], sum * place_cells_number);
 			}
 		}
-	
+
 	}
 }
-
-
-
-
+#endif
 
 
 void compute_place_cell_location_probability(
@@ -1417,11 +1452,11 @@ void compute_place_cell_location_probability(
 	const float **prediction, const std::size_t &prediction_rows, const std::size_t &prediction_cols, const std::size_t &prediction_stride,
 	float *** hypothesis_map, const std::size_t &hypothesis_map_rows, const std::size_t &hypothesis_map_cols, const std::size_t &hypothesis_map_stride,
 	float ** location_probability, const std::size_t &location_probability_rows, const std::size_t &location_probability_cols, const std::size_t &location_probability_stride) // batch_size * 2
-
 {
-	
-	const auto minus_sigma2_inv = -1.0/(sigma * sigma);
+	const auto minus_sigma2_inv = -1.0 / (sigma * sigma);
 	const std::size_t size = rows * firing_rate_map_stride;
+
+#ifndef PROTO
 	dim3 block, grid;
 	block.x = 32;
 	block.y = 32;
@@ -1491,6 +1526,69 @@ void compute_place_cell_location_probability(
 			checkCudaErrors(cudaGetLastError());
 		}
 	}
+#else
+
+	struct Handle
+	{
+		cudaStream_t stream;
+		cublasHandle_t handle;
+		cudaEvent_t event;
+	};
+
+	/*std::vector<Handle> handles(batch_size);
+
+	cudaEvent_t parent_event;
+	checkCudaErrors(cudaEventCreate(&parent_event));
+	checkCudaErrors(cudaEventRecord(parent_event, stream));
+
+	for (auto &h : handles)
+	{
+		checkCudaErrors(cudaStreamCreateWithFlags(&h.stream, cudaStreamNonBlocking));
+		checkCudaErrors(cublasCreate(&h.handle));
+		checkCudaErrors(cublasSetStream(h.handle, h.stream));
+		checkCudaErrors(cudaEventCreate(&h.event));
+	}*/
+	dim3 block, grid;
+	block.x = 32;
+	block.y = 32;
+	block.z = 1;
+	grid.x = (cols / 4 + block.x - 1) / block.x;
+	grid.y = (rows / 4 + block.y - 1) / block.y;
+	grid.z = (place_cells_number + block.z - 1) / block.z;
+	/*std::size_t handle_number = 0;
+	for (std::size_t batch = 0; batch < batch_size; batch++)
+	{
+
+			auto &h = handles[handle_number];
+			cudaStreamWaitEvent(h.stream, parent_event, 0);
+			*/
+			location_hypothesis_kernel2 << <grid, block, 0, stream>> > (
+				batch_size, place_cells_number, rows, cols, minus_sigma2_inv,
+				
+				firing_rate_map, firing_rate_map_stride,
+				prediction, prediction_stride,
+				hypothesis_map, hypothesis_map_stride);
+			checkCudaErrors(cudaGetLastError());
+
+
+	
+		/*	cudaEventRecord(h.event, h.stream);
+			cudaStreamWaitEvent(stream, h.event, 0);
+
+
+			handle_number++;
+
+	}*/
+	
+
+	/*cudaStreamSynchronize(stream);
+	for (auto &h : handles)
+	{
+		checkCudaErrors(cudaEventDestroy(h.event));
+		checkCudaErrors(cublasDestroy(h.handle));
+		checkCudaErrors(cudaStreamDestroy(h.stream));
+	}*/
+#endif
 }
 
 

@@ -20,7 +20,7 @@ namespace TRN
 			Node(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank);
 
 		public:
-			virtual ~Node();
+			virtual ~Node() noexcept(false);
 
 	
 		public :

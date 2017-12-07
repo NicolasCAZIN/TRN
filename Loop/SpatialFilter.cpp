@@ -20,6 +20,7 @@ public :
 
 	std::shared_ptr<TRN::Core::Matrix> x_grid;
 	std::shared_ptr<TRN::Core::Matrix> y_grid;
+	std::shared_ptr<TRN::Core::Matrix> firing_rate_map;
 	std::shared_ptr<TRN::Core::Batch> batched_x_grid_centered2;
 	std::shared_ptr<TRN::Core::Batch> batched_y_grid_centered2;
 
@@ -53,7 +54,7 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
 	const std::size_t &rows, const std::size_t &cols,
 	const std::pair<float, float> &x, const std::pair<float, float> &y,
-	const std::vector<float> &response,
+	const std::shared_ptr<TRN::Core::Matrix> &firing_rate_map,
 	const float &sigma, 
 	const float &radius,
 	const float &scale,
@@ -62,6 +63,7 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 	TRN::Core::Loop(driver, batch_size, stimulus_size),
 	handle(std::make_unique<Handle>())
 {
+	handle->firing_rate_map = firing_rate_map;
 	handle->stimulus_size = stimulus_size;
 	handle->batch_size = batch_size;
 	handle->seed = seed;
@@ -79,7 +81,7 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 	if (cols == 0)
 		throw std::invalid_argument("grid cols must be strictly positive");
 
-	if (rows * stimulus_size * cols != response.size())
+	if (rows * stimulus_size * cols != firing_rate_map->get_cols() * firing_rate_map->get_rows())
 		throw std::invalid_argument("place cell response table must fit dimensions rows * cols * stimulus_size");
 
 
@@ -133,9 +135,9 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 		}
 	};
 
-#pragma omp parallel sections
+//#pragma omp parallel sections
 	{
-#pragma omp section
+//#pragma omp section
 		{
 			handle->x_range[0] = x.first;
 			for (std::size_t col = 0; col < cols - 1; col++)
@@ -143,7 +145,7 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 			handle->x_range[cols - 1] = x.second;
 			handle->x_grid->from(handle->x_range, 1, handle->x_range.size());
 		}
-#pragma omp section
+//#pragma omp section
 		{
 			/*handle->y_range[rows - 1] = y.first;
 			for (std::size_t row = 0; row < rows - 1; row++)
@@ -157,19 +159,19 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 	}
 	handle->batched_firing_rate_map = TRN::Core::Batch::create(driver, stimulus_size);
 
+	for (int place_cell = 0; place_cell < stimulus_size; place_cell++)
+	{
+		auto sub_firing_rate_map = TRN::Core::Matrix::create(driver, firing_rate_map, place_cell * rows, 0, rows, cols);
+		handle->batched_firing_rate_map->update(place_cell, sub_firing_rate_map);
+
+	}
+
 	for (std::size_t batch = 0; batch < batch_size; batch++)
 	{
-
 		auto batched_hypothesis_map = TRN::Core::Batch::create(driver, stimulus_size);
-#pragma omp parallel for
+//#pragma omp parallel for
 		for (int place_cell = 0; place_cell < stimulus_size; place_cell++)
 		{
-			auto b = &response[place_cell * rows * cols];
-			auto e = b + rows * cols;
-			std::vector<float> place_cell_response(b, e);
-			auto firing_rate_map = TRN::Core::Matrix::create(driver, place_cell_response, rows, cols);
-			handle->batched_firing_rate_map->update(place_cell, firing_rate_map);
-
 			auto hypothesis_map = TRN::Core::Matrix::create(driver, rows, cols, true);
 			batched_hypothesis_map->update(place_cell, hypothesis_map);
 		}
@@ -315,8 +317,8 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 
 	//handle->batched_current_position->to(current_position, current_position_matrices, current_position_rows, current_position_cols);
 	handle->batched_predicted_position->to(predicted_position, predicted_position_matrices, predicted_position_rows, predicted_position_cols);
-	//// std::cout << __FUNCTION__ << " current position " << current_position[0] << ", " << current_position[1] << std::endl;
-	//// std::cout << __FUNCTION__ << " predicted position " << predicted_position[0] << ", " << predicted_position[1] << std::endl;
+	//// INFORMATION __FUNCTION__ << " current position " << current_position[0] << ", " << current_position[1] ;
+	//// INFORMATION __FUNCTION__ << " predicted position " << predicted_position[0] << ", " << predicted_position[1] ;
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::POSITION>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::POSITION>(handle->batched_predicted_position, payload.get_trial(), payload.get_evaluation()));
 
 
@@ -378,11 +380,11 @@ std::shared_ptr<TRN::Loop::SpatialFilter> TRN::Loop::SpatialFilter::create(const
 	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
 	const std::size_t &rows, const std::size_t &cols,
 	const std::pair<float, float> &x, const std::pair<float, float> &y,
-	const std::vector<float> &response,
+	const std::shared_ptr<TRN::Core::Matrix> &firing_rate_map,
 	const float &sigma,
 	const float &radius,
 	const float &scale,
 	const std::string &tag)
 {
-	return std::make_shared<TRN::Loop::SpatialFilter>(driver, batch_size, stimulus_size, seed, predicted_position, estimated_position, predicted_stimulus, perceived_stimulus, rows, cols, x, y, response, sigma,radius, scale,tag);
+	return std::make_shared<TRN::Loop::SpatialFilter>(driver, batch_size, stimulus_size, seed, predicted_position, estimated_position, predicted_stimulus, perceived_stimulus, rows, cols, x, y, firing_rate_map, sigma,radius, scale,tag);
 }

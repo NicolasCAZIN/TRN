@@ -7,6 +7,8 @@
 #include "ViewModel/Communicator.h"
 #include "ViewModel/Frontend.h"
 
+#include "Helper/Logger.h"
+
 const std::string TRN4CPP::Simulation::DEFAULT_TAG = "";
 const std::string TRN4CPP::Engine::Backend::Remote::DEFAULT_HOST = "127.0.0.1";
 const unsigned short TRN4CPP::Engine::Backend::Remote::DEFAULT_PORT = 12345;
@@ -51,13 +53,35 @@ extern std::function<void(const unsigned long long &id, const std::size_t &trial
 extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_stimulus;
 
 
+void TRN4CPP::Logging::Severity::Trace::setup()
+{
+	TRN::Helper::Logger::setup(TRN::Helper::Logger::TRACE_LEVEL);
+}
+void TRN4CPP::Logging::Severity::Debug::setup()
+{
+	TRN::Helper::Logger::setup(TRN::Helper::Logger::DEBUG_LEVEL);
+}
+void TRN4CPP::Logging::Severity::Information::setup()
+{
+	TRN::Helper::Logger::setup(TRN::Helper::Logger::INFORMATION_LEVEL);
+}
+void TRN4CPP::Logging::Severity::Warning::setup()
+{
+	TRN::Helper::Logger::setup(TRN::Helper::Logger::WARNING_LEVEL);
+}
+void TRN4CPP::Logging::Severity::Error::setup()
+{
+	TRN::Helper::Logger::setup(TRN::Helper::Logger::ERROR_LEVEL);
+}
 
 void  TRN4CPP::Simulation::encode(const unsigned short &frontend, const unsigned short &condition_number, const unsigned int &simulation_number, unsigned long long &id)
 {
+	TRACE_LOGGER;
 	TRN::Engine::encode(frontend, condition_number, simulation_number, id);
 }
 void TRN4CPP::Simulation::decode(const unsigned long long &id, unsigned short &frontend, unsigned short &condition_number, unsigned int &simulation_number)
 {
+	TRACE_LOGGER;
 	TRN::Engine::decode(id, frontend, condition_number, simulation_number);
 }
 
@@ -83,21 +107,24 @@ static void initialize_frontend(const std::shared_ptr<TRN::Engine::Communicator>
 	frontend->install_information(on_information);
 	frontend->install_warning(on_warning);
 	frontend->start();
-	std::cout << "TRN successfully initialized" << std::endl;
+	INFORMATION_LOGGER <<   "TRN successfully initialized" ;
 }
 void TRN4CPP::Engine::Backend::Local::initialize(const std::vector<unsigned int> &indices)
 {
-	std::cout << "Initializing TRN with a local backend" << std::endl;
+	TRACE_LOGGER;
+	INFORMATION_LOGGER <<   "Initializing TRN with a local backend" ;
 	initialize_frontend(TRN::ViewModel::Communicator::Local::create(indices));
 }
 void TRN4CPP::Engine::Backend::Remote::initialize(const std::string &host, const unsigned short &port)
 {
-	std::cout << "Initializing TRN with a remote backend" << std::endl;
+	TRACE_LOGGER;
+	INFORMATION_LOGGER <<   "Initializing TRN with a remote backend" ;
 	initialize_frontend(TRN::ViewModel::Communicator::Remote::create(host, port));
 }
 void TRN4CPP::Engine::Backend::Distributed::initialize(int argc, char *argv[])
 {
-	std::cout << "Initializing TRN with a distributed backend" << std::endl;
+	TRACE_LOGGER;
+	INFORMATION_LOGGER <<   "Initializing TRN with a distributed backend" ;
 	initialize_frontend(TRN::ViewModel::Communicator::Distributed::create(argc, argv));
 }
 
@@ -109,10 +136,11 @@ std::string getEnvVar(std::string const& key)
 
 void TRN4CPP::Engine::initialize()
 {
+	TRACE_LOGGER;
 	std::string initialize = getEnvVar("TRN_INITIALIZE");
 	if (!initialize.empty())
 	{
-		std::cout << "Initializing TRN" << std::endl;
+		INFORMATION_LOGGER <<   "Initializing TRN" ;
 		std::vector<std::string> tokens;
 
 		std::string arguments = getEnvVar("TRN_INITIALIZE_DISTRIBUTED");
@@ -169,12 +197,12 @@ void TRN4CPP::Engine::initialize()
 	}
 	else
 	{
-		std::cout << "TRN manual initialization is required" << std::endl;
+		INFORMATION_LOGGER <<   "TRN manual initialization is required" ;
 	}
 }
 void TRN4CPP::Engine::uninitialize()
 {
-
+	TRACE_LOGGER;
 	if (simplified)
 	{
 		simplified->uninitialize();

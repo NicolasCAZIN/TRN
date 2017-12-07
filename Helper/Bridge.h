@@ -12,7 +12,7 @@ namespace TRN
 
 		public :
 			Bridge(const Pointer<Implementor> implementor) : implementor(implementor) {}
-			virtual ~Bridge() {}
+	
 			Pointer<Implementor> get_implementor() const { return implementor; }
 
 		};
