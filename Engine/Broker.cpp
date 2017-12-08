@@ -602,7 +602,8 @@ void TRN::Engine::Broker::declare_sequence(const unsigned long long &id, const s
 {
 	TRACE_LOGGER;
 
-	
+	if (sequence.empty())
+		throw std::runtime_error("Sequence with label " + label + " and tag " + tag + " is empty");
 
 	retrieve_simulation(id)->post([=]()
 	{

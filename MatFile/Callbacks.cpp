@@ -3,7 +3,8 @@
 #include "Helper/Queue.h"
 #include "Helper/Logger.h"
 static const std::string DEFAULT_MODE = "w7.3";
-
+static const std::string DEFAULT_IDENTIFIER = "";
+static const std::string IDENTIFIER_TOKEN = "IDENTIFIER";
 static const std::string TIMEOUT_TOKEN = "TIMEOUT";
 static const std::string FILENAME_TOKEN = "FILENAME";
 static const std::string MODE_TOKEN = "MODE";
@@ -30,6 +31,7 @@ struct Callbacks::Handle
 	float timeout;
 	std::string filename;
 	std::string mode;
+	std::string identifier;
 	mxArray *result;
 	std::thread dump;
 	TRN::Helper::Queue<std::pair<std::size_t, mxArray *>> to_save;
@@ -53,7 +55,10 @@ void Callbacks::initialize(const std::map<std::string, std::string> &arguments)
 		handle->mode = DEFAULT_MODE;
 	else
 		handle->mode = arguments.at(MODE_TOKEN);
-
+	if (arguments.find(IDENTIFIER_TOKEN) == arguments.end())
+		handle->identifier = DEFAULT_IDENTIFIER;
+	else
+		handle->identifier = arguments.at(IDENTIFIER_TOKEN);
 	handle->version_saved = 0;
 	handle->result = mxCreateStructMatrix(1, 1, 0, NULL);
 
@@ -95,7 +100,7 @@ void Callbacks::save(const std::size_t &version, mxArray *result)
 			auto extension = boost::filesystem::extension(path);
 			auto parent_directory = path.parent_path();
 
-			auto filename = basename + "_" + std::to_string(version) + extension;
+			auto filename = basename + "_" + handle->identifier + "_" + std::to_string(version) + extension;
 			auto absolute_filename = (parent_directory / filename).string();
 			INFORMATION_LOGGER <<   "saving to file " << absolute_filename ;
 

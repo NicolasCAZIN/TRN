@@ -93,7 +93,7 @@ static std::ostream &stream(const TRN::Helper::Logger::Severity &severity)
 // helper class
 
 static std::string hostname;
-static TRN::Helper::Logger::Severity level = TRN::Helper::Logger::Severity::INFORMATION_LEVEL;
+static TRN::Helper::Logger::Severity level = TRN::Helper::Logger::Severity::DEBUG_LEVEL;
 
 TRN::Helper::Logger::Logger(const TRN::Helper::Logger::Severity &severity, const std::string &module) : severity(severity), module(module)
 {
