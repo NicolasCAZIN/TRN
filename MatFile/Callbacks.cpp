@@ -377,7 +377,7 @@ void Callbacks::callback_states(const unsigned long long &id, const std::string 
 
 	auto mx_samples = mxCreateNumericMatrix(cols, rows, mxClassID::mxSINGLE_CLASS, mxComplexity::mxREAL); std::copy(samples.begin(), samples.end(), (float *)mxGetData(mx_samples)); states["samples"] = mx_samples;
 
-	append(handle->result, { "recording", "states" }, states);
+	append(handle->result, { "recording", "states", label }, states);
 	update();
 }
 void Callbacks::callback_weights(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
@@ -399,7 +399,7 @@ void Callbacks::callback_weights(const unsigned long long &id, const std::string
 
 	auto mx_samples = mxCreateNumericMatrix(cols, rows, mxClassID::mxSINGLE_CLASS, mxComplexity::mxREAL); std::copy(samples.begin(), samples.end(), (float *)mxGetData(mx_samples)); weights["samples"] = mx_samples;
 
-	append(handle->result, { "recording", "weights" , phase, label }, weights);
+	append(handle->result, { "recording", "weights" , label }, weights);
 	update();
 
 }

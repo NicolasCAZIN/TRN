@@ -155,7 +155,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Callbacks.cpp" />
-    <ClCompile Include="Simplified.cpp" />
+    <ClCompile Include="Sequences.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -165,7 +165,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Callbacks.h" />
-    <ClInclude Include="Simplified.h" />
+    <ClInclude Include="Sequences.h" />
     <ClInclude Include="matfile_global.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>

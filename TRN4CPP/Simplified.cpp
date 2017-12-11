@@ -4,30 +4,11 @@
 #include "Callbacks.h"
 #include "Custom.h"
 #include "Extended.h"
+#include "Sequences.h"
+#include "Search.h"
 
 #include "Helper/Logger.h"
-//extern std::shared_ptr<TRN::Engine::Frontend> frontend;
 
-/*extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_raw;
-extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_mutator;
-extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduler;
-extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedforward;
-extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedback;
-extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_readout;
-extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> on_recurrent;
-
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_mean_square_error;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_frechet_distance;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_mean_square_error;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_frechet_distance;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> on_performances;
-extern std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_states;
-extern std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_weights;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduling;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_position;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_stimulus;
-*/
 static const std::string experiment_name = "EXPERIMENT";
 static const std::string declaration_name = "DECLARATION";
 static const std::string configuration_name = "CONFIGURATION";
@@ -78,42 +59,17 @@ static const std::string performances_type = "PERFORMANCES";
 static const std::string scheduling_type = "SCHEDULING";
 
 
-struct Sequence
+template<typename Type> 
+static Type get_variable(const boost::property_tree::iptree &node, const unsigned short &condition_number, const unsigned int &individual_number)
 {
-	std::size_t rows;
-	std::size_t cols;
-	std::vector<float> elements;
-};
+	auto value = node.get_value<std::string>();
 
-static std::map<std::pair<std::string, std::string>, Sequence> sequences_map;
-
-
-
-boost::shared_ptr<TRN4CPP::Plugin::Simplified::Interface> simplified;
-
-void TRN4CPP::Plugin::Simplified::initialize(const std::string &library_path, const std::string &name, const std::map<std::string, std::string>  &arguments)
-{
-	if (simplified)
-		throw std::runtime_error("A plugin is already loaded");
-	boost::filesystem::path path = library_path;
-
-	path /=  name;
-
-	simplified = boost::dll::import<TRN4CPP::Plugin::Simplified::Interface>(path, "plugin_simplified", boost::dll::load_mode::append_decorations);
-	simplified->initialize(arguments);
-	simplified->install_variable(std::bind(&TRN4CPP::Simulation::declare, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
-	INFORMATION_LOGGER << "Simplified plugin " << name << " loaded from path " << library_path;
-}
-
-
-void TRN4CPP::Simulation::declare(const std::string &label, const std::vector<float> &elements, const std::size_t rows, const std::size_t &cols, const std::string &tag)
-{
-	auto key = std::make_pair(label, tag);
-	if (sequences_map.find(key) != sequences_map.end())
-		throw std::invalid_argument("Sequence have already been declared");
-	sequences_map[key].rows = rows;
-	sequences_map[key].cols = cols;
-	sequences_map[key].elements = elements;
+	if (value[0] == '@')
+	{
+		value = TRN4CPP::Search::retrieve(condition_number, individual_number, value.substr(1));
+	}
+	
+	return boost::lexical_cast<Type>(value);
 }
 
 void TRN4CPP::Simulation::compute(const std::string &filename)
@@ -207,6 +163,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 				if (experiment_done)
 					throw std::runtime_error("Only one experiment per file is allowed");
 				condition_number = 1;
+				simulation_number = 1;
 				auto _experiment = property_element.second;
 				for (auto experiment_element : _experiment)
 				{
@@ -234,9 +191,13 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 						}
 
 
-						if (boost::iequals(interface, "Simplified"))
+						if (boost::iequals(interface, "Sequences"))
 						{
-							TRN4CPP::Plugin::Simplified::initialize(path, name, arguments);
+							TRN4CPP::Plugin::Sequences::initialize(path, name, arguments);
+						}
+						else if (boost::iequals(interface, "Search"))
+						{
+							TRN4CPP::Plugin::Search::initialize(path, name, arguments);
 						}
 						else if (boost::iequals(interface, "Custom"))
 						{
@@ -259,548 +220,567 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 							{
 								auto _variable = data_element.second;
 								auto label = _variable.get_child(label_attribute).get_value<std::string>();
-								auto tag = _variable.get(tag_attribute, "");
-								simplified->callback_variable(label, tag);
+								auto tag = _variable.get(tag_attribute, TRN4CPP::Sequences::DEFAULT_TAG);
+
+								TRN4CPP::Sequences::fetch(label, tag);
 							}
 
 						}
-						simplified.reset();
 					}
 					else if (boost::iequals(experiment_element.first, condition_name))
 					{
 						auto _simulation = experiment_element.second;
-						const std::size_t batch_number = _simulation.get <std::size_t>(batch_number_attribute, 1);
-						const std::size_t batch_size = _simulation.get <std::size_t>(batch_size_attribute, 1);
-						for (simulation_number = 1; simulation_number <= batch_number; simulation_number++)
+
+						std::size_t batch_size = _simulation.get<std::size_t>(batch_size_attribute, 1);
+						std::size_t batch_number = _simulation.get<std::size_t>(batch_number_attribute, 1);
+
+						TRN4CPP::Search::begin(condition_number, simulation_number, batch_number, batch_size);
+						do
 						{
-							bool reservoir_initialized = false;
-							bool loop_initialized = false;
-							bool scheduler_initialized = false;
-							bool readout_mean_square_error_initialized = false;
-							bool position_mean_square_error_initialized = false;
-							bool readout_frechet_distance_initialized = false;
-							bool position_frechet_distance_initialized = false;
-							bool readout_custom_initialized = false;
-							bool position_custom_initialized = false;
-							bool states_initialized = false;
-							bool weights_initialized = false;
-							bool performances_initialized = false;
-							bool scheduling_initialized = false;
-
-		
-							std::size_t stimulus_size;
-							std::size_t reservoir_size;
-							std::size_t prediction_size;
-							unsigned long long id;
-							TRN4CPP::Simulation::encode(0, condition_number, simulation_number, id);
-							TRN4CPP::Simulation::allocate(id);
-						
-							//
-							bool configured = false;
-							bool declared = false;
-							for (auto simulation_element : _simulation)
+							for (unsigned int individual_number = 1; individual_number <= TRN4CPP::Search::size(condition_number); individual_number++)
 							{
-								/// DECLARATION
-								if (boost::iequals(simulation_element.first, declaration_name))
+								bool reservoir_initialized = false;
+								bool loop_initialized = false;
+								bool scheduler_initialized = false;
+								bool readout_mean_square_error_initialized = false;
+								bool position_mean_square_error_initialized = false;
+								bool readout_frechet_distance_initialized = false;
+								bool position_frechet_distance_initialized = false;
+								bool readout_custom_initialized = false;
+								bool position_custom_initialized = false;
+								bool states_initialized = false;
+								bool weights_initialized = false;
+								bool performances_initialized = false;
+								bool scheduling_initialized = false;
+
+
+								std::size_t stimulus_size;
+								std::size_t reservoir_size;
+								std::size_t prediction_size;
+								unsigned long long id;
+								TRN4CPP::Simulation::encode(0, condition_number, simulation_number, id);
+								TRN4CPP::Simulation::allocate(id);
+
+								//
+								bool configured = false;
+								bool declared = false;
+								for (auto simulation_element : _simulation)
 								{
-									if (!configured)
-										throw std::runtime_error("Simulation  #" + std::to_string(id) + " must be configured first");
-									auto _declaration = simulation_element.second;
-									for (auto declaration_element : _declaration)
+									/// DECLARATION
+									if (boost::iequals(simulation_element.first, declaration_name))
 									{
-										/// SEQUENCES
-										if (boost::iequals(declaration_element.first, sequence_name))
+										if (!configured)
+											throw std::runtime_error("Simulation  #" + std::to_string(id) + " must be configured first");
+										auto _declaration = simulation_element.second;
+										for (auto declaration_element : _declaration)
 										{
-											auto _sequence = declaration_element.second;
-											auto label = _sequence.get_child(label_attribute).get_value<std::string>();
-											for (auto sequence_element : _sequence)
+											/// SEQUENCES
+											if (boost::iequals(declaration_element.first, sequence_name))
 											{
-												auto sequence_element_name = sequence_element.first;
-												if (boost::iequals(sequence_element.first, tag_name))
+												auto _sequence = declaration_element.second;
+												auto label = _sequence.get_child(label_attribute).get_value<std::string>();
+												for (auto sequence_element : _sequence)
 												{
-													auto _tag = sequence_element.second;
-													auto tag = _tag.get_value<std::string>();
-													auto key = std::make_pair(label, tag);
-													if (sequences_map.find(key) == sequences_map.end())
-														throw std::runtime_error("Sequence having label " + label + " and tag " + tag + "does not exist");
-													auto data = sequences_map[key];
-													//
-													TRN4CPP::Simulation::declare_sequence(id, label, tag, data.elements, data.rows);
-												}
-											}
-										}
-										/// SETS
-										else if (boost::iequals(declaration_element.first, set_name))
-										{
-											auto set = declaration_element.second;
-											auto label = set.get_child(label_attribute).get_value<std::string>();
-											std::vector<std::string> labels;
-											std::vector<std::string> tags;
-											for (auto set_element : set)
-											{
-												auto set_element_name = set_element.first;
-												boost::to_upper(set_element_name);
-												if (set_element_name == label_name)
-												{
-													auto label = set_element.second;
-													labels.push_back(label.get_value<std::string>());
-												}
-												else if (set_element_name == tag_name)
-												{
-													auto tag = set_element.second;
-													tags.push_back(tag.get_value<std::string>());
-												}
-											}
-											
-											for (auto tag : tags)
-											{
-												TRN4CPP::Simulation::declare_set(id, label, tag, labels);
-											}
-
-										}
-									}
-									declared = true;
-								}
-								/// CONFIGURATION
-								else if (boost::iequals(simulation_element.first, configuration_name))
-								{
-									if (configured)
-										throw std::runtime_error("Simulation #" + std::to_string(id) + " is already configured");
-									TRN4CPP::Simulation::configure_begin(id);
-									//
-									auto _configuration = simulation_element.second;
-									for (auto configuration_element : _configuration)
-									{
-										if (boost::iequals(configuration_element.first, model_name))
-										{
-											auto _model = configuration_element.second;
-											for (auto model_element : _model)
-											{
-												/// RESERVOIR
-												if (boost::iequals(model_element.first, reservoir_name))
-												{
-													if (reservoir_initialized)
-														throw std::runtime_error("Only one reservoir per simulation is allowed");
-
-													auto _reservoir = model_element.second;
-
-											
-													stimulus_size = _reservoir.get_child(stimulus_size_attribute).get_value<std::size_t>();
-													reservoir_size = _reservoir.get_child(reservoir_size_attribute).get_value<std::size_t>();
-													prediction_size = _reservoir.get_child(prediction_size_attribute).get_value<std::size_t>();
-													auto seed = simulation_number + _reservoir.get_child(seed_attribute).get_value<unsigned long>();
-													auto leak_rate = _reservoir.get_child(leak_rate_attribute).get_value<float>();
-													auto initial_state_scale = _reservoir.get_child(initial_state_scale_attribute).get_value<float>();
-													auto reservoir_type = _reservoir.get_child(type_attribute).get_value<std::string>();
-
-													if (boost::iequals(reservoir_type, widrowhoff_type))
+													auto sequence_element_name = sequence_element.first;
+													if (boost::iequals(sequence_element.first, tag_name))
 													{
-														auto learning_rate = _reservoir.get_child(learning_rate_attribute).get_value<float>();
-
-														TRN4CPP::Simulation::Reservoir::WidrowHoff::configure(id, stimulus_size, prediction_size, reservoir_size, leak_rate, initial_state_scale, learning_rate, seed, batch_size);
-														//
-													}
-													else
-														throw std::runtime_error("Unexpected reservoir type " + reservoir_type);
-													bool feedback_initialized = false;
-													bool feedforward_initialized = false;
-													bool recurrent_initialized = false;
-													bool readout_initialized = false;
-													for (auto reservoir_element : _reservoir)
-													{
-														if (boost::iequals(reservoir_element.first, weights_name))
-														{
-															auto _weights = reservoir_element.second;
-															auto target = _weights.get_child(target_attribute).get_value<std::string>();
-															auto type = _weights.get_child(type_attribute).get_value<std::string>();
-															if (boost::iequals(target, feedforward_name))
-															{
-																if (boost::iequals(type, gaussian_type))
-																{
-																	auto mu = _weights.get_child(mu_attribute).get_value<float>();
-																	auto sigma = _weights.get_child(sigma_attribute).get_value<float>();
-																	
-																	TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Gaussian::configure(id, mu, sigma);
-																	
-																	feedforward_initialized = true;
-																}
-																else if (boost::iequals(type, uniform_type))
-																{
-																	auto a = _weights.get_child(a_attribute).get_value<float>();
-																	auto b = _weights.get_child(b_attribute).get_value<float>();
-																	auto sparsity = _weights.get_child(sparsity_attribute).get_value<float>();
-																	TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Uniform::configure(id, a, b, sparsity);
-																	
-																	feedforward_initialized = true;
-																}
-																else if (boost::iequals(type, custom_type))
-																{
-																	TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Custom::configure(id);
-															
-																	//
-																	feedforward_initialized = true;
-																}
-															}
-															else if (boost::iequals(target, feedback_name))
-															{
-																if (boost::iequals(type, gaussian_type))
-																{
-																	auto mu = _weights.get_child(mu_attribute).get_value<float>();
-																	auto sigma = _weights.get_child(sigma_attribute).get_value<float>();
-																	TRN4CPP::Simulation::Reservoir::Weights::Feedback::Gaussian::configure(id, mu, sigma);
-																	//
-																	feedback_initialized = true;
-																}
-																else if (boost::iequals(type, uniform_type))
-																{
-																	auto a = _weights.get_child(a_attribute).get_value<float>();
-																	auto b = _weights.get_child(b_attribute).get_value<float>();
-																	auto sparsity = _weights.get_child(sparsity_attribute).get_value<float>();
-																	TRN4CPP::Simulation::Reservoir::Weights::Feedback::Uniform::configure(id, a, b, sparsity);
-																	//
-																	feedback_initialized = true;
-																}
-																else if (boost::iequals(type, custom_type))
-																{
-																	TRN4CPP::Simulation::Reservoir::Weights::Feedback::Custom::configure(id);
-																	//
-																	feedback_initialized = true;
-																}
-															}
-															else if (boost::iequals(target, recurrent_name))
-															{
-																if (boost::iequals(type, gaussian_type))
-																{
-																	auto mu = _weights.get_child(mu_attribute).get_value<float>();
-																	auto sigma = _weights.get_child(sigma_attribute).get_value<float>();
-																	TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Gaussian::configure(id, mu, sigma);
-																	//
-																	recurrent_initialized = true;
-																}
-																else if (boost::iequals(type, uniform_type))
-																{
-																	auto a = _weights.get_child(a_attribute).get_value<float>();
-																	auto b = _weights.get_child(b_attribute).get_value<float>();
-																	auto sparsity = _weights.get_child(sparsity_attribute).get_value<float>();
-																	TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Uniform::configure(id, a, b, sparsity);
-																	//
-																	recurrent_initialized = true;
-																}
-																else if (boost::iequals(type, custom_type))
-																{
-																	TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::configure(id);
-																	//
-																	recurrent_initialized = true;
-																}
-															}
-															else if (boost::iequals(target, readout_name))
-															{
-																auto _initializer = reservoir_element.second;
-																auto type = _initializer.get_child(type_attribute).get_value<std::string>();
-																if (boost::iequals(type, gaussian_type))
-																{
-																	auto mu = _initializer.get_child(mu_attribute).get_value<float>();
-																	auto sigma = _initializer.get_child(sigma_attribute).get_value<float>();
-																	TRN4CPP::Simulation::Reservoir::Weights::Readout::Gaussian::configure(id, mu, sigma);
-																	//
-																	readout_initialized = true;
-																}
-																else if (boost::iequals(type, uniform_type))
-																{
-																	auto a = _initializer.get_child(a_attribute).get_value<float>();
-																	auto b = _initializer.get_child(b_attribute).get_value<float>();
-																	auto sparsity = _initializer.get_child(sparsity_attribute).get_value<float>();
-																	TRN4CPP::Simulation::Reservoir::Weights::Readout::Uniform::configure(id, a, b, sparsity);
-																	//
-																	readout_initialized = true;
-																}
-																else if (boost::iequals(type, custom_type))
-																{
-																	TRN4CPP::Simulation::Reservoir::Weights::Readout::Custom::configure(id);
-																	//
-																	readout_initialized = true;
-																}
-															}
-														}
-													}
-
-													if (!feedforward_initialized)
-														throw std::runtime_error("Feedforward was not initialized");
-													if (!feedback_initialized)
-														throw std::runtime_error("Feedback was not initialized");
-													if (!recurrent_initialized)
-														throw std::runtime_error("Recurrent was not initialized");
-													if (!readout_initialized)
-														throw std::runtime_error("Readout was not initialized");
-													reservoir_initialized = true;
-												}
-												/// LOOP				
-												else if (boost::iequals(model_element.first, loop_name))
-												{
-													if (loop_initialized)
-														throw std::runtime_error("Only one loop per simulation is allowed");
-													if (!reservoir_initialized)
-														throw std::runtime_error("Reservoir must be initialized first");
-
-													auto _loop = model_element.second;
-													auto loop_type = _loop.get_child(type_attribute).get_value<std::string>();
-													if (boost::iequals(loop_type, copy_type))
-													{
-														TRN4CPP::Simulation::Loop::Copy::configure(id, batch_size, stimulus_size);
-														//
-													}
-													else if (boost::iequals(loop_type, custom_type))
-													{
-														TRN4CPP::Simulation::Loop::Custom::configure(id, batch_size, stimulus_size);
-														//
-													}
-													else if (boost::iequals(loop_type, spatial_filter_type))
-													{
-														auto seed = simulation_number + _loop.get_child(seed_attribute).get_value<unsigned long>();
-														auto sigma = _loop.get_child(sigma_attribute).get_value<float>();
-														auto scale = _loop.get_child(scale_attribute).get_value<float>();
-														auto radius = _loop.get_child(radius_attribute).get_value<float>();
-														auto tag = _loop.get_child(tag_attribute).get_value<std::string>();
-														auto response = _loop.get_child(response_attribute).get_value<std::string>();
-														auto x_min = _loop.get_child(x_min_attribute).get_value<float>();
-														auto x_max = _loop.get_child(x_max_attribute).get_value<float>();
-														auto y_min = _loop.get_child(y_min_attribute).get_value<float>();
-														auto y_max = _loop.get_child(y_max_attribute).get_value<float>();
-														auto x = std::make_pair(x_min, x_max);
-														auto y = std::make_pair(y_min, y_max);
-														auto key = std::make_pair(response, "");
-														if (sequences_map.find(key) == sequences_map.end())
-															throw std::runtime_error("Can't find response matrix " + response);
-														auto &response_matrix = sequences_map[key];
-														auto cols = response_matrix.cols;
-														auto rows = response_matrix.rows / stimulus_size;
-														auto firing_rate_map = response_matrix.elements;
-
-														TRN4CPP::Simulation::Loop::SpatialFilter::configure(id, batch_size, stimulus_size, seed, rows, cols, x, y, firing_rate_map, sigma, radius, scale, tag);
-													}
-												}
-												/// SCHEDULER
-												else if (boost::iequals(model_element.first, scheduler_name))
-												{
-													auto _scheduler = model_element.second;
-													auto scheduler_type = _scheduler.get_child(type_attribute).get_value<std::string>();
-													if (boost::iequals(scheduler_type, tiled_type))
-													{
-														auto epochs = _scheduler.get_child(epochs_attribute).get_value<unsigned int>();
-														TRN4CPP::Simulation::Scheduler::Tiled::configure(id, epochs);
-													}
-													else if (boost::iequals(scheduler_type, snippets_type))
-													{
-														auto seed = simulation_number + _scheduler.get_child(seed_attribute).get_value<unsigned long>();
-														auto snippets_size = _scheduler.get_child(snippets_size_attribute).get_value<std::size_t>();
-														auto time_budget = _scheduler.get_child(time_budget_attribute).get_value<std::size_t>();
-														auto tag = _scheduler.get(tag_attribute, DEFAULT_TAG);
-														TRN4CPP::Simulation::Scheduler::Snippets::configure(id, seed, snippets_size, time_budget, tag);
-													}
-													else if (boost::iequals(scheduler_type, custom_type))
-													{
-														auto seed = simulation_number + _scheduler.get_child(seed_attribute).get_value<unsigned long>();
-														auto tag = _scheduler.get_child(seed_attribute).get_value<std::string>(DEFAULT_TAG);
-														TRN4CPP::Simulation::Scheduler::Custom::configure(id, seed, tag);
-													}
-													bool mutator_initialized = false;
-													for (auto scheduler_element : _scheduler)
-													{
-														/// MUTATOR
-														if (boost::iequals(scheduler_element.first, mutator_name))
-														{
-
-															auto _mutator = scheduler_element.second;
-															auto mutator_type = _mutator.get_child(type_attribute).get_value<std::string>();
-															if (boost::iequals(mutator_type, reverse_type))
-															{
-																auto seed = simulation_number + _mutator.get_child(seed_attribute).get_value<unsigned long>();
-																auto rate = _mutator.get_child(rate_attribute).get_value<float>();
-																auto size = _mutator.get_child(size_attribute).get_value<std::size_t>();
-																//auto number = _mutator.get_child(number_attribute).get_value<std::size_t>();
-																TRN4CPP::Simulation::Scheduler::Mutator::Reverse::configure(id, seed, rate, size);
-																//
-															}
-															else if (boost::iequals(mutator_type, punch_type))
-															{
-																auto seed = simulation_number + _mutator.get_child(seed_attribute).get_value<unsigned long>();
-																auto rate = _mutator.get_child(rate_attribute).get_value<float>();
-																auto size = _mutator.get_child(size_attribute).get_value<std::size_t>();
-																auto counter = _mutator.get_child(number_attribute).get_value<std::size_t>();
-																TRN4CPP::Simulation::Scheduler::Mutator::Punch::configure(id, seed, rate, size, counter);
-																//
-															}
-															else if (boost::iequals(mutator_type, shuffle_type))
-															{
-																auto seed = simulation_number + _mutator.get_child(seed_attribute).get_value<unsigned long>();
-
-																TRN4CPP::Simulation::Scheduler::Mutator::Shuffle::configure(id, seed);
-																//
-															}
-															else if (boost::iequals(mutator_type, custom_type))
-															{
-																auto seed = simulation_number + _mutator.get_child(seed_attribute).get_value<unsigned long>();
-
-																TRN4CPP::Simulation::Scheduler::Mutator::Custom::configure(id, seed);
-																//
-																mutator_initialized = true;
-															}
-														}
-													}
-												}
-											}
-										}
-										else if (boost::iequals(configuration_element.first, result_name))
-										{
-											auto _result = configuration_element.second;
-											for (auto result_element : _result)
-											{
-												/// MEASUREMENT
-												if (boost::iequals(result_element.first, measurement_name))
-												{
-													auto _measurement = result_element.second;
-													auto measurement_target = _measurement.get_child(target_attribute).get_value<std::string>();
-													if (boost::iequals(measurement_target, readout_name))
-													{
-														auto measurement_type = _measurement.get_child(type_attribute).get_value<std::string>();
-														if (boost::iequals(measurement_type, mean_square_error_type))
-														{
-															TRN4CPP::Simulation::Measurement::Readout::MeanSquareError::configure(id, batch_size);
-															readout_mean_square_error_initialized = true;
-														}
-														else if (boost::iequals(measurement_type, frechet_distance_type))
-														{
-															TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::configure(id, batch_size);
-															readout_frechet_distance_initialized = true;
-														}
-														else if (boost::iequals(measurement_type, custom_type))
-														{
-															TRN4CPP::Simulation::Measurement::Readout::Custom::configure(id, batch_size);
-															readout_custom_initialized = true;
-														}
-													}
-													else if (boost::iequals(measurement_target, position_name))
-													{
-														auto measurement_type = _measurement.get_child(type_attribute).get_value<std::string>();
-														if (boost::iequals(measurement_type, mean_square_error_type))
-														{
-															TRN4CPP::Simulation::Measurement::Position::MeanSquareError::configure(id, batch_size);
-															position_mean_square_error_initialized = true;
-														}
-														else if (boost::iequals(measurement_type, frechet_distance_type))
-														{
-															TRN4CPP::Simulation::Measurement::Position::FrechetDistance::configure(id, batch_size);
-															position_frechet_distance_initialized = true;
-														}
-														else if (boost::iequals(measurement_type, custom_type))
-														{
-															TRN4CPP::Simulation::Measurement::Position::Custom::configure(id, batch_size);
-															position_custom_initialized = true;
-														}
-													}
-												}
-												/// RECORDING
-												else if (boost::iequals(result_element.first, recording_name))
-												{
-													auto _measurement = result_element.second;
-													auto measurement_target = _measurement.get_child(target_attribute).get_value<std::string>();
-													if (boost::iequals(measurement_target, states_type))
-													{
-														auto train = _measurement.get_child(train_attribute).get_value<bool>();
-														auto prime = _measurement.get_child(prime_attribute).get_value<bool>();
-														auto generate = _measurement.get_child(generate_attribute).get_value<bool>();
-
-														TRN4CPP::Simulation::Recording::States::configure(id, train, prime, generate);
-													}
-													else if (boost::iequals(measurement_target, weights_type))
-													{
-														auto train = _measurement.get_child(train_attribute).get_value<bool>();
-														auto initialization = _measurement.get_child(initialize_attribute).get_value<bool>();
-
-														TRN4CPP::Simulation::Recording::Weights::configure(id, initialization, train);
-													}
-													else if (boost::iequals(measurement_target, performances_type))
-													{
-														auto train = _measurement.get_child(train_attribute).get_value<bool>();
-														auto prime = _measurement.get_child(prime_attribute).get_value<bool>();
-														auto generate = _measurement.get_child(generate_attribute).get_value<bool>();
-
-														TRN4CPP::Simulation::Recording::Performances::configure(id, train, prime, generate);
-													}
-													else if (boost::iequals(measurement_target, scheduling_type))
-													{
-														TRN4CPP::Simulation::Recording::Scheduling::configure(id);
-													}
-												}
-											}
-
-										}
-									}
-									
-									TRN4CPP::Simulation::configure_end(id);
-
-									//
-									configured = true;
-								}
-								/// EXECUTION
-								else if (boost::iequals(simulation_element.first, execution_name))
-								{
-									if (!configured)
-										throw std::runtime_error("Simulation #" + std::to_string(id) + " is not configured");
-									if (!declared)
-										throw std::runtime_error("Simulation #" + std::to_string(id) + " have no data declared");
-									auto _execution = simulation_element.second;
-
-									for (auto execution_element : _execution)
-									{
-										std::size_t trial_number = 1;
-										if (boost::iequals(execution_element.first, trial_name))
-										{
-											auto _trial = execution_element.second;
-											bool trained = false;
-											for (auto trial_element : _trial)
-											{
-												if (boost::iequals(trial_element.first, train_name))
-												{
-													if (trained)
-														throw std::runtime_error("Simulation #" + std::to_string(id) + " is already trained for trial #" + std::to_string(trial_number));
-													auto _train = trial_element.second;
-													auto label = _train.get_child(label_attribute).get_value<std::string>();
-													auto incoming = _train.get_child(incoming_attribute).get_value<std::string>();
-													auto expected = _train.get_child(expected_attribute).get_value<std::string>();
-													
+														auto _tag = sequence_element.second;
+														auto tag = _tag.get_value<std::string>();
+														auto key = std::make_pair(label, tag);
+														std::size_t rows, cols;
+														std::vector<float> elements;
+														TRN4CPP::Sequences::retrieve(label, tag, elements, rows, cols);
 												
-													TRN4CPP::Simulation::train(id, label, incoming, expected);
-
-													trained = true;
-												}
-												else if (boost::iequals(trial_element.first, test_name))
-												{
-													if (!trained)
-														throw std::runtime_error("Simulation #" + std::to_string(id) + " must be trained before test");
-													auto _test = trial_element.second;
-													auto preamble = _test.get_child(preamble_attribute).get_value<unsigned int>();
-													auto supplementary = _test.get_child(supplementary_attribute).get_value<unsigned int>();
-													auto label = _test.get_child(label_attribute).get_value<std::string>();
-													auto incoming = _test.get_child(incoming_attribute).get_value<std::string>();
-													auto expected = _test.get_child(expected_attribute).get_value<std::string>();
-													auto repeat = _test.get_child(repeat_attribute).get_value<std::size_t>();
-													auto autonomous = _test.get_child(autonomous_attribute).get_value<bool>();
-													for (std::size_t k = 0; k < repeat; k++)
-													{
-														TRN4CPP::Simulation::test(id, label, incoming, expected, preamble, autonomous, supplementary);
+														//
+														TRN4CPP::Simulation::declare_sequence(id, label, tag, elements, rows);
 													}
-
 												}
 											}
-											trial_number++;
-										}
-									}
+											/// SETS
+											else if (boost::iequals(declaration_element.first, set_name))
+											{
+												auto set = declaration_element.second;
+												auto label = set.get_child(label_attribute).get_value<std::string>();
+												std::vector<std::string> labels;
+												std::vector<std::string> tags;
+												for (auto set_element : set)
+												{
+													auto set_element_name = set_element.first;
+													boost::to_upper(set_element_name);
+													if (set_element_name == label_name)
+													{
+														auto label = set_element.second;
+														labels.push_back(label.get_value<std::string>());
+													}
+													else if (set_element_name == tag_name)
+													{
+														auto tag = set_element.second;
+														tags.push_back(tag.get_value<std::string>());
+													}
+												}
 
+												for (auto tag : tags)
+												{
+													TRN4CPP::Simulation::declare_set(id, label, tag, labels);
+												}
+
+											}
+										}
+										declared = true;
+									}
+									/// CONFIGURATION
+									else if (boost::iequals(simulation_element.first, configuration_name))
+									{
+										if (configured)
+											throw std::runtime_error("Simulation #" + std::to_string(id) + " is already configured");
+										TRN4CPP::Simulation::configure_begin(id);
+										//
+										auto _configuration = simulation_element.second;
+										for (auto configuration_element : _configuration)
+										{
+											if (boost::iequals(configuration_element.first, model_name))
+											{
+												auto _model = configuration_element.second;
+												for (auto model_element : _model)
+												{
+													/// RESERVOIR
+													if (boost::iequals(model_element.first, reservoir_name))
+													{
+														if (reservoir_initialized)
+															throw std::runtime_error("Only one reservoir per simulation is allowed");
+
+														auto _reservoir = model_element.second;
+
+
+														stimulus_size = get_variable<std::size_t>(_reservoir.get_child(stimulus_size_attribute), condition_number, individual_number);
+														reservoir_size = get_variable<std::size_t>(_reservoir.get_child(reservoir_size_attribute), condition_number, individual_number);
+														prediction_size = get_variable<std::size_t>(_reservoir.get_child(prediction_size_attribute), condition_number, individual_number);
+														auto seed = simulation_number + _reservoir.get_child(seed_attribute).get_value<unsigned long>();
+														auto leak_rate = _reservoir.get_child(leak_rate_attribute).get_value<float>();
+														auto initial_state_scale = _reservoir.get_child(initial_state_scale_attribute).get_value<float>();
+														auto reservoir_type = _reservoir.get_child(type_attribute).get_value<std::string>();
+
+														if (boost::iequals(reservoir_type, widrowhoff_type))
+														{
+															auto learning_rate = get_variable<float>(_reservoir.get_child(learning_rate_attribute), condition_number, individual_number);
+																
+															TRN4CPP::Simulation::Reservoir::WidrowHoff::configure(id, stimulus_size, prediction_size, reservoir_size, leak_rate, initial_state_scale, learning_rate, seed, batch_size);
+															//
+														}
+														else
+															throw std::runtime_error("Unexpected reservoir type " + reservoir_type);
+														bool feedback_initialized = false;
+														bool feedforward_initialized = false;
+														bool recurrent_initialized = false;
+														bool readout_initialized = false;
+														for (auto reservoir_element : _reservoir)
+														{
+															if (boost::iequals(reservoir_element.first, weights_name))
+															{
+																auto _weights = reservoir_element.second;
+																auto target = _weights.get_child(target_attribute).get_value<std::string>();
+																auto type = _weights.get_child(type_attribute).get_value<std::string>();
+																if (boost::iequals(target, feedforward_name))
+																{
+																	if (boost::iequals(type, gaussian_type))
+																	{
+																		auto mu = get_variable<float>(_weights.get_child(mu_attribute), condition_number, individual_number);
+																		auto sigma = get_variable<float>(_weights.get_child(sigma_attribute), condition_number, individual_number);
+
+																		TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Gaussian::configure(id, mu, sigma);
+
+																		feedforward_initialized = true;
+																	}
+																	else if (boost::iequals(type, uniform_type))
+																	{
+																		auto a = get_variable<float>(_weights.get_child(a_attribute), condition_number, individual_number);
+																		auto b = get_variable<float>(_weights.get_child(b_attribute), condition_number, individual_number);
+																		auto sparsity = get_variable<float>(_weights.get_child(sparsity_attribute), condition_number, individual_number);
+
+																		TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Uniform::configure(id, a, b, sparsity);
+
+																		feedforward_initialized = true;
+																	}
+																	else if (boost::iequals(type, custom_type))
+																	{
+																		TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Custom::configure(id);
+
+																		//
+																		feedforward_initialized = true;
+																	}
+																}
+																else if (boost::iequals(target, feedback_name))
+																{
+																	if (boost::iequals(type, gaussian_type))
+																	{
+																		auto mu = get_variable<float>(_weights.get_child(mu_attribute), condition_number, individual_number);
+																		auto sigma = get_variable<float>(_weights.get_child(sigma_attribute), condition_number, individual_number);
+
+																		TRN4CPP::Simulation::Reservoir::Weights::Feedback::Gaussian::configure(id, mu, sigma);
+																		//
+																		feedback_initialized = true;
+																	}
+																	else if (boost::iequals(type, uniform_type))
+																	{
+																		auto a = get_variable<float>(_weights.get_child(a_attribute), condition_number, individual_number);
+																		auto b = get_variable<float>(_weights.get_child(b_attribute), condition_number, individual_number);
+																		auto sparsity = get_variable<float>(_weights.get_child(sparsity_attribute), condition_number, individual_number);
+
+																		TRN4CPP::Simulation::Reservoir::Weights::Feedback::Uniform::configure(id, a, b, sparsity);
+																		//
+																		feedback_initialized = true;
+																	}
+																	else if (boost::iequals(type, custom_type))
+																	{
+																		TRN4CPP::Simulation::Reservoir::Weights::Feedback::Custom::configure(id);
+																		//
+																		feedback_initialized = true;
+																	}
+																}
+																else if (boost::iequals(target, recurrent_name))
+																{
+										
+																	if (boost::iequals(type, gaussian_type))
+																	{
+																		auto mu = get_variable<float>(_weights.get_child(mu_attribute), condition_number, individual_number);
+																		auto sigma = get_variable<float>(_weights.get_child(sigma_attribute), condition_number, individual_number);
+
+
+																		TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Gaussian::configure(id, mu, sigma);
+																		//
+																		recurrent_initialized = true;
+																	}
+																	else if (boost::iequals(type, uniform_type))
+																	{
+																		auto a = get_variable<float>(_weights.get_child(a_attribute), condition_number, individual_number);
+																		auto b = get_variable<float>(_weights.get_child(b_attribute), condition_number, individual_number);
+																		auto sparsity = get_variable<float>(_weights.get_child(sparsity_attribute), condition_number, individual_number);
+
+																		TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Uniform::configure(id, a, b, sparsity);
+																		//
+																		recurrent_initialized = true;
+																	}
+																	else if (boost::iequals(type, custom_type))
+																	{
+																		TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::configure(id);
+																		//
+																		recurrent_initialized = true;
+																	}
+																}
+																else if (boost::iequals(target, readout_name))
+																{
+																	if (boost::iequals(type, gaussian_type))
+																	{
+																		auto mu = get_variable<float>(_weights.get_child(mu_attribute), condition_number, individual_number);
+																		auto sigma = get_variable<float>(_weights.get_child(sigma_attribute), condition_number, individual_number);
+
+																		TRN4CPP::Simulation::Reservoir::Weights::Readout::Gaussian::configure(id, mu, sigma);
+																		//
+																		readout_initialized = true;
+																	}
+																	else if (boost::iequals(type, uniform_type))
+																	{
+																		auto a = get_variable<float>(_weights.get_child(a_attribute), condition_number, individual_number);
+																		auto b = get_variable<float>(_weights.get_child(b_attribute), condition_number, individual_number);
+																		auto sparsity = get_variable<float>(_weights.get_child(sparsity_attribute), condition_number, individual_number);
+																	
+																		TRN4CPP::Simulation::Reservoir::Weights::Readout::Uniform::configure(id, a, b, sparsity);
+																		//
+																		readout_initialized = true;
+																	}
+																	else if (boost::iequals(type, custom_type))
+																	{
+																		TRN4CPP::Simulation::Reservoir::Weights::Readout::Custom::configure(id);
+																		//
+																		readout_initialized = true;
+																	}
+																}
+															}
+														}
+
+														if (!feedforward_initialized)
+															throw std::runtime_error("Feedforward was not initialized");
+														if (!feedback_initialized)
+															throw std::runtime_error("Feedback was not initialized");
+														if (!recurrent_initialized)
+															throw std::runtime_error("Recurrent was not initialized");
+														if (!readout_initialized)
+															throw std::runtime_error("Readout was not initialized");
+														reservoir_initialized = true;
+													}
+													/// LOOP				
+													else if (boost::iequals(model_element.first, loop_name))
+													{
+														if (loop_initialized)
+															throw std::runtime_error("Only one loop per simulation is allowed");
+														if (!reservoir_initialized)
+															throw std::runtime_error("Reservoir must be initialized first");
+
+														auto _loop = model_element.second;
+														auto loop_type = _loop.get_child(type_attribute).get_value<std::string>();
+														if (boost::iequals(loop_type, copy_type))
+														{
+															TRN4CPP::Simulation::Loop::Copy::configure(id, batch_size, stimulus_size);
+															//
+														}
+														else if (boost::iequals(loop_type, custom_type))
+														{
+															TRN4CPP::Simulation::Loop::Custom::configure(id, batch_size, stimulus_size);
+															//
+														}
+														else if (boost::iequals(loop_type, spatial_filter_type))
+														{
+															auto seed = individual_number + get_variable<unsigned long>(_loop.get_child(seed_attribute), condition_number, individual_number);
+															
+															auto sigma = get_variable<float>(_loop.get_child(sigma_attribute), condition_number, individual_number);
+															auto scale = get_variable<float>(_loop.get_child(scale_attribute), condition_number, individual_number);
+															auto radius = get_variable<float>(_loop.get_child(radius_attribute), condition_number, individual_number);
+
+															auto tag = _loop.get_child(tag_attribute).get_value<std::string>();
+															auto response = _loop.get_child(response_attribute).get_value<std::string>();
+															auto x_min = _loop.get_child(x_min_attribute).get_value<float>();
+															auto x_max = _loop.get_child(x_max_attribute).get_value<float>();
+															auto y_min = _loop.get_child(y_min_attribute).get_value<float>();
+															auto y_max = _loop.get_child(y_max_attribute).get_value<float>();
+															auto x = std::make_pair(x_min, x_max);
+															auto y = std::make_pair(y_min, y_max);
+															auto key = std::make_pair(response, "");
+															std::vector<float> firing_rate_map;
+															std::size_t firing_rate_map_rows, firing_rate_map_cols;
+															TRN4CPP::Sequences::retrieve(response, TRN4CPP::Sequences::DEFAULT_TAG, firing_rate_map, firing_rate_map_rows, firing_rate_map_cols);
+													
+															auto cols = firing_rate_map_cols;
+															auto rows = firing_rate_map_rows / stimulus_size;
+										
+
+															TRN4CPP::Simulation::Loop::SpatialFilter::configure(id, batch_size, stimulus_size, seed, rows, cols, x, y, firing_rate_map, sigma, radius, scale, tag);
+														}
+													}
+													/// SCHEDULER
+													else if (boost::iequals(model_element.first, scheduler_name))
+													{
+														auto _scheduler = model_element.second;
+														auto scheduler_type = _scheduler.get_child(type_attribute).get_value<std::string>();
+														if (boost::iequals(scheduler_type, tiled_type))
+														{
+															auto epochs = get_variable<unsigned int>(_scheduler.get_child(epochs_attribute), condition_number, individual_number);
+															TRN4CPP::Simulation::Scheduler::Tiled::configure(id, epochs);
+														}
+														else if (boost::iequals(scheduler_type, snippets_type))
+														{
+															auto seed = individual_number + get_variable<unsigned long>(_scheduler.get_child(seed_attribute), condition_number, individual_number);
+															auto snippets_size = get_variable<std::size_t>(_scheduler.get_child(snippets_size_attribute), condition_number, individual_number);
+															auto time_budget = get_variable<std::size_t>(_scheduler.get_child(time_budget_attribute), condition_number, individual_number);
+															auto tag = _scheduler.get(tag_attribute, DEFAULT_TAG);
+															TRN4CPP::Simulation::Scheduler::Snippets::configure(id, seed, snippets_size, time_budget, tag);
+														}
+														else if (boost::iequals(scheduler_type, custom_type))
+														{
+															auto seed = individual_number + get_variable<unsigned long>(_scheduler.get_child(seed_attribute), condition_number, individual_number);
+															auto tag = _scheduler.get_child(seed_attribute).get_value<std::string>(DEFAULT_TAG);
+															TRN4CPP::Simulation::Scheduler::Custom::configure(id, seed, tag);
+														}
+														bool mutator_initialized = false;
+														for (auto scheduler_element : _scheduler)
+														{
+															/// MUTATOR
+															if (boost::iequals(scheduler_element.first, mutator_name))
+															{
+
+																auto _mutator = scheduler_element.second;
+																auto mutator_type = _mutator.get_child(type_attribute).get_value<std::string>();
+																if (boost::iequals(mutator_type, reverse_type))
+																{
+																	auto seed = individual_number + get_variable<unsigned long>(_mutator.get_child(seed_attribute), condition_number, individual_number);
+																	auto rate = get_variable<float>(_mutator.get_child(rate_attribute), condition_number, individual_number);
+																	auto size = get_variable<std::size_t>(_mutator.get_child(size_attribute), condition_number, individual_number);
+																	//auto number = _mutator.get_child(number_attribute).get_value<std::size_t>();
+																	TRN4CPP::Simulation::Scheduler::Mutator::Reverse::configure(id, seed, rate, size);
+																	//
+																}
+																else if (boost::iequals(mutator_type, punch_type))
+																{
+																	auto seed = individual_number + get_variable<unsigned long>(_mutator.get_child(seed_attribute), condition_number, individual_number);
+																	auto rate = get_variable<float>(_mutator.get_child(rate_attribute), condition_number, individual_number);
+																	auto size = get_variable<std::size_t>(_mutator.get_child(size_attribute), condition_number, individual_number);
+																	auto number = get_variable<std::size_t>(_mutator.get_child(number_attribute), condition_number, individual_number);
+																	TRN4CPP::Simulation::Scheduler::Mutator::Punch::configure(id, seed, rate, size, number);
+																	//
+																}
+																else if (boost::iequals(mutator_type, shuffle_type))
+																{
+																	auto seed = individual_number + get_variable<unsigned long>(_mutator.get_child(seed_attribute), condition_number, individual_number);
+
+																	TRN4CPP::Simulation::Scheduler::Mutator::Shuffle::configure(id, seed);
+																	//
+																}
+																else if (boost::iequals(mutator_type, custom_type))
+																{
+																	auto seed = individual_number + get_variable<unsigned long>(_mutator.get_child(seed_attribute), condition_number, individual_number);
+
+																	TRN4CPP::Simulation::Scheduler::Mutator::Custom::configure(id, seed);
+																	//
+																	mutator_initialized = true;
+																}
+															}
+														}
+													}
+												}
+											}
+											else if (boost::iequals(configuration_element.first, result_name))
+											{
+												auto _result = configuration_element.second;
+												for (auto result_element : _result)
+												{
+													/// MEASUREMENT
+													if (boost::iequals(result_element.first, measurement_name))
+													{
+														auto _measurement = result_element.second;
+														auto measurement_target = _measurement.get_child(target_attribute).get_value<std::string>();
+														if (boost::iequals(measurement_target, readout_name))
+														{
+															auto measurement_type = _measurement.get_child(type_attribute).get_value<std::string>();
+															if (boost::iequals(measurement_type, mean_square_error_type))
+															{
+																TRN4CPP::Simulation::Measurement::Readout::MeanSquareError::configure(id, batch_size);
+																readout_mean_square_error_initialized = true;
+															}
+															else if (boost::iequals(measurement_type, frechet_distance_type))
+															{
+																TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::configure(id, batch_size);
+																readout_frechet_distance_initialized = true;
+															}
+															else if (boost::iequals(measurement_type, custom_type))
+															{
+																TRN4CPP::Simulation::Measurement::Readout::Custom::configure(id, batch_size);
+																readout_custom_initialized = true;
+															}
+														}
+														else if (boost::iequals(measurement_target, position_name))
+														{
+															auto measurement_type = _measurement.get_child(type_attribute).get_value<std::string>();
+															if (boost::iequals(measurement_type, mean_square_error_type))
+															{
+																TRN4CPP::Simulation::Measurement::Position::MeanSquareError::configure(id, batch_size);
+																position_mean_square_error_initialized = true;
+															}
+															else if (boost::iequals(measurement_type, frechet_distance_type))
+															{
+																TRN4CPP::Simulation::Measurement::Position::FrechetDistance::configure(id, batch_size);
+																position_frechet_distance_initialized = true;
+															}
+															else if (boost::iequals(measurement_type, custom_type))
+															{
+																TRN4CPP::Simulation::Measurement::Position::Custom::configure(id, batch_size);
+																position_custom_initialized = true;
+															}
+														}
+													}
+													/// RECORDING
+													else if (boost::iequals(result_element.first, recording_name))
+													{
+														auto _measurement = result_element.second;
+														auto measurement_target = _measurement.get_child(target_attribute).get_value<std::string>();
+														if (boost::iequals(measurement_target, states_type))
+														{
+															auto train = _measurement.get_child(train_attribute).get_value<bool>();
+															auto prime = _measurement.get_child(prime_attribute).get_value<bool>();
+															auto generate = _measurement.get_child(generate_attribute).get_value<bool>();
+
+															TRN4CPP::Simulation::Recording::States::configure(id, train, prime, generate);
+														}
+														else if (boost::iequals(measurement_target, weights_type))
+														{
+															auto train = _measurement.get_child(train_attribute).get_value<bool>();
+															auto initialization = _measurement.get_child(initialize_attribute).get_value<bool>();
+
+															TRN4CPP::Simulation::Recording::Weights::configure(id, initialization, train);
+														}
+														else if (boost::iequals(measurement_target, performances_type))
+														{
+															auto train = _measurement.get_child(train_attribute).get_value<bool>();
+															auto prime = _measurement.get_child(prime_attribute).get_value<bool>();
+															auto generate = _measurement.get_child(generate_attribute).get_value<bool>();
+
+															TRN4CPP::Simulation::Recording::Performances::configure(id, train, prime, generate);
+														}
+														else if (boost::iequals(measurement_target, scheduling_type))
+														{
+															TRN4CPP::Simulation::Recording::Scheduling::configure(id);
+														}
+													}
+												}
+
+											}
+										}
+
+										TRN4CPP::Simulation::configure_end(id);
+
+										//
+										configured = true;
+									}
+									/// EXECUTION
+									else if (boost::iequals(simulation_element.first, execution_name))
+									{
+										if (!configured)
+											throw std::runtime_error("Simulation #" + std::to_string(id) + " is not configured");
+										if (!declared)
+											throw std::runtime_error("Simulation #" + std::to_string(id) + " have no data declared");
+										auto _execution = simulation_element.second;
+
+										for (auto execution_element : _execution)
+										{
+											std::size_t trial_number = 1;
+											if (boost::iequals(execution_element.first, trial_name))
+											{
+												auto _trial = execution_element.second;
+												bool trained = false;
+												for (auto trial_element : _trial)
+												{
+													if (boost::iequals(trial_element.first, train_name))
+													{
+														if (trained)
+															throw std::runtime_error("Simulation #" + std::to_string(id) + " is already trained for trial #" + std::to_string(trial_number));
+														auto _train = trial_element.second;
+														auto label = _train.get_child(label_attribute).get_value<std::string>();
+														auto incoming = _train.get_child(incoming_attribute).get_value<std::string>();
+														auto expected = _train.get_child(expected_attribute).get_value<std::string>();
+
+
+														TRN4CPP::Simulation::train(id, label, incoming, expected);
+
+														trained = true;
+													}
+													else if (boost::iequals(trial_element.first, test_name))
+													{
+														if (!trained)
+															throw std::runtime_error("Simulation #" + std::to_string(id) + " must be trained before test");
+														auto _test = trial_element.second;
+														auto preamble = _test.get_child(preamble_attribute).get_value<unsigned int>();
+														auto supplementary = _test.get_child(supplementary_attribute).get_value<unsigned int>();
+														auto label = _test.get_child(label_attribute).get_value<std::string>();
+														auto incoming = _test.get_child(incoming_attribute).get_value<std::string>();
+														auto expected = _test.get_child(expected_attribute).get_value<std::string>();
+														auto repeat = _test.get_child(repeat_attribute).get_value<std::size_t>();
+														auto autonomous = _test.get_child(autonomous_attribute).get_value<bool>();
+														for (std::size_t k = 0; k < repeat; k++)
+														{
+															TRN4CPP::Simulation::test(id, label, incoming, expected, preamble, autonomous, supplementary);
+														}
+
+													}
+												}
+												trial_number++;
+											}
+										}
+
+									}
 								}
+								TRN4CPP::Simulation::deallocate(id);
+								simulation_number++;
 							}
-							TRN4CPP::Simulation::deallocate(id);
-						}
+						} 
+						while (!TRN4CPP::Search::end(condition_number));
 						condition_number++;
 					}
 				}

@@ -7,6 +7,7 @@
 #include "TRN4JAVA_Simplified_Simulation.h"
 
 #include "TRN4CPP/Simplified.h"
+#include "TRN4CPP/Sequences.h"
 #include "Helper/Logger.h"
 
 void Java_TRN4JAVA_Simplified_00024Plugin_initialize(JNIEnv *env, jclass jclazz, jstring library_path, jstring name, jobject arguments)
@@ -14,7 +15,7 @@ void Java_TRN4JAVA_Simplified_00024Plugin_initialize(JNIEnv *env, jclass jclazz,
 	TRACE_LOGGER;
 	try
 	{
-		TRN4CPP::Plugin::Simplified::initialize(TRN4JAVA::Convert::to_string(env, library_path), TRN4JAVA::Convert::to_string(env, name), TRN4JAVA::Convert::to_map(env, arguments));
+		TRN4CPP::Plugin::Sequences::initialize(TRN4JAVA::Convert::to_string(env, library_path), TRN4JAVA::Convert::to_string(env, name), TRN4JAVA::Convert::to_map(env, arguments));
 	}
 	catch (std::exception &e)
 	{
@@ -26,7 +27,7 @@ void Java_TRN4JAVA_Simplified_00024Simulation_declare(JNIEnv *env, jclass jclazz
 	TRACE_LOGGER;
 	try
 	{
-		TRN4CPP::Simulation::declare(TRN4JAVA::Convert::to_string(env, label), TRN4JAVA::Convert::to_float_vector(env, elements), (std::size_t)rows, (std::size_t)cols, TRN4JAVA::Convert::to_string(env, tag));
+		TRN4CPP::Sequences::declare(TRN4JAVA::Convert::to_string(env, label), TRN4JAVA::Convert::to_string(env, tag), TRN4JAVA::Convert::to_float_vector(env, elements), (std::size_t)rows, (std::size_t)cols);
 	}
 	catch (std::exception &e)
 	{

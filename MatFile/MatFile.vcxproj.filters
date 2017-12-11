@@ -32,7 +32,7 @@
     <ClCompile Include="Callbacks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Simplified.cpp">
+    <ClCompile Include="Sequences.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -43,7 +43,7 @@
     <ClInclude Include="Callbacks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Simplified.h">
+    <ClInclude Include="Sequences.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

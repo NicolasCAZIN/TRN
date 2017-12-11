@@ -3,7 +3,7 @@
 #include "matfile_global.h"
 #include "TRN4CPP/Callbacks.h"
 
-class MATFILE_EXPORT Callbacks :public TRN4CPP::Plugin::Callbacks::Interface
+class MATFILE_EXPORT Callbacks : public TRN4CPP::Plugin::Callbacks::Interface
 {
 private :
 	class Handle;

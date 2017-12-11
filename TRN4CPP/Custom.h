@@ -5,7 +5,6 @@
 
 namespace TRN4CPP
 {
-
 	namespace Plugin
 	{
 		namespace Custom
@@ -39,6 +38,7 @@ namespace TRN4CPP
 			};
 
 			void TRN4CPP_EXPORT		initialize(const std::string &library_path, const std::string &name, const std::map<std::string, std::string> &arguments);
+			void uninitialize();
 		};
 	}
 

@@ -277,6 +277,7 @@
   <ItemGroup>
     <ClCompile Include="Algorithm.cpp" />
     <ClCompile Include="Context.cpp" />
+    <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Driver.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="Random.cpp" />

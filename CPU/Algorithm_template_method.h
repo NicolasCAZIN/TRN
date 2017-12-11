@@ -488,7 +488,7 @@ static inline void 	circle(VSLStreamStatePtr &stream, const float &scale, float 
 		float noise[_2];
 		for (; col + _2 - 1 < cols; col += _2)
 		{
-			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, _2, noise, 0.0, scale);
+			//vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, _2, noise, 0.0, scale);
 			stream_ps(&location_probability_row[col + _0],  blendv_ps(__zero, add_ps(load_ps(&noise[_0]), load_ps(&location_probability_row[col + _0])), cmp_lt_ps(add_ps(load_ps(&x_grid_centered2[col + _0]), y2), r2)));
 			stream_ps(&location_probability_row[col + _1],  blendv_ps(__zero, add_ps(load_ps(&noise[_1]), load_ps(&location_probability_row[col + _1])), cmp_lt_ps(add_ps(load_ps(&x_grid_centered2[col + _1]), y2), r2)));
 		}
@@ -498,7 +498,7 @@ static inline void 	circle(VSLStreamStatePtr &stream, const float &scale, float 
 		 float noise[_1];
 		for (; col  < cols; col += _1)
 		{
-			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, _1, noise, 0.0, scale);
+			//vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, _1, noise, 0.0, scale);
 			stream_ps(&location_probability_row[col + _0], blendv_ps(__zero, add_ps(load_ps(&noise[_0]), load_ps(&location_probability_row[col + _0])), cmp_lt_ps(add_ps(load_ps(&x_grid_centered2[col + _0]), y2), r2)));
 		}
 	}

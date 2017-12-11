@@ -14,6 +14,7 @@ namespace TRN
 		public :
 			Driver();
 		public:
+			virtual void dispose() override;
 			virtual void synchronize() override;
 			virtual std::string name() override;
 			virtual int index() override;

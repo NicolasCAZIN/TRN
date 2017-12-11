@@ -56,7 +56,7 @@ void TRN::Engine::Broker::uninitialize()
 		from_caller.second->terminate();
 	}
 
-	handle->communicator->dispose();
+
 }
 void TRN::Engine::Broker::body()
 {

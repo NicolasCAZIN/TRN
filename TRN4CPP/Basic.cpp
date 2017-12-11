@@ -3,6 +3,8 @@
 #include "Basic.h"
 #include "Custom.h"
 #include "Callbacks.h"
+#include "Sequences.h"
+#include "Search.h"
 
 #include "ViewModel/Communicator.h"
 #include "ViewModel/Frontend.h"
@@ -14,7 +16,6 @@ const std::string TRN4CPP::Engine::Backend::Remote::DEFAULT_HOST = "127.0.0.1";
 const unsigned short TRN4CPP::Engine::Backend::Remote::DEFAULT_PORT = 12345;
 std::shared_ptr<TRN::Engine::Frontend> frontend;
 
-extern boost::shared_ptr<TRN4CPP::Plugin::Simplified::Interface> simplified;
 extern boost::shared_ptr<TRN4CPP::Plugin::Custom::Interface> custom;
 extern std::vector<boost::shared_ptr<TRN4CPP::Plugin::Callbacks::Interface>> callbacks;
 
@@ -203,26 +204,10 @@ void TRN4CPP::Engine::initialize()
 void TRN4CPP::Engine::uninitialize()
 {
 	TRACE_LOGGER;
-	if (simplified)
-	{
-		simplified->uninitialize();
-		simplified.reset();
-	}
-	if (custom)
-	{
-		custom->uninitialize();
-		custom.reset();
-	}
-	if (!callbacks.empty())
-	{
-		for (auto callback : callbacks)
-		{
-			callback->uninitialize();
-		}
-		callbacks.clear();
-	}
-
-
+	TRN4CPP::Plugin::Sequences::uninitialize();
+	TRN4CPP::Plugin::Custom::uninitialize();
+	TRN4CPP::Plugin::Callbacks::uninitialize();
+	TRN4CPP::Plugin::Search::uninitialize();
 
 	if (frontend)
 	{

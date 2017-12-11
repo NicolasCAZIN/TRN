@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "Basic.h"
 #include "Helper/Logger.h"
+#include "Cache.h"
 
 BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle, IN DWORD     nReason, IN LPVOID    Reserved)
 {
@@ -11,18 +11,18 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle, IN DWORD     nReason, IN LPVOID 
 		switch (nReason)
 		{
 			case DLL_PROCESS_ATTACH:
-			//	TRN4CPP::Engine::initialize();
+				TRN::Engine::Cache::initialize();
 				break;
 
 			case DLL_PROCESS_DETACH:
-				//TRN4CPP::Engine::uninitialize();
+				TRN::Engine::Cache::uninitialize();
 				break;
 		}
 	}
 	catch (std::exception &e)
 	{
 		bSuccess = false;
-		ERROR_LOGGER << e.what() ;
+		ERROR_LOGGER << e.what();
 	}
 	return bSuccess;
 }

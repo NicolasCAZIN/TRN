@@ -24,6 +24,7 @@ namespace TRN
 
 #ifdef GPU_LIB
 		public :
+			void dispose();
 			void toggle();
 			const std::size_t &get_stride_alignment();
 			const int &get_device();

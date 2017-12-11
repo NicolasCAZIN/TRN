@@ -25,6 +25,7 @@ namespace TRN
 			const std::shared_ptr<TRN::Backend::Random> &get_random();
 			const std::shared_ptr<TRN::Backend::Algorithm> &get_algorithm();
 		
+			virtual void dispose() = 0;
 			virtual void synchronize() = 0;
 			virtual void toggle() = 0;
 			virtual std::string name() = 0;

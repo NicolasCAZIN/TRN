@@ -28,7 +28,7 @@ static void decrease_reference(const std::size_t &index)
 	counter[index]--;
 	if (counter[index] == 0)
 	{
-
+		//cudaDevice
 		checkCudaErrors(cudaDeviceReset());
 		INFORMATION_LOGGER <<   "device #" << index + 1 << " reset" ;
 	}
@@ -38,6 +38,7 @@ static void decrease_reference(const std::size_t &index)
 TRN::GPU::Driver::Driver(const int &device) :
 	TRN::GPU::Driver::Driver(TRN::GPU::Context::create(device))
 {
+	increase_reference(device);
 }
 
 
@@ -48,19 +49,19 @@ TRN::GPU::Driver::Driver(const std::shared_ptr<TRN::GPU::Context> context) :
 {
 	
 	handle->context = context;
-	increase_reference(handle->context->get_device());
 }
 TRN::GPU::Driver::~Driver()
 {
-	TRN::Backend::Driver::handle->algorithm.reset();
-	TRN::Backend::Driver::handle->random.reset();
-	TRN::Backend::Driver::handle->memory.reset();
-	auto device = handle->context->get_device();
-
-	handle->context.reset();
-	decrease_reference(device);
 	handle.reset();
 }
+
+void TRN::GPU::Driver::dispose()
+{
+	handle->context->toggle();
+	handle->context->dispose();
+	decrease_reference(handle->context->get_device());
+}
+
 void TRN::GPU::Driver::synchronize()
 {
 	checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));

@@ -176,6 +176,7 @@
     <ClCompile Include="Advanced.cpp" />
     <ClCompile Include="Custom.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Search.cpp" />
     <ClCompile Include="Simplified.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -186,10 +187,12 @@
     <ClCompile Include="Basic.cpp" />
     <ClCompile Include="Callbacks.cpp" />
     <ClCompile Include="Extended.cpp" />
+    <ClCompile Include="Sequences.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Advanced.h" />
     <ClInclude Include="Basic.h" />
+    <ClInclude Include="Search.h" />
     <ClInclude Include="Simplified.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TRN4CPP.h" />
@@ -197,6 +200,7 @@
     <ClInclude Include="Custom.h" />
     <ClInclude Include="Extended.h" />
     <ClInclude Include="trn4cpp_global.h" />
+    <ClInclude Include="Sequences.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Engine\Engine.vcxproj">

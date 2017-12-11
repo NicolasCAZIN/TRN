@@ -4,7 +4,8 @@
 #include "Helper/Logger.h"
 
 extern std::shared_ptr<TRN::Engine::Frontend> frontend;
-boost::shared_ptr<TRN4CPP::Plugin::Custom::Interface> custom;
+static boost::shared_ptr<TRN4CPP::Plugin::Custom::Interface> custom;
+static std::recursive_mutex mutex;
 
 std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_position;
 std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_stimulus;
@@ -26,6 +27,7 @@ std::function<void(const unsigned long long &id, const std::vector<float> &weigh
 
 void TRN4CPP::Plugin::Custom::initialize(const std::string &library_path, const std::string &name, const std::map<std::string, std::string>  &arguments)
 {
+	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
 	if (custom)
 		throw std::runtime_error("A plugin is already loaded");
@@ -60,10 +62,19 @@ void TRN4CPP::Plugin::Custom::initialize(const std::string &library_path, const 
 	custom->install_readout(reply_readout);
 	INFORMATION_LOGGER << "Custom plugin " << name << " loaded from path " << library_path;
 }
-
+void TRN4CPP::Plugin::Custom::uninitialize()
+{
+	std::unique_lock<std::recursive_mutex> guard(mutex);
+	if (custom)
+	{
+		custom->uninitialize();
+		custom.reset();
+	}
+}
 void TRN4CPP::Simulation::Scheduler::Custom::install(const std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
 	std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply)
 {
+	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
 	if (on_scheduler)
 		throw std::runtime_error("Scheduler functor is already installed");
@@ -75,6 +86,7 @@ void TRN4CPP::Simulation::Scheduler::Custom::install(const std::function<void(co
 void TRN4CPP::Simulation::Scheduler::Mutator::Custom::install(const std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
 	std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply)
 {
+	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
 	if (on_mutator)
 		throw std::runtime_error("Mutator functor is already installed");
@@ -86,6 +98,7 @@ void TRN4CPP::Simulation::Scheduler::Mutator::Custom::install(const std::functio
 void TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Custom::install(const std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned long long &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
+	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
 	if (on_feedforward)
 		throw std::runtime_error("Feedforward functor is already installed");
@@ -97,6 +110,7 @@ void TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Custom::install(const
 void TRN4CPP::Simulation::Reservoir::Weights::Feedback::Custom::install(const std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned long long &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
+	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
 	if (on_feedback)
 		throw std::runtime_error("Feedbackfunctor is already installed");
@@ -108,6 +122,7 @@ void TRN4CPP::Simulation::Reservoir::Weights::Feedback::Custom::install(const st
 void TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::install(const std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned long long &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
+	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
 	if (on_recurrent)
 		throw std::runtime_error("Recurrent functor is already installed");
@@ -119,6 +134,7 @@ void TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::install(const s
 void TRN4CPP::Simulation::Reservoir::Weights::Readout::Custom::install(const std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned long long &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
+	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
 	if (on_readout)
 		throw std::runtime_error("Readout functor is already installed");
@@ -131,6 +147,7 @@ void TRN4CPP::Simulation::Reservoir::Weights::Readout::Custom::install(const std
 void TRN4CPP::Simulation::Loop::Stimulus::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
+	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
 	if (on_stimulus)
 		throw std::runtime_error("Predicted readout functor is already installed");
@@ -140,6 +157,7 @@ void TRN4CPP::Simulation::Loop::Stimulus::install(const std::function<void(const
 void TRN4CPP::Simulation::Loop::Position::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
+	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
 	if (on_position)
 		throw std::runtime_error("Position functor is already installed");

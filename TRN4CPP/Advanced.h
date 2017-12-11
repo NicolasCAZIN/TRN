@@ -4,7 +4,6 @@
 
 namespace TRN4CPP
 {
-
 	namespace Engine
 	{
 		namespace Events
@@ -50,8 +49,6 @@ namespace TRN4CPP
 	}
 	namespace Simulation
 	{
-
-
 		namespace Loop
 		{
 			namespace Custom
@@ -91,12 +88,10 @@ namespace TRN4CPP
 						std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply
 					);
 				};
-
 			};
 		};
 		namespace Reservoir
 		{
-
 			namespace Weights
 			{
 				namespace Feedforward
@@ -136,9 +131,6 @@ namespace TRN4CPP
 					};
 				};
 			};
-
-
-
 		};
 		namespace Measurement
 		{
@@ -147,17 +139,14 @@ namespace TRN4CPP
 				namespace MeanSquareError
 				{
 					void TRN4CPP_EXPORT 	configure(const unsigned long long &id, const std::size_t &batch_size, const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
-
 				};
 				namespace FrechetDistance
 				{
 					void TRN4CPP_EXPORT 	configure(const unsigned long long &id, const std::size_t &batch_size, const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
-
 				};
 				namespace Custom
 				{
 					void TRN4CPP_EXPORT 	configure(const unsigned long long &id, const std::size_t &batch_size, const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &predicted, const std::vector<float> &primed, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
-
 				};
 			};
 			namespace Position
@@ -165,17 +154,14 @@ namespace TRN4CPP
 				namespace MeanSquareError
 				{
 					void TRN4CPP_EXPORT 	configure(const unsigned long long &id, const std::size_t &batch_size, const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
-
 				};
 				namespace FrechetDistance
 				{
 					void TRN4CPP_EXPORT 	configure(const unsigned long long &id, const std::size_t &batch_size, const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
-
 				};
 				namespace Custom
 				{
 					void TRN4CPP_EXPORT 	configure(const unsigned long long &id, const std::size_t &batch_size, const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &predicted, const std::vector<float> &primed, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor);
-
 				};
 			};
 
@@ -200,9 +186,4 @@ namespace TRN4CPP
 			};
 		};
 	};
-
-
-
-
-
 };

@@ -55,13 +55,19 @@ TRN::GPU::Context::Context(const int &device) :
 	}
 }
 
+void TRN::GPU::Context::dispose()
+{
+
+	checkCudaErrors(cudaStreamSynchronize(handle->stream));
+	checkCudaErrors(cublasDestroy(handle->handle));
+	checkCudaErrors(cudaStreamDestroy(handle->stream));
+
+	checkCudaErrors(curandDestroyGenerator(handle->generator));
+}
+
 TRN::GPU::Context::~Context()
 {
-	checkCudaErrors(cudaSetDevice(handle->device));
-	checkCudaErrors(cudaStreamSynchronize(handle->stream));
-	checkCudaErrors(cudaStreamDestroy(handle->stream));
-	checkCudaErrors(cublasDestroy(handle->handle));
-	checkCudaErrors(curandDestroyGenerator(handle->generator));
+	
 
 	handle.reset();
 }

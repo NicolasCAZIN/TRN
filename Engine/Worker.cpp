@@ -72,6 +72,8 @@ void TRN::Engine::Worker::uninitialize()
 	auto communicator = TRN::Engine::Node::implementor.lock();
 	if (communicator)
 		communicator->send(terminated, 0);
+	TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->dispose();
+
 }
 
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message)

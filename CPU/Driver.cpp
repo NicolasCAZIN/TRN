@@ -10,6 +10,11 @@ TRN::CPU::Driver<Implementation>::Driver() :
 {
 
 }
+template<TRN::CPU::Implementation Implementation>
+void TRN::CPU::Driver<Implementation>::dispose()
+{
+
+}
 
 template<TRN::CPU::Implementation Implementation>
 std::shared_ptr<TRN::CPU::Driver<Implementation>> TRN::CPU::Driver<Implementation>::create()

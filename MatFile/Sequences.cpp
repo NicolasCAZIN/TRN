@@ -1,6 +1,7 @@
 #include "stdafx.h"
-#include "Simplified.h"
+#include "Sequences.h"
 #include "Helper/Logger.h"
+
 const std::string FILENAME_TOKEN = "FILENAME";
 const std::string MAPPING_TOKEN = "MAPPING";
 const std::string VARIABLE_TOKEN = "VARIABLE";
@@ -12,14 +13,14 @@ struct Matrix
 	std::vector<float> elements;
 };
 
-struct Simplified::Handle 
+struct Sequences::Handle
 {
 	std::map<std::pair<std::string, std::string>, Matrix> fields;
-	std::function<void(const std::string &label, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::string &tag)> declare;
+	std::function<void(const std::string &label, const std::string &tag, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols)> declare;
 };
 
 
-void Simplified::initialize(const std::map<std::string, std::string> &arguments)
+void Sequences::initialize(const std::map<std::string, std::string> &arguments)
 {
 	if (handle)
 		throw std::runtime_error("Handle already allocated");
@@ -144,11 +145,11 @@ void Simplified::initialize(const std::map<std::string, std::string> &arguments)
 	
 
 }
-void Simplified::uninitialize()
+void Sequences::uninitialize()
 {
 	handle.reset();
 }
-void  Simplified::callback_variable(const std::string &label, const std::string &tag)
+void  Sequences::callback_variable(const std::string &label, const std::string &tag)
 {
 	if (!handle->declare)
 		throw std::runtime_error("Declare functor is not installed");
@@ -158,14 +159,9 @@ void  Simplified::callback_variable(const std::string &label, const std::string 
 		throw std::runtime_error("variable with label "  +label + " and tag "+ tag + "is not mapped");
 	auto &matrix = handle->fields[key];
 
-	handle->declare(label, matrix.elements, matrix.rows, matrix.cols, tag);
+	handle->declare(label, tag, matrix.elements, matrix.rows, matrix.cols);
 }
-void  Simplified::install_variable(const std::function<void(const std::string &label, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::string &tag)> &functor)
+void  Sequences::install_variable(const std::function<void(const std::string &label, const std::string &tag, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	handle->declare = functor;
 }
-
-/*boost::shared_ptr<Simplified>  Simplified::create()
-{
-	return boost::make_shared<Simplified>();
-}*/

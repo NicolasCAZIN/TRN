@@ -25,6 +25,7 @@ namespace TRN
 			virtual std::string name() override;
 			virtual int index() override;
 			virtual void toggle() override;
+			virtual void dispose() override;
 		public:
 			static std::shared_ptr<Driver> create( const int &device);
 		};
