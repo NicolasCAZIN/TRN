@@ -313,12 +313,12 @@ void TRN4CPP::Simulation::Reservoir::Weights::Readout::Uniform::configure(const 
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->configure_readout_uniform(id, a, b, sparsity);
 }
-void TRN4CPP::Simulation::Reservoir::Weights::Readout::Gaussian::configure(const unsigned long long &id, const float &mu, const float &sigma)
+void TRN4CPP::Simulation::Reservoir::Weights::Readout::Gaussian::configure(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity)
 {
 	TRACE_LOGGER;
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
-	frontend->configure_readout_gaussian(id, mu, sigma);
+	frontend->configure_readout_gaussian(id, mu, sigma, sparsity);
 }
 void TRN4CPP::Simulation::Reservoir::Weights::Readout::Custom::configure(const unsigned long long &id)
 {
@@ -339,12 +339,12 @@ void TRN4CPP::Simulation::Reservoir::Weights::Feedback::Uniform::configure(const
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->configure_feedback_uniform(id, a, b, sparsity);
 }
-void TRN4CPP::Simulation::Reservoir::Weights::Feedback::Gaussian::configure(const unsigned long long &id, const float &mu, const float &sigma)
+void TRN4CPP::Simulation::Reservoir::Weights::Feedback::Gaussian::configure(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity)
 {
 	TRACE_LOGGER;
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
-	frontend->configure_feedback_gaussian(id, mu, sigma);
+	frontend->configure_feedback_gaussian(id, mu, sigma, sparsity);
 }
 void TRN4CPP::Simulation::Reservoir::Weights::Feedback::Custom::configure(const unsigned long long &id)
 {
@@ -365,12 +365,12 @@ void TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Uniform::configure(cons
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->configure_recurrent_uniform(id, a, b, sparsity);
 }
-void TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Gaussian::configure(const unsigned long long &id, const float &mu, const float &sigma)
+void TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Gaussian::configure(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity)
 {
 	TRACE_LOGGER;
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
-	frontend->configure_recurrent_gaussian(id, mu, sigma);
+	frontend->configure_recurrent_gaussian(id, mu, sigma, sparsity);
 }
 void TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::configure(const unsigned long long &id)
 {
@@ -391,12 +391,12 @@ void TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Uniform::configure(co
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->configure_feedforward_uniform(id, a, b, sparsity);
 }
-void TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Gaussian::configure(const unsigned long long &id, const float &mu, const float &sigma)
+void TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Gaussian::configure(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity)
 {
 	TRACE_LOGGER;
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
-	frontend->configure_feedforward_gaussian(id, mu, sigma);
+	frontend->configure_feedforward_gaussian(id, mu, sigma, sparsity);
 }
 void TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Custom::configure(const unsigned long long &id)
 {

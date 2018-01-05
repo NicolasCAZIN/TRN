@@ -10,7 +10,7 @@ void random_uniform(const cudaStream_t &stream,
 
 void random_gaussian(const cudaStream_t &stream,
 	const unsigned long &seed,
-	const float &mu, const float &sigma,
+	const float &mu, const float &sigma, const float &sparsity,
 	const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
 	float **x, const std::size_t &x_stride, const bool &blank_diagonal);
 

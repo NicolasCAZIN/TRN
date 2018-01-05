@@ -4,7 +4,7 @@
 
 
 
-class TRN::Engine::Cache::Handle 
+struct TRN::Engine::Cache::Handle 
 {
-
+	boost::interprocess::managed_windows_shared_memory segment; 
 };

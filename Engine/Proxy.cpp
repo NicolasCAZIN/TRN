@@ -323,7 +323,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CO
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_GAUSSIAN> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_feedforward_gaussian(global_id(message.id), message.mu, message.sigma);
+	handle->dispatcher->configure_feedforward_gaussian(global_id(message.id), message.mu, message.sigma, message.sparsity);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_CUSTOM> &message)
 {
@@ -338,7 +338,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CO
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_GAUSSIAN> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_feedback_gaussian(global_id(message.id), message.mu, message.sigma);
+	handle->dispatcher->configure_feedback_gaussian(global_id(message.id), message.mu, message.sigma, message.sparsity);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM> &message)
 {
@@ -353,7 +353,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CO
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_GAUSSIAN> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_recurrent_gaussian(global_id(message.id), message.mu, message.sigma);
+	handle->dispatcher->configure_recurrent_gaussian(global_id(message.id), message.mu, message.sigma, message.sparsity);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_CUSTOM> &message)
 {
@@ -368,7 +368,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CO
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_GAUSSIAN> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_readout_gaussian(global_id(message.id), message.mu, message.sigma);
+	handle->dispatcher->configure_readout_gaussian(global_id(message.id), message.mu, message.sigma, message.sparsity);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_CUSTOM> &message)
 {

@@ -3,11 +3,46 @@
 #include "Helper/Logger.h"
 
 const std::string FILENAME_TOKEN = "FILENAME";
+const std::string OBJECTIVE_TOKEN = "OBJECTIVE";
+
+enum Objective
+{
+	SCORE,
+	MEAN
+};
+static const Objective DEFAULT_OBJECTIVE = SCORE;
+static const std::size_t DEFAULT_TEST = 1;
+static const std::size_t DEFAULT_TRIAL = 1;
+static const std::string TEST_TOKEN = "TEST";
+static const std::string TRIAL_TOKEN = "TRIAL";
+
 struct Search::Handle
 {
+	Objective objective;
+	std::size_t trial;
+	std::size_t test;
+	std::vector<std::map<std::string, std::string>> population;
 	std::map<std::string, std::set<std::string>> variables;
 	std::function<void(const unsigned short &condition_number, const std::vector<std::map<std::string, std::string>> &population)> populate;
+	std::function<void(const unsigned short &condition_number, const std::vector<std::pair<std::map<std::string, std::string>, float>> &solutions) > publish;
 };
+
+std::istream & operator >> (std::istream &is, Objective &objective)
+{
+	std::string token;
+	is >> token;
+
+	boost::to_upper(token);
+	if (token == "SCORE")
+		objective = SCORE;
+	else if (token == "MEAN")
+		objective = MEAN;
+	else
+		throw std::invalid_argument("Unexpected token " + token);
+
+	return is;
+}
+
 void Search::initialize(const std::map<std::string, std::string> &arguments)
 {
 	if (handle)
@@ -19,10 +54,51 @@ void Search::initialize(const std::map<std::string, std::string> &arguments)
 		throw std::runtime_error("Can't file " + FILENAME_TOKEN + " key/value pair");
 	auto filename = arguments.at(FILENAME_TOKEN);
 	handle->variables=TRN4CPP::Search::parse(filename);
+
+	if (arguments.find(TEST_TOKEN) == arguments.end())
+		handle->test = DEFAULT_TEST;
+	else
+		handle->test = boost::lexical_cast<std::size_t>(arguments.at(TEST_TOKEN));
+	if (arguments.find(TRIAL_TOKEN) == arguments.end())
+		handle->trial = DEFAULT_TRIAL;
+	else
+		handle->trial = boost::lexical_cast<std::size_t>(arguments.at(TRIAL_TOKEN));
+	if (arguments.find(OBJECTIVE_TOKEN) == arguments.end())
+		handle->objective = DEFAULT_OBJECTIVE;
+	else
+		handle->objective = boost::lexical_cast<Objective>(arguments.at(OBJECTIVE_TOKEN));
 }
 void Search::uninitialize()
 {
 	handle.reset();
+}
+float Search::evaluate_cost(const std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>> > &measurements)
+{
+	auto measurement = measurements.at(handle->trial).at(handle->test);
+
+	float cost;
+	switch (handle->objective)
+	{
+		case SCORE:
+			cost = measurement.first;
+			break;
+		case MEAN:
+		{
+			float sum = 0.0f;
+			const std::size_t n = measurement.second.size();
+			for (std::size_t k = 0; k < n; k++)
+			{
+				sum += measurement.second[k];
+			}
+			cost = sum / n;
+		}
+		break;
+
+		default:
+			throw std::runtime_error("Unexpected objective function type");
+	}
+
+	return cost;
 }
 
 static void cartesian_product(std::vector<std::vector<std::string>> &cartesian,
@@ -43,34 +119,49 @@ static void cartesian_product(std::vector<std::vector<std::string>> &cartesian,
 	}
 }
 
-void Search::callback_generation(const unsigned short &condition_number, const std::vector<float> &score)
+
+
+void Search::callback_generation(const unsigned short &condition_number, const std::vector<std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>> >> &measurements)
 {
-	
-	std::vector<std::set<std::string>> values;
-	std::vector<std::string> keys;
-	for (auto variable : handle->variables)
-	{	
-		keys.push_back(variable.first);
-		values.push_back(variable.second);
-	}
-	std::vector<std::vector<std::string>> product;
-	std::vector<std::string> current(values.size());
-
-	cartesian_product(product,  values, current);
-
 	std::vector<std::map<std::string, std::string>> combinations;
-
-	for (auto tuple : product)
+	if (measurements.empty())
 	{
-		int k = 0;
-		std::map<std::string, std::string> combination;
-		for (auto value : tuple)
+		std::vector<std::set<std::string>> values;
+		std::vector<std::string> keys;
+		for (auto variable : handle->variables)
 		{
-			auto key = keys[k];
-			combination[key] = value;
-			k++;
+			keys.push_back(variable.first);
+			values.push_back(variable.second);
 		}
-		combinations.push_back(combination);
+		std::vector<std::vector<std::string>> product;
+		std::vector<std::string> current(values.size());
+
+		cartesian_product(product, values, current);
+
+		for (auto tuple : product)
+		{
+			int k = 0;
+			std::map<std::string, std::string> combination;
+			for (auto value : tuple)
+			{
+				auto key = keys[k];
+				combination[key] = value;
+				k++;
+			}
+			combinations.push_back(combination);
+		}
+		handle->population = combinations;
+	}
+	else
+	{
+		std::vector<std::pair<std::map<std::string, std::string>, float>> solutions;
+
+		for (std::size_t k = 0; k < handle->population.size(); k++)
+		{
+			solutions.push_back(std::make_pair(handle->population[k], evaluate_cost(measurements[k])));
+		}
+
+		handle->publish(condition_number, solutions);
 	}
 
 	handle->populate(condition_number, combinations);
@@ -81,3 +172,7 @@ void Search::install_generation(const std::function<void(const unsigned short &c
 }
 
 
+void Search::install_solutions(const std::function<void(const unsigned short &condition_number, const std::vector<std::pair<std::map<std::string, std::string>, float>> &solutions)> &functor)
+{
+	handle->publish = functor;
+}

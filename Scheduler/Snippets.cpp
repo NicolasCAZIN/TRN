@@ -98,8 +98,8 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 
 	std::discrete_distribution<int> score_distribution(score.begin(), score.end());
 	auto random_offset = std::bind(score_distribution, engine);
-	std::uniform_real_distribution<float> mutate_distribution(0.0f, 1.0f);
-	auto random_mutation = std::bind(mutate_distribution, engine);
+	//std::uniform_real_distribution<float> mutate_distribution(0.0f, 1.0f);
+	//auto random_mutation = std::bind(mutate_distribution, engine);
 	std::vector<int> offsets;
 	for (std::size_t n = 0; n < snippets_number; n++)
 	{

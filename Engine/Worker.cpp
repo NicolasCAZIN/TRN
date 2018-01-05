@@ -508,7 +508,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
 	handle->simulators[message.id]->append_measurement(
 		TRN::Model::Measurement::Position::create(
-			TRN::Model::Measurement::MeanSquareError::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor,
+			TRN::Model::Measurement::FrechetDistance::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor,
 				[this, message](const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 	{
 		TRN::Engine::Message<TRN::Engine::MEASUREMENT_POSITION_FRECHET_DISTANCE> measurement;
@@ -772,7 +772,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	handle->simulators[message.id]->set_feedforward(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma));
+	handle->simulators[message.id]->set_feedforward(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma, message.sparsity));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_CUSTOM> &message)
 {
@@ -815,7 +815,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	handle->simulators[message.id]->set_feedback(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma));
+	handle->simulators[message.id]->set_feedback(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma, message.sparsity));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM> &message)
 {
@@ -857,7 +857,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	handle->simulators[message.id]->set_recurrent(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma));
+	handle->simulators[message.id]->set_recurrent(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma, message.sparsity));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_CUSTOM> &message)
 {
@@ -899,7 +899,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	handle->simulators[message.id]->set_readout(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma));
+	handle->simulators[message.id]->set_readout(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma, message.sparsity));
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_CUSTOM> &message)
 {

@@ -91,7 +91,7 @@ namespace TRN4CPP
 				{
 					namespace Gaussian
 					{
-						void TRN4CPP_EXPORT  	configure(const unsigned long long &id, const float &mu, const float &sigma);
+						void TRN4CPP_EXPORT  	configure(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity);
 					};
 
 					namespace Uniform
@@ -108,7 +108,7 @@ namespace TRN4CPP
 				{
 					namespace Gaussian
 					{
-						void TRN4CPP_EXPORT  	configure(const unsigned long long &id, const float &mu, const float &sigma);
+						void TRN4CPP_EXPORT  	configure(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity);
 					};
 
 					namespace Uniform
@@ -125,7 +125,7 @@ namespace TRN4CPP
 				{
 					namespace Gaussian
 					{
-						void TRN4CPP_EXPORT  	configure(const unsigned long long &id, const float &mu, const float &sigma);
+						void TRN4CPP_EXPORT  	configure(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity);
 					};
 
 					namespace Uniform
@@ -142,7 +142,7 @@ namespace TRN4CPP
 				{
 					namespace Gaussian
 					{
-						void TRN4CPP_EXPORT  	configure(const unsigned long long &id, const float &mu, const float &sigma);
+						void TRN4CPP_EXPORT  	configure(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity);
 					};
 
 					namespace Uniform

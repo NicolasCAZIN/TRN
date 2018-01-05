@@ -9,9 +9,9 @@ std::shared_ptr<TRN::Core::Initializer> TRN::Model::Initializer::Uniform::create
 	return TRN::Initializer::Uniform::create(driver, a, b, sparsity);
 }
 
-std::shared_ptr<TRN::Core::Initializer> TRN::Model::Initializer::Gaussian::create(const std::shared_ptr<TRN::Backend::Driver> &driver,  const float &mu, const float &sigma)
+std::shared_ptr<TRN::Core::Initializer> TRN::Model::Initializer::Gaussian::create(const std::shared_ptr<TRN::Backend::Driver> &driver,  const float &mu, const float &sigma, const float &sparsity)
 {
-	return TRN::Initializer::Gaussian::create(driver, mu, sigma);
+	return TRN::Initializer::Gaussian::create(driver, mu, sigma, sparsity);
 }
 
 std::shared_ptr<TRN::Core::Initializer> TRN::Model::Initializer::Custom::create(const std::shared_ptr<TRN::Backend::Driver> &driver,

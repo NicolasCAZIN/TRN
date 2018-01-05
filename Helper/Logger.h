@@ -7,10 +7,12 @@ namespace TRN
 {
 	namespace Helper
 	{
-		class  HELPER_EXPORT Logger : public std::ostringstream
+
+
+		class   Logger : public std::ostringstream
 		{
 		public:
-			enum Severity
+			enum  Severity
 			{
 				TRACE_LEVEL = 0,
 				DEBUG_LEVEL,
@@ -19,14 +21,16 @@ namespace TRN
 				ERROR_LEVEL
 			};
 		public:
-			Logger( const TRN::Helper::Logger::Severity  &severity, const std::string &module);
-			~Logger();
+			HELPER_EXPORT Logger( const TRN::Helper::Logger::Severity  &severity, const std::string &module);
+			HELPER_EXPORT ~Logger();
 
 		private :
-			const TRN::Helper::Logger::Severity severity;
-			const std::string module;
+			class Handle;
+
+			std::unique_ptr<Handle> handle;
+		
 		public :
-			static void setup(const TRN::Helper::Logger::Severity  &severity);
+			static void HELPER_EXPORT setup(const TRN::Helper::Logger::Severity  &severity, const bool &exit_on_error = true);
 		};
 	}
 }

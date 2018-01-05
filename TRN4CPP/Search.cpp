@@ -5,38 +5,310 @@
 #include "Extended.h"
 #include "Helper/Logger.h"
 
-
-
-struct Solution
+extern std::function<void(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results)> on_search_results;
+extern std::function<void(const unsigned short &condition_number, const std::vector<std::pair<std::map<std::string, std::string>, float>> &solutions)> on_search_solutions;
+typedef std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>> Score;
+typedef std::map<std::string, std::string> Parameters;
+template <typename Type>
+static bool contiguous(const std::set<Type> &set)
 {
-	std::map<std::string, std::string> variables; // genotype
-	std::vector<float> score;
+	if (set.empty())
+		return false;
+	std::vector<Type> v(set.size());
+	std::copy(set.begin(), set.end(), v.begin());
+	//std::sort(v.begin(), v.end());
+	for (std::size_t k = 0; k < v.size() - 1; k++)
+	{
+		if (v[k] != v[k + 1] - 1)
+			return false;
+	}
+	return true;
+}
+template <typename Key, typename Value>
+static std::set<Key> extract_keys(const std::map<Key, Value> &map)
+{
+	std::set<Key> keys;
 
-	Solution() 
+	for (auto p : map)
+	{
+		keys.insert(p.first);
+	}
+
+	return keys;
+}
+
+static float score(const std::vector<float> &score)
+{
+	float aggregated;
+	float new_m, old_m = score[0];
+	float new_s, old_s = 0.0f;
+
+	for (std::size_t k = 1; k < score.size(); k++)
+	{
+		new_m = old_m + (score[k] - old_m) / k;
+		new_s = old_s + (score[k] - old_m)*(score[k] - new_m);
+
+		old_m = new_m;
+		old_s = new_s;
+	}
+
+	float mean = score.size() > 0 ? new_m : 0.0f;
+	float variance = score.size() > 1 ? new_s / (score.size() - 1) : 0.0f;
+	float stddev = sqrtf(variance);
+
+	return mean * (1.0f + stddev);
+}
+
+struct Measurement
+{
+	std::size_t repeat;
+	std::vector<float> score;
+};
+
+class Individual
+{
+	std::map<std::size_t, std::map<std::size_t, Measurement>> measurements;
+	Parameters parameters; // genotype
+
+public:
+	Individual()
 	{
 
 	}
 
-	Solution(const std::map<std::string, std::string> &variables) : variables(variables)
+	Individual(const std::map<std::string, std::string> &parameters) : parameters(parameters)
 	{
 
+	}
+
+	std::pair<Parameters, Score> aggregate() const
+	{
+		Score aggregated;
+	
+		for (auto by_trial_number : measurements)
+		{
+			const std::size_t trial_number = by_trial_number.first;
+			for (auto by_train_number_test_number : by_trial_number.second)
+			{
+				std::size_t test_number = by_train_number_test_number.first;
+				auto &measurements = by_train_number_test_number.second.score;
+				aggregated[trial_number][test_number].second = measurements;
+				aggregated[trial_number][test_number].first = score(measurements);
+			}
+		}
+
+		return std::make_pair(parameters, aggregated);
+	}
+
+	void operator () (const std::size_t &trial_number, const std::size_t &evaluation_number, const std::vector<float> &score)
+	{
+		std::size_t test_number;
+		std::size_t repeat_number;
+		retrieve(trial_number, evaluation_number, test_number, repeat_number);
+		auto &current = measurements[trial_number][test_number].score;
+		DEBUG_LOGGER << "Inserting " << score.size() << " results for trial #" << trial_number << ", test #" << test_number << ", repeat #" << repeat_number << " (evaluation #" << evaluation_number << ")";
+
+		current.insert(current.begin(), score.begin(), score.end());
+	}
+	const std::string &operator[](const std::string &key)
+	{
+		auto it = parameters.find(key);
+		if (it == parameters.end())
+			throw std::runtime_error("Variable " + key + " is not defined");
+		return it->second;
+	}
+
+private:
+	void retrieve(const std::size_t &trial_number, const std::size_t &evaluation_number, std::size_t &test_number, std::size_t &repeat_number)
+	{
+		auto it = measurements.find(trial_number);
+		if (it == measurements.end())
+			throw std::runtime_error("measurement is not declared for trial : " + std::to_string(trial_number));
+
+		std::set<std::size_t> test_number_set = extract_keys(it->second);
+		if (!contiguous(test_number_set))
+			throw std::runtime_error("test number set is not contiguous");
+		std::size_t cummulated_repeat = 0;
+		bool found = false;
+		for (auto t : test_number_set)
+		{
+			auto r = it->second[t].repeat;
+			auto reminder = (evaluation_number - 1)- cummulated_repeat;
+	
+			if (reminder < r)
+			{
+				repeat_number = reminder + 1;
+				test_number = t;
+				found = true;
+				break;
+			}
+			cummulated_repeat += r;
+		}
+		if (!found)
+			throw std::runtime_error("test_number and repeat_number were not retrieved");
+	}
+public :
+	void update_repeat(const std::size_t &trial_number, const std::size_t &test_number, const std::size_t &repeat)
+	{
+
+		auto it = measurements[trial_number].find(test_number);
+		if (it == measurements[trial_number].end())
+		{
+			measurements[trial_number][test_number].repeat = repeat;
+		}
+		else if (it->second.repeat != repeat)
+			throw std::runtime_error("repeat is already declared for trial/test : " + std::to_string(trial_number) + "/" + std::to_string(test_number)  + " and update is inconsistent");
+		
+	}
+
+
+	bool completed(const std::size_t &expected) const
+	{
+		auto trial_number_set = extract_keys(measurements);
+		if (!contiguous(trial_number_set))
+			return false;
+		for (auto trial_number : trial_number_set)
+		{
+			auto &by_trial = measurements.at(trial_number);
+			auto test_number_set = extract_keys(by_trial);
+			if (!contiguous(test_number_set))
+				return false;
+
+			for (auto test_number : test_number_set)
+			{
+				auto measurement = by_trial.at(test_number);
+				auto expected_score_size = expected * measurement.repeat;
+
+				if (measurement.score.size() != expected_score_size)
+					return false;
+			}
+		}
+		return true;
 	}
 };
 
-struct Population
+class Population
 {
+
+	std::mutex mutex;
+	std::condition_variable cond;
+
 	std::size_t generation;
-	unsigned int simulation_number;
+	unsigned int offset;
 	std::size_t batch_number;
 	std::size_t batch_size;
-	std::vector<Solution> population;
+	
+	std::vector<Individual> population;
+
+	bool evaluated;
+
+public :
+	void initialize(const unsigned int &simulation_number,
+		const std::size_t &batch_number,
+		const std::size_t &batch_size)
+	{
+		this->batch_number = batch_number;
+		this->batch_size = batch_size;
+		this->offset = simulation_number - 1;
+		this->generation = 0;
+		this->evaluated = false;
+	
+	}
+	void update_offset(const unsigned int &simulation_number)
+	{
+		this->offset = simulation_number - 1;
+	
+	}
+
+
+	std::size_t simulations()
+	{
+		auto evaluation_number = batch_number;
+		if (population.empty())
+			return evaluation_number;
+		else
+			return population.size() * evaluation_number;
+	}
+
+	Individual &operator [](const unsigned int &simulation_number)
+	{
+		std::size_t index = ((simulation_number - 1) - this->offset) / batch_number;
+		return population[index];
+	}
+
+	void renew(const std::vector<std::map<std::string, std::string>> &individuals)
+	{
+		population.resize(individuals.size());
+	
+		if (population.empty())
+		{
+			INFORMATION_LOGGER << "Search is over";
+		}
+		else
+		{
+			generation++;
+			unsigned int number = 0;
+			for (auto individual : individuals)
+			{
+				population[number] = Individual(individual);
+				number++;
+			}
+			INFORMATION_LOGGER << "Populating generation #" << generation << " with " << number << " configurations";
+		}
+
+	}
+
+	bool completed()
+	{
+		auto evaluated = batch_number * batch_size;
+		return std::all_of(population.begin(), population.end(), [&](const Individual &individual)
+		{
+			return individual.completed(evaluated);
+		});
+	}
+
+	void wait(std::unique_lock<std::recursive_mutex> &recursive_mutex)
+	{
+		
+		std::unique_lock<std::mutex> guard(mutex);
+		recursive_mutex.unlock();
+		while (!evaluated)
+		{
+			cond.wait(guard);
+		}
+		evaluated = false;
+		recursive_mutex.lock();
+	}
+
+	void notify()
+	{
+		std::unique_lock<std::mutex> guard(mutex);
+		evaluated = true;
+		guard.unlock();
+		cond.notify_one();
+	}
+
+	bool empty()
+	{
+		return population.empty();
+	}
+
+	std::pair<std::size_t, std::vector<std::pair<Parameters, Score>>>  results()
+	{
+		std::vector<std::pair<Parameters, Score>> evaluated(population.size());
+
+		std::transform(population.begin(), population.end(), evaluated.begin(), [](const Individual &individual)
+		{
+			return individual.aggregate(); 
+		});
+
+		return std::make_pair(generation, evaluated);
+	}
 };
 
-
-
 static std::map <unsigned short, Population> pool;
-static boost::shared_ptr<TRN4CPP::Plugin::Search::Interface> search;
 static std::recursive_mutex mutex;
+static boost::shared_ptr<TRN4CPP::Plugin::Search::Interface> search;
 
 const std::string TARGET_TOKEN = "TARGET";
 
@@ -87,28 +359,28 @@ public:
 	{
 		if (target == READOUT_MEAN_SQUARE_ERROR)
 		{
-			TRN4CPP::Search::evaluate(id, values);
+			TRN4CPP::Search::evaluate(id, trial, evaluation, values);
 		}
 	}
 	virtual void callback_measurement_readout_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols) override
 	{
 		if (target == READOUT_FRECHET_DISTANCE)
 		{
-			TRN4CPP::Search::evaluate(id, values);
+			TRN4CPP::Search::evaluate(id, trial, evaluation, values);
 		}
 	}
 	virtual void callback_measurement_position_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols) override
 	{
 		if (target == POSITION_MEAN_SQUARE_ERROR)
 		{
-			TRN4CPP::Search::evaluate(id, values);
+			TRN4CPP::Search::evaluate(id, trial, evaluation, values);
 		}
 	}
 	virtual void callback_measurement_position_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols) override
 	{
 		if (target == POSITION_FRECHET_DISTANCE)
 		{
-			TRN4CPP::Search::evaluate(id, values);
+			TRN4CPP::Search::evaluate(id, trial, evaluation, values);
 		}
 	}
 
@@ -124,6 +396,25 @@ public:
 	virtual void callback_scheduling(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations) override
 	{
 	}
+	virtual void callback_results(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results) override
+	{
+
+			std::vector<std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>> scores;
+			std::transform(results.begin(), results.end(), std::back_inserter(scores), [](const std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>> &result)
+			{
+				return result.second;
+			}
+			);
+
+			search->callback_generation(condition_number, scores);
+		
+	}
+
+	virtual void callback_solutions(const unsigned short &condition_number, const std::vector<std::pair<std::map<std::string, std::string>, float>> &solutions) override
+	{
+
+	}
+
 };
 void TRN4CPP::Plugin::Search::initialize(const std::string &library_path, const std::string &name, const std::map<std::string, std::string>  &arguments)
 {
@@ -135,7 +426,8 @@ void TRN4CPP::Plugin::Search::initialize(const std::string &library_path, const 
 
 	search = boost::dll::import<TRN4CPP::Plugin::Search::Interface>(path, "plugin_search", boost::dll::load_mode::append_decorations);
 	search->initialize(arguments);
-	search->install_generation(std::bind(&TRN4CPP::Search::populate, std::placeholders::_1, std::placeholders::_2));
+	search->install_generation(TRN4CPP::Search::populate);
+	search->install_solutions(on_search_solutions);
 	INFORMATION_LOGGER << "Search plugin " << name << " loaded from path " << library_path;
 	auto hook = boost::make_shared<Hook>();
 	hook->initialize(arguments);
@@ -185,7 +477,7 @@ std::map<std::string, std::set<std::string>> TRN4CPP::Search::parse(const std::s
 	static const std::string end_attribute = prefix + "end";
 	static const std::string step_attribute = prefix + "step";
 
-	std::map<std::string, std::set<std::string>> variables;
+	std::map<std::string, std::set<std::string>> parameters;
 	for (auto property_element : properties)
 	{
 		if (boost::iequals(property_element.first, variables_name))
@@ -204,7 +496,7 @@ std::map<std::string, std::set<std::string>> TRN4CPP::Search::parse(const std::s
 						{
 							auto _value = _variable_element.second;
 
-							variables[name].insert(_value.get_value<std::string>());
+							parameters[name].insert(_value.get_value<std::string>());
 						}
 						else if (boost::iequals(_variable_element.first, range_name))
 						{
@@ -213,50 +505,62 @@ std::map<std::string, std::set<std::string>> TRN4CPP::Search::parse(const std::s
 							auto begin = _range.get_child(begin_attribute).get_value<float>();
 							auto end = _range.get_child(end_attribute).get_value<float>();
 							auto step = _range.get_child(step_attribute).get_value<float>();
-							for (float value = begin; value <= end; value +=step)
+							bool is_integer = std::floor(begin) == begin && std::floor(end) == end && std::floor(step) == step;
+							for (auto value = begin; value <= end; value += step)
 							{
-								variables[name].insert(std::to_string(value));
+								if (is_integer)
+								{
+									parameters[name].insert(std::to_string((int)value));
+								}
+								else
+								{
+									parameters[name].insert(std::to_string(value));
+								}
+								
 							}
-							variables[name].insert(std::to_string(end));
+							if (is_integer)
+							{
+								parameters[name].insert(std::to_string((int)end));
+							}
+							else
+							{
+								parameters[name].insert(std::to_string(end));
+							}
 						}
 					}
 				}
 			}
 		}
 	}
-
-	return variables;
+	for (auto variable : parameters)
+	{
+		INFORMATION_LOGGER << "Variable " << variable.first << " have " << variable.second.size() << " values";
+	}
+	return parameters;
 }
 
-std::string TRN4CPP::Search::retrieve(const unsigned short &condition_number, const unsigned int &individual_number, const std::string &key)
-{
-	std::unique_lock<std::recursive_mutex> guard(mutex);
 
-	if (individual_number >= size(condition_number))
-		throw std::runtime_error("Condition #" + std::to_string(condition_number) + " does not hold invididual #" + std::to_string(individual_number));
-	
-	auto &variables = pool[condition_number].population[condition_number].variables;
-	auto it = variables.find(key);
-	if (it == variables.end())
-		throw std::runtime_error("Variable " + key + " is not defined for condition #" + std::to_string(condition_number) + ", invididual #" + std::to_string(individual_number));
-	return it->second;
-}
-
-unsigned int TRN4CPP::Search::size(const unsigned short &condition_number)
+std::string TRN4CPP::Search::retrieve(const unsigned short &condition_number, const unsigned int &simulation_number, const std::string &key)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	if (pool.find(condition_number) == pool.end())
 	{
 		throw std::runtime_error("Condition #" + std::to_string(condition_number) + " is not populated");
 	}
-	if (!search)
+
+	return pool[condition_number][simulation_number][key];
+}
+
+unsigned int TRN4CPP::Search::size(const unsigned short &condition_number)
+{
+	// retourned une liste de simulation incompletes
+	std::unique_lock<std::recursive_mutex> guard(mutex);
+	if (pool.find(condition_number) == pool.end())
 	{
-		return pool[condition_number].batch_number;
+		throw std::runtime_error("Condition #" + std::to_string(condition_number) + " is not populated");
 	}
-	else
-	{
-		return pool[condition_number].population.size() * pool[condition_number].batch_number;
-	}
+	return pool[condition_number].simulations();
+
 }
 void  TRN4CPP::Search::begin(const unsigned short &condition_number, const unsigned int &simulation_number, const std::size_t &batch_number, const std::size_t &batch_size)
 {
@@ -265,17 +569,27 @@ void  TRN4CPP::Search::begin(const unsigned short &condition_number, const unsig
 	{
 		throw std::runtime_error("Condition #" + std::to_string(condition_number) + " is already populated");
 	}
-	pool[condition_number].simulation_number = simulation_number;
-	pool[condition_number].batch_number = batch_number;
-	pool[condition_number].batch_size = batch_size;
-	pool[condition_number].generation = 0;
+	pool[condition_number].initialize(simulation_number, batch_number, batch_size);
 
 	if (search)
 	{
 		search->callback_generation(condition_number, {});
 	}
 }
-bool TRN4CPP_EXPORT		TRN4CPP::Search::end(const unsigned short &condition_number)
+
+void 		TRN4CPP::Search::update(const unsigned short &condition_number, const unsigned int &simulation_number, const std::size_t &trial_number, const std::size_t &test_number, const std::size_t &repeat)
+{
+	std::unique_lock<std::recursive_mutex> guard(mutex);
+
+	if (pool.find(condition_number) == pool.end())
+	{
+		throw std::runtime_error("Condition #" + std::to_string(condition_number) + " is not populated");
+	}
+
+	pool[condition_number][simulation_number].update_repeat(trial_number, test_number, repeat);
+}
+
+bool 	TRN4CPP::Search::end(const unsigned short &condition_number, const unsigned int &simulation_number)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	if (!search)
@@ -284,82 +598,56 @@ bool TRN4CPP_EXPORT		TRN4CPP::Search::end(const unsigned short &condition_number
 	}
 	else
 	{
-		TRN4CPP::Engine::Execution::run();
 		if (pool.find(condition_number) == pool.end())
 		{
 			throw std::runtime_error("Condition #" + std::to_string(condition_number) + " is not populated");
 		}
-		return pool[condition_number].population.empty();
+		pool[condition_number].wait(guard);
+
+		if (pool[condition_number].empty())
+		{
+			INFORMATION_LOGGER << "Condition #" << condition_number << " completed. Removing population from the pool";
+			pool.erase(condition_number);
+			return true;
+		}
+		else
+		{
+			pool[condition_number].update_offset(simulation_number);
+			return false;
+		}
 	}
 }
 
 void TRN4CPP::Search::populate(const unsigned short &condition_number, const std::vector<std::map<std::string, std::string>> &individuals)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
-
-	pool[condition_number].population.resize(individuals.size());
-	
-	pool[condition_number].generation++;
-	DEBUG_LOGGER << "Condition number #" << condition_number << ", populating generation #" << pool[condition_number].generation;
-	unsigned int number = 0;
-	for (auto individual : individuals)
+	if (pool.find(condition_number) == pool.end())
 	{
-		pool[condition_number].population[number] = Solution(individual);
-		number++;
+		throw std::runtime_error("Condition #" + std::to_string(condition_number) + " is not populated");
 	}
+	pool[condition_number].renew(individuals);
 }
 
-static float aggregate(const std::vector<float> &score)
-{
-	float aggregated;
-	float new_m, old_m = score[0];
-	float new_s, old_s = 0.0f;
-
-	for (std::size_t k = 1; k < score.size(); k++)
-	{
-		new_m = old_m + (score[k] - old_m) / k;
-		new_s = old_s + (score[k] - old_m)*(score[k] - new_m);
-
-		old_m = new_m;
-		old_s = new_s;
-	}
-
-	float mean = score.size() > 0 ? new_m : 0.0f;
-	float variance = score.size() > 1 ? new_s / (score.size() - 1) : 0.0f;
-	float stddev = sqrtf(variance);
-	
-	return mean * stddev;
-}
-
-void TRN4CPP::Search::evaluate(const unsigned long long &id, const std::vector<float> &score)
+void TRN4CPP::Search::evaluate(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &measurements)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
-	if (score.empty())
+	if (measurements.empty())
 		throw std::invalid_argument("Score is empty");
 
 	unsigned short frontend;
 	unsigned short condition;
 	unsigned int simulation;
 	TRN4CPP::Simulation::decode(id, frontend, condition, simulation);
+	DEBUG_LOGGER << "Reporting results for condition #" << condition << ", simulation #" << simulation;
+	pool[condition][simulation](trial, evaluation, measurements);
 
-
-	unsigned int individual = (simulation - pool[condition].simulation_number) / pool[condition].batch_number;
-	auto &target = pool[condition].population[individual].score;
-
-	target.insert(target.begin(), score.begin(), score.end());
-
-	if (std::all_of(pool[condition].population.begin(), pool[condition].population.end(), [&](const Solution &solution)
-		{
-		return solution.score.size() == pool[condition].batch_number * pool[condition].batch_size;
-		}))
+	if (pool[condition].completed())
 	{
-		DEBUG_LOGGER << "Condition number #" << condition << ", generation #" <<  pool[condition].generation << " is evaluated";
-		std::vector<float> evaluated(pool[condition].population.size());
+		auto &p = pool[condition].results();
+		auto &generation = p.first;
+		auto &results = p.second;
+		on_search_results(condition,  generation, results);
 
-		std::transform(pool[condition].population.begin(), pool[condition].population.end(), evaluated.begin(), [](const Solution &individual) 
-			{
-				return aggregate(individual.score);
-			});
-		search->callback_generation(condition, evaluated);
+		pool[condition].notify();
 	}
 }

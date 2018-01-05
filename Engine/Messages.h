@@ -619,6 +619,7 @@ namespace TRN
 		{
 			float mu;
 			float sigma;
+			float sparsity;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
@@ -626,6 +627,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & mu;
 				ar & sigma;
+				ar & sparsity;
 			}
 		};
 

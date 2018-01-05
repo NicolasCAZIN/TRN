@@ -57,7 +57,7 @@ void TRN::CPU::Random::uniform(unsigned long &seed, float **ptr, const std::size
 	}
 }
 
-void TRN::CPU::Random::gaussian(unsigned long &seed, float **ptr, const std::size_t &batch_size, const std::size_t *rows, const std::size_t *cols, const std::size_t *strides, const bool &blank_diagonal, const float &mu, const float &sigma)
+void TRN::CPU::Random::gaussian(unsigned long &seed, float **ptr, const std::size_t &batch_size, const std::size_t *rows, const std::size_t *cols, const std::size_t *strides, const bool &blank_diagonal, const float &mu, const float &sigma, const float &sparsity)
 {
 	std::vector<VSLStreamStatePtr> streams(batch_size);
 
@@ -68,9 +68,12 @@ void TRN::CPU::Random::gaussian(unsigned long &seed, float **ptr, const std::siz
 	{
 		for (int k = 0; k < rows[batch]; k++)
 		{
+			auto mid = std::lrint((float)cols[batch] * (1.0 - sparsity));
 			auto row = &ptr[batch][k * strides[batch]];
 
-			check_vsl(vsRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, streams[batch], cols[batch], row, mu, sigma));
+			check_vsl(vsRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, streams[batch], mid, row, mu, sigma));
+			std::fill(row + mid, row + cols[batch], 0.0f);
+			std::random_shuffle(row, row + cols[batch]);
 
 			if (blank_diagonal && rows[batch] == cols[batch])
 				row[k] = 0.0f;				

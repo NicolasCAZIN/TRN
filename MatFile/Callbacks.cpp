@@ -150,7 +150,7 @@ void Callbacks::update()
 	}
 }
 
-static void append(mxArray *root, const std::vector<std::string> &path, const std::map<std::string, mxArray *> fields)
+static void append(mxArray *root, const std::vector<std::string> &path, const std::map<std::string, mxArray *> &fields)
 {
 	mxArray *node = root;
 	for (auto field : path)
@@ -424,3 +424,62 @@ void Callbacks::callback_scheduling(const unsigned long long &id, const std::siz
 	update();
 }
 
+
+void Callbacks::callback_results(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results)
+{
+	std::size_t configuration = 0;
+	for (auto result : results)
+	{
+		for (auto by_trial : result.second)
+		{
+			for (auto by_trial_by_test : by_trial.second)
+			{
+				auto &score = by_trial_by_test.second.first;
+				auto &measurements = by_trial_by_test.second.second;
+			
+				std::map<std::string, mxArray *> results_map;
+				auto mx_condition = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_condition) = condition_number; results_map["condition"] = mx_condition;
+				auto mx_generation = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT64_CLASS, mxComplexity::mxREAL); *(unsigned long long *)mxGetData(mx_generation) = generation_number; results_map["generation"] = mx_generation;
+
+				for (auto variable : result.first)
+				{
+					auto key = variable.first;
+					auto value = variable.second;
+					auto mx_value = mxCreateString(value.c_str()); results_map[key] = mx_value;
+				}
+		
+				auto mx_trial = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT64_CLASS, mxComplexity::mxREAL); *(unsigned long long *)mxGetData(mx_trial) = by_trial.first; results_map["trial"] = mx_trial;
+				auto mx_test = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT64_CLASS, mxComplexity::mxREAL); *(unsigned long long *)mxGetData(mx_test) = by_trial_by_test.first; results_map["test"] = mx_test;
+				auto mx_measurements = mxCreateNumericMatrix(measurements.size(), 1, mxClassID::mxSINGLE_CLASS, mxComplexity::mxREAL); std::copy(measurements.begin(), measurements.end(), (float *)mxGetData(mx_measurements)); results_map["measurements"] = mx_measurements;
+				auto mx_score = mxCreateNumericMatrix(1, 1, mxClassID::mxSINGLE_CLASS, mxComplexity::mxREAL); *(float *)mxGetData(mx_score) = score; results_map["score"] = mx_score;
+
+				append(handle->result, { "search", "population" }, results_map);
+				update();
+			}
+		}
+		configuration++;
+	}
+
+
+	//INFORMATION_LOGGER << __FUNCTION__ << " : " << ID(id) << ", scores = " << scores.size();
+}
+
+void Callbacks::callback_solutions(const unsigned short &condition_number, const std::vector<std::pair<std::map<std::string, std::string>, float>> &solutions)
+{
+	std::vector<std::string> rows;
+	for (auto solution : solutions)
+	{
+		std::map<std::string, mxArray *> solutions_map;
+		auto mx_condition = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT16_CLASS, mxComplexity::mxREAL); *(unsigned short *)mxGetData(mx_condition) = condition_number; solutions_map["condition"] = mx_condition;
+
+		for (auto variable : solution.first)
+		{
+			auto key = variable.first;
+			auto value = variable.second;
+			auto mx_value = mxCreateString(value.c_str()); solutions_map[key] = mx_value;
+		}
+		auto mx_score = mxCreateNumericMatrix(1, 1, mxClassID::mxSINGLE_CLASS, mxComplexity::mxREAL); *(float *)mxGetData(mx_score) = solution.second; solutions_map["score"] = mx_score;
+		append(handle->result, { "search", "solutions" }, solutions_map);
+		update();
+	}
+}

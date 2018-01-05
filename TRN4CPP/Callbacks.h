@@ -23,6 +23,8 @@ namespace TRN4CPP
 				virtual void callback_states(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols) = 0;
 				virtual void callback_weights(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols) = 0;
 				virtual void callback_scheduling(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations) = 0;
+				virtual void callback_results(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results) = 0;
+				virtual void callback_solutions(const unsigned short &condition_number, const std::vector<std::pair<std::map<std::string, std::string>, float>> &solutions) = 0;
 			};
 
 			void TRN4CPP_EXPORT		initialize(const std::string &library_path, const std::string &name, const std::map<std::string, std::string> &arguments);
@@ -90,4 +92,17 @@ namespace TRN4CPP
 			};
 		};
 	};
+
+	namespace Search
+	{
+		namespace Results
+		{
+			void TRN4CPP_EXPORT 	install(const std::function<void(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results)> &functor);
+		}
+
+		namespace Solutions
+		{
+			void TRN4CPP_EXPORT 	install(const std::function<void(const unsigned short &condition_number, const std::vector<std::pair<std::map<std::string, std::string>, float>> &solutions)> &functor);
+		}
+	}
 };

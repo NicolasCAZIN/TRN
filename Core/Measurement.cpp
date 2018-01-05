@@ -48,7 +48,7 @@ void TRN::Core::Measurement::Abstraction::set_expected(const std::shared_ptr<TRN
 	handle->expected = TRN::Core::Matrix::create(implementor->get_implementor(), handle->measurable_generations, cols, true);
 	handle->expected->from(*sub);
 
-	handle->error = TRN::Core::Matrix::create(implementor->get_implementor(), handle->measurable_generations, handle->batch_size);
+	handle->error = TRN::Core::Matrix::create(implementor->get_implementor(), 1, handle->batch_size);
 
 	for (std::size_t batch = 0; batch < handle->batch_size; batch++)
 	{

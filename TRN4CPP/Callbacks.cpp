@@ -14,6 +14,8 @@ std::function<void(const unsigned long long &id, const std::size_t &trial, const
 std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_states;
 std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_weights;
 std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduling;
+std::function<void(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results)> on_search_results;
+std::function<void(const unsigned short &condition_number, const std::vector<std::pair<std::map<std::string, std::string>, float>> &solutions)> on_search_solutions;
 
 static std::recursive_mutex mutex;
 static std::vector<boost::shared_ptr<TRN4CPP::Plugin::Callbacks::Interface>> callbacks;
@@ -118,6 +120,30 @@ static void callback_scheduling(const unsigned long long &id, const std::size_t 
 		plugin->callback_scheduling(id, trial, offsets, durations);
 	}
 }
+
+static void callback_results(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results)
+{
+	std::unique_lock<std::recursive_mutex> guard(mutex);
+#pragma omp parallel for
+	for (int k = 0; k < callbacks.size(); k++)
+	{
+		auto plugin = callbacks[k];
+		plugin->callback_results(condition_number, generation_number, results);
+	}
+}
+
+static void callback_solutions(const unsigned short &condition_number, const std::vector<std::pair<std::map<std::string, std::string>, float>> &solutions)
+{
+	std::unique_lock<std::recursive_mutex> guard(mutex);
+#pragma omp parallel for
+	for (int k = 0; k < callbacks.size(); k++)
+	{
+		auto plugin = callbacks[k];
+		plugin->callback_solutions(condition_number, solutions);
+	}
+}
+
+
 void TRN4CPP::Plugin::Callbacks::append(const boost::shared_ptr<TRN4CPP::Plugin::Callbacks::Interface> &plugin)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
@@ -143,6 +169,9 @@ void TRN4CPP::Plugin::Callbacks::initialize(const std::string &library_path, con
 		TRN4CPP::Simulation::Recording::Scheduling::install(callback_scheduling);
 		TRN4CPP::Simulation::Recording::States::install(callback_states);
 		TRN4CPP::Simulation::Recording::Weights::install(callback_weights);
+
+		TRN4CPP::Search::Results::install(callback_results);
+		TRN4CPP::Search::Solutions::install(callback_solutions);
 	}
 
 	boost::filesystem::path path = library_path;
@@ -273,3 +302,26 @@ void TRN4CPP::Simulation::Measurement::Position::FrechetDistance::install(const 
 	on_measurement_position_frechet_distance = functor;
 }
 
+void TRN4CPP::Search::Results::install(const std::function<void(const unsigned short &condition_number, const std::size_t &generation_number,const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results)> &functor)
+{
+	std::unique_lock<std::recursive_mutex> guard(mutex);
+	TRACE_LOGGER;
+
+	if (on_search_results)
+		throw std::runtime_error("Results functor is already installed");
+	if (!frontend)
+		throw std::runtime_error("Frontend is not initialized");
+	on_search_results = functor;
+}
+
+void TRN4CPP::Search::Solutions::install(const std::function<void(const unsigned short &condition_number, const std::vector<std::pair<std::map<std::string, std::string>, float>> &solutions)> &functor)
+{
+	std::unique_lock<std::recursive_mutex> guard(mutex);
+	TRACE_LOGGER;
+
+	if (on_search_solutions)
+		throw std::runtime_error("Solutions functor is already installed");
+	if (!frontend)
+		throw std::runtime_error("Frontend is not initialized");
+	on_search_solutions = functor;
+}

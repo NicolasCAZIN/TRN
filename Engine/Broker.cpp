@@ -966,37 +966,6 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned long long
 			send(processor->get_rank(), message);
 		});
 	});
-	auto x_resolution = (x.second - x.first) / cols;
-	auto y_resolution = (y.second - y.first) / rows;
-	auto resolution = x_resolution * y_resolution;
-	
-	int order = 0;
-	while (resolution < 1.0f && order <= 2)
-	{
-		resolution *= 100.0f;
-		order++;
-	}
-	resolution = sqrtf(resolution);
-	std::string unit;
-	switch (order)
-	{
-		case 0 :
-			unit = "meter";
-			break;
-		case 1:
-			unit = "decimeter";
-			break;
-		case 2:
-			unit = "centimeter";
-			break;
-		case 3:
-			unit = "millimeter";
-			break;
-	}
-	handle->to_caller->post([=]()
-	{
-		callback_information("Spatial filter resolution : " + std::to_string(resolution) + " " + unit + " square per stencil element");
-	});
 }
 void TRN::Engine::Broker::configure_loop_custom(const unsigned long long &id, const std::size_t &batch_size, const std::size_t &stimulus_size)
 {
@@ -1169,7 +1138,7 @@ void TRN::Engine::Broker::configure_readout_uniform(const unsigned long long &id
 		});
 	});
 }
-void TRN::Engine::Broker::configure_readout_gaussian(const unsigned long long &id, const float &mu, const float &sigma)
+void TRN::Engine::Broker::configure_readout_gaussian(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity)
 {
 	TRACE_LOGGER;
 	retrieve_simulation(id)->post([=]()
@@ -1183,6 +1152,7 @@ void TRN::Engine::Broker::configure_readout_gaussian(const unsigned long long &i
 			message.id = id;
 			message.mu = mu;
 			message.sigma = sigma;
+			message.sparsity = sparsity;
 
 			send(processor->get_rank(), message);
 		});
@@ -1225,7 +1195,7 @@ void TRN::Engine::Broker::configure_feedback_uniform(const unsigned long long &i
 		});
 	});
 }
-void TRN::Engine::Broker::configure_feedback_gaussian(const unsigned long long &id, const float &mu, const float &sigma)
+void TRN::Engine::Broker::configure_feedback_gaussian(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity)
 {
 	TRACE_LOGGER;
 	retrieve_simulation(id)->post([=]()
@@ -1239,6 +1209,7 @@ void TRN::Engine::Broker::configure_feedback_gaussian(const unsigned long long &
 			message.id = id;
 			message.mu = mu;
 			message.sigma = sigma;
+			message.sparsity = sparsity;
 
 			send(processor->get_rank(), message);
 		});
@@ -1280,7 +1251,7 @@ void TRN::Engine::Broker::configure_recurrent_uniform(const unsigned long long &
 		});
 	});
 }
-void TRN::Engine::Broker::configure_recurrent_gaussian(const unsigned long long &id, const float &mu, const float &sigma)
+void TRN::Engine::Broker::configure_recurrent_gaussian(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity)
 {
 	TRACE_LOGGER;
 	retrieve_simulation(id)->post([=]()
@@ -1294,6 +1265,7 @@ void TRN::Engine::Broker::configure_recurrent_gaussian(const unsigned long long 
 			message.id = id;
 			message.mu = mu;
 			message.sigma = sigma;
+			message.sparsity = sparsity;
 
 			send(processor->get_rank(), message);
 		});
@@ -1335,7 +1307,7 @@ void TRN::Engine::Broker::configure_feedforward_uniform(const unsigned long long
 		});
 	});
 }
-void TRN::Engine::Broker::configure_feedforward_gaussian(const unsigned long long &id, const float &mu, const float &sigma)
+void TRN::Engine::Broker::configure_feedforward_gaussian(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity)
 {
 	TRACE_LOGGER;
 	retrieve_simulation(id)->post([=]()
@@ -1349,6 +1321,7 @@ void TRN::Engine::Broker::configure_feedforward_gaussian(const unsigned long lon
 			message.id = id;
 			message.mu = mu;
 			message.sigma = sigma;
+			message.sparsity = sparsity;
 
 			send(processor->get_rank(), message);
 		});

@@ -24,6 +24,8 @@ namespace TRN
 				const float *expected, const std::size_t &expected_rows, const std::size_t &expected_cols, const std::size_t &expected_stride,
 				float *result, const std::size_t &result_rows, const std::size_t &result_cols, const std::size_t &result_stride) = 0;
 
+	
+
 			virtual void place_cell_location_probability(
 				const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
 				const float &sigma,

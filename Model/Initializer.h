@@ -16,7 +16,7 @@ namespace TRN
 			};
 			namespace Gaussian
 			{
-				std::shared_ptr<TRN::Core::Initializer> MODEL_EXPORT create(const std::shared_ptr<TRN::Backend::Driver> &driver, const float &mu, const float &sigma);
+				std::shared_ptr<TRN::Core::Initializer> MODEL_EXPORT create(const std::shared_ptr<TRN::Backend::Driver> &driver, const float &mu, const float &sigma, const float &sparsity);
 			};
 			namespace Custom
 			{

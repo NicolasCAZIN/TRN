@@ -26,6 +26,12 @@ static std::mutex mutex{};
 
 struct Color
 {
+	Color()
+	{
+		CONSOLE_SCREEN_BUFFER_INFO info;
+		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
+		value = info.wAttributes;
+	}
 	Color( int foreground, int background, bool intensity = false) : value
 	(
 			(((background) & 0x0F) << 4) | 
@@ -37,7 +43,7 @@ struct Color
 	}
 	WORD value;
 };
-static const Color NEUTRAL_COLOR(WHITE, BLACK);
+static const Color NEUTRAL_COLOR;
 
 static const Color DATE_COLOR(YELLOW, BLUE);
 static const Color MODULE_COLOR(CYAN, BLUE);
@@ -64,19 +70,19 @@ static inline std::ostream& operator<<(std::ostream& os, const TRN::Helper::Logg
 	switch (severity)
 	{
 		case TRN::Helper::Logger::Severity::TRACE_LEVEL:
-			os << TRACE_COLOR << "TRACE      ";
+			os << TRACE_COLOR << "TRACE      " << NEUTRAL_COLOR;
 			break;
 		case TRN::Helper::Logger::Severity::DEBUG_LEVEL:
-			os << DEBUG_COLOR <<  "DEBUG      ";
+			os << DEBUG_COLOR <<  "DEBUG      " << NEUTRAL_COLOR;
 			break;
 		case TRN::Helper::Logger::Severity::INFORMATION_LEVEL:
-			os << INFORMATION_COLOR << "INFORMATION";
+			os << INFORMATION_COLOR << "INFORMATION" << NEUTRAL_COLOR;
 			break;
 		case TRN::Helper::Logger::Severity::WARNING_LEVEL:
-			os << WARNING_COLOR << "WARNING    ";
+			os << WARNING_COLOR << "WARNING    " << NEUTRAL_COLOR;
 			break;
 		case TRN::Helper::Logger::Severity::ERROR_LEVEL:
-			os << ERROR_COLOR << "ERROR      ";
+			os << ERROR_COLOR << "ERROR      " << NEUTRAL_COLOR;
 			break;
 	}
 
@@ -93,31 +99,76 @@ static std::ostream &stream(const TRN::Helper::Logger::Severity &severity)
 // helper class
 
 static std::string hostname;
-static TRN::Helper::Logger::Severity level = TRN::Helper::Logger::Severity::DEBUG_LEVEL;
+static std::string filename;
 
-TRN::Helper::Logger::Logger(const TRN::Helper::Logger::Severity &severity, const std::string &module) : severity(severity), module(module)
+static TRN::Helper::Logger::Severity level = TRN::Helper::Logger::Severity::INFORMATION_LEVEL;
+static bool exit_on_error = true;
+
+struct TRN::Helper::Logger::Handle
 {
+	TRN::Helper::Logger::Severity severity;
+	std::string module;
+};
+
+TRN::Helper::Logger::Logger(const TRN::Helper::Logger::Severity &severity, const std::string &module) : handle(std::make_unique<Handle>())
+{
+	handle->severity = severity;
+	handle->module = module;
 	if (hostname.empty())
 		hostname = boost::asio::ip::host_name();
+	if (filename.empty())
+		filename = "trn_" + std::to_string(getpid()) + ".log";
 }
 
 TRN::Helper::Logger::~Logger()
 {
 	std::lock_guard<std::mutex> guard(mutex);
-	if (severity >= level)
+	if (handle->severity >= level)
 	{
 		auto now = boost::posix_time::microsec_clock::universal_time();
-		stream(severity) << severity << NEUTRAL_COLOR << " " << DATE_COLOR << "[" << now << "]" << NEUTRAL_COLOR << " " << MODULE_COLOR << module << "@" << hostname << NEUTRAL_COLOR << " -> " << MESSAGE_COLOR << this->str() << std::endl << std::flush;
+		auto _str = str();
+
+		if (_str[_str.length()] != '.')
+			_str = _str + '.';
+		_str[0] = std::toupper(_str[0]);
+		stream(handle->severity) << NEUTRAL_COLOR << handle->severity << NEUTRAL_COLOR << " " << DATE_COLOR << "[" << now << "]" << NEUTRAL_COLOR << " " << MODULE_COLOR << handle->module << "@" << hostname << NEUTRAL_COLOR << " -> " << MESSAGE_COLOR << _str << NEUTRAL_COLOR << std::endl << std::flush;
+		try
+		{
+			std::ofstream fstream(filename, std::ofstream::out | std::ofstream::app);
+			
+			if (fstream.is_open())
+			{
+				fstream << handle->severity << " " << "[" << now << "]" << " " << handle->module << "@" << hostname << " -> " << _str << std::endl << std::flush;
+
+				fstream.close();
+			}
+			else
+			{
+				throw std::runtime_error("File " + filename + " could not be opened");
+			}
+		}
+		catch (std::exception &e)
+		{
+			handle->severity = Severity::ERROR_LEVEL;
+			stream(handle->severity) << handle->severity << NEUTRAL_COLOR << " " << DATE_COLOR << "[" << now << "]" << NEUTRAL_COLOR << " " << MODULE_COLOR << handle->module << "@" << hostname << NEUTRAL_COLOR << " -> " << MESSAGE_COLOR << e.what() << NEUTRAL_COLOR << std::endl << std::flush;
+
+		}
 	}
+	if (exit_on_error && handle->severity == Severity::ERROR_LEVEL)
+	{
+		exit(EXIT_FAILURE);
+	}
+	handle.reset();
+
 }
 
 
 
-void TRN::Helper::Logger::setup(const TRN::Helper::Logger::Severity &severity)
+void TRN::Helper::Logger::setup(const TRN::Helper::Logger::Severity &severity, const bool &exit_on_error)
 {
 	std::lock_guard<std::mutex> guard(mutex);
 	level = severity;
-
+	::exit_on_error = exit_on_error;
 }
 
 std::istream &std::operator >> (std::istream &is, TRN::Helper::Logger::Severity &severity)

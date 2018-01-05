@@ -2,7 +2,7 @@
 #include "Cache_impl.h"
 #include "Helper/Logger.h"
 
-#define SEGMENT_MUTEX "TRN_cache_mutex"
+/*#define SEGMENT_MUTEX "TRN_cache_mutex"*/
 #define SEGMENT_IDENTIFIER "TRN_cache_segment"
 #define CHECKSUMS_IDENTIFIER "TRN_cache_map"
 #define COUNTER_IDENTIFIER "TRN_cache_counter"
@@ -24,7 +24,7 @@ typedef std::pair<const KeyType, MappedType> EntryType;
 typedef boost::interprocess::allocator<EntryType, boost::interprocess::managed_shared_memory::segment_manager> ShmEntryAllocator;
 typedef boost::interprocess::map<KeyType, MappedType, std::less<KeyType>, ShmEntryAllocator> Map;
 
-
+ static boost::interprocess::managed_windows_shared_memory segment(boost::interprocess::open_or_create, SEGMENT_IDENTIFIER, GB(1));
 static unsigned int process_id()
 {
 #ifdef _WIN32
@@ -40,12 +40,13 @@ static const std::string compute_key(const unsigned int checksum)
 }
 void TRN::Engine::Cache::initialize()
 {
+	/*WARNING_LOGGER << "initializing cache";
 	if (boost::interprocess::shared_memory_object::remove(SEGMENT_IDENTIFIER))
-		DEBUG_LOGGER << SEGMENT_IDENTIFIER << " shared memory object was removed";
+		WARNING_LOGGER << SEGMENT_IDENTIFIER << " shared memory object was removed";
 	else
-		DEBUG_LOGGER << SEGMENT_IDENTIFIER << " shared memory object was not removed";
-	boost::interprocess::managed_shared_memory segment(boost::interprocess::open_or_create, SEGMENT_IDENTIFIER, GB(1));
-	auto pid = process_id();
+		WARNING_LOGGER << SEGMENT_IDENTIFIER << " shared memory object was not removed";*/
+
+	//auto pid = process_id();
 /*	boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> guard(*segment.find_or_construct<boost::interprocess::interprocess_mutex>(SEGMENT_MUTEX)());*/
 	/*auto counter = segment.find_or_construct<Set>(COUNTER_IDENTIFIER)(segment.get_segment_manager());
 	auto size = counter->size();
@@ -66,10 +67,14 @@ void TRN::Engine::Cache::initialize()
 }
 void TRN::Engine::Cache::uninitialize()
 {
+
+
+
+	/*WARNING_LOGGER << "uninitializing cache";
 	if (boost::interprocess::shared_memory_object::remove(SEGMENT_IDENTIFIER))
-		DEBUG_LOGGER << SEGMENT_IDENTIFIER << " shared memory object was removed";
+		WARNING_LOGGER << SEGMENT_IDENTIFIER << " shared memory object was removed";
 	else
-		DEBUG_LOGGER << SEGMENT_IDENTIFIER << " shared memory object was not removed";
+		WARNING_LOGGER << SEGMENT_IDENTIFIER << " shared memory object was not removed";*/
 	/*boost::interprocess::managed_shared_memory segment(boost::interprocess::open_or_create, SEGMENT_IDENTIFIER, GB(1));
 	boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> guard(*segment.find_or_construct<boost::interprocess::interprocess_mutex>(SEGMENT_MUTEX)());
 	auto &counter = *segment.find_or_construct<Set>(COUNTER_IDENTIFIER)(segment.get_segment_manager());
@@ -89,6 +94,8 @@ void TRN::Engine::Cache::uninitialize()
 
 TRN::Engine::Cache::Cache() : handle(std::make_unique<Handle>())
 {
+
+	
 }
 
 TRN::Engine::Cache::~Cache()
@@ -98,28 +105,23 @@ TRN::Engine::Cache::~Cache()
 std::set<unsigned int> TRN::Engine::Cache::cached()
 {
 	std::set<unsigned int> result;
-	boost::interprocess::managed_shared_memory segment(boost::interprocess::open_only, SEGMENT_IDENTIFIER);
-	boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> guard(*segment.find_or_construct<boost::interprocess::interprocess_mutex>(SEGMENT_MUTEX)());
-
-	/*segment.atomic_func([&]()
-	{*/
+	segment.atomic_func([&]()
+	{
 		auto map = segment.find_or_construct<Map>(CHECKSUMS_IDENTIFIER)(segment.get_segment_manager());
 		for (auto entry : *map)
 		{
 			result.insert(entry.first);
 		}
 
-	/*});*/
+	});
 	return result;
 }
 
 void TRN::Engine::Cache::store(const unsigned int &checksum, const std::vector<float> &sequence)
 {
-	boost::interprocess::managed_shared_memory segment(boost::interprocess::open_only, SEGMENT_IDENTIFIER);
-	boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> guard(*segment.find_or_construct<boost::interprocess::interprocess_mutex>(SEGMENT_MUTEX)());
-
-	/*segment.atomic_func([&]()
-	{*/
+	
+	segment.atomic_func([&]()
+	{
 	//	boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> guard(*segment.find_or_construct<boost::interprocess::interprocess_mutex>(SEGMENT_MUTEX)());
 		auto map = segment.find_or_construct<Map>(CHECKSUMS_IDENTIFIER)(segment.get_segment_manager());
 
@@ -135,32 +137,28 @@ void TRN::Engine::Cache::store(const unsigned int &checksum, const std::vector<f
 			map->emplace(checksum, cached);
 			DEBUG_LOGGER << "Free shared memory " << free_memory;
 		}
-	/*});*/
+	});
 
 }
 
 bool	TRN::Engine::Cache::contains(const unsigned int &checksum)
 {
 	bool result = false;
-	boost::interprocess::managed_shared_memory segment(boost::interprocess::open_only, SEGMENT_IDENTIFIER);
-	boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> guard(*segment.find_or_construct<boost::interprocess::interprocess_mutex>(SEGMENT_MUTEX)());
 
-	/*segment.atomic_func([&]()
-	{*/
+	segment.atomic_func([&]()
+	{
 		auto map = segment.find_or_construct<Map>(CHECKSUMS_IDENTIFIER)(segment.get_segment_manager());
 		result = map->find(checksum) != map->end();
-	/*});*/
+	});
 	return result;
 }
 
 std::vector<float> TRN::Engine::Cache::retrieve(const unsigned int &checksum)
 {
 	std::vector<float> result;
-	boost::interprocess::managed_shared_memory segment(boost::interprocess::open_only, SEGMENT_IDENTIFIER);
-	boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> guard(*segment.find_or_construct<boost::interprocess::interprocess_mutex>(SEGMENT_MUTEX)());
-
-	/*segment.atomic_func([&]()
-	{*/
+	
+	segment.atomic_func([&]()
+	{
 		auto map = segment.find_or_construct<Map>(CHECKSUMS_IDENTIFIER)(segment.get_segment_manager());
 		if (map->find(checksum) == map->end())
 			throw std::runtime_error("Data is not cached");
@@ -168,7 +166,7 @@ std::vector<float> TRN::Engine::Cache::retrieve(const unsigned int &checksum)
 		auto cached = map->at(checksum);
 		result.resize(cached->size());
 		std::copy(cached->begin(), cached->end(), result.begin());
-	/*});*/
+	});
 	
 
 	return result;

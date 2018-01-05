@@ -90,19 +90,19 @@ namespace TRN
 			void 	configure_mutator_custom(const unsigned long long &id, const unsigned long &seed);
 
 			void 	configure_readout_uniform(const unsigned long long &id, const float &a, const float &b, const float &sparsity);
-			void 	configure_readout_gaussian(const unsigned long long &id, const float &mu, const float &sigma);
+			void 	configure_readout_gaussian(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity);
 			void 	configure_readout_custom(const unsigned long long &id);
 
 			void 	configure_feedback_uniform(const unsigned long long &id, const float &a, const float &b, const float &sparsity);
-			void 	configure_feedback_gaussian(const unsigned long long &id, const float &mu, const float &sigma);
+			void 	configure_feedback_gaussian(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity);
 			void 	configure_feedback_custom(const unsigned long long &id);
 
 			void 	configure_recurrent_uniform(const unsigned long long &id, const float &a, const float &b, const float &sparsity);
-			void 	configure_recurrent_gaussian(const unsigned long long &id, const float &mu, const float &sigma);
+			void 	configure_recurrent_gaussian(const unsigned long long &id, const float &mu, const float &sigma, const float &sparsity);
 			void 	configure_recurrent_custom(const unsigned long long &id);
 
 			void 	configure_feedforward_uniform(const unsigned long long &id, const float &a, const float &b, const float &sparsity);
-			void 	configure_feedforward_gaussian(const unsigned long long &id ,const float &mu, const float &sigma);
+			void 	configure_feedforward_gaussian(const unsigned long long &id ,const float &mu, const float &sigma, const float &sparsity);
 			void 	configure_feedforward_custom(const unsigned long long &id);
 
 	

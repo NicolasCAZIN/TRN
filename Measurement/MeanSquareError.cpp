@@ -7,8 +7,7 @@ TRN::Measurement::MeanSquareError::MeanSquareError(const std::shared_ptr<TRN::Ba
 {
 	handle->functor = functor;
 }
-#include <iostream>
-#include <algorithm>
+
 void TRN::Measurement::MeanSquareError::compute(const std::size_t &trial, const std::size_t &evaluation, const std::shared_ptr<TRN::Core::Matrix> &primed, const std::shared_ptr<TRN::Core::Batch> &predicted, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Matrix> &error)
 {
 	std::vector<float> error_values;
