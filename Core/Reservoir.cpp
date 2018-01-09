@@ -43,6 +43,7 @@ TRN::Core::Reservoir::Reservoir(
 	handle->batched_W_in = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_X_ro = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_W_ro = TRN::Core::Batch::create(driver, batch_size);
+	handle->batched_W_ro_reset = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_X_res = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_W_rec = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_W_fbck = TRN::Core::Batch::create(driver, batch_size);
@@ -52,13 +53,14 @@ TRN::Core::Reservoir::Reservoir(
 		auto u = TRN::Core::Matrix::create(driver, 1, reservoir);
 		auto error = TRN::Core::Matrix::create(driver, 1, prediction);
 
-		auto W_ffwd = TRN::Core::Matrix::create(driver,   reservoir, stimulus, false);
+		auto W_ffwd = TRN::Core::Matrix::create(driver,   reservoir, stimulus, true);
 		auto W_in = TRN::Core::Matrix::create(driver, reservoir, x_in_cols, true);
 		auto W_rec = TRN::Core::Matrix::create(driver, W_in, 0, 0, reservoir, reservoir);
 		auto W_fbck = TRN::Core::Matrix::create(driver, W_in, 0, handle->reservoir_stride, reservoir, prediction);
 
 
 		auto W_ro = TRN::Core::Matrix::create(driver, prediction, reservoir, true);
+		auto W_ro_reset = TRN::Core::Matrix::create(driver, prediction, reservoir, true);
 		auto X_in = TRN::Core::Matrix::create(driver,  1, x_in_cols, true);
 		auto X_res = TRN::Core::Matrix::create(driver, X_in, 0 ,0, 1, reservoir);
 		auto X_ro = TRN::Core::Matrix::create(driver, X_in,  0, handle->reservoir_stride,  1, prediction);
@@ -79,6 +81,7 @@ TRN::Core::Reservoir::Reservoir(
 		handle->batched_X_res->update(batch, X_res);
 		handle->batched_X_ro->update(batch, X_ro);
 		handle->batched_W_ro->update(batch, W_ro);
+		handle->batched_W_ro_reset->update(batch, W_ro_reset);
 		handle->batched_W_rec->update(batch, W_rec);
 		handle->batched_W_fbck->update(batch, W_fbck);
 	}
@@ -157,6 +160,7 @@ void TRN::Core::Reservoir::synchronize()
 
 void TRN::Core::Reservoir::initialize()
 {
+	handle->batched_W_ro_reset->from(*handle->batched_W_ro);
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED>());
 }
 
@@ -181,6 +185,11 @@ void TRN::Core::Reservoir::initialize(const std::shared_ptr<TRN::Core::Initializ
 	recurrent->initialize(handle->seed, handle->batched_W_rec, true);	
 	feedback->initialize(handle->seed, handle->batched_W_fbck);
 	readout->initialize(handle->seed, handle->batched_W_ro);
+}
+
+void TRN::Core::Reservoir::reset_readout()
+{
+	handle->batched_W_ro->from(*handle->batched_W_ro_reset);
 }
 
 void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::size_t &preamble, const bool &autonomous_generation, const std::size_t &supplementary_generations)

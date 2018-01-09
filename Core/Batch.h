@@ -31,6 +31,7 @@ namespace TRN
 			void update(const std::size_t &index, float *elements, const std::size_t &rows, const std::size_t &cols, const std::size_t &stride);
 
 		public :
+			void from(const TRN::Core::Batch &batch);
 			void to(std::vector<float> &elements, std::size_t &matrices, std::vector<std::size_t> &rows, std::vector<std::size_t> &cols);
 		private :
 			void upload();

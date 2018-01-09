@@ -27,6 +27,12 @@ TRN::Core::Batch::~Batch()
 	handle.reset();
 }
 	
+void TRN::Core::Batch::from(const TRN::Core::Batch &batch)
+{
+	for (std::size_t k = 0; k < batch.handle->matrices.size(); k++)
+		handle->matrices[k]->from(*batch.handle->matrices[k]);
+}
+
 void TRN::Core::Batch::to(std::vector<float> &elements, std::size_t &matrices, std::vector<std::size_t> &rows, std::vector<std::size_t> &cols)
 {
 	matrices = handle->size;

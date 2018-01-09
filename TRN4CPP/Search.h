@@ -34,6 +34,7 @@ namespace TRN4CPP
 		void TRN4CPP_EXPORT		update(const unsigned short &condition_number, const unsigned int &simulation_number, const std::size_t &trial_number, const std::size_t &test_number, const std::size_t &repeat);
 		bool TRN4CPP_EXPORT		end(const unsigned short &condition_number, const unsigned int &simulation_number);
 
+		float TRN4CPP_EXPORT score(const std::vector<float> &values);
 		std::map<std::string, std::set<std::string>> TRN4CPP_EXPORT parse(const std::string &filename);
 	};
 };

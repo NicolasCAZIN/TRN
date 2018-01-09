@@ -555,7 +555,7 @@ void TRN::Engine::Broker::deallocate(const unsigned long long &id)
 		//INFORMATION_LOGGER <<   "exiting " << id << " " << __FUNCTION__ ;
 	});
 }
-void TRN::Engine::Broker::train(const unsigned long long &id, const std::string &label, const std::string &incoming, const std::string &expected)
+void TRN::Engine::Broker::train(const unsigned long long &id, const std::string &label, const std::string &incoming, const std::string &expected, const bool &reset_readout)
 {
 	TRACE_LOGGER;
 	retrieve_simulation(id)->post([=]()
@@ -571,6 +571,7 @@ void TRN::Engine::Broker::train(const unsigned long long &id, const std::string 
 			message.label = label;
 			message.incoming = incoming;
 			message.expected = expected;
+			message.reset_readout = reset_readout;
 
 			send(processor->get_rank(), message);
 		});

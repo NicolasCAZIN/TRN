@@ -111,7 +111,7 @@ const std::shared_ptr<TRN::Core::Set>  TRN::Simulator::Basic::retrieve_set(const
 	return handle->sets[key(label, tag)];
 }
 
-void TRN::Simulator::Basic::train(const std::string &label, const std::string &incoming, const std::string &expected)
+void TRN::Simulator::Basic::train(const std::string &label, const std::string &incoming, const std::string &expected, const bool &reset_readout)
 {
 	if (!handle->initialized)
 		throw std::logic_error("Simulator is not initialized");
@@ -122,7 +122,8 @@ void TRN::Simulator::Basic::train(const std::string &label, const std::string &i
 		throw std::invalid_argument("Batch " + key(label, expected) + " does not exist");
 	
 	DEBUG_LOGGER << "Training simulator with set " << label << " and tags (" << incoming << ", " << expected << ")";
-
+	if (reset_readout)
+		handle->reservoir->reset_readout();
 	TRN::Core::Message::Payload<TRN::Core::Message::SET> sequence(label, incoming, expected, handle->reservoir->get_trial());
 	handle->pending.push(sequence);
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::SET>>::notify(sequence);

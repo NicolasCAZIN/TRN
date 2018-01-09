@@ -89,10 +89,10 @@ void TRN::Simulator::Scheduling::declare(const std::string &label, const std::st
 {
 	decorated->declare(label, tag, set);
 }
-void TRN::Simulator::Scheduling::train(const std::string &label, const std::string &incoming, const std::string &expected)
+void TRN::Simulator::Scheduling::train(const std::string &label, const std::string &incoming, const std::string &expected, const bool &reset_readout)
 {
 
-	decorated->train(label, incoming, expected);
+	decorated->train(label, incoming, expected, reset_readout);
 }
 void TRN::Simulator::Scheduling::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
 {

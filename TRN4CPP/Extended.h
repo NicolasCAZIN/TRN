@@ -14,10 +14,12 @@ namespace TRN4CPP
 
 	namespace Simulation
 	{
+		extern TRN4CPP_EXPORT const bool DEFAULT_RESET_READOUT;
+
 		void TRN4CPP_EXPORT  	allocate(const unsigned long long &id);
 		void TRN4CPP_EXPORT  	deallocate(const unsigned long long &id);
 
-		void TRN4CPP_EXPORT  	train(const unsigned long long &id, const std::string &label, const std::string &incoming, const std::string &expected);
+		void TRN4CPP_EXPORT  	train(const unsigned long long &id, const std::string &label, const std::string &incoming, const std::string &expected, const bool &reset_readout = DEFAULT_RESET_READOUT);
 		void TRN4CPP_EXPORT  	test(const unsigned long long &id, const std::string &sequence, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const bool &autonomous, const unsigned int &supplementary_generations = 0);
 
 		void TRN4CPP_EXPORT  	declare_sequence(const unsigned long long &id, const std::string &label, const std::string &tag, const std::vector<float> &sequence, const std::size_t &observations);

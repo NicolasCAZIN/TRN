@@ -28,6 +28,7 @@ public:
 	std::shared_ptr<TRN::Core::Batch> batched_X_res;
 	std::shared_ptr<TRN::Core::Batch> batched_X_ro;
 	std::shared_ptr<TRN::Core::Batch> batched_W_ro;
+	std::shared_ptr<TRN::Core::Batch> batched_W_ro_reset;
 
 	std::size_t trial;
 	std::size_t evaluation;

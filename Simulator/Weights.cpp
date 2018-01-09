@@ -90,9 +90,9 @@ void TRN::Simulator::Weights::declare(const std::string &label, const std::strin
 {
 	decorated->declare(label, tag, batch);
 }
-void TRN::Simulator::Weights::train(const std::string &label, const std::string &incoming, const std::string &expected)
+void TRN::Simulator::Weights::train(const std::string &label, const std::string &incoming, const std::string &expected, const bool &reset_readout)
 {
-	decorated->train(label, incoming, expected);
+	decorated->train(label, incoming, expected, reset_readout);
 }
 void TRN::Simulator::Weights::test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
 {

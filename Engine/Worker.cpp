@@ -217,7 +217,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::T
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	if (handle->simulators.find(message.id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.id) + " does not exist");
-	handle->simulators[message.id]->train(message.label, message.incoming, message.expected);
+	handle->simulators[message.id]->train(message.label, message.incoming, message.expected, message.reset_readout);
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::TEST> &message)
 {

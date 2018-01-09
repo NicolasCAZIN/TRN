@@ -47,6 +47,7 @@ namespace TRN
 							const std::shared_ptr<TRN::Core::Initializer> &recurrent,
 							const std::shared_ptr<TRN::Core::Initializer> &feedback,
 							const std::shared_ptr<TRN::Core::Initializer> &readout);
+			void reset_readout();
 			void initialize();
 			void synchronize();
 			void start();

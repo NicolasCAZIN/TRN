@@ -37,7 +37,7 @@ static std::set<Key> extract_keys(const std::map<Key, Value> &map)
 	return keys;
 }
 
-static float score(const std::vector<float> &score)
+float TRN4CPP::Search::score(const std::vector<float> &score)
 {
 	float aggregated;
 	float new_m, old_m = score[0];
@@ -54,7 +54,7 @@ static float score(const std::vector<float> &score)
 
 	float mean = score.size() > 0 ? new_m : 0.0f;
 	float variance = score.size() > 1 ? new_s / (score.size() - 1) : 0.0f;
-	float stddev = sqrtf(variance);
+	float stddev = std::sqrtf(variance);
 
 	return mean * (1.0f + stddev);
 }
@@ -91,9 +91,9 @@ public:
 			for (auto by_train_number_test_number : by_trial_number.second)
 			{
 				std::size_t test_number = by_train_number_test_number.first;
-				auto &measurements = by_train_number_test_number.second.score;
-				aggregated[trial_number][test_number].second = measurements;
-				aggregated[trial_number][test_number].first = score(measurements);
+				auto &m = by_train_number_test_number.second.score;
+				aggregated[trial_number][test_number].second = m;
+				aggregated[trial_number][test_number].first = TRN4CPP::Search::score(m);
 			}
 		}
 
@@ -586,7 +586,10 @@ void 		TRN4CPP::Search::update(const unsigned short &condition_number, const uns
 		throw std::runtime_error("Condition #" + std::to_string(condition_number) + " is not populated");
 	}
 
-	pool[condition_number][simulation_number].update_repeat(trial_number, test_number, repeat);
+	if (search)
+	{
+		pool[condition_number][simulation_number].update_repeat(trial_number, test_number, repeat);
+	}
 }
 
 bool 	TRN4CPP::Search::end(const unsigned short &condition_number, const unsigned int &simulation_number)

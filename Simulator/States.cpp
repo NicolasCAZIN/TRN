@@ -95,9 +95,9 @@ void TRN::Simulator::States::declare(const std::string &label, const std::string
 	decorated->declare(label, tag, batch);
 }
 
-void TRN::Simulator::States::train(const std::string &sequence, const std::string &incoming, const std::string &expected)
+void TRN::Simulator::States::train(const std::string &sequence, const std::string &incoming, const std::string &expected, const bool &reset_readout)
 {
-	decorated->train(sequence, incoming, expected);
+	decorated->train(sequence, incoming, expected, reset_readout);
 }
 void TRN::Simulator::States::test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
 {

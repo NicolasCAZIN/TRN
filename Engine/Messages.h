@@ -275,7 +275,7 @@ namespace TRN
 			std::string label;
 			std::string incoming;
 			std::string expected;
-
+			bool reset_readout;
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
@@ -283,6 +283,7 @@ namespace TRN
 				ar & label;
 				ar & incoming;
 				ar & expected;
+				ar & reset_readout;
 			}
 		};
 	

@@ -92,6 +92,15 @@ static Type get_variable(const boost::property_tree::iptree &node, const std::st
 	return boost::lexical_cast<Type>(value);
 }
 
+template<typename Type>
+static Type get_attribute(const boost::property_tree::iptree &node, const std::string &label, const Type &default = default_value<Type>())
+{
+	auto child = node.get_child_optional(label);
+	if (!child)
+		return default;
+	return child->get_value<Type>(default);
+}
+
 void TRN4CPP::Simulation::compute(const std::string &filename)
 {
 	INFORMATION_LOGGER <<   "Reading file " << filename ;
@@ -160,6 +169,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 	const std::string expected_attribute = prefix + "expected";
 	const std::string preamble_attribute = prefix + "preamble";
 	const std::string repeat_attribute = prefix + "repeat";
+	const std::string reset_attribute = prefix + "reset";
 	const std::string autonomous_attribute = prefix + "autonomous";
 	const std::string supplementary_attribute = prefix + "supplementary";
 	const std::string filename_attribute = prefix + "filename";
@@ -240,6 +250,8 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 							{
 								auto _variable = data_element.second;
 								auto label = _variable.get_child(label_attribute).get_value<std::string>();
+								if (label.empty())
+									throw std::runtime_error("Unexpected empty label");
 								auto tag = _variable.get(tag_attribute, TRN4CPP::Sequences::DEFAULT_TAG);
 
 								TRN4CPP::Sequences::fetch(label, tag);
@@ -774,9 +786,10 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														auto label = _train.get_child(label_attribute).get_value<std::string>();
 														auto incoming = _train.get_child(incoming_attribute).get_value<std::string>();
 														auto expected = _train.get_child(expected_attribute).get_value<std::string>();
-
+										
+														auto reset_readout = get_attribute(_train, reset_attribute, false);
 														
-														TRN4CPP::Simulation::train(id, label, incoming, expected);
+														TRN4CPP::Simulation::train(id, label, incoming, expected, reset_readout);
 
 														trained = true;
 													}

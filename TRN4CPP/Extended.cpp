@@ -8,6 +8,8 @@
 #include "Helper/Logger.h"
 
 
+const bool TRN4CPP::Simulation::DEFAULT_RESET_READOUT = false;
+
 extern std::shared_ptr<TRN::Engine::Frontend> frontend;
 
 extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
@@ -86,12 +88,12 @@ void TRN4CPP::Simulation::deallocate(const unsigned long long &id)
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->deallocate(id);
 }
-void TRN4CPP::Simulation::train(const unsigned long long &id, const std::string &label, const std::string &incoming, const std::string &expected)
+void TRN4CPP::Simulation::train(const unsigned long long &id, const std::string &label, const std::string &incoming, const std::string &expected, const bool &reset_readout)
 {
 	TRACE_LOGGER;
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
-	frontend->train(id, label, incoming, expected);
+	frontend->train(id, label, incoming, expected, reset_readout);
 }
 void TRN4CPP::Simulation::test(const unsigned long long &id, const std::string &sequence, const std::string &incoming, const std::string &expected, const unsigned int &preamble, const bool &autonomous, const unsigned int &supplementary_generations)
 {

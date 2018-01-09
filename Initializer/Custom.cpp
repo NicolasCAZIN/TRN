@@ -5,8 +5,8 @@
 class TRN::Initializer::Custom::Handle
 {
 public:
-	std::mutex mutex;
-	std::condition_variable cond;
+	/*std::mutex mutex;
+	std::condition_variable cond;*/
 	std::function<void(const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> request;
 	std::queue<std::pair<std::shared_ptr<TRN::Core::Batch>,bool>> pending;
 };

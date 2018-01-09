@@ -183,7 +183,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::DE
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::TRAIN> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->train(global_id(message.id), message.label, message.incoming, message.expected);
+	handle->dispatcher->train(global_id(message.id), message.label, message.incoming, message.expected, message.reset_readout);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::TEST> &message)
 {
