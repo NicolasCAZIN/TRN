@@ -417,7 +417,7 @@ void Callbacks::callback_scheduling(const unsigned long long &id, const std::siz
 	auto mx_simulation = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT32_CLASS, mxComplexity::mxREAL); *(unsigned int *)mxGetData(mx_simulation) = simulation_number; scheduling["simulation"] = mx_simulation;
 
 	auto mx_trial = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT64_CLASS, mxComplexity::mxREAL); *(unsigned long long *)mxGetData(mx_trial) = trial; scheduling["trial"] = mx_trial;
-	auto mx_offsets = mxCreateNumericMatrix(offsets.size(), 1, mxClassID::mxINT32_CLASS, mxComplexity::mxREAL); std::copy(offsets.begin(), offsets.end(), (int *)mxGetData(mx_offsets)); scheduling["offets"] = mx_offsets;
+	auto mx_offsets = mxCreateNumericMatrix(offsets.size(), 1, mxClassID::mxINT32_CLASS, mxComplexity::mxREAL); std::copy(offsets.begin(), offsets.end(), (int *)mxGetData(mx_offsets)); scheduling["offsets"] = mx_offsets;
 	auto mx_durations = mxCreateNumericMatrix(durations.size(), 1, mxClassID::mxINT32_CLASS, mxComplexity::mxREAL); std::copy(durations.begin(), durations.end(), (int *)mxGetData(mx_durations)); scheduling["durations"] = mx_durations;
 
 	append(handle->result, { "recording", "scheduling" }, scheduling);

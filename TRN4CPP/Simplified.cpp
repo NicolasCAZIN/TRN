@@ -719,32 +719,32 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 													/// RECORDING
 													else if (boost::iequals(result_element.first, recording_name))
 													{
-														auto _measurement = result_element.second;
-														auto measurement_target = _measurement.get_child(target_attribute).get_value<std::string>();
-														if (boost::iequals(measurement_target, states_type))
+														auto _recording = result_element.second;
+														auto recording_type = _recording.get_child(type_attribute).get_value<std::string>();
+														if (boost::iequals(recording_type, states_type))
 														{
-															auto train = _measurement.get_child(train_attribute).get_value<bool>();
-															auto prime = _measurement.get_child(prime_attribute).get_value<bool>();
-															auto generate = _measurement.get_child(generate_attribute).get_value<bool>();
+															auto train = _recording.get_child(train_attribute).get_value<bool>();
+															auto prime = _recording.get_child(prime_attribute).get_value<bool>();
+															auto generate = _recording.get_child(generate_attribute).get_value<bool>();
 
 															TRN4CPP::Simulation::Recording::States::configure(id, train, prime, generate);
 														}
-														else if (boost::iequals(measurement_target, weights_type))
+														else if (boost::iequals(recording_type, weights_type))
 														{
-															auto train = _measurement.get_child(train_attribute).get_value<bool>();
-															auto initialization = _measurement.get_child(initialize_attribute).get_value<bool>();
+															auto train = _recording.get_child(train_attribute).get_value<bool>();
+															auto initialization = _recording.get_child(initialize_attribute).get_value<bool>();
 
 															TRN4CPP::Simulation::Recording::Weights::configure(id, initialization, train);
 														}
-														else if (boost::iequals(measurement_target, performances_type))
+														else if (boost::iequals(recording_type, performances_type))
 														{
-															auto train = _measurement.get_child(train_attribute).get_value<bool>();
-															auto prime = _measurement.get_child(prime_attribute).get_value<bool>();
-															auto generate = _measurement.get_child(generate_attribute).get_value<bool>();
+															auto train = _recording.get_child(train_attribute).get_value<bool>();
+															auto prime = _recording.get_child(prime_attribute).get_value<bool>();
+															auto generate = _recording.get_child(generate_attribute).get_value<bool>();
 
 															TRN4CPP::Simulation::Recording::Performances::configure(id, train, prime, generate);
 														}
-														else if (boost::iequals(measurement_target, scheduling_type))
+														else if (boost::iequals(recording_type, scheduling_type))
 														{
 															TRN4CPP::Simulation::Recording::Scheduling::configure(id);
 														}

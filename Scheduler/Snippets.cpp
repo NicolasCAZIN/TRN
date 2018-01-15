@@ -57,7 +57,7 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 	{
 		auto e = b + batch_durations[k] - handle->snippets_size;
 		
-		possible_offsets.insert(possible_offsets.end(), b, e);
+		possible_offsets.insert(possible_offsets.end(), b, e+1);
 		b = e + handle->snippets_size;
 	}
 
