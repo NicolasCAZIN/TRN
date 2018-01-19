@@ -1061,47 +1061,50 @@ static inline void batched_update_readout(
 
 		checkCudaErrors(cudaGetLastError());
 	}
+	if (t < batched_expected_rows)
 	{
-		dim3 block;
-		dim3 grid;
+		{
+			dim3 block;
+			dim3 grid;
 
-		block.x = warpSize * 4;
-		grid.x = (batched_error_cols / 4+ block.x - 1) / block.x;
+			block.x = warpSize * 4;
+			grid.x = (batched_error_cols / 4 + block.x - 1) / block.x;
 
-		block.y = 1;
-		grid.y = (batch_size + block.y - 1) / block.y;
+			block.y = 1;
+			grid.y = (batch_size + block.y - 1) / block.y;
 
-		update_readout_error_kernel << <grid, block, 0, stream >> >
-			(
-				batch_size, t, parameter.get_learning_rate(),
-				batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_stride,
-				batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_stride,
-				batched_error, batched_error_rows, batched_error_cols, batched_error_stride
-				);
+			update_readout_error_kernel << <grid, block, 0, stream >> >
+				(
+					batch_size, t, parameter.get_learning_rate(),
+					batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_stride,
+					batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_stride,
+					batched_error, batched_error_rows, batched_error_cols, batched_error_stride
+					);
 
-		checkCudaErrors(cudaGetLastError());
-	}
-	
+			checkCudaErrors(cudaGetLastError());
+		}
 
-	{
-		dim3 block;
-		dim3 grid;
 
-		block.x = BLOCK_X;
-		block.y = BLOCK_Y;
-		block.z = 1;
-		grid.x = (batched_w_ro_cols / 4 + block.x - 1) / block.x;
-		grid.y = (batched_w_ro_rows + block.y - 1) / block.y;
-		grid.z = (batch_size + block.z - 1) / block.z;
-		widrow_hoff_kernel << <grid, block, 0, stream >> >
-			(
-				batch_size,
-				batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_stride,
-				batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_stride,
-				batched_error, batched_error_rows, batched_error_cols, batched_error_stride
-				);
+		{
+			dim3 block;
+			dim3 grid;
 
-		checkCudaErrors(cudaGetLastError());
+			block.x = BLOCK_X;
+			block.y = BLOCK_Y;
+			block.z = 1;
+			grid.x = (batched_w_ro_cols / 4 + block.x - 1) / block.x;
+			grid.y = (batched_w_ro_rows + block.y - 1) / block.y;
+			grid.z = (batch_size + block.z - 1) / block.z;
+			widrow_hoff_kernel << <grid, block, 0, stream >> >
+				(
+					batch_size,
+					batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_stride,
+					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_stride,
+					batched_error, batched_error_rows, batched_error_cols, batched_error_stride
+					);
+
+			checkCudaErrors(cudaGetLastError());
+		}
 	}
 }
 static const float one = 1.0f;
@@ -1189,6 +1192,7 @@ void update_model(
 
 
 	std::size_t ts = 0;
+	std::size_t d = 0;
 	for (std::size_t repetition = 0; repetition < repetitions; repetition++)
 	{
 		initialize_states<overwrite_states>(stream,  seed, batch_size,
@@ -1197,10 +1201,12 @@ void update_model(
 		initialize_states<overwrite_states>(stream, seed, batch_size,
 			(float **)batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides, initial_state_scale);
 		//isnan(stream, batch_size, batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides);
+
+		d += durations[repetition];
 		for (std::size_t k = 0; k < durations[repetition]; k++, ts++)
 		{
-			int t = offsets[ts];
-	
+			int t0 = offsets[ts];
+
 			//INFORMATION_LOGGER <<   "t = " << t ;
 			batched_reset(stream, batch_size, batched_u_rows, batched_u_cols, batched_u, batched_u_strides);
 			//isnan(stream, batch_size, batched_u, batched_u_rows, batched_u_cols, batched_u_strides);
@@ -1211,7 +1217,7 @@ void update_model(
 			);
 			//isnan(stream, batch_size, batched_u, batched_u_rows, batched_u_cols, batched_u_strides);
 
-			if (t < 0)
+			/*if (t < 0)
 			{
 				t = -t;
 				batched_update_reservoir_no_input(
@@ -1222,15 +1228,15 @@ void update_model(
 					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides);
 			}
 			else
-			{
-				batched_update_reservoir(
-					stream,
-					batch_size, t, leak_rate,
-					batched_u_ffwd, batched_u_ffwd_rows, batched_u_ffwd_cols, batched_u_ffwd_strides,
-					batched_u, batched_u_rows, batched_u_cols, batched_u_strides,
-					batched_p, batched_p_rows, batched_p_cols, batched_p_strides,
-					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides);
-			}
+			{*/
+			batched_update_reservoir(
+				stream,
+				batch_size, t0, leak_rate,
+				batched_u_ffwd, batched_u_ffwd_rows, batched_u_ffwd_cols, batched_u_ffwd_strides,
+				batched_u, batched_u_rows, batched_u_cols, batched_u_strides,
+				batched_p, batched_p_rows, batched_p_cols, batched_p_strides,
+				batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides);
+			/*}*/
 
 
 			//isnan(stream, batch_size, batched_p, batched_p_rows, batched_p_cols, batched_w_ffwd_strides);
@@ -1244,16 +1250,21 @@ void update_model(
 				batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides
 			);
 			//isnan(stream, batch_size, batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides);
-			batched_update_readout<Parameter>(
-				stream, handle, batch_size, t, parameter,
-				batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
-				batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,
-				batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_strides,
-				batched_error, batched_error_rows, batched_error_cols, batched_error_strides,
-				batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides);
+			if (ts + 1 < d)
+			{
+				int t1 = offsets[ts + 1];
+
+				batched_update_readout<Parameter>(
+					stream, handle, batch_size, t1, parameter,
+					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
+					batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,
+					batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_strides,
+					batched_error, batched_error_rows, batched_error_cols, batched_error_strides,
+					batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides);
+			}
 			//isnan(stream, batch_size, batched_error, batched_error_rows, batched_error_cols, batched_error_strides);
 			//isnan(stream, batch_size, batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides);
-			copy_states<gather_states>(stream, batch_size, t, ts,
+			copy_states<gather_states>(stream, batch_size, t0, ts,
 				stimulus_size, reservoir_size, prediction_size,
 				stimulus_stride, reservoir_stride, prediction_stride,
 				(const float **)batched_incoming, batched_incoming_rows, batched_incoming_cols, batched_incoming_strides,

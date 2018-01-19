@@ -14,7 +14,7 @@ class Widrow_Hoff
 private:
 	const float learning_rate;
 public:
-	 Widrow_Hoff(const float &learning_rate) : learning_rate(learning_rate) {}
+	 Widrow_Hoff(const float &learning_rate = 0.0f) : learning_rate(learning_rate) {}
 	 const float &get_learning_rate() const
 	{
 		return learning_rate;
@@ -1258,66 +1258,70 @@ static inline void batched_update_readout(
 			batch_size,
 			batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides
 			);
+
 	const float learning_rate = parameter.get_learning_rate();
 	for (std::size_t batch = 0; batch < batch_size; batch++)
 	{
-		const std::size_t rows = batched_w_ro_rows[batch];
-		const std::size_t cols = batched_w_ro_cols[batch];
-		std::size_t w_ro_stride = batched_w_ro_strides[batch];
-		std::size_t expected_stride = batched_expected_strides[batch];
-		float *w_ro = batched_w_ro[batch];
-		float *x_ro = batched_x_ro[batch];
-		float *expected = &batched_expected[batch][t * expected_stride];
-		float *error = batched_error[batch];
-		float *x_res = batched_x_res[batch];
-		
-#pragma omp parallel for
-		for (int row = 0; row < rows; row++)
+		if (t < batched_expected_rows[batch])
 		{
-			float *w_ro_row = &w_ro[row  * w_ro_stride];
-			const auto x_ro_row = x_ro[row];
-			const auto post_error = learning_rate * (expected[row] - x_ro_row) * (1.0f - x_ro_row * x_ro_row);
-			const auto __post_error = set1_ps(post_error);
-			error[row] = post_error;
-			std::size_t col = 0;
+			const std::size_t rows = batched_w_ro_rows[batch];
+			const std::size_t cols = batched_w_ro_cols[batch];
+			std::size_t w_ro_stride = batched_w_ro_strides[batch];
+			std::size_t expected_stride = batched_expected_strides[batch];
+			float *w_ro = batched_w_ro[batch];
+			float *x_ro = batched_x_ro[batch];
+			float *expected = &batched_expected[batch][t * expected_stride];
+			float *error = batched_error[batch];
+			float *x_res = batched_x_res[batch];
 
-			if (cols - col > _8)
+#pragma omp parallel for
+			for (int row = 0; row < rows; row++)
 			{
-				for (; col + _8 - 1 < cols; col += _8)
+				float *w_ro_row = &w_ro[row  * w_ro_stride];
+				const auto x_ro_row = x_ro[row];
+				const auto post_error = learning_rate * (expected[row] - x_ro_row) * (1.0f - x_ro_row * x_ro_row);
+				const auto __post_error = set1_ps(post_error);
+				error[row] = post_error;
+				std::size_t col = 0;
+
+				if (cols - col > _8)
 				{
-					stream_ps(&w_ro_row[col + _0], mul_add_ps(__post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
-					stream_ps(&w_ro_row[col + _1], mul_add_ps(__post_error, load_ps(&x_res[col + _1]), load_ps(&w_ro_row[col + _1])));
-					stream_ps(&w_ro_row[col + _2], mul_add_ps(__post_error, load_ps(&x_res[col + _2]), load_ps(&w_ro_row[col + _2])));
-					stream_ps(&w_ro_row[col + _3], mul_add_ps(__post_error, load_ps(&x_res[col + _3]), load_ps(&w_ro_row[col + _3])));
-					stream_ps(&w_ro_row[col + _4], mul_add_ps(__post_error, load_ps(&x_res[col + _4]), load_ps(&w_ro_row[col + _4])));
-					stream_ps(&w_ro_row[col + _5], mul_add_ps(__post_error, load_ps(&x_res[col + _5]), load_ps(&w_ro_row[col + _5])));
-					stream_ps(&w_ro_row[col + _6], mul_add_ps(__post_error, load_ps(&x_res[col + _6]), load_ps(&w_ro_row[col + _6])));
-					stream_ps(&w_ro_row[col + _7], mul_add_ps(__post_error, load_ps(&x_res[col + _7]), load_ps(&w_ro_row[col + _7])));
+					for (; col + _8 - 1 < cols; col += _8)
+					{
+						stream_ps(&w_ro_row[col + _0], mul_add_ps(__post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
+						stream_ps(&w_ro_row[col + _1], mul_add_ps(__post_error, load_ps(&x_res[col + _1]), load_ps(&w_ro_row[col + _1])));
+						stream_ps(&w_ro_row[col + _2], mul_add_ps(__post_error, load_ps(&x_res[col + _2]), load_ps(&w_ro_row[col + _2])));
+						stream_ps(&w_ro_row[col + _3], mul_add_ps(__post_error, load_ps(&x_res[col + _3]), load_ps(&w_ro_row[col + _3])));
+						stream_ps(&w_ro_row[col + _4], mul_add_ps(__post_error, load_ps(&x_res[col + _4]), load_ps(&w_ro_row[col + _4])));
+						stream_ps(&w_ro_row[col + _5], mul_add_ps(__post_error, load_ps(&x_res[col + _5]), load_ps(&w_ro_row[col + _5])));
+						stream_ps(&w_ro_row[col + _6], mul_add_ps(__post_error, load_ps(&x_res[col + _6]), load_ps(&w_ro_row[col + _6])));
+						stream_ps(&w_ro_row[col + _7], mul_add_ps(__post_error, load_ps(&x_res[col + _7]), load_ps(&w_ro_row[col + _7])));
+					}
 				}
-			}
-			if (cols - col > _4)
-			{
-				for (; col + _4 - 1 < cols; col += _4)
+				if (cols - col > _4)
 				{
-					stream_ps(&w_ro_row[col + _0], mul_add_ps(__post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
-					stream_ps(&w_ro_row[col + _1], mul_add_ps(__post_error, load_ps(&x_res[col + _1]), load_ps(&w_ro_row[col + _1])));
-					stream_ps(&w_ro_row[col + _2], mul_add_ps(__post_error, load_ps(&x_res[col + _2]), load_ps(&w_ro_row[col + _2])));
-					stream_ps(&w_ro_row[col + _3], mul_add_ps(__post_error, load_ps(&x_res[col + _3]), load_ps(&w_ro_row[col + _3])));
+					for (; col + _4 - 1 < cols; col += _4)
+					{
+						stream_ps(&w_ro_row[col + _0], mul_add_ps(__post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
+						stream_ps(&w_ro_row[col + _1], mul_add_ps(__post_error, load_ps(&x_res[col + _1]), load_ps(&w_ro_row[col + _1])));
+						stream_ps(&w_ro_row[col + _2], mul_add_ps(__post_error, load_ps(&x_res[col + _2]), load_ps(&w_ro_row[col + _2])));
+						stream_ps(&w_ro_row[col + _3], mul_add_ps(__post_error, load_ps(&x_res[col + _3]), load_ps(&w_ro_row[col + _3])));
+					}
 				}
-			}
-			if (cols - col > _2)
-			{
-				for (; col + _2 - 1 < cols; col += _2)
+				if (cols - col > _2)
 				{
-					stream_ps(&w_ro_row[col + _0], mul_add_ps(__post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
-					stream_ps(&w_ro_row[col + _1], mul_add_ps(__post_error, load_ps(&x_res[col + _1]), load_ps(&w_ro_row[col + _1])));
+					for (; col + _2 - 1 < cols; col += _2)
+					{
+						stream_ps(&w_ro_row[col + _0], mul_add_ps(__post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
+						stream_ps(&w_ro_row[col + _1], mul_add_ps(__post_error, load_ps(&x_res[col + _1]), load_ps(&w_ro_row[col + _1])));
+					}
 				}
-			}
-			if (cols - col > 0)
-			{
-				for (; col + _1 - 1 < cols; col += _1)
+				if (cols - col > 0)
 				{
-					stream_ps(&w_ro_row[col + _0], mul_add_ps(__post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
+					for (; col + _1 - 1 < cols; col += _1)
+					{
+						stream_ps(&w_ro_row[col + _0], mul_add_ps(__post_error, load_ps(&x_res[col + _0]), load_ps(&w_ro_row[col + _0])));
+					}
 				}
 			}
 		}
@@ -1443,16 +1447,17 @@ static inline void update_model(
 		batched_u_ffwd, batched_u_ffwd_rows, batched_u_ffwd_cols, batched_u_ffwd_strides);
 
 	std::size_t ts = 0;
+	std::size_t d = 0;
 	for (std::size_t repetition = 0; repetition < repetitions; repetition++)
 	{
 		initializer(batch_size, seed, batched_p, batched_p_rows, batched_p_cols, batched_p_strides, initial_state_scale);
 		initializer(batch_size, seed, batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides, initial_state_scale);
-	
+		d += durations[repetition];
 		for (std::size_t k = 0; k < durations[repetition]; k++, ts++)
 		{
-			int t = offsets[ts];
+			int t0 = offsets[ts];
 	
-			if (t < 0)
+			/*if (t < 0)
 			{
 				t = -t;
 				update_reservoir_no_input<Implementation>(batch_size, t,
@@ -1463,9 +1468,9 @@ static inline void update_model(
 					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides, __leak_rate);
 			
 			}
-			else
+			else*/
 			{
-				update_reservoir<Implementation>(batch_size, t,
+				update_reservoir<Implementation>(batch_size, t0,
 					batched_w_in, batched_w_in_rows, batched_w_in_cols, batched_w_in_strides,
 					batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides,
 					batched_u, batched_u_rows, batched_u_cols, batched_u_strides,
@@ -1473,16 +1478,19 @@ static inline void update_model(
 					batched_p, batched_p_rows, batched_p_cols, batched_p_strides,
 					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides, __leak_rate);
 			}
-		
-			batched_update_readout<Implementation>(batch_size, t, parameter,
-				batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
-				batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,
-				batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_strides,
-				batched_error, batched_error_rows, batched_error_cols, batched_error_strides,
-				batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides
-				);
+			if (ts + 1 < d)
+			{
+				int t1 = offsets[ts + 1];
+				batched_update_readout<Implementation>(batch_size, t1, parameter,
+					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
+					batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,
+					batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_strides,
+					batched_error, batched_error_rows, batched_error_cols, batched_error_strides,
+					batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides
+					);
+			}
 			//INFORMATION d ;
-			copy_states<gather_states>(batch_size, t, ts,
+			copy_states<gather_states>(batch_size, t0, ts,
 				stimulus_size, reservoir_size, prediction_size,
 				stimulus_stride, reservoir_stride, prediction_stride,
 				(const float **)batched_incoming, batched_incoming_rows, batched_incoming_cols, batched_incoming_strides,

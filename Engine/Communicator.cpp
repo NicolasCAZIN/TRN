@@ -31,8 +31,9 @@ void TRN::Engine::Communicator::send(const TRN::Engine::Message<tag> &message, c
 	boost::archive::binary_oarchive archive(archive_stream);
 	archive << message;
 
+	auto to_send = archive_stream.str();
 
-	send(destination, tag, compress<RAW>(archive_stream.str()));
+	send(destination, tag, compress<RAW>(to_send));
 }
 template <TRN::Engine::Tag tag>
 void TRN::Engine::Communicator::broadcast(const TRN::Engine::Message<tag> &message)
@@ -47,7 +48,8 @@ template <TRN::Engine::Tag tag>
 TRN::Engine::Message<tag> TRN::Engine::Communicator::receive(const int &destination)
 {
 	TRACE_LOGGER;
-	std::string data = decompress<RAW>(receive(destination, tag));
+	auto received = receive(destination, tag);
+	std::string data = decompress<RAW>(received);
 
 	std::istringstream archive_stream(data);
 	boost::archive::binary_iarchive archive(archive_stream);

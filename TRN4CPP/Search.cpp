@@ -43,6 +43,7 @@ float TRN4CPP::Search::score(const std::vector<float> &score)
 	float new_m, old_m = score[0];
 	float new_s, old_s = 0.0f;
 
+	new_m = old_m;
 	for (std::size_t k = 1; k < score.size(); k++)
 	{
 		new_m = old_m + (score[k] - old_m) / k;

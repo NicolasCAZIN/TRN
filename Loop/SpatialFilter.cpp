@@ -2,6 +2,7 @@
 #include "SpatialFilter.h"
 #include "Core/Loop_impl.h"
 #include "Core/Bundle.h"
+#include "Helper/Logger.h"
 
 class TRN::Loop::SpatialFilter::Handle
 {
@@ -42,8 +43,6 @@ public :
 
 	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_predicted_position;
 	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_predicted_stimulus;
-	std::function<std::size_t(const float &x)> x_to_col;
-	std::function<std::size_t(const float &y)> y_to_row;
 
 };
 
@@ -149,8 +148,8 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 		{
 			/*handle->y_range[rows - 1] = y.first;
 			for (std::size_t row = 0; row < rows - 1; row++)
-				handle->y_range[rows - 1 - row] = y.first + row * y_step;
-			handle->y_range[0] = y.second;*/
+				handle->y_range[rows - 1 - row] = y.first + row * y_step;*/
+			handle->y_range[0] = y.first;
 			for (std::size_t row = 0; row < rows - 1; row++)
 				handle->y_range[row] = y.first + ( row) * y_step;
 			handle->y_range[rows - 1] = y.second;
@@ -235,6 +234,7 @@ static inline std::size_t clamp(const std::size_t &v, const std::size_t &a, cons
 #include <random>
 #include <algorithm>
 #include <numeric>
+#include <opencv2\core.hpp>
 void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Core::Message::PREDICTION> &payload)
 {
 	{
@@ -312,13 +312,17 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 	/*std::vector<float> current_position;
 	std::size_t current_position_matrices;
 	std::vector<std::size_t> current_position_rows;
-	std::vector<std::size_t> current_position_cols;*/
+	std::vector<std::size_t> current_position_cols;
 
 
-	//handle->batched_current_position->to(current_position, current_position_matrices, current_position_rows, current_position_cols);
+	handle->batched_current_position->to(current_position, current_position_matrices, current_position_rows, current_position_cols);*/
+
+
+
 	handle->batched_predicted_position->to(predicted_position, predicted_position_matrices, predicted_position_rows, predicted_position_cols);
-	//// INFORMATION __FUNCTION__ << " current position " << current_position[0] << ", " << current_position[1] ;
-	//// INFORMATION __FUNCTION__ << " predicted position " << predicted_position[0] << ", " << predicted_position[1] ;
+
+//	INFORMATION_LOGGER << " current position " << current_position[0] << ", " << current_position[1] ;
+	//INFORMATION_LOGGER << " predicted position " << predicted_position[0] << ", " << predicted_position[1] ;
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::POSITION>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::POSITION>(handle->batched_predicted_position, payload.get_trial(), payload.get_evaluation()));
 
 

@@ -117,6 +117,7 @@ void TRN::Simulator::States::uninitialize()
 void TRN::Simulator::States::to_host(const std::string &phase)
 {
 	auto driver = decorated->get_reservoir()->get_implementor();
+	driver->synchronize();
 	auto batch_size = decorated->get_reservoir();
 	auto stimulus_size = decorated->get_reservoir()->get_stimulus_size();
 	auto prediction_size = decorated->get_reservoir()->get_prediction_size();

@@ -6,7 +6,7 @@ class TRN::Scheduler::Snippets::Handle
 public :
 	unsigned int snippets_size;
 	unsigned int time_budget;
-	unsigned long seed;
+	std::default_random_engine random_engine;
 	std::string tag;
 };
 
@@ -16,7 +16,7 @@ TRN::Scheduler::Snippets::Snippets(const unsigned long &seed, const unsigned int
 	handle->snippets_size = snippets_size;
 	handle->time_budget = time_budget;
 	handle->tag = tag;
-	handle->seed = seed;
+	handle->random_engine = std::default_random_engine(seed);
 }
 
 TRN::Scheduler::Snippets::~Snippets()
@@ -26,91 +26,124 @@ TRN::Scheduler::Snippets::~Snippets()
 
 void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Core::Message::SET> &payload)
 {
-	auto snippets_number = handle->time_budget / handle->snippets_size;
-	auto remaining_time = handle->time_budget % handle->snippets_size;
-	std::vector<int> durations(snippets_number);
-	std::fill(durations.begin(), durations.end(), (int)handle->snippets_size);
-	if (remaining_time)
-	{
-		durations.push_back(remaining_time);
-		snippets_number++;
-	}
+
 	std::shared_ptr<TRN::Core::Set> set;
 	std::vector<int> score;
 	std::vector<int> batch_offsets, batch_durations;
 
+	std::vector<float> reward_elements;
+
 	if (handle->tag.empty())
 	{
 		set = delegate.lock()->retrieve_set(payload.get_label(), payload.get_incoming());
+		set->get_scheduling()->to(batch_offsets, batch_durations);
+		reward_elements.resize(batch_offsets.size());
+		std::fill(reward_elements.begin(), reward_elements.end(), 0.0f);
+		std::size_t b = 0;
+	
+		for (std::size_t k = 0; k < batch_durations.size(); k++)
+		{
+			auto e = b + batch_durations[k] - 1;
+			reward_elements[b] = 1.0f;
+			reward_elements[e] = 1.0f;
+
+			b = e + 1;
+		}
+
 	}
 	else
 	{
-		set = delegate.lock()->retrieve_set(payload.get_label(), handle->tag);
-	}
-
-
-
-	set->get_scheduling()->to(batch_offsets, batch_durations);
-	std::vector<unsigned int> possible_offsets, possible_durations;
-	auto b = batch_offsets.begin();
-	for (std::size_t k = 0; k < set->get_scheduling()->get_durations().size(); k++)
-	{
-		auto e = b + batch_durations[k] - handle->snippets_size;
-		
-		possible_offsets.insert(possible_offsets.end(), b, e+1);
-		b = e + handle->snippets_size;
-	}
-
-	if (handle->tag.empty())
-	{
-		score.resize(possible_offsets.size());
-		std::fill(score.begin(), score.end(),  1);
-	}
-	else
-	{
-		std::vector<float> reward_elements;
 		std::size_t reward_rows;
 		std::size_t reward_cols;
+
+		set = delegate.lock()->retrieve_set(payload.get_label(), handle->tag);
 		set->get_sequence()->to(reward_elements, reward_rows, reward_cols);
+		set->get_scheduling()->to(batch_offsets, batch_durations);
 
-		std::size_t c = 0;
-		for (std::size_t k = 0; k < set->get_scheduling()->get_durations().size(); k++)
-		{
-			std::vector<float> integral(batch_durations[k]);
-		
-			float cumsum = 0.0f;
-			for (unsigned int l = 0; l < batch_durations[k]; l++)
-			{
-				integral[l] = cumsum;
-				cumsum += reward_elements[batch_offsets[l + c]];
-			}
-			if (cumsum == 0.0f)
-				throw std::runtime_error("no reward present in sequence " + payload.get_label() + " with tag " + handle->tag);
-			for (int l = 0; l < batch_durations[k] - handle->snippets_size; l++)
-			{
-				score.push_back((integral[l + handle->snippets_size] - integral[l]));
-			}
-			c += batch_durations[k];
-		}
+	
+
 	}
-
-	std::default_random_engine engine(handle->seed);
-
-	std::discrete_distribution<int> score_distribution(score.begin(), score.end());
-	auto random_offset = std::bind(score_distribution, engine);
-	//std::uniform_real_distribution<float> mutate_distribution(0.0f, 1.0f);
-	//auto random_mutation = std::bind(mutate_distribution, engine);
-	std::vector<int> offsets;
-	for (std::size_t n = 0; n < snippets_number; n++)
+	/*std::size_t b = 0;
+	for (std::size_t k = 0; k < batch_durations.size(); k++)
 	{
+		auto e = b + batch_durations[k] - 1;
 
-		std::vector<int> snippet(handle->snippets_size);
-		std::iota(snippet.begin(), snippet.end(), possible_offsets[random_offset()]);
-		offsets.insert(offsets.end(), snippet.begin(), snippet.end());
+	}*/
+	std::vector<std::vector<float>> reward_sites;
+	std::vector<std::vector<int>> relative_offsets;
+
+	std::size_t b = 0;
+
+	for (std::size_t k = 0; k < batch_durations.size(); k++)
+	{
+		/*auto e = b + batch_durations[k]-1;
+		reward_elements[b] = 1.0f;
+		reward_elements[e] = 1.0f;*/
+		std::vector<float> batch_reward(batch_durations[k]);
+		std::vector<int> batch_offset(batch_durations[k]);
+
+		std::copy(reward_elements.begin() + b, reward_elements.begin() + b + batch_durations[k], batch_reward.begin());
+		std::copy(batch_offsets.begin() + b, batch_offsets.begin() + b + batch_durations[k], batch_offset.begin());
+
+
+		reward_sites.push_back(batch_reward);
+		relative_offsets.push_back(batch_offset);
+		b += batch_durations[k];
 	}
-	if (std::any_of(offsets.begin(), offsets.end(), [](const int &offset) {return offset < 0; }))
-		throw std::runtime_error("offset can't be negative");
-	handle->seed += offsets.size() * durations.size();
+
+	auto sequence = std::uniform_int<std::size_t>(0, reward_sites.size() -1);
+
+	std::vector<int> offsets;
+	std::vector<int> durations;
+
+	while (offsets.size() < handle->time_budget)
+	{
+		std::size_t s = sequence(handle->random_engine);
+		std::discrete_distribution<std::size_t> d(reward_sites[s].begin(), reward_sites[s].end());
+		std::size_t r0 = d(handle->random_engine);
+		std::size_t r1 = r0;
+		while (r0 == r1)
+		{
+			r1 = d(handle->random_engine);
+		} 
+
+		if (r0 > r1)
+			std::swap(r0, r1);
+		std::uniform_int<std::size_t> offset(r0, r1);
+
+		std::size_t o = offset(handle->random_engine);
+		auto duration = handle->snippets_size;
+		if (r1 - r0 < handle->snippets_size)
+		{
+			unsigned int t = reward_sites[s].size() - o;
+			duration = std::min(t + 1, handle->snippets_size);
+		}
+		else
+		{
+			while (o + duration >= reward_sites[s].size())
+			{
+				o = offset(handle->random_engine);
+			}
+			
+		}
+	
+		int extra_steps = offsets.size() + duration - handle->time_budget;
+		if (extra_steps > 0)
+		{
+			if (extra_steps >= handle->snippets_size)
+				throw std::runtime_error("");
+			duration -= extra_steps;
+		}
+		
+
+		std::vector<int> snippet(duration);
+		std::iota(snippet.begin(), snippet.end(), relative_offsets[s][o]);
+
+		durations.push_back(static_cast<int>(snippet.size()));
+		offsets.insert(offsets.begin(), snippet.begin(), snippet.end());
+
+	}
+	assert(handle->time_budget == offsets.size());
 	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_trial(), TRN::Core::Scheduling::create(offsets, durations)));
 }
 

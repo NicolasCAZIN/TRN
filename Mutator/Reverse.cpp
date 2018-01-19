@@ -26,15 +26,14 @@ void TRN::Mutator::Reverse::update(const TRN::Core::Message::Payload<TRN::Core::
 	payload.get_scheduling()->to(indices);
 	std::for_each(std::begin(indices), std::end(indices), [&](std::vector<int> &v) 
 	{
-		if (rate_dice() < handle->rate)
+		if (rate_dice() <= handle->rate)
 		{
-			if (handle->size > v.size())
-				throw std::invalid_argument("size of sequence must be <= to " + std::to_string(handle->size));
-			std::uniform_int_distribution<std::size_t> offset_distribution(0, v.size() - handle->size);
+			auto size = std::min(handle->size, v.size());
+			std::uniform_int_distribution<std::size_t> offset_distribution(0, v.size() - size);
 
 			auto offset = offset_distribution(engine);
 
-			std::reverse(std::begin(v) + offset, std::begin(v) + offset + handle->size);
+			std::reverse(std::begin(v) + offset, std::begin(v) + offset + size);
 		}
 	});
 	handle->seed += payload.get_scheduling()->get_offsets().size() *  payload.get_scheduling()->get_durations().size();

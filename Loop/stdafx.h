@@ -3,6 +3,7 @@
 #include <vld.h>
 #endif 
 
+#include <sstream>
 #include <cassert>
 #include <vector>
 #include <memory>
