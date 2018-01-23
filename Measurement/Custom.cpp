@@ -3,14 +3,14 @@
 #include "Custom_impl.h"
 #include "Core/Measurement_impl.h"
 
-TRN::Measurement::Custom::Custom(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor) :
+TRN::Measurement::Custom::Custom(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor) :
 	TRN::Core::Measurement::Implementation(driver),
 	handle(std::make_unique<Handle>())
 {
 	handle->functor = functor;
 }
 
-void TRN::Measurement::Custom::compute(const std::size_t &trial, const std::size_t &evaluation, const std::shared_ptr<TRN::Core::Matrix> &primed, const std::shared_ptr<TRN::Core::Batch> &predicted, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Matrix> &error)
+void TRN::Measurement::Custom::compute(const unsigned long long &evaluation_id, const std::shared_ptr<TRN::Core::Matrix> &primed, const std::shared_ptr<TRN::Core::Batch> &predicted, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Matrix> &error)
 {
 	std::vector<float> predicted_values;
 	std::size_t batch_size;
@@ -30,10 +30,10 @@ void TRN::Measurement::Custom::compute(const std::size_t &trial, const std::size
 	predicted->to(predicted_values, batch_size, predicted_rows, predicted_cols);
 	
 
-	handle->functor(trial, evaluation, primed_values, predicted_values, expected_values, primed_rows, batch_size,expected_rows, expected_cols);
+	handle->functor(evaluation_id, primed_values, predicted_values, expected_values, primed_rows, batch_size,expected_rows, expected_cols);
 }
 
-std::shared_ptr<TRN::Measurement::Custom> TRN::Measurement::Custom::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
+std::shared_ptr<TRN::Measurement::Custom> TRN::Measurement::Custom::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	return std::make_shared<TRN::Measurement::Custom>(driver, functor);
 }

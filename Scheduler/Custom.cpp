@@ -6,13 +6,13 @@ class TRN::Scheduler::Custom::Handle
 {
 public:
 	unsigned long seed;
-	std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> request;
+	std::function<void(const unsigned long long &evaluation_id, const unsigned long &seed, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> request;
 	std::string tag;
 };
 
 TRN::Scheduler::Custom::Custom(const unsigned long &seed,
-	const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-	std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply,
+	const std::function<void(const unsigned long long &evaluation_id, const unsigned long &seed,const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void(const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply,
 	const std::string &tag) :
 	handle(std::make_unique<TRN::Scheduler::Custom::Handle>())
 {
@@ -52,7 +52,7 @@ void TRN::Scheduler::Custom::update(const TRN::Core::Message::Payload<TRN::Core:
 		batch->get_sequence()->to(elements, rows, cols);
 		batch->get_scheduling()->to(offsets, durations);
 
-		handle->request(handle->seed, payload.get_trial(), elements, rows, cols, offsets, durations);
+		handle->request(payload.get_evaluation_id(), handle->seed,  elements, rows, cols, offsets, durations);
 		handle->seed += offsets.size() * durations.size();
 	}
 	catch (std::exception &e)
@@ -62,8 +62,8 @@ void TRN::Scheduler::Custom::update(const TRN::Core::Message::Payload<TRN::Core:
 }
 
 std::shared_ptr<TRN::Scheduler::Custom> TRN::Scheduler::Custom::create(const unsigned long &seed,
-	const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-	std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply,
+	const std::function<void(const unsigned long long &evaluation_id, const unsigned long &seed, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void(const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply,
 	const std::string &tag)
 {
 	return std::make_shared<TRN::Scheduler::Custom>(seed, request, reply, tag);

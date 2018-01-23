@@ -89,14 +89,14 @@ void TRN::Simulator::Scheduling::declare(const std::string &label, const std::st
 {
 	decorated->declare(label, tag, set);
 }
-void TRN::Simulator::Scheduling::train(const std::string &label, const std::string &incoming, const std::string &expected, const bool &reset_readout)
+void TRN::Simulator::Scheduling::train(const unsigned long long &evaluation_id, const std::string &label, const std::string &incoming, const std::string &expected, const bool &reset_readout)
 {
 
-	decorated->train(label, incoming, expected, reset_readout);
+	decorated->train(evaluation_id, label, incoming, expected, reset_readout);
 }
-void TRN::Simulator::Scheduling::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
+void TRN::Simulator::Scheduling::test(const unsigned long long &evaluation_id, const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
 {
-	decorated->test(label, incoming, expected, preamble, autonomous, supplementary_generations);
+	decorated->test(evaluation_id, label, incoming, expected, preamble, autonomous, supplementary_generations);
 }
 
 
@@ -116,7 +116,7 @@ void  TRN::Simulator::Scheduling::update(const TRN::Core::Message::Payload<TRN::
 	std::vector<int> offsets, durations;
 
 	payload.get_scheduling()->to(offsets, durations);
-	handle->functor(get_reservoir()->get_trial(), offsets, durations);
+	handle->functor(payload.get_evaluation_id(), offsets, durations);
 }
 
 void  TRN::Simulator::Scheduling::update(const TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED> &payload)

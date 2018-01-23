@@ -18,7 +18,7 @@ namespace TRN
 
 		public:
 			States(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-					const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
+					const std::function<void(const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
 				const bool &train, const bool &prime, const bool &generate);
 			~States();
 		public:
@@ -43,8 +43,8 @@ namespace TRN
 		public:
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Matrix> &sequence) override;
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Set> &batch) override;
-			virtual void train(const std::string &sequence, const std::string &incoming, const std::string &expected, const bool &reset_readout) override;
-			virtual void test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations) override;
+			virtual void train(const unsigned long long &evaluation_id, const std::string &sequence, const std::string &incoming, const std::string &expected, const bool &reset_readout) override;
+			virtual void test(const unsigned long long &evaluation_id, const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations) override;
 
 			virtual void initialize() override;
 			virtual void uninitialize() override;
@@ -56,11 +56,11 @@ namespace TRN
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::TRAINED> &payload) override;
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::CONFIGURED> &payload) override;
 		private:
-			void to_host(const std::string &phase);
+			void to_host(const std::string &phase, const unsigned long long &evaluation_id);
 
 		public:
 			static std::shared_ptr<States> create(const std::shared_ptr<TRN::Core::Simulator> decorated,
-				const std::function<void(const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
+				const std::function<void(const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::vector<float> &data, const std::size_t &rows, const std::size_t &cols)> &functor,
 				const bool &train, const bool &prime, const bool &generate);
 		};
 	};

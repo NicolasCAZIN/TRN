@@ -10,15 +10,16 @@ static const std::string THICKNESS_TOKEN = "THICKNESS";
 
 struct ID
 {
-	unsigned int simulation_number;
+	unsigned int batch_number;
 	unsigned short condition_number;
 	unsigned short number;
 
-	ID(const unsigned long long &id)
+	ID(const unsigned long long &simulation_id)
 	{
-		TRN4CPP::Simulation::decode(id, number, condition_number, simulation_number);
+		TRN4CPP::Simulation::decode(simulation_id,number, condition_number, batch_number);
 	}
 };
+
 
 struct Callbacks::Handle
 {
@@ -33,16 +34,17 @@ struct Callbacks::Handle
 	std::mutex windows_mutex;
 	std::mutex traj_mutex;
 	std::map<std::string, cv::Mat> windows;
-	std::map<std::size_t, cv::Mat> accumulator;
-	std::map<std::size_t, cv::Mat> overall;
-	std::map<std::size_t, std::size_t> trajectories;
+	std::set<std::string> allocated;
+	std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, cv::Mat>>> accumulator;
+	std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, cv::Mat>>> overall;
+	std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, std::size_t>>> trajectories;
 
 	bool expose_required;
 };
 
-static std::ostream &operator << (std::ostream &stream, const ID &id)
+static std::ostream &operator << (std::ostream &stream, const ID id)
 {
-	stream << "frontend_number = " << id.number << ", condition_number = " << id.condition_number << ", simulation_number = " << id.simulation_number;
+	stream << "frontend_number = " << id.number << ", condition_number = " << id.condition_number << ", bundle_size = " << id.batch_number;
 	return stream;
 }
 
@@ -129,7 +131,11 @@ void Callbacks::initialize(const std::map<std::string, std::string> &arguments)
 			//cv::destroyAllWindows();
 			for (auto p : handle->windows)
 			{
-				cv::namedWindow(p.first, CV_WINDOW_AUTOSIZE);
+				if (handle->allocated.find(p.first) == handle->allocated.end())
+				{
+					cv::namedWindow(p.first, CV_WINDOW_AUTOSIZE);
+					handle->allocated.insert(p.first);
+				}
 				cv::imshow(p.first, p.second);
 			}
 			if (handle->expose_required == false)
@@ -154,7 +160,7 @@ void Callbacks::uninitialize()
 	handle.reset();
 }
 
-void Callbacks::callback_measurement_readout_raw(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
+void Callbacks::callback_measurement_readout_raw(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRACE_LOGGER;
 }
@@ -167,9 +173,11 @@ int Callbacks::y_to_row(float y)
 {
 	return (handle->height - 1 - (((y)-handle->y.first) / (handle->y.second - handle->y.first)) * (handle->height - 1));
 }
-void Callbacks::callback_measurement_position_raw(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
+void Callbacks::callback_measurement_position_raw(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
 {
-	
+	unsigned short trial, train, test, repeat;
+	TRN4CPP::Simulation::Evaluation::decode(evaluation_id, trial, train, test, repeat);
+
 	cv::Mat cv_expected(handle->height, handle->width, CV_8UC3);
 	cv::Mat cv_predicted(handle->height, handle->width, CV_32F);
 
@@ -234,51 +242,54 @@ void Callbacks::callback_measurement_position_raw(const unsigned long long &id, 
 	{
 		std::unique_lock<std::mutex> lock(handle->traj_mutex);
 
-		if (handle->accumulator.find(trial - 1) == handle->accumulator.end())
+		if (handle->accumulator[trial][train][test].empty())
 		{
-			handle->accumulator[trial - 1] = cv::Mat(handle->height, handle->width, CV_32F);
-			handle->accumulator[trial - 1] = 0.0f;
+			handle->accumulator[trial][train][test] = cv::Mat(handle->height, handle->width, CV_32F);
+			handle->accumulator[trial][train][test] = 0.0f;
+			handle->trajectories[trial][train][test] = 0;
 		}
 
-		handle->accumulator[trial - 1] += cv_predicted;
-		handle->trajectories[trial - 1]++;
-		handle->overall[trial - 1] = handle->accumulator[trial - 1] / handle->trajectories[trial - 1];
+		handle->accumulator[trial][train][test] += cv_predicted;
+		handle->trajectories[trial][train][test]++;
+		handle->overall[trial][train][test] = handle->accumulator[trial][train][test] / handle->trajectories[trial][train][test];
 		//cv::equalizeHist(cv_accumulator, cv_overall);
-		handle->to_display.enqueue(std::make_pair("accumulated, condition #" + std::to_string(ID(id).condition_number) + ", trial #" + std::to_string(trial), handle->overall[trial - 1]));
+		handle->to_display.enqueue(std::make_pair("accumulated, condition #" + std::to_string(ID(simulation_id).condition_number) + ", trial #" + std::to_string(trial)+ ", train #" + std::to_string(train)+ ", test #" + std::to_string(test), handle->overall[train][trial][test]));
 	}
 }
-void Callbacks::callback_measurement_readout_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+void Callbacks::callback_measurement_readout_mean_square_error(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRACE_LOGGER;
 }
-void Callbacks::callback_measurement_readout_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+void Callbacks::callback_measurement_readout_frechet_distance(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRACE_LOGGER;
 }
-void Callbacks::callback_measurement_position_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+void Callbacks::callback_measurement_position_mean_square_error(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRACE_LOGGER;
 }
-void Callbacks::callback_measurement_position_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+void Callbacks::callback_measurement_position_frechet_distance(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRACE_LOGGER;
 }
-void Callbacks::callback_performances(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
+void Callbacks::callback_performances(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
 {
 	TRACE_LOGGER;
 }
-void Callbacks::callback_states(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
+void Callbacks::callback_states(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
 	TRACE_LOGGER;
 	cv::Mat copy;
 	cv::Mat(rows, cols, CV_32FC1, (char *)samples.data()).copyTo(copy);
-	handle->to_display.enqueue(std::make_pair("id #" + std::to_string(id) + " " + label + "@" + phase + " batch #" + std::to_string(batch) + " trial #" + std::to_string(trial) + ", evalutation #" + std::to_string(evaluation), copy));
-	INFORMATION_LOGGER << __FUNCTION__ << " : " << ID(id) << ", phase = " << phase << ", batch = " << batch << ", trial = " << trial << ", evaluation = " << evaluation;
+	unsigned short trial, train, test, repeat;
+	TRN4CPP::Simulation::Evaluation::decode(evaluation_id, trial, train, test, repeat);
+	handle->to_display.enqueue(std::make_pair("accumulated, condition #" + std::to_string(ID(simulation_id).condition_number) + ", trial #" + std::to_string(trial) + ", train #" + std::to_string(train) + ", test #" + std::to_string(test), copy));
 }
-void Callbacks::callback_weights(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
+void Callbacks::callback_weights(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch,const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
 	TRACE_LOGGER;
-	INFORMATION_LOGGER << __FUNCTION__ << " : " << ID(id) << ", phase = " << phase << ", label = " << label << ", batch = " << batch << ", trial = " << trial;
+	unsigned short trial, train, test, repeat;
+	TRN4CPP::Simulation::Evaluation::decode(evaluation_id, trial, train, test, repeat);
 	int histSize = 256;
 	int hist_w = 512; int hist_h = 400;
 	int bin_w = cvRound((double)hist_w / histSize);
@@ -301,15 +312,17 @@ void Callbacks::callback_weights(const unsigned long long &id, const std::string
 	}
 
 
-	INFORMATION_LOGGER << "id = " << std::to_string(id) << ", weights = " << label << ", rows = " << rows << ", cols = " << cols;
+	INFORMATION_LOGGER << "id = " << std::to_string(simulation_id) << ", weights = " << label << ", rows = " << rows << ", cols = " << cols;
 
-	handle->to_display.enqueue(std::make_pair("id #" + std::to_string(id) + " " + label + "@" + phase + " batch #" + std::to_string(batch) + " trial #" + std::to_string(trial), histImage));
+	handle->to_display.enqueue(std::make_pair("id #" + std::to_string(simulation_id) + " " + label + "@" + phase + " batch #" + std::to_string(batch) + " trial #" + std::to_string(trial), histImage));
 
 
 }
-void Callbacks::callback_scheduling(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
+void Callbacks::callback_scheduling(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
 	TRACE_LOGGER;
+	unsigned short trial, train, test, repeat;
+	TRN4CPP::Simulation::Evaluation::decode(evaluation_id, trial, train, test, repeat);
 	auto min_max = std::minmax_element(offsets.begin(), offsets.end());
 	auto ST = std::max(std::abs(*min_max.first), std::abs(*min_max.second)) + 1;
 	auto T = offsets.size();
@@ -323,14 +336,12 @@ void Callbacks::callback_scheduling(const unsigned long long &id, const std::siz
 			chronogram.at<float>(t, st) = 1.0f;
 	}
 
-	handle->to_display.enqueue(std::make_pair("scheduling for simulation #" + std::to_string(id) + ", trial #" + std::to_string(trial), chronogram));
-
-	INFORMATION_LOGGER << __FUNCTION__ << " : " << ID(id) << ", trial = " << trial;
+	handle->to_display.enqueue(std::make_pair("scheduling for simulation #" + std::to_string(simulation_id) + ", trial #" + std::to_string(trial)+", train #" + std::to_string(train), chronogram));
 }
 
 
 
-void Callbacks::callback_results(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results)
+void Callbacks::callback_results(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>>> &results)
 {
 }
 

@@ -111,7 +111,7 @@ const std::shared_ptr<TRN::Core::Set>  TRN::Simulator::Basic::retrieve_set(const
 	return handle->sets[key(label, tag)];
 }
 
-void TRN::Simulator::Basic::train(const std::string &label, const std::string &incoming, const std::string &expected, const bool &reset_readout)
+void TRN::Simulator::Basic::train(const unsigned long long &evaluation_id, const std::string &label, const std::string &incoming, const std::string &expected, const bool &reset_readout)
 {
 	if (!handle->initialized)
 		throw std::logic_error("Simulator is not initialized");
@@ -124,11 +124,11 @@ void TRN::Simulator::Basic::train(const std::string &label, const std::string &i
 	DEBUG_LOGGER << "Training simulator with set " << label << " and tags (" << incoming << ", " << expected << ")";
 	if (reset_readout)
 		handle->reservoir->reset_readout();
-	TRN::Core::Message::Payload<TRN::Core::Message::SET> sequence(label, incoming, expected, handle->reservoir->get_trial());
+	TRN::Core::Message::Payload<TRN::Core::Message::SET> sequence(label, incoming, expected, evaluation_id);
 	handle->pending.push(sequence);
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::SET>>::notify(sequence);
 }
-void TRN::Simulator::Basic::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
+void TRN::Simulator::Basic::test(const unsigned long long &evaluation_id, const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
 {
 	if (!handle->initialized)
 		throw std::logic_error("Simulator is not initialized");
@@ -151,7 +151,7 @@ void TRN::Simulator::Basic::test(const std::string &label, const std::string &in
 
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::CYCLES>>::notify(cycles);
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TARGET_SEQUENCE>>::notify(target_sequence);
-	handle->reservoir->test(incoming_sequence, expected_sequence, preamble, autonomous, supplementary_generations);
+	handle->reservoir->test(evaluation_id, incoming_sequence, expected_sequence, preamble, autonomous, supplementary_generations);
 }
 void TRN::Simulator::Basic::initialize()
 {
@@ -271,7 +271,7 @@ void  TRN::Simulator::Basic::update(const TRN::Core::Message::Payload<TRN::Core:
 	auto sequence = handle->pending.front();
 	auto incoming = retrieve_set(sequence.get_label(), sequence.get_incoming());
 	auto expected = retrieve_set(sequence.get_label(), sequence.get_expected());
-	handle->reservoir->train(incoming->get_sequence(), expected->get_sequence(), payload.get_scheduling());
+	handle->reservoir->train(payload.get_evaluation_id(), incoming->get_sequence(), expected->get_sequence(), payload.get_scheduling());
 	handle->pending.pop();
 }
 

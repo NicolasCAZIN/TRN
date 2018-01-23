@@ -30,14 +30,14 @@ void TRN::Engine::Manager::start()
 	}
 	handle->deallocator = std::thread([&]()
 	{
-		unsigned long long id;
-		while (handle->to_deallocate.dequeue(id))
+		unsigned long long simulation_id;
+		while (handle->to_deallocate.dequeue(simulation_id))
 		{
 			std::unique_lock<std::mutex> lock(handle->mutex);
 
 			//INFORMATION_LOGGER <<   "deallocate " << id ;
-			handle->available.emplace(handle->associated[id]);
-			handle->associated.erase(id);
+			handle->available.emplace(handle->associated[simulation_id]);
+			handle->associated.erase(simulation_id);
 
 			lock.unlock();
 			handle->condition.notify_all();
@@ -103,13 +103,13 @@ void TRN::Engine::Manager::update_processor(const int &rank, const std::string h
 	}
 	//INFORMATION_LOGGER <<   "no more simulations pending" ;
 }*/
-std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::allocate(const unsigned long long &id)
+std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::allocate(const unsigned long long &simulation_id)
 {
 	TRACE_LOGGER;
 	std::unique_lock<std::mutex> lock(handle->mutex);
-	if (handle->associated.find(id) != handle->associated.end())
+	if (handle->associated.find(simulation_id) != handle->associated.end())
 	{
-		throw std::invalid_argument("Simulator #" + std::to_string(id) + " was already associated");
+		throw std::invalid_argument("Simulator #" + std::to_string(simulation_id) + " was already associated");
 	}
 
 	while (handle->available.empty())
@@ -120,7 +120,7 @@ std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::allocate(const uns
 
 	auto processor = handle->available.top();
 	handle->available.pop();
-	handle->associated[id] = processor;
+	handle->associated[simulation_id] = processor;
 
 	lock.unlock();
 	handle->condition.notify_all();
@@ -137,24 +137,24 @@ void TRN::Engine::Manager::dispose()
 
 	lock.unlock();
 }
-void TRN::Engine::Manager::deallocate(const unsigned long long &id)
+void TRN::Engine::Manager::deallocate(const unsigned long long &simulation_id)
 {
 	TRACE_LOGGER;
-	handle->to_deallocate.enqueue(id);
+	handle->to_deallocate.enqueue(simulation_id);
 }
 
-std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::retrieve(const unsigned long long &id)
+std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::retrieve(const unsigned long long &simulation_id)
 {
 	TRACE_LOGGER;
 	std::unique_lock<std::mutex> lock(handle->mutex);
 	
-	while (handle->associated.find(id) == handle->associated.end())
+	while (handle->associated.find(simulation_id) == handle->associated.end())
 	{
 		//INFORMATION_LOGGER <<   "waiting for " << id <<  " non empty" ;
 		handle->condition.wait(lock);
 	}
 
-	return (handle->associated[id]);
+	return (handle->associated[simulation_id]);
 }
 
 std::shared_ptr<TRN::Engine::Manager> TRN::Engine::Manager::create(const std::size_t &size)

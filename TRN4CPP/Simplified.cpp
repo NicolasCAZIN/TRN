@@ -77,7 +77,7 @@ static std::string default_value<std::string>()
 }
 
 template<typename Type> 
-static Type get_variable(const boost::property_tree::iptree &node, const std::string &label, const unsigned short &condition_number, const unsigned int &simulation_number, const Type &default = default_value<Type>())
+static Type get_variable(const boost::property_tree::iptree &node, const std::string &label, const unsigned short &condition_number, const unsigned int &batch_number, const Type &default = default_value<Type>())
 {
 	auto child = node.get_child_optional(label);
 	if (!child)
@@ -86,7 +86,7 @@ static Type get_variable(const boost::property_tree::iptree &node, const std::st
 
 	if (value.at(0) == '@')
 	{
-		value = TRN4CPP::Search::retrieve(condition_number, simulation_number, value.substr(1));
+		value = TRN4CPP::Search::retrieve(condition_number, batch_number, value.substr(1));
 	}
 	
 	return boost::lexical_cast<Type>(value);
@@ -130,7 +130,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 	const std::string trials_attribute = prefix + "trials";
 	const std::string type_attribute = prefix + "type";
 	const std::string batch_size_attribute = prefix + "batch_size";
-	const std::string batch_number_attribute = prefix + "batch_number";
+	const std::string bundle_size_attribute = prefix + "bundle_size";
 	const std::string stimulus_size_attribute = prefix + "stimulus_size";
 	const std::string reservoir_size_attribute = prefix + "reservoir_size";
 	const std::string prediction_size_attribute = prefix + "prediction_size";
@@ -181,7 +181,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 
 
 	unsigned short condition_number;
-	unsigned int simulation_number;
+	unsigned int batch_number;
 
 	try
 	{
@@ -193,7 +193,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 				if (experiment_done)
 					throw std::runtime_error("Only one experiment per file is allowed");
 				condition_number = 1;
-				simulation_number = 1;
+		
 				auto _experiment = property_element.second;
 				for (auto experiment_element : _experiment)
 				{
@@ -264,13 +264,15 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 						auto _simulation = experiment_element.second;
 
 						std::size_t batch_size = _simulation.get<std::size_t>(batch_size_attribute, 1);
-						std::size_t batch_number = _simulation.get<std::size_t>(batch_number_attribute, 1);
-
-						TRN4CPP::Search::begin(condition_number, simulation_number, batch_number, batch_size);
+						std::size_t bundle_size = _simulation.get<std::size_t>(bundle_size_attribute, 1);
+						batch_number = 1;
+						TRN4CPP::Search::begin(condition_number, batch_number, bundle_size, batch_size);
 						do
 						{
-							for (unsigned int k = 0; k < TRN4CPP::Search::size(condition_number); k++)
+							auto K = TRN4CPP::Search::size(condition_number);
+							for (unsigned int k = 0; k < K; k++)
 							{
+							
 								bool reservoir_initialized = false;
 								bool loop_initialized = false;
 								bool scheduler_initialized = false;
@@ -289,9 +291,9 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 								std::size_t stimulus_size;
 								std::size_t reservoir_size;
 								std::size_t prediction_size;
-								unsigned long long id;
-								TRN4CPP::Simulation::encode(0, condition_number, simulation_number, id);
-								TRN4CPP::Simulation::allocate(id);
+								unsigned long long simulation_id;
+								TRN4CPP::Simulation::encode(0, condition_number, batch_number, simulation_id);
+								TRN4CPP::Simulation::allocate(simulation_id);
 
 								//
 								bool configured = false;
@@ -302,7 +304,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 									if (boost::iequals(simulation_element.first, declaration_name))
 									{
 										if (!configured)
-											throw std::runtime_error("Simulation  #" + std::to_string(id) + " must be configured first");
+											throw std::runtime_error("Simulation  #" + std::to_string(simulation_id) + " must be configured first");
 										auto _declaration = simulation_element.second;
 										for (auto declaration_element : _declaration)
 										{
@@ -324,7 +326,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														TRN4CPP::Sequences::retrieve(label, tag, elements, rows, cols);
 												
 														//
-														TRN4CPP::Simulation::declare_sequence(id, label, tag, elements, rows);
+														TRN4CPP::Simulation::declare_sequence(simulation_id,label, tag, elements, rows);
 													}
 												}
 											}
@@ -353,7 +355,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 
 												for (auto tag : tags)
 												{
-													TRN4CPP::Simulation::declare_set(id, label, tag, labels);
+													TRN4CPP::Simulation::declare_set(simulation_id,label, tag, labels);
 												}
 
 											}
@@ -364,8 +366,8 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 									else if (boost::iequals(simulation_element.first, configuration_name))
 									{
 										if (configured)
-											throw std::runtime_error("Simulation #" + std::to_string(id) + " is already configured");
-										TRN4CPP::Simulation::configure_begin(id);
+											throw std::runtime_error("Simulation #" + std::to_string(simulation_id) + " is already configured");
+										TRN4CPP::Simulation::configure_begin(simulation_id);
 										//
 										auto _configuration = simulation_element.second;
 										for (auto configuration_element : _configuration)
@@ -384,19 +386,19 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														auto _reservoir = model_element.second;
 
 
-														stimulus_size = get_variable<std::size_t>(_reservoir, stimulus_size_attribute, condition_number, simulation_number);
-														reservoir_size = get_variable<std::size_t>(_reservoir, reservoir_size_attribute, condition_number, simulation_number);
-														prediction_size = get_variable<std::size_t>(_reservoir, prediction_size_attribute, condition_number, simulation_number);
-														auto seed = simulation_number + get_variable<unsigned long>(_reservoir, seed_attribute, condition_number, simulation_number);
-														auto leak_rate = get_variable<float>(_reservoir, leak_rate_attribute, condition_number, simulation_number);
-														auto initial_state_scale = get_variable<float>(_reservoir, initial_state_scale_attribute, condition_number, simulation_number);
+														stimulus_size = get_variable<std::size_t>(_reservoir, stimulus_size_attribute, condition_number, batch_number);
+														reservoir_size = get_variable<std::size_t>(_reservoir, reservoir_size_attribute, condition_number, batch_number);
+														prediction_size = get_variable<std::size_t>(_reservoir, prediction_size_attribute, condition_number, batch_number);
+														auto seed = batch_number + get_variable<unsigned long>(_reservoir, seed_attribute, condition_number, batch_number);
+														auto leak_rate = get_variable<float>(_reservoir, leak_rate_attribute, condition_number, batch_number);
+														auto initial_state_scale = get_variable<float>(_reservoir, initial_state_scale_attribute, condition_number, batch_number);
 														auto reservoir_type = _reservoir.get_child(type_attribute).get_value<std::string>();
 
 														if (boost::iequals(reservoir_type, widrowhoff_type))
 														{
-															auto learning_rate = get_variable<float>(_reservoir, learning_rate_attribute, condition_number, simulation_number);
+															auto learning_rate = get_variable<float>(_reservoir, learning_rate_attribute, condition_number, batch_number);
 																
-															TRN4CPP::Simulation::Reservoir::WidrowHoff::configure(id, stimulus_size, prediction_size, reservoir_size, leak_rate, initial_state_scale, learning_rate, seed, batch_size);
+															TRN4CPP::Simulation::Reservoir::WidrowHoff::configure(simulation_id,stimulus_size, prediction_size, reservoir_size, leak_rate, initial_state_scale, learning_rate, seed, batch_size);
 															//
 														}
 														else
@@ -413,34 +415,34 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																auto target = _weights.get_child(target_attribute).get_value<std::string>();
 																auto type = _weights.get_child(type_attribute).get_value<std::string>();
 															
-																auto scale = get_variable(_weights, scale_attribute, condition_number, simulation_number, DEFAULT_SCALE);
+																auto scale = get_variable(_weights, scale_attribute, condition_number, batch_number, DEFAULT_SCALE);
 														
 																if (boost::iequals(target, feedforward_name))
 																{
 																	if (boost::iequals(type, gaussian_type))
 																	{
-																		auto mu = get_variable(_weights, mu_attribute, condition_number, simulation_number, DEFAULT_MU);
-																		auto sigma = get_variable(_weights, sigma_attribute, condition_number, simulation_number, DEFAULT_SIGMA);
-																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, simulation_number, DEFAULT_SPARSITY);
+																		auto mu = get_variable(_weights, mu_attribute, condition_number, batch_number, DEFAULT_MU);
+																		auto sigma = get_variable(_weights, sigma_attribute, condition_number, batch_number, DEFAULT_SIGMA);
+																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, batch_number, DEFAULT_SPARSITY);
 
-																		TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Gaussian::configure(id, mu, sigma * scale, sparsity);
+																		TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Gaussian::configure(simulation_id,mu, sigma * scale, sparsity);
 
 																		feedforward_initialized = true;
 																	}
 																	else if (boost::iequals(type, uniform_type))
 																	{
-																		auto a = get_variable(_weights, a_attribute, condition_number, simulation_number, DEFAULT_A);
-																		auto b = get_variable(_weights, b_attribute, condition_number, simulation_number, DEFAULT_B);
-																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, simulation_number, DEFAULT_SPARSITY);
+																		auto a = get_variable(_weights, a_attribute, condition_number, batch_number, DEFAULT_A);
+																		auto b = get_variable(_weights, b_attribute, condition_number, batch_number, DEFAULT_B);
+																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, batch_number, DEFAULT_SPARSITY);
 
 
-																		TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Uniform::configure(id, a * scale, b * scale, sparsity);
+																		TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Uniform::configure(simulation_id,a * scale, b * scale, sparsity);
 
 																		feedforward_initialized = true;
 																	}
 																	else if (boost::iequals(type, custom_type))
 																	{
-																		TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Custom::configure(id);
+																		TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Custom::configure(simulation_id);
 
 																		//
 																		feedforward_initialized = true;
@@ -450,28 +452,28 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																{
 																	if (boost::iequals(type, gaussian_type))
 																	{
-																		auto mu = get_variable(_weights, mu_attribute, condition_number, simulation_number, DEFAULT_MU);
-																		auto sigma = get_variable(_weights, sigma_attribute, condition_number, simulation_number, DEFAULT_SIGMA);
-																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, simulation_number, DEFAULT_SPARSITY);
+																		auto mu = get_variable(_weights, mu_attribute, condition_number, batch_number, DEFAULT_MU);
+																		auto sigma = get_variable(_weights, sigma_attribute, condition_number, batch_number, DEFAULT_SIGMA);
+																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, batch_number, DEFAULT_SPARSITY);
 
 
-																		TRN4CPP::Simulation::Reservoir::Weights::Feedback::Gaussian::configure(id, mu, sigma * scale, sparsity);
+																		TRN4CPP::Simulation::Reservoir::Weights::Feedback::Gaussian::configure(simulation_id,mu, sigma * scale, sparsity);
 																		//
 																		feedback_initialized = true;
 																	}
 																	else if (boost::iequals(type, uniform_type))
 																	{
-																		auto a = get_variable(_weights, a_attribute, condition_number, simulation_number, DEFAULT_A);
-																		auto b = get_variable(_weights, b_attribute, condition_number, simulation_number, DEFAULT_B);
-																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, simulation_number, DEFAULT_SPARSITY);
+																		auto a = get_variable(_weights, a_attribute, condition_number, batch_number, DEFAULT_A);
+																		auto b = get_variable(_weights, b_attribute, condition_number, batch_number, DEFAULT_B);
+																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, batch_number, DEFAULT_SPARSITY);
 
-																		TRN4CPP::Simulation::Reservoir::Weights::Feedback::Uniform::configure(id, a * scale, b * scale, sparsity);
+																		TRN4CPP::Simulation::Reservoir::Weights::Feedback::Uniform::configure(simulation_id,a * scale, b * scale, sparsity);
 																		//
 																		feedback_initialized = true;
 																	}
 																	else if (boost::iequals(type, custom_type))
 																	{
-																		TRN4CPP::Simulation::Reservoir::Weights::Feedback::Custom::configure(id);
+																		TRN4CPP::Simulation::Reservoir::Weights::Feedback::Custom::configure(simulation_id);
 																		//
 																		feedback_initialized = true;
 																	}
@@ -481,27 +483,27 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 										
 																	if (boost::iequals(type, gaussian_type))
 																	{
-																		auto mu = get_variable(_weights, mu_attribute, condition_number, simulation_number, DEFAULT_MU);
-																		auto sigma = get_variable(_weights, sigma_attribute, condition_number, simulation_number, DEFAULT_SIGMA);
-																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, simulation_number, DEFAULT_SPARSITY);
+																		auto mu = get_variable(_weights, mu_attribute, condition_number, batch_number, DEFAULT_MU);
+																		auto sigma = get_variable(_weights, sigma_attribute, condition_number, batch_number, DEFAULT_SIGMA);
+																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, batch_number, DEFAULT_SPARSITY);
 
-																		TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Gaussian::configure(id, mu, sigma * scale, sparsity);
+																		TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Gaussian::configure(simulation_id,mu, sigma * scale, sparsity);
 																		//
 																		recurrent_initialized = true;
 																	}
 																	else if (boost::iequals(type, uniform_type))
 																	{
-																		auto a = get_variable(_weights, a_attribute, condition_number, simulation_number, DEFAULT_A);
-																		auto b = get_variable(_weights, b_attribute, condition_number, simulation_number, DEFAULT_B);
-																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, simulation_number, DEFAULT_SPARSITY);
+																		auto a = get_variable(_weights, a_attribute, condition_number, batch_number, DEFAULT_A);
+																		auto b = get_variable(_weights, b_attribute, condition_number, batch_number, DEFAULT_B);
+																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, batch_number, DEFAULT_SPARSITY);
 
-																		TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Uniform::configure(id, a * scale, b * scale, sparsity);
+																		TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Uniform::configure(simulation_id,a * scale, b * scale, sparsity);
 																		//
 																		recurrent_initialized = true;
 																	}
 																	else if (boost::iequals(type, custom_type))
 																	{
-																		TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::configure(id);
+																		TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::configure(simulation_id);
 																		//
 																		recurrent_initialized = true;
 																	}
@@ -510,27 +512,27 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																{
 																	if (boost::iequals(type, gaussian_type))
 																	{
-																		auto mu = get_variable(_weights, mu_attribute, condition_number, simulation_number, DEFAULT_MU);
-																		auto sigma = get_variable(_weights, sigma_attribute, condition_number, simulation_number, DEFAULT_SIGMA);
-																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, simulation_number, DEFAULT_SPARSITY);
+																		auto mu = get_variable(_weights, mu_attribute, condition_number, batch_number, DEFAULT_MU);
+																		auto sigma = get_variable(_weights, sigma_attribute, condition_number, batch_number, DEFAULT_SIGMA);
+																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, batch_number, DEFAULT_SPARSITY);
 
-																		TRN4CPP::Simulation::Reservoir::Weights::Readout::Gaussian::configure(id, mu, sigma * scale, sparsity);
+																		TRN4CPP::Simulation::Reservoir::Weights::Readout::Gaussian::configure(simulation_id,mu, sigma * scale, sparsity);
 																		//
 																		readout_initialized = true;
 																	}
 																	else if (boost::iequals(type, uniform_type))
 																	{
-																		auto a = get_variable(_weights, a_attribute, condition_number, simulation_number, DEFAULT_A);
-																		auto b = get_variable(_weights, b_attribute, condition_number, simulation_number, DEFAULT_B);
-																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, simulation_number, DEFAULT_SPARSITY);
+																		auto a = get_variable(_weights, a_attribute, condition_number, batch_number, DEFAULT_A);
+																		auto b = get_variable(_weights, b_attribute, condition_number, batch_number, DEFAULT_B);
+																		auto sparsity = get_variable(_weights, sparsity_attribute, condition_number, batch_number, DEFAULT_SPARSITY);
 
-																		TRN4CPP::Simulation::Reservoir::Weights::Readout::Uniform::configure(id, a * scale, b * scale, sparsity);
+																		TRN4CPP::Simulation::Reservoir::Weights::Readout::Uniform::configure(simulation_id,a * scale, b * scale, sparsity);
 																		//
 																		readout_initialized = true;
 																	}
 																	else if (boost::iequals(type, custom_type))
 																	{
-																		TRN4CPP::Simulation::Reservoir::Weights::Readout::Custom::configure(id);
+																		TRN4CPP::Simulation::Reservoir::Weights::Readout::Custom::configure(simulation_id);
 																		//
 																		readout_initialized = true;
 																	}
@@ -560,21 +562,21 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														auto loop_type = _loop.get_child(type_attribute).get_value<std::string>();
 														if (boost::iequals(loop_type, copy_type))
 														{
-															TRN4CPP::Simulation::Loop::Copy::configure(id, batch_size, stimulus_size);
+															TRN4CPP::Simulation::Loop::Copy::configure(simulation_id,batch_size, stimulus_size);
 															//
 														}
 														else if (boost::iequals(loop_type, custom_type))
 														{
-															TRN4CPP::Simulation::Loop::Custom::configure(id, batch_size, stimulus_size);
+															TRN4CPP::Simulation::Loop::Custom::configure(simulation_id,batch_size, stimulus_size);
 															//
 														}
 														else if (boost::iequals(loop_type, spatial_filter_type))
 														{
-															auto seed = simulation_number + get_variable<unsigned long>(_loop, seed_attribute, condition_number, simulation_number);
+															auto seed = batch_number + get_variable<unsigned long>(_loop, seed_attribute, condition_number, batch_number);
 															
-															auto sigma = get_variable<float>(_loop, sigma_attribute, condition_number, simulation_number);
-															auto scale = get_variable<float>(_loop, scale_attribute, condition_number, simulation_number);
-															auto radius = get_variable<float>(_loop, radius_attribute, condition_number, simulation_number);
+															auto sigma = get_variable<float>(_loop, sigma_attribute, condition_number, batch_number);
+															auto scale = get_variable<float>(_loop, scale_attribute, condition_number, batch_number);
+															auto radius = get_variable<float>(_loop, radius_attribute, condition_number, batch_number);
 
 															auto tag = _loop.get_child(tag_attribute).get_value<std::string>();
 															auto response = _loop.get_child(response_attribute).get_value<std::string>();
@@ -593,7 +595,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 															auto rows = firing_rate_map_rows / stimulus_size;
 										
 
-															TRN4CPP::Simulation::Loop::SpatialFilter::configure(id, batch_size, stimulus_size, seed, rows, cols, x, y, firing_rate_map, sigma, radius, scale, tag);
+															TRN4CPP::Simulation::Loop::SpatialFilter::configure(simulation_id,batch_size, stimulus_size, seed, rows, cols, x, y, firing_rate_map, sigma, radius, scale, tag);
 														}
 													}
 													/// SCHEDULER
@@ -603,22 +605,22 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														auto scheduler_type = _scheduler.get_child(type_attribute).get_value<std::string>();
 														if (boost::iequals(scheduler_type, tiled_type))
 														{
-															auto epochs = get_variable<unsigned int>(_scheduler, epochs_attribute, condition_number, simulation_number);
-															TRN4CPP::Simulation::Scheduler::Tiled::configure(id, epochs);
+															auto epochs = get_variable<unsigned int>(_scheduler, epochs_attribute, condition_number, batch_number);
+															TRN4CPP::Simulation::Scheduler::Tiled::configure(simulation_id,epochs);
 														}
 														else if (boost::iequals(scheduler_type, snippets_type))
 														{
-															auto seed = simulation_number + get_variable<unsigned long>(_scheduler, seed_attribute, condition_number, simulation_number);
-															auto snippets_size = get_variable<std::size_t>(_scheduler, snippets_size_attribute, condition_number, simulation_number);
-															auto time_budget = get_variable<std::size_t>(_scheduler, time_budget_attribute, condition_number, simulation_number);
+															auto seed = batch_number + get_variable<unsigned long>(_scheduler, seed_attribute, condition_number, batch_number);
+															auto snippets_size = get_variable<std::size_t>(_scheduler, snippets_size_attribute, condition_number, batch_number);
+															auto time_budget = get_variable<std::size_t>(_scheduler, time_budget_attribute, condition_number, batch_number);
 															auto tag = _scheduler.get(tag_attribute, DEFAULT_TAG);
-															TRN4CPP::Simulation::Scheduler::Snippets::configure(id, seed, snippets_size, time_budget, tag);
+															TRN4CPP::Simulation::Scheduler::Snippets::configure(simulation_id,seed, snippets_size, time_budget, tag);
 														}
 														else if (boost::iequals(scheduler_type, custom_type))
 														{
-															auto seed = simulation_number + get_variable<unsigned long>(_scheduler, seed_attribute, condition_number, simulation_number);
+															auto seed = batch_number + get_variable<unsigned long>(_scheduler, seed_attribute, condition_number, batch_number);
 															auto tag = _scheduler.get_child(seed_attribute).get_value<std::string>(DEFAULT_TAG);
-															TRN4CPP::Simulation::Scheduler::Custom::configure(id, seed, tag);
+															TRN4CPP::Simulation::Scheduler::Custom::configure(simulation_id,seed, tag);
 														}
 														bool mutator_initialized = false;
 														for (auto scheduler_element : _scheduler)
@@ -631,34 +633,34 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 																auto mutator_type = _mutator.get_child(type_attribute).get_value<std::string>();
 																if (boost::iequals(mutator_type, reverse_type))
 																{
-																	auto seed = simulation_number + get_variable<unsigned long>(_mutator, seed_attribute, condition_number, simulation_number);
-																	auto rate = get_variable<float>(_mutator, rate_attribute, condition_number, simulation_number);
-																	auto size = get_variable<std::size_t>(_mutator, size_attribute, condition_number, simulation_number);
+																	auto seed = batch_number + get_variable<unsigned long>(_mutator, seed_attribute, condition_number, batch_number);
+																	auto rate = get_variable<float>(_mutator, rate_attribute, condition_number, batch_number);
+																	auto size = get_variable<std::size_t>(_mutator, size_attribute, condition_number, batch_number);
 																	//auto number = _mutator.get_child(number_attribute).get_value<std::size_t>();
-																	TRN4CPP::Simulation::Scheduler::Mutator::Reverse::configure(id, seed, rate, size);
+																	TRN4CPP::Simulation::Scheduler::Mutator::Reverse::configure(simulation_id,seed, rate, size);
 																	//
 																}
 																else if (boost::iequals(mutator_type, punch_type))
 																{
-																	auto seed = simulation_number + get_variable<unsigned long>(_mutator, seed_attribute, condition_number, simulation_number);
-																	auto rate = get_variable<float>(_mutator, rate_attribute, condition_number, simulation_number);
-																	auto size = get_variable<std::size_t>(_mutator, size_attribute, condition_number, simulation_number);
-																	auto number = get_variable<std::size_t>(_mutator, number_attribute, condition_number, simulation_number);
-																	TRN4CPP::Simulation::Scheduler::Mutator::Punch::configure(id, seed, rate, size, number);
+																	auto seed = batch_number + get_variable<unsigned long>(_mutator, seed_attribute, condition_number, batch_number);
+																	auto rate = get_variable<float>(_mutator, rate_attribute, condition_number, batch_number);
+																	auto size = get_variable<std::size_t>(_mutator, size_attribute, condition_number, batch_number);
+																	auto number = get_variable<std::size_t>(_mutator, number_attribute, condition_number, batch_number);
+																	TRN4CPP::Simulation::Scheduler::Mutator::Punch::configure(simulation_id,seed, rate, size, number);
 																	//
 																}
 																else if (boost::iequals(mutator_type, shuffle_type))
 																{
-																	auto seed = simulation_number + get_variable<unsigned long>(_mutator, seed_attribute, condition_number, simulation_number);
+																	auto seed = batch_number + get_variable<unsigned long>(_mutator, seed_attribute, condition_number, batch_number);
 
-																	TRN4CPP::Simulation::Scheduler::Mutator::Shuffle::configure(id, seed);
+																	TRN4CPP::Simulation::Scheduler::Mutator::Shuffle::configure(simulation_id,seed);
 																	//
 																}
 																else if (boost::iequals(mutator_type, custom_type))
 																{
-																	auto seed = simulation_number + get_variable<unsigned long>(_mutator, seed_attribute, condition_number, simulation_number);
+																	auto seed = batch_number + get_variable<unsigned long>(_mutator, seed_attribute, condition_number, batch_number);
 
-																	TRN4CPP::Simulation::Scheduler::Mutator::Custom::configure(id, seed);
+																	TRN4CPP::Simulation::Scheduler::Mutator::Custom::configure(simulation_id,seed);
 																	//
 																	mutator_initialized = true;
 																}
@@ -682,17 +684,17 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 															auto measurement_type = _measurement.get_child(type_attribute).get_value<std::string>();
 															if (boost::iequals(measurement_type, mean_square_error_type))
 															{
-																TRN4CPP::Simulation::Measurement::Readout::MeanSquareError::configure(id, batch_size);
+																TRN4CPP::Simulation::Measurement::Readout::MeanSquareError::configure(simulation_id,batch_size);
 																readout_mean_square_error_initialized = true;
 															}
 															else if (boost::iequals(measurement_type, frechet_distance_type))
 															{
-																TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::configure(id, batch_size);
+																TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::configure(simulation_id,batch_size);
 																readout_frechet_distance_initialized = true;
 															}
 															else if (boost::iequals(measurement_type, custom_type))
 															{
-																TRN4CPP::Simulation::Measurement::Readout::Custom::configure(id, batch_size);
+																TRN4CPP::Simulation::Measurement::Readout::Custom::configure(simulation_id,batch_size);
 																readout_custom_initialized = true;
 															}
 														}
@@ -701,17 +703,17 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 															auto measurement_type = _measurement.get_child(type_attribute).get_value<std::string>();
 															if (boost::iequals(measurement_type, mean_square_error_type))
 															{
-																TRN4CPP::Simulation::Measurement::Position::MeanSquareError::configure(id, batch_size);
+																TRN4CPP::Simulation::Measurement::Position::MeanSquareError::configure(simulation_id,batch_size);
 																position_mean_square_error_initialized = true;
 															}
 															else if (boost::iequals(measurement_type, frechet_distance_type))
 															{
-																TRN4CPP::Simulation::Measurement::Position::FrechetDistance::configure(id, batch_size);
+																TRN4CPP::Simulation::Measurement::Position::FrechetDistance::configure(simulation_id,batch_size);
 																position_frechet_distance_initialized = true;
 															}
 															else if (boost::iequals(measurement_type, custom_type))
 															{
-																TRN4CPP::Simulation::Measurement::Position::Custom::configure(id, batch_size);
+																TRN4CPP::Simulation::Measurement::Position::Custom::configure(simulation_id,batch_size);
 																position_custom_initialized = true;
 															}
 														}
@@ -727,14 +729,14 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 															auto prime = _recording.get_child(prime_attribute).get_value<bool>();
 															auto generate = _recording.get_child(generate_attribute).get_value<bool>();
 
-															TRN4CPP::Simulation::Recording::States::configure(id, train, prime, generate);
+															TRN4CPP::Simulation::Recording::States::configure(simulation_id,train, prime, generate);
 														}
 														else if (boost::iequals(recording_type, weights_type))
 														{
 															auto train = _recording.get_child(train_attribute).get_value<bool>();
 															auto initialization = _recording.get_child(initialize_attribute).get_value<bool>();
 
-															TRN4CPP::Simulation::Recording::Weights::configure(id, initialization, train);
+															TRN4CPP::Simulation::Recording::Weights::configure(simulation_id,initialization, train);
 														}
 														else if (boost::iequals(recording_type, performances_type))
 														{
@@ -742,11 +744,11 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 															auto prime = _recording.get_child(prime_attribute).get_value<bool>();
 															auto generate = _recording.get_child(generate_attribute).get_value<bool>();
 
-															TRN4CPP::Simulation::Recording::Performances::configure(id, train, prime, generate);
+															TRN4CPP::Simulation::Recording::Performances::configure(simulation_id,train, prime, generate);
 														}
 														else if (boost::iequals(recording_type, scheduling_type))
 														{
-															TRN4CPP::Simulation::Recording::Scheduling::configure(id);
+															TRN4CPP::Simulation::Recording::Scheduling::configure(simulation_id);
 														}
 													}
 												}
@@ -754,7 +756,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 											}
 										}
 
-										TRN4CPP::Simulation::configure_end(id);
+										TRN4CPP::Simulation::configure_end(simulation_id);
 
 										//
 										configured = true;
@@ -763,9 +765,9 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 									else if (boost::iequals(simulation_element.first, execution_name))
 									{
 										if (!configured)
-											throw std::runtime_error("Simulation #" + std::to_string(id) + " is not configured");
+											throw std::runtime_error("Simulation #" + std::to_string(simulation_id) + " is not configured");
 										if (!declared)
-											throw std::runtime_error("Simulation #" + std::to_string(id) + " have no data declared");
+											throw std::runtime_error("Simulation #" + std::to_string(simulation_id) + " have no data declared");
 										auto _execution = simulation_element.second;
 										std::size_t trial_number = 1;
 										for (auto execution_element : _execution)
@@ -774,14 +776,15 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 											if (boost::iequals(execution_element.first, trial_name))
 											{
 												auto _trial = execution_element.second;
-												bool trained = false;
+										
 												std::size_t test_number = 1;
+												std::size_t train_number = 1;
 												for (auto trial_element : _trial)
 												{
 													if (boost::iequals(trial_element.first, train_name))
 													{
-														if (trained)
-															throw std::runtime_error("Simulation #" + std::to_string(id) + " is already trained for trial #" + std::to_string(trial_number));
+														train_number = 1;
+
 														auto _train = trial_element.second;
 														auto label = _train.get_child(label_attribute).get_value<std::string>();
 														auto incoming = _train.get_child(incoming_attribute).get_value<std::string>();
@@ -789,14 +792,15 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 										
 														auto reset_readout = get_attribute(_train, reset_attribute, false);
 														
-														TRN4CPP::Simulation::train(id, label, incoming, expected, reset_readout);
+														unsigned long long evaluation_id;
+														TRN4CPP::Simulation::Evaluation::encode(trial_number, train_number, 0, 0, evaluation_id);
+														TRN4CPP::Simulation::train(simulation_id, evaluation_id,label, incoming, expected, reset_readout);
 
-														trained = true;
+														train_number++;
 													}
 													else if (boost::iequals(trial_element.first, test_name))
 													{
-														if (!trained)
-															throw std::runtime_error("Simulation #" + std::to_string(id) + " must be trained before test");
+													
 														auto _test = trial_element.second;
 														auto preamble = _test.get_child(preamble_attribute).get_value<unsigned int>();
 														auto supplementary = _test.get_child(supplementary_attribute).get_value<unsigned int>();
@@ -805,10 +809,12 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														auto expected = _test.get_child(expected_attribute).get_value<std::string>();
 														auto repeat = _test.get_child(repeat_attribute).get_value<std::size_t>();
 														auto autonomous = _test.get_child(autonomous_attribute).get_value<bool>();
-														TRN4CPP::Search::update(condition_number, simulation_number, trial_number, test_number, repeat);
-														for (std::size_t k = 0; k < repeat; k++)
+														TRN4CPP::Search::update(condition_number, batch_number, trial_number, train_number - 1, test_number, repeat);
+														for (std::size_t r = 0; r < repeat; r++)
 														{
-															TRN4CPP::Simulation::test(id, label, incoming, expected, preamble, autonomous, supplementary);
+															unsigned long long evaluation_id;
+															TRN4CPP::Simulation::Evaluation::encode(trial_number, train_number-1, test_number, r+1,evaluation_id);
+															TRN4CPP::Simulation::test(simulation_id, evaluation_id, label, incoming, expected, preamble, autonomous, supplementary);
 														}
 
 														test_number++;
@@ -820,11 +826,11 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 
 									}
 								}
-								TRN4CPP::Simulation::deallocate(id);
-								simulation_number++;
+								TRN4CPP::Simulation::deallocate(simulation_id);
+								batch_number++;
 							}
 						} 
-						while (!TRN4CPP::Search::end(condition_number, simulation_number));
+						while (!TRN4CPP::Search::end(condition_number, batch_number));
 						condition_number++;
 					}
 				}

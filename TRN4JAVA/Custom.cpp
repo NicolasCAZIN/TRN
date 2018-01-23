@@ -34,7 +34,7 @@ void Java_TRN4JAVA_Custom_00024Plugin_initialize(JNIEnv *env, jclass jclazz, jst
 	}
 }
 
-void Java_TRN4JAVA_Custom_00024Simulation_00024Loop_notify(JNIEnv *env, jobject loop, jlong id, jlong trial, jlong evaluation, jfloatArray elements, jlong rows, jlong cols)
+void Java_TRN4JAVA_Custom_00024Simulation_00024Loop_notify(JNIEnv *env, jobject loop, jlong simulation_id, jlong trial, jlong evaluation, jfloatArray elements, jlong rows, jlong cols)
 {
 	TRN4JAVA::Functor::notify(env, loop, (unsigned long long)id, TRN4JAVA::Functor::loop_global_ref, TRN4JAVA::Functor::loop_reply, (unsigned long long)id, (std::size_t)trial, (std::size_t)evaluation, TRN4JAVA::Convert::to_float_vector(env, elements), (std::size_t)rows, (std::size_t)cols);
 }
@@ -68,12 +68,12 @@ void Java_TRN4JAVA_Custom_00024Simulation_00024Reservoir_00024Recurrent_install(
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, recurrent, TRN4JAVA::Functor::INITIALIZER_CALLBACK_SIGNATURE, TRN4JAVA::Functor::weights_global_ref, TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::install, TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::custom_weights_callback), TRN4JAVA::Functor::weights_reply);
 }
-void Java_TRN4JAVA_Custom_00024Simulation_00024Reservoir_00024Weights_notify(JNIEnv *env, jobject initializer, jlong id, jfloatArray weights, jlong batch_size, jlong rows, jlong cols)
+void Java_TRN4JAVA_Custom_00024Simulation_00024Reservoir_00024Weights_notify(JNIEnv *env, jobject initializer, jlong simulation_id, jfloatArray weights, jlong batch_size, jlong rows, jlong cols)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::notify(env, initializer, (unsigned long long)id, TRN4JAVA::Functor::weights_global_ref, TRN4JAVA::Functor::weights_reply, (unsigned long long)id, TRN4JAVA::Convert::to_float_vector(env, weights), (std::size_t)batch_size, (std::size_t)rows, (std::size_t)cols);
 }
-void Java_TRN4JAVA_Custom_00024Simulation_00024Scheduler_notify(JNIEnv *env, jobject scheduler, jlong id, jlong trial, jintArray offsets, jintArray durations)
+void Java_TRN4JAVA_Custom_00024Simulation_00024Scheduler_notify(JNIEnv *env, jobject scheduler, jlong simulation_id, jlong trial, jintArray offsets, jintArray durations)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::notify(env,  scheduler, (unsigned long long)id, TRN4JAVA::Functor::scheduler_global_ref, TRN4JAVA::Functor::scheduler_reply, (unsigned long long)id, (std::size_t)trial, TRN4JAVA::Convert::to_int_vector(env, offsets), TRN4JAVA::Convert::to_int_vector(env, durations));
@@ -83,7 +83,7 @@ void Java_TRN4JAVA_Custom_00024Simulation_00024Scheduler_installJava_TRN4JAVA_Si
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, scheduler, TRN4JAVA::Functor::INITIALIZER_CALLBACK_SIGNATURE, TRN4JAVA::Functor::scheduler_global_ref, TRN4CPP::Simulation::Scheduler::Custom::install, TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::recording_scheduler_callback), TRN4JAVA::Functor::scheduler_reply);
 }
-void Java_TRN4JAVA_Custom_00024Simulation_00024Scheduler_00024Mutator_notify(JNIEnv *env, jobject mutator, jlong id, jlong trial, jintArray offsets, jintArray durations)
+void Java_TRN4JAVA_Custom_00024Simulation_00024Scheduler_00024Mutator_notify(JNIEnv *env, jobject mutator, jlong simulation_id, jlong trial, jintArray offsets, jintArray durations)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::notify(env, mutator, (unsigned long long)id, TRN4JAVA::Functor::mutator_global_ref, TRN4JAVA::Functor::mutator_reply, (unsigned long long)id, (std::size_t)trial, TRN4JAVA::Convert::to_int_vector(env, offsets), TRN4JAVA::Convert::to_int_vector(env, durations));

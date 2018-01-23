@@ -38,7 +38,7 @@ void TRN::Mutator::Reverse::update(const TRN::Core::Message::Payload<TRN::Core::
 	});
 	handle->seed += payload.get_scheduling()->get_offsets().size() *  payload.get_scheduling()->get_durations().size();
 
-	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_trial(), TRN::Core::Scheduling::create(indices)));
+	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_evaluation_id(), TRN::Core::Scheduling::create(indices)));
 }
 
 std::shared_ptr<TRN::Mutator::Reverse> TRN::Mutator::Reverse::create(const unsigned long &seed, const float &rate, const std::size_t &size)

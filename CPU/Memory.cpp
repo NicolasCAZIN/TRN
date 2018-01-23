@@ -35,7 +35,7 @@ void TRN::CPU::Memory<Implementation>::copy_implementation(const void *src, void
 //#pragma omp parallel for
 	for (int row = 0; row < height; row++)
 	{
-		std::memcpy(row_ptr(dst, depth, dst_stride, row), row_ptr(src, depth, src_stride, row), width * depth);
+		std::memcpy(row_ptr(dst, depth, dst_stride, row), row_ptr(src, depth, src_stride, row),width * depth);
 	}
 }
 template<TRN::CPU::Implementation Implementation>
@@ -53,7 +53,7 @@ void TRN::CPU::Memory<Implementation>::align(const std::size_t &unaligned, std::
 template<TRN::CPU::Implementation Implementation>
 void TRN::CPU::Memory<Implementation>::allocate(void **block, std::size_t &stride, const std::size_t &depth, const std::size_t &width, const std::size_t &height)
 {
-	TRN::CPU::Memory<Implementation>::allocate_implementation(block, stride, depth, width, height);
+	TRN::CPU::Memory<Implementation>::allocate_implementation(block, stride, depth,width, height);
 }
 template<TRN::CPU::Implementation Implementation>
 void TRN::CPU::Memory<Implementation>::allocate(void **block, const std::size_t &depth, const std::size_t &size)
@@ -76,7 +76,7 @@ void TRN::CPU::Memory<Implementation>::copy(const void *src, void *dst, const st
 template<TRN::CPU::Implementation Implementation>
 void  TRN::CPU::Memory<Implementation>::copy(const void *src, void *dst, const std::size_t &depth, const std::size_t &width, const std::size_t &height, const std::size_t &src_stride, const std::size_t &dst_stride, const bool &async)
 {
-	TRN::CPU::Memory<Implementation>::copy_implementation(src, dst, depth, width, height, src_stride, dst_stride, async);
+	TRN::CPU::Memory<Implementation>::copy_implementation(src, dst, depth,width, height, src_stride, dst_stride, async);
 }
 
 template<TRN::CPU::Implementation Implementation>
@@ -91,7 +91,7 @@ void  TRN::CPU::Memory<Implementation>::upload(const void *local, void *remote, 
 //#pragma omp parallel for
 	for (int row = 0; row < height; row++)
 	{
-		std::memcpy(row_ptr(remote, depth, stride, row), row_ptr(local, depth, width, row), width * depth);
+		std::memcpy(row_ptr(remote, depth, stride, row), row_ptr(local, depth,width, row),width * depth);
 	}
 }
 
@@ -108,7 +108,7 @@ void  TRN::CPU::Memory<Implementation>::download(void *local, const void *remote
 //#pragma omp parallel for
 	for (int row = 0; row < height; row++)
 	{
-		std::memcpy(row_ptr(local, depth, width, row), row_ptr(remote, depth, stride, row), width * depth);
+		std::memcpy(row_ptr(local, depth,width, row), row_ptr(remote, depth, stride, row),width * depth);
 	}
 }
 
@@ -116,7 +116,7 @@ template<TRN::CPU::Implementation Implementation>
 void  TRN::CPU::Memory<Implementation>::blank(void *remote, const std::size_t &depth, const std::size_t &width, const std::size_t &height, const std::size_t &stride, const bool &async)
 {
 //#pragma omp parallel for
-	TRN::CPU::Memory<Implementation>::blank_implementation(remote, depth, width, height, stride);
+	TRN::CPU::Memory<Implementation>::blank_implementation(remote, depth,width, height, stride);
 
 }
 

@@ -26,7 +26,7 @@ namespace TRN
 
 			namespace Custom
 			{
-				std::shared_ptr<TRN::Core::Mutator> MODEL_EXPORT create(const unsigned long &seed, const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &request, std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply);
+				std::shared_ptr<TRN::Core::Mutator> MODEL_EXPORT create(const unsigned long &seed, const std::function<void(const unsigned long long &evaluation_id, const unsigned long &seed,  const std::vector<int> &offsets, const std::vector<int> &durations)> &request, std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply);
 			};
 		};
 	};

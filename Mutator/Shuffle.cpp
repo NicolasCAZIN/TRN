@@ -21,7 +21,7 @@ void TRN::Mutator::Shuffle::update(const TRN::Core::Message::Payload<TRN::Core::
 	
 	std::shuffle(std::begin(indices), std::end(indices), engine);
 	handle->seed += payload.get_scheduling()->get_offsets().size() *  payload.get_scheduling()->get_durations().size();
-	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_trial(), TRN::Core::Scheduling::create(indices)));
+	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_evaluation_id(), TRN::Core::Scheduling::create(indices)));
 }
 
 std::shared_ptr<TRN::Mutator::Shuffle> TRN::Mutator::Shuffle::create(const unsigned long &seed)

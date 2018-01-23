@@ -19,7 +19,7 @@ namespace TRN
 			namespace Proxy
 			{
 				std::shared_ptr<TRN::Engine::Proxy> VIEWMODEL_EXPORT  create(const std::shared_ptr<TRN::Engine::Communicator> &frontend_proxy, 
-					const std::shared_ptr<TRN::Engine::Communicator> &proxy_workers, const std::shared_ptr<TRN::Engine::Dispatcher> &dispatcher, const std::shared_ptr<TRN::Helper::Visitor<TRN::Engine::Proxy>> &visitor, const unsigned short &id);
+					const std::shared_ptr<TRN::Engine::Communicator> &proxy_workers, const std::shared_ptr<TRN::Engine::Dispatcher> &dispatcher, const std::shared_ptr<TRN::Helper::Visitor<TRN::Engine::Proxy>> &visitor, const unsigned short &simulation_id);
 			}
 		};
 

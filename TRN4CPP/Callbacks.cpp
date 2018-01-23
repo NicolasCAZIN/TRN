@@ -4,124 +4,124 @@
 #include "Helper/Logger.h"
 extern std::shared_ptr<TRN::Engine::Frontend> frontend;
 
-std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
-std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_raw;
-std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_mean_square_error;
-std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_frechet_distance;
-std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_mean_square_error;
-std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_frechet_distance;
-std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> on_performances;
-std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_states;
-std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_weights;
-std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduling;
-std::function<void(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results)> on_search_results;
+std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
+std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_raw;
+std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_mean_square_error;
+std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_frechet_distance;
+std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_mean_square_error;
+std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_frechet_distance;
+std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> on_performances;
+std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_states;
+std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_weights;
+std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduling;
+std::function<void(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>,  std::map < std::size_t, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>>> &results)> on_search_results;
 std::function<void(const unsigned short &condition_number, const std::vector<std::pair<std::map<std::string, std::string>, float>> &solutions)> on_search_solutions;
 
 static std::recursive_mutex mutex;
 static std::vector<boost::shared_ptr<TRN4CPP::Plugin::Callbacks::Interface>> callbacks;
 
-static void callback_measurement_readout_raw(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
+static void callback_measurement_readout_raw(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 #pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
-		plugin->callback_measurement_readout_raw(id, trial, evaluation, primed, predicted, expected, preamble, pages, rows, cols);
+		plugin->callback_measurement_readout_raw(simulation_id,evaluation_id, primed, predicted, expected, preamble, pages, rows, cols);
 	}
 }
-static void  callback_measurement_position_raw(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
+static void  callback_measurement_position_raw(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 #pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
-		plugin->callback_measurement_position_raw(id, trial, evaluation, primed, predicted, expected, preamble, pages, rows, cols);
+		plugin->callback_measurement_position_raw(simulation_id,evaluation_id, primed, predicted, expected, preamble, pages, rows, cols);
 	}
 }
-static void callback_measurement_readout_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+static void callback_measurement_readout_mean_square_error(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 #pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
-		plugin->callback_measurement_readout_mean_square_error(id, trial, evaluation, values, rows, cols);
+		plugin->callback_measurement_readout_mean_square_error(simulation_id,evaluation_id, values, rows, cols);
 	}
 }
-static void callback_measurement_readout_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+static void callback_measurement_readout_frechet_distance(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 #pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
-		plugin->callback_measurement_readout_frechet_distance(id, trial, evaluation, values, rows, cols);
+		plugin->callback_measurement_readout_frechet_distance(simulation_id,evaluation_id, values, rows, cols);
 	}
 }
-static void callback_measurement_position_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+static void callback_measurement_position_mean_square_error(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 #pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
-		plugin->callback_measurement_position_mean_square_error(id, trial, evaluation, values, rows, cols);
+		plugin->callback_measurement_position_mean_square_error(simulation_id, evaluation_id, values, rows, cols);
 	}
 }
-static void callback_measurement_position_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
+static void callback_measurement_position_frechet_distance(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 #pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
-		plugin->callback_measurement_position_frechet_distance(id, trial, evaluation, values, rows, cols);
+		plugin->callback_measurement_position_frechet_distance(simulation_id,evaluation_id, values, rows, cols);
 	}
 }
-static void callback_performances(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
+static void callback_performances(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 #pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
-		plugin->callback_performances(id, trial, evaluation, phase, cycles_per_second, gflops_per_second);
+		plugin->callback_performances(simulation_id,evaluation_id,phase, cycles_per_second, gflops_per_second);
 	}
 }
-static void callback_states(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
+static void callback_states(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch,const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 #pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
-		plugin->callback_states(id, phase, label, batch, trial, evaluation, samples, rows, cols);
+		plugin->callback_states(simulation_id,evaluation_id,phase, label, batch, samples, rows, cols);
 	}
 }
-static void callback_weights(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
+static void callback_weights(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 #pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
-		plugin->callback_weights(id, phase, label, batch, trial, samples, rows, cols);
+		plugin->callback_weights(simulation_id,evaluation_id,phase, label, batch, samples, rows, cols);
 	}
 }
-static void callback_scheduling(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
+static void callback_scheduling(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 #pragma omp parallel for
 	for (int k = 0; k < callbacks.size(); k++)
 	{
 		auto plugin = callbacks[k];
-		plugin->callback_scheduling(id, trial, offsets, durations);
+		plugin->callback_scheduling(simulation_id,evaluation_id, offsets, durations);
 	}
 }
 
-static void callback_results(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results)
+static void callback_results(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>>> &results)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 #pragma omp parallel for
@@ -199,7 +199,7 @@ void TRN4CPP::Plugin::Callbacks::uninitialize()
 
 }
 
-void TRN4CPP::Simulation::Measurement::Position::Raw::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &predicted, const std::vector<float> &primed, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
+void TRN4CPP::Simulation::Measurement::Position::Raw::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &predicted, const std::vector<float> &primed, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
@@ -209,7 +209,7 @@ void TRN4CPP::Simulation::Measurement::Position::Raw::install(const std::functio
 		throw std::runtime_error("Frontend is not initialized");
 	on_measurement_position_raw = functor;
 }
-void TRN4CPP::Simulation::Measurement::Readout::Raw::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &predicted, const std::vector<float> &primed, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
+void TRN4CPP::Simulation::Measurement::Readout::Raw::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &predicted, const std::vector<float> &primed, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
@@ -221,7 +221,7 @@ void TRN4CPP::Simulation::Measurement::Readout::Raw::install(const std::function
 }
 
 
-void TRN4CPP::Simulation::Recording::States::install(const std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor)
+void TRN4CPP::Simulation::Recording::States::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
@@ -231,7 +231,7 @@ void TRN4CPP::Simulation::Recording::States::install(const std::function<void(co
 		throw std::runtime_error("Frontend is not initialized");
 	on_states = functor;
 }
-void TRN4CPP::Simulation::Recording::Weights::install(const std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)> &functor)
+void TRN4CPP::Simulation::Recording::Weights::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
@@ -241,7 +241,7 @@ void TRN4CPP::Simulation::Recording::Weights::install(const std::function<void(c
 		throw std::runtime_error("Frontend is not initialized");
 	on_weights = functor;
 }
-void TRN4CPP::Simulation::Recording::Performances::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor)
+void TRN4CPP::Simulation::Recording::Performances::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
@@ -251,7 +251,7 @@ void TRN4CPP::Simulation::Recording::Performances::install(const std::function<v
 		throw std::runtime_error("Frontend is not initialized");
 	on_performances = functor;
 }
-void TRN4CPP::Simulation::Recording::Scheduling::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
+void TRN4CPP::Simulation::Recording::Scheduling::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations)> &functor)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
@@ -261,7 +261,7 @@ void TRN4CPP::Simulation::Recording::Scheduling::install(const std::function<voi
 		throw std::runtime_error("Frontend is not initialized");
 	on_scheduling = functor;
 }
-void TRN4CPP::Simulation::Measurement::Readout::MeanSquareError::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void TRN4CPP::Simulation::Measurement::Readout::MeanSquareError::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
@@ -271,7 +271,7 @@ void TRN4CPP::Simulation::Measurement::Readout::MeanSquareError::install(const s
 		throw std::runtime_error("Frontend is not initialized");
 	on_measurement_readout_mean_square_error = functor;
 }
-void TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
@@ -281,7 +281,7 @@ void TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::install(const s
 		throw std::runtime_error("Frontend is not initialized");
 	on_measurement_readout_frechet_distance = functor;
 }
-void TRN4CPP::Simulation::Measurement::Position::MeanSquareError::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void TRN4CPP::Simulation::Measurement::Position::MeanSquareError::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
@@ -291,7 +291,7 @@ void TRN4CPP::Simulation::Measurement::Position::MeanSquareError::install(const 
 		throw std::runtime_error("Frontend is not initialized");
 	on_measurement_position_mean_square_error = functor;
 }
-void TRN4CPP::Simulation::Measurement::Position::FrechetDistance::install(const std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void TRN4CPP::Simulation::Measurement::Position::FrechetDistance::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;
@@ -302,7 +302,7 @@ void TRN4CPP::Simulation::Measurement::Position::FrechetDistance::install(const 
 	on_measurement_position_frechet_distance = functor;
 }
 
-void TRN4CPP::Search::Results::install(const std::function<void(const unsigned short &condition_number, const std::size_t &generation_number,const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results)> &functor)
+void TRN4CPP::Search::Results::install(const std::function<void(const unsigned short &condition_number, const std::size_t &generation_number,const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>>> &results)> &functor)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	TRACE_LOGGER;

@@ -27,7 +27,7 @@ namespace TRN
 			void dispose();
 		private:
 			void body() override;
-			void erase_functors(const unsigned long long &id);
+			void erase_functors(const unsigned long long &simulation_id);
 
 
 		protected:

@@ -14,9 +14,6 @@ TRN::Core::Reservoir::Reservoir(
 	TRN::Helper::Bridge<TRN::Backend::Driver>(driver),
 	handle(std::make_unique<Handle>())
 {
-	handle->trial = 0;
-	handle->evaluation = 0;
-
 	handle->stimulus_size = stimulus;
 	handle->reservoir_size = reservoir;
 	handle->prediction_size = prediction;
@@ -103,10 +100,10 @@ void TRN::Core::Reservoir::start()
 	handle->thread = std::thread([&]()
 	{
 		get_implementor()->toggle();
-		std::tuple<std::shared_ptr<TRN::Core::Batch>, size_t, size_t> tuple;
+		std::tuple<std::shared_ptr<TRN::Core::Batch>, unsigned long long> tuple;
 		while (handle->prediction.dequeue(tuple))
 		{
-			TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PREDICTION>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::PREDICTION>(std::get<0>(tuple), std::get<1>(tuple), std::get<2>(tuple)));
+			TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PREDICTION>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::PREDICTION>(std::get<0>(tuple), std::get<1>(tuple)));
 		}
 	}
 	);
@@ -127,14 +124,7 @@ TRN::Core::Reservoir::~Reservoir()
 	handle.reset();
 }
 
-std::size_t TRN::Core::Reservoir::get_trial()
-{
-	return handle->trial;
-}
-std::size_t TRN::Core::Reservoir::get_evaluation()
-{
-	return handle->evaluation;
-}
+
 std::size_t TRN::Core::Reservoir::get_batch_size()
 {
 	return handle->batch_size;
@@ -180,7 +170,7 @@ void TRN::Core::Reservoir::initialize(const std::shared_ptr<TRN::Core::Initializ
 	if (!readout)
 		throw std::invalid_argument("Readout initializer is not initialized");
 	// blank self connection
-	handle->trial = 1;
+
 	feedforward->initialize(handle->seed, handle->batched_W_ffwd);
 	recurrent->initialize(handle->seed, handle->batched_W_rec, true);	
 	feedback->initialize(handle->seed, handle->batched_W_fbck);
@@ -192,7 +182,7 @@ void TRN::Core::Reservoir::reset_readout()
 	handle->batched_W_ro->from(*handle->batched_W_ro_reset);
 }
 
-void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::size_t &preamble, const bool &autonomous_generation, const std::size_t &supplementary_generations)
+void TRN::Core::Reservoir::test(const unsigned long long &evaluation_id, const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::size_t &preamble, const bool &autonomous_generation, const std::size_t &supplementary_generations)
 {
 	if (!expected)
 		throw std::invalid_argument("target expected is empty");
@@ -200,7 +190,7 @@ void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incomi
 		throw std::invalid_argument("target incoming is empty");
 	if (preamble > expected->get_rows())
 		throw std::invalid_argument("preamble (" + std::to_string(preamble) + ") is longer than the target sequence duration");
-	handle->evaluation++;
+
 	auto sub_states = TRN::Core::Matrix::create(implementor, handle->states->get_global(), 0, 0, preamble, handle->states->get_global()->get_cols());
 
 	std::vector<int> durations(1);
@@ -245,13 +235,13 @@ void TRN::Core::Reservoir::test(const std::shared_ptr<TRN::Core::Matrix> &incomi
 			sub_scheduling->get_offsets().data(), sub_scheduling->get_durations().data(), sub_scheduling->get_durations().size(),
 			sub_states->get_elements(), sub_states->get_rows(), sub_states->get_cols(), sub_states->get_stride());
 	
-	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>());
+	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>(evaluation_id));
 
 	handle->target_expected = expected;
 	handle->cycle = preamble;
 	handle->autonomous_generation = autonomous_generation;
 	handle->max_cycle = expected->get_rows() + supplementary_generations;
-	handle->prediction.enqueue(std::make_tuple(handle->batched_X_ro, handle->trial-1, handle->evaluation));
+	handle->prediction.enqueue(std::make_tuple(handle->batched_X_ro, evaluation_id));
 }
 #include <iostream>
 void TRN::Core::Reservoir::update(const TRN::Core::Message::Payload<TRN::Core::Message::STIMULUS> &incoming)
@@ -304,7 +294,7 @@ void TRN::Core::Reservoir::update(const TRN::Core::Message::Payload<TRN::Core::M
 			sub_states->get_elements(), sub_states->get_rows(), sub_states->get_cols(), sub_states->get_stride());
 		handle->cycle++;
 	
-		handle->prediction.enqueue(std::make_tuple(handle->batched_X_ro, handle->trial  -1, handle->evaluation));
+		handle->prediction.enqueue(std::make_tuple(handle->batched_X_ro, incoming.get_evaluation_id()));
 	
 	}
 	else
@@ -314,13 +304,11 @@ void TRN::Core::Reservoir::update(const TRN::Core::Message::Payload<TRN::Core::M
 		handle->max_cycle = 0;
 		handle->cycle = 0;
 	
-		TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TESTED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::TESTED>());
+		TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TESTED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::TESTED>(incoming.get_evaluation_id()));
 	}
 }
-void TRN::Core::Reservoir::train(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Scheduling> &scheduling)
+void TRN::Core::Reservoir::train(const unsigned long long &evaluation_id, const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Scheduling> &scheduling)
 {
-	handle->evaluation = 0;
-	handle->trial++;
 	for (std::size_t batch = 0; batch < handle->batch_size; batch++)
 	{
 		auto sub_u_ffwd = TRN::Core::Matrix::create(implementor,  incoming->get_rows(), handle->reservoir_size);
@@ -331,7 +319,7 @@ void TRN::Core::Reservoir::train(const std::shared_ptr<TRN::Core::Matrix> &incom
 
 	train(incoming, expected, scheduling, handle->states->get_global());
 	synchronize();
-	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>());
+	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>(evaluation_id));
 
 }
 

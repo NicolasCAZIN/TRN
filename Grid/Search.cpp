@@ -72,34 +72,6 @@ void Search::uninitialize()
 {
 	handle.reset();
 }
-float Search::evaluate_cost(const std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>> > &measurements)
-{
-	auto measurement = measurements.at(handle->trial).at(handle->test);
-
-	float cost;
-	switch (handle->objective)
-	{
-		case SCORE:
-			cost = measurement.first;
-			break;
-		case MEAN:
-		{
-			float sum = 0.0f;
-			const std::size_t n = measurement.second.size();
-			for (std::size_t k = 0; k < n; k++)
-			{
-				sum += measurement.second[k];
-			}
-			cost = sum / n;
-		}
-		break;
-
-		default:
-			throw std::runtime_error("Unexpected objective function type");
-	}
-
-	return cost;
-}
 
 static void cartesian_product(std::vector<std::vector<std::string>> &cartesian,
 	std::vector<std::set<std::string>> &values,
@@ -121,7 +93,7 @@ static void cartesian_product(std::vector<std::vector<std::string>> &cartesian,
 
 
 
-void Search::callback_generation(const unsigned short &condition_number, const std::vector<std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>> >> &measurements)
+void Search::callback_generation(const unsigned short &condition_number, const std::vector<std::map < std::size_t, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &measurements)
 {
 	std::vector<std::map<std::string, std::string>> combinations;
 	if (measurements.empty())
@@ -158,7 +130,7 @@ void Search::callback_generation(const unsigned short &condition_number, const s
 
 		for (std::size_t k = 0; k < handle->population.size(); k++)
 		{
-			solutions.push_back(std::make_pair(handle->population[k], evaluate_cost(measurements[k])));
+			solutions.push_back(std::make_pair(handle->population[k], TRN4CPP::Search::evaluate_cost(measurements[k])));
 		}
 
 		handle->publish(condition_number, solutions);

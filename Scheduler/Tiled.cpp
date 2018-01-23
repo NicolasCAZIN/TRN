@@ -36,7 +36,7 @@ void  TRN::Scheduler::Tiled::update(const TRN::Core::Message::Payload<TRN::Core:
 		durations[epoch] = incoming->get_sequence()->get_rows();
 	}
 
-	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_trial(), TRN::Core::Scheduling::create(offsets, durations)));
+	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_evaluation_id(), TRN::Core::Scheduling::create(offsets, durations)));
 }
 
 

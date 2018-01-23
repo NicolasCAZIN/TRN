@@ -5,9 +5,9 @@
 #include "Extended.h"
 #include "Helper/Logger.h"
 
-extern std::function<void(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results)> on_search_results;
+extern std::function<void(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>>> &results)> on_search_results;
 extern std::function<void(const unsigned short &condition_number, const std::vector<std::pair<std::map<std::string, std::string>, float>> &solutions)> on_search_solutions;
-typedef std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>> Score;
+typedef std::map < std::size_t, std::map<std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>> Score;
 typedef std::map<std::string, std::string> Parameters;
 template <typename Type>
 static bool contiguous(const std::set<Type> &set)
@@ -68,7 +68,7 @@ struct Measurement
 
 class Individual
 {
-	std::map<std::size_t, std::map<std::size_t, Measurement>> measurements;
+	std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, Measurement>>> measurements;
 	Parameters parameters; // genotype
 
 public:
@@ -89,25 +89,26 @@ public:
 		for (auto by_trial_number : measurements)
 		{
 			const std::size_t trial_number = by_trial_number.first;
-			for (auto by_train_number_test_number : by_trial_number.second)
+			for (auto by_train_number : by_trial_number.second)
 			{
-				std::size_t test_number = by_train_number_test_number.first;
-				auto &m = by_train_number_test_number.second.score;
-				aggregated[trial_number][test_number].second = m;
-				aggregated[trial_number][test_number].first = TRN4CPP::Search::score(m);
+				const std::size_t train_number = by_train_number.first;
+				for (auto by_test_number : by_train_number.second)
+				{
+					std::size_t test_number = by_test_number.first;
+					auto &m = by_test_number.second.score;
+					aggregated[trial_number][train_number][test_number].second = m;
+					aggregated[trial_number][train_number][test_number].first = TRN4CPP::Search::score(m);
+				}
 			}
 		}
 
 		return std::make_pair(parameters, aggregated);
 	}
 
-	void operator () (const std::size_t &trial_number, const std::size_t &evaluation_number, const std::vector<float> &score)
+	void operator () (const std::size_t &trial_number, const std::size_t &train_number, const std::size_t &test_number, const std::size_t &repeat_number, const std::vector<float> &score)
 	{
-		std::size_t test_number;
-		std::size_t repeat_number;
-		retrieve(trial_number, evaluation_number, test_number, repeat_number);
-		auto &current = measurements[trial_number][test_number].score;
-		DEBUG_LOGGER << "Inserting " << score.size() << " results for trial #" << trial_number << ", test #" << test_number << ", repeat #" << repeat_number << " (evaluation #" << evaluation_number << ")";
+		auto &current = measurements[trial_number][test_number][test_number].score;
+		DEBUG_LOGGER << "Inserting " << score.size() << " results for trial #" << trial_number << ", train #" << test_number << ", train #" << test_number << ", repeat #" << repeat_number;
 
 		current.insert(current.begin(), score.begin(), score.end());
 	}
@@ -119,7 +120,7 @@ public:
 		return it->second;
 	}
 
-private:
+/*private:
 	void retrieve(const std::size_t &trial_number, const std::size_t &evaluation_number, std::size_t &test_number, std::size_t &repeat_number)
 	{
 		auto it = measurements.find(trial_number);
@@ -147,19 +148,11 @@ private:
 		}
 		if (!found)
 			throw std::runtime_error("test_number and repeat_number were not retrieved");
-	}
+	}*/
 public :
-	void update_repeat(const std::size_t &trial_number, const std::size_t &test_number, const std::size_t &repeat)
+	void update_repeat(const std::size_t &trial_number, const std::size_t &train_number, const std::size_t &test_number, const std::size_t &repeat)
 	{
-
-		auto it = measurements[trial_number].find(test_number);
-		if (it == measurements[trial_number].end())
-		{
-			measurements[trial_number][test_number].repeat = repeat;
-		}
-		else if (it->second.repeat != repeat)
-			throw std::runtime_error("repeat is already declared for trial/test : " + std::to_string(trial_number) + "/" + std::to_string(test_number)  + " and update is inconsistent");
-		
+		measurements[trial_number][train_number][test_number].repeat = repeat;	
 	}
 
 
@@ -171,17 +164,26 @@ public :
 		for (auto trial_number : trial_number_set)
 		{
 			auto &by_trial = measurements.at(trial_number);
-			auto test_number_set = extract_keys(by_trial);
-			if (!contiguous(test_number_set))
+			auto train_number_set = extract_keys(by_trial);
+			if (!contiguous(train_number_set))
 				return false;
-
-			for (auto test_number : test_number_set)
+			for (auto train_number : train_number_set)
 			{
-				auto measurement = by_trial.at(test_number);
-				auto expected_score_size = expected * measurement.repeat;
-
-				if (measurement.score.size() != expected_score_size)
+				auto &by_train = by_trial.at(train_number);
+				auto test_number_set = extract_keys(by_train);
+				if (!contiguous(test_number_set))
 					return false;
+
+				for (auto test_number : test_number_set)
+				{
+					auto measurement = by_train.at(test_number);
+					if (measurement.repeat == 0)
+						throw std::runtime_error("Repeat must be at least 1");
+					auto expected_score_size = expected * measurement.repeat;
+
+					if (measurement.score.size() != expected_score_size)
+						return false;
+				}
 			}
 		}
 		return true;
@@ -196,7 +198,7 @@ class Population
 
 	std::size_t generation;
 	unsigned int offset;
-	std::size_t batch_number;
+	std::size_t bundle_size;
 	std::size_t batch_size;
 	
 	std::vector<Individual> population;
@@ -204,36 +206,35 @@ class Population
 	bool evaluated;
 
 public :
-	void initialize(const unsigned int &simulation_number,
-		const std::size_t &batch_number,
+	void initialize(const unsigned int &batch_number,
+		const std::size_t &bundle_size,
 		const std::size_t &batch_size)
 	{
-		this->batch_number = batch_number;
+		this->bundle_size = bundle_size;
 		this->batch_size = batch_size;
-		this->offset = simulation_number - 1;
+		this->offset = batch_number - 1;
 		this->generation = 0;
 		this->evaluated = false;
 	
 	}
-	void update_offset(const unsigned int &simulation_number)
+	void update_offset(const unsigned int &batch_number)
 	{
-		this->offset = simulation_number - 1;
+		this->offset = batch_number - 1;
 	
 	}
 
 
 	std::size_t simulations()
 	{
-		auto evaluation_number = batch_number;
 		if (population.empty())
-			return evaluation_number;
+			return bundle_size;
 		else
-			return population.size() * evaluation_number;
+			return population.size() * bundle_size;
 	}
 
-	Individual &operator [](const unsigned int &simulation_number)
+	Individual &operator [](const unsigned int &batch_number)
 	{
-		std::size_t index = ((simulation_number - 1) - this->offset) / batch_number;
+		std::size_t index = ((batch_number - 1) - this->offset) / bundle_size;
 		return population[index];
 	}
 
@@ -261,7 +262,7 @@ public :
 
 	bool completed()
 	{
-		auto evaluated = batch_number * batch_size;
+		auto evaluated = bundle_size * batch_size;
 		return std::all_of(population.begin(), population.end(), [&](const Individual &individual)
 		{
 			return individual.completed(evaluated);
@@ -349,59 +350,59 @@ public:
 	{
 	}
 
-	virtual	void callback_measurement_readout_raw(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols) override
+	virtual	void callback_measurement_readout_raw(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols) override
 	{
 
 	}
-	virtual void callback_measurement_position_raw(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols) override
+	virtual void callback_measurement_position_raw(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols) override
 	{
 	}
-	virtual void callback_measurement_readout_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols) override
+	virtual void callback_measurement_readout_mean_square_error(const unsigned long long &simulation_id, const unsigned long long &evaluation_id,  const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols) override
 	{
 		if (target == READOUT_MEAN_SQUARE_ERROR)
 		{
-			TRN4CPP::Search::evaluate(id, trial, evaluation, values);
+			TRN4CPP::Search::evaluate(simulation_id,evaluation_id,values);
 		}
 	}
-	virtual void callback_measurement_readout_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols) override
+	virtual void callback_measurement_readout_frechet_distance(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols) override
 	{
 		if (target == READOUT_FRECHET_DISTANCE)
 		{
-			TRN4CPP::Search::evaluate(id, trial, evaluation, values);
+			TRN4CPP::Search::evaluate(simulation_id, evaluation_id, values);
 		}
 	}
-	virtual void callback_measurement_position_mean_square_error(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols) override
+	virtual void callback_measurement_position_mean_square_error(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols) override
 	{
 		if (target == POSITION_MEAN_SQUARE_ERROR)
 		{
-			TRN4CPP::Search::evaluate(id, trial, evaluation, values);
+			TRN4CPP::Search::evaluate(simulation_id, evaluation_id, values);
 		}
 	}
-	virtual void callback_measurement_position_frechet_distance(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols) override
+	virtual void callback_measurement_position_frechet_distance(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols) override
 	{
 		if (target == POSITION_FRECHET_DISTANCE)
 		{
-			TRN4CPP::Search::evaluate(id, trial, evaluation, values);
+			TRN4CPP::Search::evaluate(simulation_id, evaluation_id, values);
 		}
 	}
 
-	virtual void callback_performances(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second) override
+	virtual void callback_performances(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second) override
 	{
 	}
-	virtual void callback_states(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols) override
+	virtual void callback_states(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch,  const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols) override
 	{
 	}
-	virtual void callback_weights(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols) override
+	virtual void callback_weights(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols) override
 	{
 	}
-	virtual void callback_scheduling(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations) override
+	virtual void callback_scheduling(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations) override
 	{
 	}
-	virtual void callback_results(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &results) override
+	virtual void callback_results(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>>> &results) override
 	{
 
-			std::vector<std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>> scores;
-			std::transform(results.begin(), results.end(), std::back_inserter(scores), [](const std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>> &result)
+			std::vector<std::map<std::size_t, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> scores;
+			std::transform(results.begin(), results.end(), std::back_inserter(scores), [](const std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>> &result)
 			{
 				return result.second;
 			}
@@ -417,6 +418,66 @@ public:
 	}
 
 };
+float TRN4CPP::Search::evaluate_cost(const  std::map < std::size_t, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>> &measurements, const std::size_t &trial_number, const std::size_t &train_number, const std::size_t &test_number)
+{
+	std::vector<float> costs;
+
+	std::set<std::size_t> trial_set;
+
+	if (trial_number == 0)
+	{
+		for (auto m : measurements)
+		{
+			trial_set.insert(m.first);
+		}
+	}
+	else
+	{
+		trial_set.insert(trial_number);
+	}
+
+
+	for (auto trial : trial_set)
+	{
+		std::set<std::size_t> train_set;
+
+		if (train_number == 0)
+		{
+			for (auto m : measurements.at(trial))
+			{
+				train_set.insert(m.first);
+			}
+		}
+		else
+		{
+			train_set.insert(train_number);
+		}
+
+		for (auto train : train_set)
+		{
+			std::set<std::size_t> test_set;
+
+			if (test_number == 0)
+			{
+				for (auto m : measurements.at(trial).at(train))
+				{
+					test_set.insert(m.first);
+				}
+			}
+			else
+			{
+				test_set.insert(test_number);
+			}
+			for (auto test : train_set)
+			{
+				costs.push_back(measurements.at(trial).at(train).at(test).first);
+			}
+		}
+	}
+
+	return TRN4CPP::Search::score(costs);
+}
+
 void TRN4CPP::Plugin::Search::initialize(const std::string &library_path, const std::string &name, const std::map<std::string, std::string>  &arguments)
 {
 	if (search)
@@ -541,7 +602,7 @@ std::map<std::string, std::set<std::string>> TRN4CPP::Search::parse(const std::s
 }
 
 
-std::string TRN4CPP::Search::retrieve(const unsigned short &condition_number, const unsigned int &simulation_number, const std::string &key)
+std::string TRN4CPP::Search::retrieve(const unsigned short &condition_number, const unsigned int &batch_number, const std::string &key)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	if (pool.find(condition_number) == pool.end())
@@ -549,7 +610,7 @@ std::string TRN4CPP::Search::retrieve(const unsigned short &condition_number, co
 		throw std::runtime_error("Condition #" + std::to_string(condition_number) + " is not populated");
 	}
 
-	return pool[condition_number][simulation_number][key];
+	return pool[condition_number][batch_number][key];
 }
 
 unsigned int TRN4CPP::Search::size(const unsigned short &condition_number)
@@ -563,14 +624,14 @@ unsigned int TRN4CPP::Search::size(const unsigned short &condition_number)
 	return pool[condition_number].simulations();
 
 }
-void  TRN4CPP::Search::begin(const unsigned short &condition_number, const unsigned int &simulation_number, const std::size_t &batch_number, const std::size_t &batch_size)
+void  TRN4CPP::Search::begin(const unsigned short &condition_number, const unsigned int &batch_number, const std::size_t &bundle_size, const std::size_t &batch_size)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	if (pool.find(condition_number) != pool.end())
 	{
 		throw std::runtime_error("Condition #" + std::to_string(condition_number) + " is already populated");
 	}
-	pool[condition_number].initialize(simulation_number, batch_number, batch_size);
+	pool[condition_number].initialize(batch_number, bundle_size, batch_size);
 
 	if (search)
 	{
@@ -578,7 +639,7 @@ void  TRN4CPP::Search::begin(const unsigned short &condition_number, const unsig
 	}
 }
 
-void 		TRN4CPP::Search::update(const unsigned short &condition_number, const unsigned int &simulation_number, const std::size_t &trial_number, const std::size_t &test_number, const std::size_t &repeat)
+void 		TRN4CPP::Search::update(const unsigned short &condition_number, const unsigned int &batch_number, const std::size_t &trial_number, const std::size_t &train_number, const std::size_t &test_number, const std::size_t &repeat)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 
@@ -589,11 +650,11 @@ void 		TRN4CPP::Search::update(const unsigned short &condition_number, const uns
 
 	if (search)
 	{
-		pool[condition_number][simulation_number].update_repeat(trial_number, test_number, repeat);
+		pool[condition_number][batch_number].update_repeat(trial_number, train_number, test_number, repeat);
 	}
 }
 
-bool 	TRN4CPP::Search::end(const unsigned short &condition_number, const unsigned int &simulation_number)
+bool 	TRN4CPP::Search::end(const unsigned short &condition_number, const unsigned int &batch_number)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	if (!search)
@@ -616,7 +677,7 @@ bool 	TRN4CPP::Search::end(const unsigned short &condition_number, const unsigne
 		}
 		else
 		{
-			pool[condition_number].update_offset(simulation_number);
+			pool[condition_number].update_offset(batch_number);
 			return false;
 		}
 	}
@@ -632,7 +693,7 @@ void TRN4CPP::Search::populate(const unsigned short &condition_number, const std
 	pool[condition_number].renew(individuals);
 }
 
-void TRN4CPP::Search::evaluate(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &measurements)
+void TRN4CPP::Search::evaluate(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &measurements)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
 	if (measurements.empty())
@@ -640,10 +701,18 @@ void TRN4CPP::Search::evaluate(const unsigned long long &id, const std::size_t &
 
 	unsigned short frontend;
 	unsigned short condition;
-	unsigned int simulation;
-	TRN4CPP::Simulation::decode(id, frontend, condition, simulation);
-	DEBUG_LOGGER << "Reporting results for condition #" << condition << ", simulation #" << simulation;
-	pool[condition][simulation](trial, evaluation, measurements);
+	unsigned int batch;
+	TRN4CPP::Simulation::decode(simulation_id,frontend, condition, batch);
+	DEBUG_LOGGER << "Reporting results for condition #" << condition << ", batch #" << batch;
+
+	unsigned short trial;
+	unsigned short train;
+	unsigned short test;
+	unsigned short repeat;
+	TRN4CPP::Simulation::Evaluation::decode(evaluation_id, trial, train, test, repeat);
+
+
+	pool[condition][batch](trial, train, test, repeat,  measurements);
 
 	if (pool[condition].completed())
 	{

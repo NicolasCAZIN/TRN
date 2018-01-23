@@ -18,7 +18,7 @@ namespace TRN
 
 		public:
 			Performances(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-				const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second) > &functor,
+				const std::function<void(const unsigned long long &evaluation_id, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second) > &functor,
 				const bool &train, const bool &prime, const bool &generate);
 			virtual ~Performances();
 
@@ -44,8 +44,8 @@ namespace TRN
 		public:
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Matrix> &sequence) override;
 			virtual void declare(const std::string &label, const std::string &tag, const std::shared_ptr<TRN::Core::Set> &set) override;
-			virtual void train(const std::string &sequence, const std::string &incoming, const std::string &expected, const bool &reset_readout) override;
-			virtual void test(const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations) override;
+			virtual void train(const unsigned long long &evaluation_id, const std::string &sequence, const std::string &incoming, const std::string &expected, const bool &reset_readout) override;
+			virtual void test(const unsigned long long &evaluation_id, const std::string &sequence, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations) override;
 			virtual void initialize() override;
 			virtual void uninitialize() override;
 		public:
@@ -59,7 +59,7 @@ namespace TRN
 			static float compute_gflops(const std::size_t &flops_per_epoch_factor, const std::size_t &observations, const std::size_t &flops_per_cycle, const std::size_t &cycles);
 		public:
 			static std::shared_ptr<Performances> create(const std::shared_ptr<TRN::Core::Simulator> decorated,
-				const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second) > &functor,
+				const std::function<void(const unsigned long long &evaluation_id, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second) > &functor,
 				const bool &train, const bool &prime, const bool &generate);
 		};
 	};

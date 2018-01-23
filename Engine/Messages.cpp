@@ -254,22 +254,75 @@ unsigned int TRN::Engine::checksum(const std::vector<float> &sequence)
 	return crc.checksum();
 }
 
-void   TRN::Engine::encode(const unsigned short &number, const unsigned short &condition_number, const unsigned int &simulation_number, unsigned long long &id)
+namespace TRN::Engine
+{
+	union Identifier
+	{
+		struct
+		{
+			unsigned long long batch_number : 32;
+			unsigned long long condition_number : 16;
+			unsigned long long frontend_number : 16;
+		};
+
+		unsigned long long id;
+	};
+};
+
+void   TRN::Engine::encode(const unsigned short &frontend_number, const unsigned short &condition_number, const unsigned int &batch_number, unsigned long long &simulation_id)
 {
 	Identifier identifier;
 
-	identifier.number = number;
+	identifier.frontend_number = frontend_number;
 	identifier.condition_number = condition_number;
-	identifier.simulation_number = simulation_number;
-	id = identifier.id;
+	identifier.batch_number = batch_number;
+	simulation_id = identifier.id;
 }
 
-void TRN::Engine::decode(const unsigned long long &id, unsigned short &number, unsigned short &condition_number, unsigned int &simulation_number)
+void TRN::Engine::decode(const unsigned long long &simulation_id, unsigned short &frontend_number, unsigned short &condition_number, unsigned int &batch_number)
 {
 	Identifier identifier;
 
-	identifier.id = id;
-	number = identifier.number;
+	identifier.id = simulation_id;
+	frontend_number = identifier.frontend_number;
 	condition_number = identifier.condition_number;
-	simulation_number = identifier.simulation_number;
+	batch_number = identifier.batch_number;
+}
+
+namespace TRN::Engine::Evaluation
+{
+	union Identifier
+	{
+		struct
+		{
+			unsigned long long trial_number : 16;
+			unsigned long long train_number : 16;
+			unsigned long long test_number : 16;
+			unsigned long long repeat_number : 16;
+		};
+
+		unsigned long long id;
+	};
+};
+
+void   TRN::Engine::Evaluation::encode(const unsigned short &trial_number, const unsigned short &train_number, const unsigned short &test_number, const unsigned short &repeat_number, unsigned long long &evaluation_id)
+{
+	Identifier identifier;
+
+	identifier.trial_number = trial_number;
+	identifier.train_number = train_number;
+	identifier.test_number = test_number;
+	identifier.repeat_number = repeat_number;
+	evaluation_id = identifier.id;
+}
+
+void TRN::Engine::Evaluation::decode(const unsigned long long &simulation_id, unsigned short &trial_number, unsigned short &train_number, unsigned short &test_number, unsigned short &repeat_number)
+{
+	Identifier identifier;
+
+	identifier.id = simulation_id;
+	trial_number = identifier.trial_number;
+	train_number = identifier.train_number;
+	test_number = identifier.test_number;
+	repeat_number = identifier.repeat_number;
 }

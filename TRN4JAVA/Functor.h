@@ -32,10 +32,10 @@ namespace TRN4JAVA
 
 		extern std::map<unsigned long long, std::vector<jobject>> lookup_ref;
 
-		extern std::map<jobject, std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)>> loop_reply;
-		extern std::map<jobject, std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)>> scheduler_reply;
-		extern std::map<jobject, std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)>> mutator_reply;
-		extern std::map<jobject, std::function<void(const unsigned long long &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)>> weights_reply;
+		extern std::map<jobject, std::function<void(const unsigned long long &simulation_id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)>> loop_reply;
+		extern std::map<jobject, std::function<void(const unsigned long long &simulation_id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)>> scheduler_reply;
+		extern std::map<jobject, std::function<void(const unsigned long long &simulation_id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)>> mutator_reply;
+		extern std::map<jobject, std::function<void(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)>> weights_reply;
 
 		extern std::mutex functor_mutex;
 		template<typename Installer, typename ... CallbackArgs>
@@ -159,7 +159,7 @@ namespace TRN4JAVA
 			}
 		}
 		template<typename Notify, typename ... NotifyArgs>
-		static void notify(JNIEnv *env, jobject object, const unsigned long long &id, const std::vector<jobject> &global_ref, Notify &notify, NotifyArgs ... args)
+		static void notify(JNIEnv *env, jobject object, const unsigned long long &simulation_id, const std::vector<jobject> &global_ref, Notify &notify, NotifyArgs ... args)
 		{
 			//env->MonitorEnter(object);
 			TRACE_LOGGER;
@@ -252,19 +252,19 @@ namespace TRN4JAVA
 			return{ p };
 		}
 
-		void recording_scheduler_callback(jobject object, jmethodID method, const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations);
-		void custom_mutator_callback(jobject object, jmethodID method, const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations);
-		void custom_weights_callback(jobject object, jmethodID method, const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols);
-		void custom_scheduler_callback(jobject object, jmethodID method, const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations);
-		void measurement_matrix_callback(jobject object, jmethodID method, const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols);
-		void measurement_raw_callback(jobject object, jmethodID method, const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols);
-		void recording_performances_callback(jobject object, jmethodID method, const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second);
-		void recording_states_callback(jobject object, jmethodID method, const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols);
-		void recording_weights_callback(jobject object, jmethodID method, const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols);
-		void recording_scheduling_callback(jobject object, jmethodID method, const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations);
-		void event_ack_callback(jobject object, jmethodID method, const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause);
-		void event_simulation_allocation_callback(jobject object, jmethodID method, const unsigned long long &id, const int &rank);
-		void event_simulation_state_callback(jobject object, jmethodID method, const unsigned long long &id);
+		void recording_scheduler_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations);
+		void custom_mutator_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations);
+		void custom_weights_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols);
+		void custom_scheduler_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations);
+		void measurement_matrix_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols);
+		void measurement_raw_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols);
+		void recording_performances_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second);
+		void recording_states_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols);
+		void recording_weights_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols);
+		void recording_scheduling_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations);
+		void event_ack_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::size_t &counter, const bool &success, const std::string &cause);
+		void event_simulation_allocation_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const int &rank);
+		void event_simulation_state_callback(jobject object, jmethodID method, const unsigned long long &simulation_id);
 		void event_processor_callback(jobject object, jmethodID method, const int &rank, const std::string &host, const unsigned int &index, const std::string &name);
 		void event_callback(jobject object, jmethodID method);
 	}

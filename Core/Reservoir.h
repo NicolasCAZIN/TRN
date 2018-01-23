@@ -55,14 +55,12 @@ namespace TRN
 
 		public :
 			std::size_t get_batch_size();
-			std::size_t get_trial();
-			std::size_t get_evaluation();
 			std::size_t get_reservoir_size();
 			std::size_t get_stimulus_size();
 			std::size_t get_prediction_size();
 		public :
-			void test(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::size_t &preamble, const bool &autonomous_generation, const std::size_t &supplementary_generations);
-			void train(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Scheduling> &scheduling);
+			void test(const unsigned long long &evaluation_id, const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::size_t &preamble, const bool &autonomous_generation, const std::size_t &supplementary_generations);
+			void train(const unsigned long long &evaluation_id, const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Scheduling> &scheduling);
 				
 		protected:
 			virtual void update(const TRN::Core::Message::Payload<TRN::Core::Message::STIMULUS> &incoming) override;

@@ -33,7 +33,7 @@ public class Advanced
 
 			public static abstract class Ack
 			{
-				public abstract void callback(final long id, final long number, final boolean success, final String cause);
+				public abstract void callback(final long simulation_id, final long number, final boolean success, final String cause);
 				public static native void install(final Ack ack);
 			}
 
@@ -49,13 +49,13 @@ public class Advanced
 			}
 			public static abstract class Allocated
 			{
-				public abstract void callback(final long id, final int rank);
+				public abstract void callback(final long simulation_id, final int rank);
 				public static native void install(final Allocated allocated);
 			}
 
 			public static abstract class Deallocated
 			{
-				public abstract void callback(final long id, final int rank);
+				public abstract void callback(final long simulation_id, final int rank);
 				public static native void install(final Deallocated deallocated);
 			}
 		}
@@ -66,13 +66,13 @@ public class Advanced
 		{
 			public static class				Custom
 			{
-				public static native void	configure(final long id, final long batch_size, final long stimulus_size, 
+				public static native void	configure(final long simulation_id, final long batch_size, final long stimulus_size, 
 													  final TRN4JAVA.Custom.Simulation.Loop stimulus);
 			}
 
 			public static class				SpatialFilter
 			{
-				public static native void	configure( final long id, final long batch_size, final long stimulus_size, final long seed,
+				public static native void	configure( final long simulation_id, final long batch_size, final long stimulus_size, final long seed,
 														final TRN4JAVA.Custom.Simulation.Loop position, final TRN4JAVA.Custom.Simulation.Loop stimulus,
 													  final long rows, final long cols, 
 												
@@ -85,14 +85,14 @@ public class Advanced
 		{
 			public static class			Custom
 			{
-				public static native void	configure(final long id, final long seed, final TRN4JAVA.Custom.Simulation.Scheduler scheduler, final String tag);
+				public static native void	configure(final long simulation_id, final long seed, final TRN4JAVA.Custom.Simulation.Scheduler scheduler, final String tag);
 			}
 
 			public static class	Mutator
 			{
 				public static class				Custom
 				{
-					public static native void	configure(final long id, final long seed, final TRN4JAVA.Custom.Simulation.Scheduler.Mutator mutator);
+					public static native void	configure(final long simulation_id, final long seed, final TRN4JAVA.Custom.Simulation.Scheduler.Mutator mutator);
 				}
 			}
 		}
@@ -105,7 +105,7 @@ public class Advanced
 				{
 					public static class			Custom
 					{
-						public static native void	configure(final long id, final TRN4JAVA.Custom.Simulation.Reservoir.Weights weights);
+						public static native void	configure(final long simulation_id, final TRN4JAVA.Custom.Simulation.Reservoir.Weights weights);
 					}
 			
 				}
@@ -113,7 +113,7 @@ public class Advanced
 				{
 					public static class				Custom
 					{
-						public static native void	configure(final long id, final TRN4JAVA.Custom.Simulation.Reservoir.Weights weights);
+						public static native void	configure(final long simulation_id, final TRN4JAVA.Custom.Simulation.Reservoir.Weights weights);
 					}
 				}
 
@@ -121,7 +121,7 @@ public class Advanced
 				{
 					public static class				Custom
 					{
-						public static native void	configure(final long id, final TRN4JAVA.Custom.Simulation.Reservoir.Weights weights);
+						public static native void	configure(final long simulation_id, final TRN4JAVA.Custom.Simulation.Reservoir.Weights weights);
 					}
 				}
 
@@ -129,7 +129,7 @@ public class Advanced
 				{
 					public static class				Custom
 					{
-						public static native void	configure(final long id, final TRN4JAVA.Custom.Simulation.Reservoir.Weights weights);
+						public static native void	configure(final long simulation_id, final TRN4JAVA.Custom.Simulation.Reservoir.Weights weights);
 					}
 				}
 			}
@@ -141,17 +141,17 @@ public class Advanced
 			{
 				public static class	Raw
 				{
-					public static native void	configure(final long id, final long batch_size, final TRN4JAVA.Callbacks.Simulation.Measurement.Raw raw);
+					public static native void	configure(final long simulation_id, final long batch_size, final TRN4JAVA.Callbacks.Simulation.Measurement.Raw raw);
 				}
 
 				public static class	MeanSquareError
 				{
-					public static native void	configure(final long id, final long batch_size, final TRN4JAVA.Callbacks.Simulation.Measurement.Processed mean_square_error);
+					public static native void	configure(final long simulation_id, final long batch_size, final TRN4JAVA.Callbacks.Simulation.Measurement.Processed mean_square_error);
 				}
 
 				public static class	FrechetDistance
 				{
-					public static native void	configure(final long id, final long batch_size, final TRN4JAVA.Callbacks.Simulation.Measurement.Processed frechet_distance);
+					public static native void	configure(final long simulation_id, final long batch_size, final TRN4JAVA.Callbacks.Simulation.Measurement.Processed frechet_distance);
 				}
 			}
 
@@ -159,17 +159,17 @@ public class Advanced
 			{
 				public static class	Raw
 				{
-					public static native void	configure(final long id, final long batch_size, final TRN4JAVA.Callbacks.Simulation.Measurement.Raw raw);
+					public static native void	configure(final long simulation_id, final long batch_size, final TRN4JAVA.Callbacks.Simulation.Measurement.Raw raw);
 				}
 
 				public static class	MeanSquareError
 				{
-					public static native void	configure(final long id, final long batch_size, final TRN4JAVA.Callbacks.Simulation.Measurement.Processed mean_square_error);
+					public static native void	configure(final long simulation_id, final long batch_size, final TRN4JAVA.Callbacks.Simulation.Measurement.Processed mean_square_error);
 				}
 
 				public static class	FrechetDistance
 				{
-					public static native void	configure(final long id, final long batch_size, final TRN4JAVA.Callbacks.Simulation.Measurement.Processed frechet_distance);
+					public static native void	configure(final long simulation_id, final long batch_size, final TRN4JAVA.Callbacks.Simulation.Measurement.Processed frechet_distance);
 				}
 			}
 		}
@@ -178,22 +178,22 @@ public class Advanced
 		{
 			public static  class	States
 			{
-				public static native void	configure(final long id, final TRN4JAVA.Callbacks.Simulation.Recording.States states, final boolean train, final boolean prime, final boolean generate);
+				public static native void	configure(final long simulation_id, final TRN4JAVA.Callbacks.Simulation.Recording.States states, final boolean train, final boolean prime, final boolean generate);
 			}
 
 			public static  class	Weights
 			{
-				public static native void	configure(final long id, final TRN4JAVA.Callbacks.Simulation.Recording.Weights weights, final boolean initialize, final boolean train);
+				public static native void	configure(final long simulation_id, final TRN4JAVA.Callbacks.Simulation.Recording.Weights weights, final boolean initialize, final boolean train);
 			}
 
 			public static  class	Performances
 			{
-				public static native void	configure(final long id, final TRN4JAVA.Callbacks.Simulation.Recording.Performances performances, final boolean train, final boolean prime, final boolean generate);
+				public static native void	configure(final long simulation_id, final TRN4JAVA.Callbacks.Simulation.Recording.Performances performances, final boolean train, final boolean prime, final boolean generate);
 			}
 
 			public static  class	Scheduling
 			{
-				public static native void	configure(final long id, final TRN4JAVA.Callbacks.Simulation.Recording.Scheduling scheduling);
+				public static native void	configure(final long simulation_id, final TRN4JAVA.Callbacks.Simulation.Recording.Scheduling scheduling);
 			}
 		}
 	}

@@ -164,7 +164,7 @@ jlong Java_TRN4JAVA_Basic_00024Simulation_encode(JNIEnv *env, jclass jclazz, job
 {
 	TRACE_LOGGER;
 
-	unsigned long long id;
+	unsigned long long &simulation_id;
 
 	try
 	{
@@ -174,15 +174,15 @@ jlong Java_TRN4JAVA_Basic_00024Simulation_encode(JNIEnv *env, jclass jclazz, job
 		auto frontend_number_field = env->GetFieldID(env->GetObjectClass(identifier), "frontend_number", "S");
 		if (frontend_number_field == 0)
 			throw std::invalid_argument("Can't find field frontend_number");
-		auto simulation_number_field = env->GetFieldID(env->GetObjectClass(identifier), "simulation_number", "I");
-		if (simulation_number_field == 0)
-			throw std::invalid_argument("Can't find field simulation_number");
+		auto bundle_size_field = env->GetFieldID(env->GetObjectClass(identifier), "bundle_size", "I");
+		if (bundle_size_field == 0)
+			throw std::invalid_argument("Can't find field bundle_size");
 
 		unsigned short condition_number = (unsigned short)env->GetShortField(identifier, condition_number_field);
 		unsigned short frontend_number = (unsigned short)env->GetShortField(identifier, frontend_number_field);
-		unsigned int simulation_number = (unsigned int)env->GetIntField(identifier, simulation_number_field);
+		unsigned int batch_number = (unsigned int)env->GetIntField(identifier, bundle_size_field);
 
-		TRN4CPP::Simulation::encode(frontend_number, condition_number, simulation_number, id);
+		TRN4CPP::Simulation::encode(frontend_number, condition_number, bundle_size, simulation_id);
 	}
 	catch (std::exception &e)
 	{
@@ -198,10 +198,10 @@ jobject Java_TRN4JAVA_Basic_00024Simulation_decode(JNIEnv *env, jclass _jclass, 
 	{
 		unsigned short condition_number;
 		unsigned short frontend_number;
-		unsigned int simulation_number;
+		unsigned int batch_number;
 
 
-		TRN4CPP::Simulation::decode((unsigned long long)id, frontend_number, condition_number, simulation_number);
+		TRN4CPP::Simulation::decode((unsigned long long)id, frontend_number, condition_number, bundle_size);
 
 		jclass identifier_class = env->FindClass("TRN4JAVA/Simulation$Identifier");
 		jmethodID constructor = env->GetMethodID(identifier_class, "<init>", "void(V)");
@@ -214,13 +214,13 @@ jobject Java_TRN4JAVA_Basic_00024Simulation_decode(JNIEnv *env, jclass _jclass, 
 		auto frontend_number_field = env->GetFieldID(env->GetObjectClass(identifier), "frontend_number", "S");
 		if (frontend_number_field == 0)
 			throw std::invalid_argument("Can't find field frontend_number");
-		auto simulation_number_field = env->GetFieldID(env->GetObjectClass(identifier), "simulation_number", "I");
-		if (simulation_number_field == 0)
-			throw std::invalid_argument("Can't find field simulation_number");
+		auto bundle_size_field = env->GetFieldID(env->GetObjectClass(identifier), "bundle_size", "I");
+		if (bundle_size_field == 0)
+			throw std::invalid_argument("Can't find field bundle_size");
 
 		env->SetShortField(identifier, frontend_number_field, (jshort)frontend_number);
 		env->SetShortField(identifier, condition_number_field, (jshort)condition_number);
-		env->SetIntField(identifier, simulation_number_field, (jint)simulation_number);
+		env->SetIntField(identifier, bundle_size_field, (jint)bundle_size);
 
 		return identifier;
 	}

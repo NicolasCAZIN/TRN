@@ -33,16 +33,16 @@ unsigned long long TRN::Engine::Proxy::global_id(const unsigned long long &local
 {
 	unsigned short number;
 	unsigned short condition_number;
-	unsigned int simulation_number;
+	unsigned int batch_number;
 
-	TRN::Engine::decode(local_id, number, condition_number, simulation_number);
+	TRN::Engine::decode(local_id, number, condition_number, batch_number);
 
 	if (number != 0)
 		throw std::invalid_argument("Fontend number must be 0");
 
 	unsigned long long global_id;
 
-	TRN::Engine::encode(handle->number, condition_number, simulation_number, global_id);
+	TRN::Engine::encode(handle->number, condition_number, batch_number, global_id);
 
 	return global_id;
 }
@@ -173,249 +173,249 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::ST
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->allocate(global_id(message.id));
+	handle->dispatcher->allocate(global_id(message.simulation_id));
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::DEALLOCATE> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->deallocate(global_id(message.id));
+	handle->dispatcher->deallocate(global_id(message.simulation_id));
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::TRAIN> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->train(global_id(message.id), message.label, message.incoming, message.expected, message.reset_readout);
+	handle->dispatcher->train(global_id(message.simulation_id), message.evaluation_id, message.label, message.incoming, message.expected, message.reset_readout);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::TEST> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->test(global_id(message.id), message.label, message.incoming, message.expected, message.preamble, message.autonomous, message.supplementary_generations);
+	handle->dispatcher->test(global_id(message.simulation_id), message.evaluation_id, message.label, message.incoming, message.expected, message.preamble, message.autonomous, message.supplementary_generations);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::DECLARE_SEQUENCE> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->declare_sequence(global_id(message.id), message.label, message.tag, message.sequence, message.observations);
+	handle->dispatcher->declare_sequence(global_id(message.simulation_id), message.label, message.tag, message.sequence, message.observations);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::DECLARE_SET> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->declare_set(global_id(message.id), message.label, message.tag, message.labels);
+	handle->dispatcher->declare_set(global_id(message.simulation_id), message.label, message.tag, message.labels);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::SETUP_STATES> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->setup_states(global_id(message.id), message.train, message.prime, message.generate);
+	handle->dispatcher->setup_states(global_id(message.simulation_id), message.train, message.prime, message.generate);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::SETUP_WEIGHTS> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->setup_weights(global_id(message.id), message.initialization, message.train);
+	handle->dispatcher->setup_weights(global_id(message.simulation_id), message.initialization, message.train);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::SETUP_PERFORMANCES> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->setup_performances(global_id(message.id), message.train, message.prime, message.generate);
+	handle->dispatcher->setup_performances(global_id(message.simulation_id), message.train, message.prime, message.generate);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::SETUP_SCHEDULING> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->setup_scheduling(global_id(message.id));
+	handle->dispatcher->setup_scheduling(global_id(message.simulation_id));
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_BEGIN> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_begin(global_id(message.id));
+	handle->dispatcher->configure_begin(global_id(message.simulation_id));
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_END> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_end(global_id(message.id));
+	handle->dispatcher->configure_end(global_id(message.simulation_id));
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_MEAN_SQUARE_ERROR> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_measurement_readout_mean_square_error(global_id(message.id), message.batch_size);
+	handle->dispatcher->configure_measurement_readout_mean_square_error(global_id(message.simulation_id), message.batch_size);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_FRECHET_DISTANCE> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_measurement_readout_frechet_distance(global_id(message.id), message.batch_size);
+	handle->dispatcher->configure_measurement_readout_frechet_distance(global_id(message.simulation_id), message.batch_size);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_CUSTOM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_measurement_readout_custom(global_id(message.id), message.batch_size);
+	handle->dispatcher->configure_measurement_readout_custom(global_id(message.simulation_id), message.batch_size);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> &message)
 {
-	handle->dispatcher->configure_measurement_position_mean_square_error(global_id(message.id), message.batch_size);
+	handle->dispatcher->configure_measurement_position_mean_square_error(global_id(message.simulation_id), message.batch_size);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_measurement_position_frechet_distance(global_id(message.id), message.batch_size);
+	handle->dispatcher->configure_measurement_position_frechet_distance(global_id(message.simulation_id), message.batch_size);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_CUSTOM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_measurement_position_custom(global_id(message.id), message.batch_size);
+	handle->dispatcher->configure_measurement_position_custom(global_id(message.simulation_id), message.batch_size);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RESERVOIR_WIDROW_HOFF> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_reservoir_widrow_hoff(global_id(message.id), message.stimulus_size, message.prediction_size, message.reservoir_size, message.leak_rate, message.initial_state_scale, message.learning_rate, message.seed, message.batch_size);
+	handle->dispatcher->configure_reservoir_widrow_hoff(global_id(message.simulation_id), message.stimulus_size, message.prediction_size, message.reservoir_size, message.leak_rate, message.initial_state_scale, message.learning_rate, message.seed, message.batch_size);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_COPY> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_loop_copy(global_id(message.id), message.batch_size, message.stimulus_size);
+	handle->dispatcher->configure_loop_copy(global_id(message.simulation_id), message.batch_size, message.stimulus_size);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_SPATIAL_FILTER> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_loop_spatial_filter(global_id(message.id), message.batch_size, message.stimulus_size, message.seed, message.rows, message.cols, message.x, message.y, message.sequence, message.sigma, message.radius, message.scale, message.tag);
+	handle->dispatcher->configure_loop_spatial_filter(global_id(message.simulation_id), message.batch_size, message.stimulus_size, message.seed, message.rows, message.cols, message.x, message.y, message.sequence, message.sigma, message.radius, message.scale, message.tag);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_CUSTOM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_loop_custom(global_id(message.id), message.batch_size, message.stimulus_size);
+	handle->dispatcher->configure_loop_custom(global_id(message.simulation_id), message.batch_size, message.stimulus_size);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_TILED> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_scheduler_tiled(global_id(message.id), message.epochs);
+	handle->dispatcher->configure_scheduler_tiled(global_id(message.simulation_id), message.epochs);
 }
 
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_SNIPPETS> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_scheduler_snippets(global_id(message.id), message.seed, message.snippets_size, message.time_budget, message.tag);
+	handle->dispatcher->configure_scheduler_snippets(global_id(message.simulation_id), message.seed, message.snippets_size, message.time_budget, message.tag);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_CUSTOM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_scheduler_custom(global_id(message.id), message.seed, message.tag);
+	handle->dispatcher->configure_scheduler_custom(global_id(message.simulation_id), message.seed, message.tag);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_mutator_shuffle(global_id(message.id), message.seed);
+	handle->dispatcher->configure_mutator_shuffle(global_id(message.simulation_id), message.seed);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_mutator_reverse(global_id(message.id), message.seed, message.rate, message.size);
+	handle->dispatcher->configure_mutator_reverse(global_id(message.simulation_id), message.seed, message.rate, message.size);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_PUNCH> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_mutator_punch(global_id(message.id), message.seed, message.rate, message.size, message.repetition);
+	handle->dispatcher->configure_mutator_punch(global_id(message.simulation_id), message.seed, message.rate, message.size, message.repetition);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_CUSTOM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_mutator_custom(global_id(message.id), message.seed);
+	handle->dispatcher->configure_mutator_custom(global_id(message.simulation_id), message.seed);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_UNIFORM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_feedforward_uniform(global_id(message.id), message.a, message.b, message.sparsity);
+	handle->dispatcher->configure_feedforward_uniform(global_id(message.simulation_id), message.a, message.b, message.sparsity);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_GAUSSIAN> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_feedforward_gaussian(global_id(message.id), message.mu, message.sigma, message.sparsity);
+	handle->dispatcher->configure_feedforward_gaussian(global_id(message.simulation_id), message.mu, message.sigma, message.sparsity);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_CUSTOM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_feedforward_custom(global_id(message.id));
+	handle->dispatcher->configure_feedforward_custom(global_id(message.simulation_id));
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_UNIFORM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_feedback_uniform(global_id(message.id), message.a, message.b, message.sparsity);
+	handle->dispatcher->configure_feedback_uniform(global_id(message.simulation_id), message.a, message.b, message.sparsity);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_GAUSSIAN> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_feedback_gaussian(global_id(message.id), message.mu, message.sigma, message.sparsity);
+	handle->dispatcher->configure_feedback_gaussian(global_id(message.simulation_id), message.mu, message.sigma, message.sparsity);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_feedback_custom(global_id(message.id));
+	handle->dispatcher->configure_feedback_custom(global_id(message.simulation_id));
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_UNIFORM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_recurrent_uniform(global_id(message.id), message.a, message.b, message.sparsity);
+	handle->dispatcher->configure_recurrent_uniform(global_id(message.simulation_id), message.a, message.b, message.sparsity);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_GAUSSIAN> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_recurrent_gaussian(global_id(message.id), message.mu, message.sigma, message.sparsity);
+	handle->dispatcher->configure_recurrent_gaussian(global_id(message.simulation_id), message.mu, message.sigma, message.sparsity);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_CUSTOM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_recurrent_custom(global_id(message.id));
+	handle->dispatcher->configure_recurrent_custom(global_id(message.simulation_id));
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_UNIFORM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_readout_uniform(global_id(message.id), message.a, message.b, message.sparsity);
+	handle->dispatcher->configure_readout_uniform(global_id(message.simulation_id), message.a, message.b, message.sparsity);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_GAUSSIAN> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_readout_gaussian(global_id(message.id), message.mu, message.sigma, message.sparsity);
+	handle->dispatcher->configure_readout_gaussian(global_id(message.simulation_id), message.mu, message.sigma, message.sparsity);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_CUSTOM> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_readout_custom(global_id(message.id));
+	handle->dispatcher->configure_readout_custom(global_id(message.simulation_id));
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::POSITION> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->notify_position(global_id(message.id), message.trial, message.evaluation, message.elements, message.rows, message.cols);
+	handle->dispatcher->notify_position(global_id(message.simulation_id), message.evaluation_id, message.elements, message.rows, message.cols);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::STIMULUS> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->notify_stimulus(global_id(message.id), message.trial, message.evaluation, message.elements, message.rows, message.cols);
+	handle->dispatcher->notify_stimulus(global_id(message.simulation_id), message.evaluation_id, message.elements, message.rows, message.cols);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::SCHEDULING> &message)
 {
 	TRACE_LOGGER;
 	if (message.is_from_mutator)
 	{
-		handle->dispatcher->notify_mutator(global_id(message.id), message.trial, message.offsets, message.durations);
+		handle->dispatcher->notify_mutator(global_id(message.simulation_id), message.evaluation_id, message.offsets, message.durations);
 	}
 	else
 	{
-		handle->dispatcher->notify_scheduler(global_id(message.id), message.trial, message.offsets, message.durations);
+		handle->dispatcher->notify_scheduler(global_id(message.simulation_id), message.evaluation_id, message.offsets, message.durations);
 	}
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::FEEDFORWARD_WEIGHTS> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->notify_feedforward(global_id(message.id), message.elements, message.matrices, message.rows, message.cols);
+	handle->dispatcher->notify_feedforward(global_id(message.simulation_id), message.elements, message.matrices, message.rows, message.cols);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_WEIGHTS> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->notify_recurrent(global_id(message.id), message.elements, message.matrices, message.rows, message.cols);
+	handle->dispatcher->notify_recurrent(global_id(message.simulation_id), message.elements, message.matrices, message.rows, message.cols);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->notify_feedback(global_id(message.id), message.elements, message.matrices, message.rows, message.cols);
+	handle->dispatcher->notify_feedback(global_id(message.simulation_id), message.elements, message.matrices, message.rows, message.cols);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::READOUT_WEIGHTS> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->notify_readout(global_id(message.id), message.elements, message.matrices, message.rows, message.cols);
+	handle->dispatcher->notify_readout(global_id(message.simulation_id), message.elements, message.matrices, message.rows, message.cols);
 }
 std::shared_ptr<TRN::Engine::Proxy> TRN::Engine::Proxy::create(
 	const std::shared_ptr<TRN::Engine::Communicator> &frontend_proxy,

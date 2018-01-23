@@ -16,11 +16,11 @@ void TRN::Loop::Copy::update(const TRN::Core::Message::Payload<TRN::Core::Messag
 	if (prediction.get_cols() != stimulus.get_cols())
 		throw std::invalid_argument("Prediction and Stimulus column number must be the same");*/
 	auto predicted = payload.get_predicted();
-
+	auto evaluation_id = payload.get_evaluation_id();
 	for (std::size_t batch = 0; batch < handle->batch_size; batch++)
 		handle->stimulus->get_matrices(batch)->from(*payload.get_predicted()->get_matrices(batch));
 	
-	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::STIMULUS>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::STIMULUS>(handle->stimulus));
+	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::STIMULUS>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::STIMULUS>(handle->stimulus, evaluation_id));
 }
 
 void TRN::Loop::Copy::visit(std::shared_ptr<TRN::Core::Message::Payload<TRN::Core::Message::FLOPS>> &payload)

@@ -144,7 +144,7 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 
 	}
 	assert(handle->time_budget == offsets.size());
-	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_trial(), TRN::Core::Scheduling::create(offsets, durations)));
+	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_evaluation_id(), TRN::Core::Scheduling::create(offsets, durations)));
 }
 
 std::shared_ptr<TRN::Scheduler::Snippets> TRN::Scheduler::Snippets::create(const unsigned long &seed, const unsigned int  &snippets_size, const unsigned int &time_budget, const std::string &tag)

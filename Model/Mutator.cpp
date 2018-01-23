@@ -21,7 +21,7 @@ std::shared_ptr<TRN::Core::Mutator> TRN::Model::Mutator::Punch::create(const uns
 	return TRN::Mutator::Punch::create(seed, rate, size, counter);
 }
 
-std::shared_ptr<TRN::Core::Mutator> TRN::Model::Mutator::Custom::create(const unsigned long &seed,const std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &request, std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply)
+std::shared_ptr<TRN::Core::Mutator> TRN::Model::Mutator::Custom::create(const unsigned long &seed,const std::function<void(const unsigned long long &evaluation_id, const unsigned long &seed, const std::vector<int> &offsets, const std::vector<int> &durations)> &request, std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply)
 {
 	return TRN::Mutator::Custom::create(seed, request, reply);
 }

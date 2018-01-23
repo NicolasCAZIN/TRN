@@ -13,7 +13,7 @@ namespace TRN
 
 
 			/// Constructor.
-			Connection(boost::asio::io_service &io_service) : socket_(io_service), id(0)
+			Connection(boost::asio::io_service &io_service) : socket_(io_service),id(0)
 			{
 			
 			}
@@ -35,14 +35,14 @@ namespace TRN
 			void set_id(const unsigned short &id)
 			{
 				if (this->id != 0)
-					throw std::runtime_error("Connection is already identified");
-				this->id = id;
+					throw std::runtime_error("Connection is alreadyidentified");
+				this->id =id;
 			}
 
 			unsigned short get_id()
 			{
 				if (id == 0)
-					throw std::runtime_error("Connection is not identified");
+					throw std::runtime_error("Connection is notidentified");
 				return id;
 			}
 

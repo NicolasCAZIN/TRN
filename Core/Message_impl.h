@@ -2,24 +2,40 @@
 
 #include "Message.h"
 
+
+class TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>::Handle
+{
+public:
+	unsigned long long evaluation_id;
+};
+class TRN::Core::Message::Payload<TRN::Core::Message::TESTED>::Handle
+{
+public:
+	unsigned long long evaluation_id;
+};
+class TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>::Handle
+{
+public:
+	unsigned long long evaluation_id;
+};
+
 class TRN::Core::Message::Payload<TRN::Core::Message::STIMULUS>::Handle
 {
 public:
+	unsigned long long evaluation_id;
 	std::shared_ptr<TRN::Core::Batch> stimulus;
 };
 
 class TRN::Core::Message::Payload<TRN::Core::Message::PREDICTION>::Handle
 {
 public:
-	std::size_t trial;
-	std::size_t evaluation;
+	unsigned long long evaluation_id;
 	std::shared_ptr<TRN::Core::Batch> predicted;
 };
 class TRN::Core::Message::Payload<TRN::Core::Message::POSITION>::Handle
 {
 public:
-	std::size_t trial;
-	std::size_t evaluation;
+	unsigned long long evaluation_id;
 	std::shared_ptr<TRN::Core::Batch> position;
 };
 class TRN::Core::Message::Payload<TRN::Core::Message::PERFORMANCES>::Handle
@@ -80,7 +96,7 @@ public:
 class TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>::Handle
 {
 public:
-	std::size_t trial;
+	unsigned long long evaluation_id;
 	std::shared_ptr<TRN::Core::Scheduling> scheduling;
 };
 
@@ -90,7 +106,7 @@ public:
 	std::string incoming;
 	std::string expected;
 	std::string label;
-	std::size_t trial;
+	unsigned long long evaluation_id;
 };
 
 class TRN::Core::Message::Payload<TRN::Core::Message::TEST>::Handle

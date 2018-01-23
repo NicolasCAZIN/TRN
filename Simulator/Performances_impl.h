@@ -14,5 +14,5 @@ public:
 	bool prime;
 	bool generate;
 
-	std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> functor;
+	std::function<void(const unsigned long long &evaluation_id, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> functor;
 };

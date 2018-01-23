@@ -1712,7 +1712,7 @@ struct normalize_functor
 
 
 void compute_select_most_probable_location(const cudaStream_t &stream,  const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
-	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
+	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,	
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 	const float  **batched_location_probability, const std::size_t &batched_location_probability_rows, const std::size_t &batched_location_probability_cols, const std::size_t &batched_location_probability_strides,
 	float **batched_predicted_location, const std::size_t &batched_predicted_location_rows, const std::size_t &batched_predicted_location_cols, const std::size_t &batched_predicted_location_strides
@@ -1724,7 +1724,6 @@ void compute_select_most_probable_location(const cudaStream_t &stream,  const st
 	std::vector<cub::KeyValuePair <int, float>> argmax_host(batch_size);
 	std::vector<void *> temp_storage_ptr(batch_size);
 	std::vector<std::size_t> temp_storage_bytes(batch_size);
-	std::vector<cudaStream_t> child_streams(batch_size);
 
 
 
@@ -1736,22 +1735,17 @@ void compute_select_most_probable_location(const cudaStream_t &stream,  const st
 	for (int batch = 0; batch < batch_size; batch++)
 	{
 		float *d_in = batched_location_probability_ptr[batch];
-		checkCudaErrors(cudaStreamCreateWithFlags(&child_streams[batch], cudaStreamNonBlocking));
-
 		checkCudaErrors(cudaMalloc(&argmax_ptr[batch], sizeof(cub::KeyValuePair <int, float>)));
-		cub::DeviceReduce::ArgMax(temp_storage_ptr[batch], temp_storage_bytes[batch], d_in, argmax_ptr[batch], batched_location_probability_strides * batched_location_probability_rows, child_streams[batch]);
+		cub::DeviceReduce::ArgMax(temp_storage_ptr[batch], temp_storage_bytes[batch], d_in, argmax_ptr[batch], batched_location_probability_strides * batched_location_probability_rows, stream);
 		// Allocate temporary storage
 		checkCudaErrors(cudaMalloc(&temp_storage_ptr[batch], temp_storage_bytes[batch]));
-		cub::DeviceReduce::ArgMax(temp_storage_ptr[batch], temp_storage_bytes[batch], d_in, argmax_ptr[batch], batched_location_probability_strides * batched_location_probability_rows, child_streams[batch]);
-		checkCudaErrors(cudaMemcpyAsync(&argmax_host[batch], argmax_ptr[batch], sizeof(cub::KeyValuePair <int, float>), cudaMemcpyKind::cudaMemcpyDeviceToHost, child_streams[batch]));
+		cub::DeviceReduce::ArgMax(temp_storage_ptr[batch], temp_storage_bytes[batch], d_in, argmax_ptr[batch], batched_location_probability_strides * batched_location_probability_rows, stream);
+		checkCudaErrors(cudaMemcpyAsync(&argmax_host[batch], argmax_ptr[batch], sizeof(cub::KeyValuePair <int, float>), cudaMemcpyKind::cudaMemcpyDeviceToHost, stream));
 	}
-
+	checkCudaErrors(cudaStreamSynchronize(stream));
 
 	for (int batch = 0; batch < batch_size; batch++)
 	{
-		
-		checkCudaErrors(cudaStreamSynchronize(child_streams[batch]));
-		checkCudaErrors(cudaStreamDestroy(child_streams[batch]));
 		checkCudaErrors(cudaFree(temp_storage_ptr[batch]));
 		checkCudaErrors(cudaFree(argmax_ptr[batch]));
 

@@ -113,7 +113,7 @@ void Java_TRN4JAVA_Advanced_00024Engine_00024Events_00024Trained_install(JNIEnv 
 		TRN4CPP::Engine::Events::Trained::install,
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::event_simulation_state_callback));
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Loop_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong id, jlong batch_size, jlong stimulus_size, jobject stimulus)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Loop_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jlong batch_size, jlong stimulus_size, jobject stimulus)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, stimulus, TRN4JAVA::Functor::LOOP_CALLBACK_SIGNATURE, TRN4JAVA::Functor::loop_global_ref,
@@ -122,7 +122,7 @@ void Java_TRN4JAVA_Advanced_00024Simulation_00024Loop_00024Custom_configure(JNIE
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::measurement_matrix_callback), TRN4JAVA::Functor::loop_reply);
 }
 void Java_TRN4JAVA_Advanced_00024Simulation_00024Loop_00024SpatialFilter_configure(
-	JNIEnv *env, jclass jclazz, jlong id, jlong batch_size, jlong stimulus_size, jlong seed, jobject position, jobject stimulus, jlong rows, jlong cols, jfloat x_min, jfloat x_max, jfloat y_min, jfloat y_max, jfloatArray response, jfloat sigma, jfloat radius, jfloat scale, jstring tag)
+	JNIEnv *env, jclass jclazz, jlong simulation_id, jlong batch_size, jlong stimulus_size, jlong seed, jobject position, jobject stimulus, jlong rows, jlong cols, jfloat x_min, jfloat x_max, jfloat y_min, jfloat y_max, jfloatArray response, jfloat sigma, jfloat radius, jfloat scale, jstring tag)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, position, stimulus, TRN4JAVA::Functor::LOOP_CALLBACK_SIGNATURE, TRN4JAVA::Functor::loop_global_ref,
@@ -133,112 +133,112 @@ void Java_TRN4JAVA_Advanced_00024Simulation_00024Loop_00024SpatialFilter_configu
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::measurement_matrix_callback), TRN4JAVA::Functor::loop_reply
 	);
 };
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Position_00024FrechetDistance_configure(JNIEnv *env, jclass jclazz, jlong id, jlong batch_size, jobject processed)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Position_00024FrechetDistance_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jlong batch_size, jobject processed)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, processed, TRN4JAVA::Functor::PROCESSED_CALLBACK_SIGNATURE, TRN4JAVA::Functor::processed_global_ref,
 		std::bind(&TRN4CPP::Simulation::Measurement::Position::FrechetDistance::configure, (unsigned long long)id, (std::size_t)batch_size, std::placeholders::_1),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::measurement_matrix_callback));
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Position_00024MeanSquareError_configure(JNIEnv *env, jclass jclazz, jlong id, jlong batch_size, jobject processed)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Position_00024MeanSquareError_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jlong batch_size, jobject processed)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, processed, TRN4JAVA::Functor::PROCESSED_CALLBACK_SIGNATURE, TRN4JAVA::Functor::processed_global_ref,
 		std::bind(&TRN4CPP::Simulation::Measurement::Position::MeanSquareError::configure, (unsigned long long)id, (std::size_t)batch_size, std::placeholders::_1),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::measurement_matrix_callback));
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Position_00024Raw_configure(JNIEnv *env, jclass jclazz, jlong id, jlong batch_size, jobject raw)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Position_00024Raw_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jlong batch_size, jobject raw)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, raw, TRN4JAVA::Functor::RAW_CALLBACK_SIGNATURE, TRN4JAVA::Functor::raw_global_ref,
 		std::bind(&TRN4CPP::Simulation::Measurement::Position::Custom::configure, (unsigned long long)id, (std::size_t)batch_size, std::placeholders::_1),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::measurement_raw_callback));
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Readout_00024FrechetDistance_configure(JNIEnv *env, jclass jclazz, jlong id, jlong batch_size, jobject processed)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Readout_00024FrechetDistance_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jlong batch_size, jobject processed)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, processed, TRN4JAVA::Functor::PROCESSED_CALLBACK_SIGNATURE, TRN4JAVA::Functor::processed_global_ref,
 		std::bind(&TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::configure, (unsigned long long)id, (std::size_t)batch_size, std::placeholders::_1),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::measurement_matrix_callback));
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Readout_00024MeanSquareError_configure(JNIEnv *env, jclass jclazz, jlong id, jlong batch_size, jobject processed)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Readout_00024MeanSquareError_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jlong batch_size, jobject processed)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, processed, TRN4JAVA::Functor::PROCESSED_CALLBACK_SIGNATURE, TRN4JAVA::Functor::processed_global_ref,
 		std::bind(&TRN4CPP::Simulation::Measurement::Readout::MeanSquareError::configure, (unsigned long long)id, (std::size_t)batch_size, std::placeholders::_1),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::measurement_matrix_callback));
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Readout_00024Raw_configure(JNIEnv *env, jclass jclazz, jlong id, jlong batch_size, jobject raw)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Readout_00024Raw_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jlong batch_size, jobject raw)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, raw, TRN4JAVA::Functor::RAW_CALLBACK_SIGNATURE, TRN4JAVA::Functor::raw_global_ref,
 		std::bind(&TRN4CPP::Simulation::Measurement::Readout::Custom::configure, (unsigned long long)id, (std::size_t)batch_size, std::placeholders::_1),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::measurement_raw_callback));
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Recording_00024Performances_configure(JNIEnv *env, jclass jclazz, jlong id, jobject performances, jboolean train, jboolean primed, jboolean generate)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Recording_00024Performances_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jobject performances, jboolean train, jboolean primed, jboolean generate)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, performances, TRN4JAVA::Functor::PERFORMANCES_CALLBACK_SIGNATURE, TRN4JAVA::Functor::recording_global_ref,
 		std::bind(&TRN4CPP::Simulation::Recording::Performances::configure, (unsigned long long)id, std::placeholders::_1, (bool)train, (bool)primed, (bool)generate),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::recording_performances_callback));
 }
-void Java_TRN4JAVA_Simulation_00024Recording_00024Scheduling_configure__JLTRN4JAVA_Simulation_Recording_Scheduling_2(JNIEnv *env, jclass jclazz, jlong id, jobject scheduling)
+void Java_TRN4JAVA_Simulation_00024Recording_00024Scheduling_configure__JLTRN4JAVA_Simulation_Recording_Scheduling_2(JNIEnv *env, jclass jclazz, jlong simulation_id, jobject scheduling)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, scheduling, TRN4JAVA::Functor::SCHEDULING_CALLBACK_SIGNATURE, TRN4JAVA::Functor::recording_global_ref,
 		std::bind(&TRN4CPP::Simulation::Recording::Scheduling::configure, (unsigned long long)id, std::placeholders::_1),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::recording_scheduling_callback));
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Recording_00024States_configure(JNIEnv *env, jclass jclazz, jlong id, jobject states, jboolean train, jboolean prime, jboolean generate)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Recording_00024States_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jobject states, jboolean train, jboolean prime, jboolean generate)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, states, TRN4JAVA::Functor::STATES_CALLBACK_SIGNATURE, TRN4JAVA::Functor::recording_global_ref,
 		std::bind(&TRN4CPP::Simulation::Recording::States::configure, (unsigned long long)id, std::placeholders::_1, (bool)train, (bool)prime, (bool)generate),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::recording_states_callback));
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Recording_00024Weights_configure(JNIEnv *env, jclass jclazz, jlong id, jobject weights, jboolean initialize, jboolean train)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Recording_00024Weights_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jobject weights, jboolean initialize, jboolean train)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, weights, TRN4JAVA::Functor::WEIGHTS_CALLBACK_SIGNATURE, TRN4JAVA::Functor::recording_global_ref,
 		std::bind(&TRN4CPP::Simulation::Recording::Weights::configure, (unsigned long long)id, std::placeholders::_1, (bool)initialize, (bool)train),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::recording_weights_callback));
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Reservoir_00024Weights_00024Feedback_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong id, jobject initializer)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Reservoir_00024Weights_00024Feedback_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jobject initializer)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, initializer, TRN4JAVA::Functor::WEIGHTS_CALLBACK_SIGNATURE, TRN4JAVA::Functor::weights_global_ref,
 		std::bind(&TRN4CPP::Simulation::Reservoir::Weights::Feedback::Custom::configure, (unsigned long long)id, std::placeholders::_1, std::placeholders::_2),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::custom_weights_callback), TRN4JAVA::Functor::weights_reply);
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Reservoir_00024Weights_00024Feedforward_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong id, jobject initializer)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Reservoir_00024Weights_00024Feedforward_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jobject initializer)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, initializer, TRN4JAVA::Functor::WEIGHTS_CALLBACK_SIGNATURE, TRN4JAVA::Functor::weights_global_ref,
 		std::bind(&TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Custom::configure, (unsigned long long)id, std::placeholders::_1, std::placeholders::_2),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::custom_weights_callback), TRN4JAVA::Functor::weights_reply);
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Reservoir_00024Weights_00024Readout_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong id, jobject initializer)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Reservoir_00024Weights_00024Readout_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jobject initializer)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, initializer, TRN4JAVA::Functor::WEIGHTS_CALLBACK_SIGNATURE, TRN4JAVA::Functor::weights_global_ref,
 		std::bind(&TRN4CPP::Simulation::Reservoir::Weights::Readout::Custom::configure, (unsigned long long)id, std::placeholders::_1, std::placeholders::_2),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::custom_weights_callback), TRN4JAVA::Functor::weights_reply);
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Reservoir_00024Weights_00024Recurrent_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong id, jobject initializer)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Reservoir_00024Weights_00024Recurrent_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jobject initializer)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, initializer, TRN4JAVA::Functor::WEIGHTS_CALLBACK_SIGNATURE, TRN4JAVA::Functor::weights_global_ref,
 		std::bind(&TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::configure, (unsigned long long)id, std::placeholders::_1, std::placeholders::_2),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::custom_weights_callback), TRN4JAVA::Functor::weights_reply);
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Scheduler_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong id, jlong seed, jobject scheduler, jstring tag)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Scheduler_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jlong seed, jobject scheduler, jstring tag)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, scheduler, TRN4JAVA::Functor::SCHEDULER_CALLBACK_SIGNATURE, TRN4JAVA::Functor::scheduler_global_ref,
 		std::bind(&TRN4CPP::Simulation::Scheduler::Custom::configure, (unsigned long long)id, (unsigned long)seed, std::placeholders::_1, std::placeholders::_2, TRN4JAVA::Convert::to_string(env, tag)),
 		TRN4JAVA::Functor::make_function(TRN4JAVA::Functor::custom_scheduler_callback), TRN4JAVA::Functor::scheduler_reply);
 }
-void Java_TRN4JAVA_Advanced_00024Simulation_00024Scheduler_00024Mutator_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong id, jlong seed, jobject mutator)
+void Java_TRN4JAVA_Advanced_00024Simulation_00024Scheduler_00024Mutator_00024Custom_configure(JNIEnv *env, jclass jclazz, jlong simulation_id, jlong seed, jobject mutator)
 {
 	TRACE_LOGGER;
 	TRN4JAVA::Functor::install(env, mutator, TRN4JAVA::Functor::SCHEDULER_CALLBACK_SIGNATURE, TRN4JAVA::Functor::scheduler_global_ref,

@@ -24,10 +24,10 @@ namespace TRN
 		public:
 			void update_processor(const int &rank, const std::string host, const unsigned int &index, const std::string name);
 			//void wait_not_allocated();
-			std::shared_ptr<TRN::Engine::Processor> allocate(const unsigned long long &id);
-			void deallocate(const unsigned long long &id);
+			std::shared_ptr<TRN::Engine::Processor> allocate(const unsigned long long &simulation_id);
+			void deallocate(const unsigned long long &simulation_id);
 		
-			std::shared_ptr<TRN::Engine::Processor> retrieve(const unsigned long long &id);
+			std::shared_ptr<TRN::Engine::Processor> retrieve(const unsigned long long &simulation_id);
 
 			std::vector<std::shared_ptr<TRN::Engine::Processor>> get_processors();
 

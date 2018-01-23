@@ -20,38 +20,38 @@ extern boost::shared_ptr<TRN4CPP::Plugin::Custom::Interface> custom;
 extern std::vector<boost::shared_ptr<TRN4CPP::Plugin::Callbacks::Interface>> callbacks;
 
 extern std::function<void()> on_completed;
-extern std::function<void(const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)> on_ack;
+extern std::function<void(const unsigned long long &simulation_id, const std::size_t &counter, const bool &success, const std::string &cause)> on_ack;
 extern std::function<void(const int &rank, const std::string &host, const unsigned int &index, const std::string &name)> on_processor;
-extern std::function<void(const unsigned long long &id, const int &rank)> on_allocated;
-extern std::function<void(const unsigned long long &id, const int &rank)> on_deallocated;
+extern std::function<void(const unsigned long long &simulation_id, const int &rank)> on_allocated;
+extern std::function<void(const unsigned long long &simulation_id, const int &rank)> on_deallocated;
 extern std::function<void(const int &rank)> on_quit;
-extern std::function<void(const unsigned long long &id)> on_trained;
-extern std::function<void(const unsigned long long &id)> on_primed;
-extern std::function<void(const unsigned long long &id)> on_tested;
-extern std::function<void(const unsigned long long &id)> on_configured;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id)> on_trained;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id)> on_primed;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id)> on_tested;
+extern std::function<void(const unsigned long long &simulation_id)> on_configured;
 extern std::function<void(const std::string &message) > on_error;
 extern std::function<void(const std::string &message) > on_information;
 extern std::function<void(const std::string &message) > on_warning;
 
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_raw;
-extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_mutator;
-extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduler;
-extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedforward;
-extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedback;
-extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_readout;
-extern std::function<void(const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> on_recurrent;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_raw;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_raw;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const unsigned long &seed, const std::vector<int> &offsets, const std::vector<int> &durations)> on_mutator;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const unsigned long &seed, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduler;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedforward;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedback;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_readout;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> on_recurrent;
 
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_mean_square_error;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_frechet_distance;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_mean_square_error;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_frechet_distance;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> on_performances;
-extern std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_states;
-extern std::function<void(const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_weights;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduling;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_position;
-extern std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_stimulus;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_mean_square_error;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_readout_frechet_distance;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_mean_square_error;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> on_measurement_position_frechet_distance;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> on_performances;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_states;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> on_weights;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduling;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_position;
+extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_stimulus;
 
 
 void TRN4CPP::Logging::Severity::Trace::setup()
@@ -75,18 +75,27 @@ void TRN4CPP::Logging::Severity::Error::setup()
 	TRN::Helper::Logger::setup(TRN::Helper::Logger::ERROR_LEVEL);
 }
 
-void  TRN4CPP::Simulation::encode(const unsigned short &frontend, const unsigned short &condition_number, const unsigned int &simulation_number, unsigned long long &id)
+void  TRN4CPP::Simulation::encode(const unsigned short &frontend, const unsigned short &condition_number, const unsigned int &batch_number, unsigned long long &simulation_id)
 {
 	TRACE_LOGGER;
-	TRN::Engine::encode(frontend, condition_number, simulation_number, id);
+	TRN::Engine::encode(frontend, condition_number, batch_number, simulation_id);
 }
-void TRN4CPP::Simulation::decode(const unsigned long long &id, unsigned short &frontend, unsigned short &condition_number, unsigned int &simulation_number)
+void TRN4CPP::Simulation::decode(const unsigned long long &simulation_id, unsigned short &frontend, unsigned short &condition_number, unsigned int &batch_number)
 {
 	TRACE_LOGGER;
-	TRN::Engine::decode(id, frontend, condition_number, simulation_number);
+	TRN::Engine::decode(simulation_id,frontend, condition_number, batch_number);
 }
 
-
+void TRN4CPP::Simulation::Evaluation::encode(const unsigned short &trial_number, const unsigned short &train_number, const unsigned short &test_number, const unsigned short &repeat_number, unsigned long long &evaluation_id)
+{
+	TRACE_LOGGER;
+	TRN::Engine::Evaluation::encode(trial_number, train_number, test_number, repeat_number, evaluation_id);
+}
+void TRN4CPP::Simulation::Evaluation::decode(const unsigned long long &evaluation_id, unsigned short &trial_number, unsigned short &train_number, unsigned short &test_number, unsigned short &repeat_number)
+{
+	TRACE_LOGGER;
+	TRN::Engine::Evaluation::decode(evaluation_id,trial_number, train_number, test_number, repeat_number);
+}
 
 static void initialize_frontend(const std::shared_ptr<TRN::Engine::Communicator> &communicator = TRN::ViewModel::Communicator::Local::create({ 0 }))
 {

@@ -9,12 +9,12 @@
 
 
 
-class Widrow_Hoff
+class widrow_hoff
 {
 private:
 	const float learning_rate;
 public:
-	 Widrow_Hoff(const float &learning_rate = 0.0f) : learning_rate(learning_rate) {}
+	 widrow_hoff(const float &learning_rate = 0.0f) : learning_rate(learning_rate) {}
 	 const float &get_learning_rate() const
 	{
 		return learning_rate;
@@ -724,9 +724,9 @@ template <TRN::CPU::Implementation Implementation>
 	 }
 	 std::vector<VSLStreamStatePtr> streams(omp_get_max_threads());
 #pragma omp parallel for
-	 for (int tid = 0; tid < streams.size(); tid++)
+	 for (int id = 0; id < streams.size(); id++)
 	 {
-		 vslNewStream(&streams[tid], VSL_BRNG_MT19937, seed);
+		 vslNewStream(&streams[id], VSL_BRNG_MT19937, seed);
 	 }
 
 	 
@@ -737,7 +737,7 @@ template <TRN::CPU::Implementation Implementation>
 #pragma omp parallel for
 	 for (int k = 0; k < K; k++)
 	 {
-		 auto tid = omp_get_thread_num();
+		 auto id = omp_get_thread_num();
 		 int batch = k % batch_size;
 		 int row = k / batch_size;
 
@@ -745,14 +745,14 @@ template <TRN::CPU::Implementation Implementation>
 		 auto location_probability_row = &batched_location_probability[batch][row * batched_location_probability_strides[batch]];
 		 auto y2 = batched_y_grid_centered2[batch][row];
 
-		 circle<Implementation>(streams[tid], scale, batched_x_grid_centered2[batch], x_grid_cols, set1_ps(y2), set1_ps(r2), location_probability_row);
+		 circle<Implementation>(streams[id], scale, batched_x_grid_centered2[batch], x_grid_cols, set1_ps(y2), set1_ps(r2), location_probability_row);
 
 	 }
 
 #pragma omp parallel for
-	 for (int tid = 0; tid < streams.size(); tid++)
+	 for (int id = 0; id < streams.size(); id++)
 	 {
-		 vslDeleteStream(&streams[tid]);
+		 vslDeleteStream(&streams[id]);
 	 }
 
 }
@@ -785,8 +785,8 @@ void TRN::CPU::Algorithm<Implementation>::select_most_probable_location(const st
 		const std::size_t rows = batched_location_probability_rows[batch];
 		const std::size_t stride = batched_location_probability_strides[batch];
 		auto idx = cblas_isamax(rows * stride, location_probability, 1);
-		std::size_t col = idx % stride;
-		std::size_t row = idx / stride;
+		std::size_t col =idx % stride;
+		std::size_t row =idx / stride;
 		float x = x_grid[col];
 		float y = y_grid[row];
 
@@ -1201,10 +1201,7 @@ template <TRN::CPU::Implementation Implementation>
 static inline void batched_update_readout_activation(const std::size_t &batch_size,
 	float **batched_x, const std::size_t *batched_x_rows, const std::size_t *batched_x_cols, const std::size_t *batched_x_strides)
 {
-
-
-	std::size_t K = batch_size;
-#pragma omp parallel for schedule(static, batch_size)
+#pragma omp parallel for
 	for (int batch = 0; batch < batch_size; batch++)
 	{
 	
@@ -1241,7 +1238,7 @@ static inline void batched_update_readout(
 
 template <TRN::CPU::Implementation Implementation>
 static inline void batched_update_readout(
-	const std::size_t &batch_size, const std::size_t & t, const Widrow_Hoff &parameter,
+	const std::size_t &batch_size, const std::size_t & t, const widrow_hoff &parameter,
 	float **batched_x_res, const std::size_t *batched_x_res_rows, const std::size_t *batched_x_res_cols, const std::size_t *batched_x_res_strides,
 	float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 	float **batched_expected, const std::size_t *batched_expected_rows, const std::size_t *batched_expected_cols, const std::size_t *batched_expected_strides,
@@ -1469,7 +1466,7 @@ static inline void update_model(
 			
 			}
 			else*/
-			{
+			/*{*/
 				update_reservoir<Implementation>(batch_size, t0,
 					batched_w_in, batched_w_in_rows, batched_w_in_cols, batched_w_in_strides,
 					batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides,
@@ -1477,7 +1474,7 @@ static inline void update_model(
 					batched_u_ffwd, batched_u_ffwd_rows, batched_u_ffwd_cols, batched_u_ffwd_strides,
 					batched_p, batched_p_rows, batched_p_cols, batched_p_strides,
 					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides, __leak_rate);
-			}
+		/*	}*/
 			if (ts + 1 < d)
 			{
 				int t1 = offsets[ts + 1];
@@ -1531,7 +1528,7 @@ void TRN::CPU::Algorithm<Implementation>::learn_widrow_hoff(
 	if (states_samples == NULL)
 	{
 		update_model<Implementation, false, true>(
-			batch_size, seed, Widrow_Hoff(learning_rate),
+			batch_size, seed, widrow_hoff(learning_rate),
 			stimulus_stride, reservoir_stride, prediction_stride,
 			stimulus_size, reservoir_size, prediction_size,
 			leak_rate, initial_state_scale,
@@ -1554,7 +1551,7 @@ void TRN::CPU::Algorithm<Implementation>::learn_widrow_hoff(
 	else
 	{
 		update_model<Implementation, true, true>(
-			batch_size, seed, Widrow_Hoff(learning_rate),
+			batch_size, seed, widrow_hoff(learning_rate),
 			stimulus_stride, reservoir_stride, prediction_stride,
 			stimulus_size, reservoir_size, prediction_size,
 			leak_rate, initial_state_scale,

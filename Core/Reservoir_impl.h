@@ -30,8 +30,6 @@ public:
 	std::shared_ptr<TRN::Core::Batch> batched_W_ro;
 	std::shared_ptr<TRN::Core::Batch> batched_W_ro_reset;
 
-	std::size_t trial;
-	std::size_t evaluation;
 	std::size_t stimulus_size;
 	std::size_t reservoir_size;
 	std::size_t prediction_size;
@@ -46,7 +44,7 @@ public:
 	std::thread thread;
 	bool gather_states;
 	bool autonomous_generation;
-	TRN::Helper::Queue<std::tuple<std::shared_ptr<TRN::Core::Batch>, size_t, size_t> > prediction;
+	TRN::Helper::Queue<std::tuple<std::shared_ptr<TRN::Core::Batch>, unsigned long long> > prediction;
 	
 	std::shared_ptr<TRN::Core::Message::Payload<TRN::Core::Message::STATES>> states;
 	std::shared_ptr<TRN::Core::Matrix> target_expected;

@@ -2,7 +2,7 @@
 #include "Performances_impl.h"
 
 TRN::Simulator::Performances::Performances(const std::shared_ptr<TRN::Core::Simulator> &decorated,
-	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor,
+	const std::function<void(const unsigned long long &evaluation_id, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor,
 	const bool &train, const bool &prime, const bool &generate) :
 	TRN::Helper::Decorator<TRN::Core::Simulator>(decorated),
 	handle(std::make_unique<Handle>())
@@ -97,16 +97,16 @@ void TRN::Simulator::Performances::declare(const std::string &label, const std::
 {
 	decorated->declare(label, tag, set);
 }
-void TRN::Simulator::Performances::train(const std::string &label, const std::string &incoming, const std::string &expected, const bool &reset_readout)
+void TRN::Simulator::Performances::train(const unsigned long long &evaluation_id, const std::string &label, const std::string &incoming, const std::string &expected, const bool &reset_readout)
 {
 	handle->start = std::chrono::high_resolution_clock::now();
-	decorated->train(label, incoming, expected, reset_readout);
+	decorated->train(evaluation_id, label, incoming, expected, reset_readout);
 }
-void TRN::Simulator::Performances::test(const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
+void TRN::Simulator::Performances::test(const unsigned long long &evaluation_id, const std::string &label, const std::string &incoming, const std::string &expected, const std::size_t &preamble, const bool &autonomous, const std::size_t &supplementary_generations)
 {
 	handle->start = std::chrono::high_resolution_clock::now();
 	handle->preamble = preamble;
-	decorated->test(label, incoming, expected, preamble, autonomous, supplementary_generations);
+	decorated->test(evaluation_id, label, incoming, expected, preamble, autonomous, supplementary_generations);
 }
 
 
@@ -156,7 +156,7 @@ void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN
 		auto s = seconds.count();
 		auto gflops_per_second = (gflops * handle->batch_size) / s;
 		auto cycles_per_second = (handle->cycles * handle->batch_size) / s;
-		handle->functor(get_reservoir()->get_trial(), get_reservoir()->get_evaluation(), "GENERATE", cycles_per_second, gflops_per_second);
+		handle->functor(payload.get_evaluation_id(), "GENERATE", cycles_per_second, gflops_per_second);
 	}
 }
 void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN::Core::Message::PRIMED> &payload)
@@ -172,7 +172,7 @@ void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN
 		auto s = seconds.count();
 		auto gflops_per_second = (gflops * handle->batch_size) / s;
 		auto cycles_per_second = (handle->preamble *handle->batch_size) / s;
-		handle->functor(get_reservoir()->get_trial(), get_reservoir()->get_evaluation(), "PRIME", cycles_per_second, gflops_per_second);
+		handle->functor(payload.get_evaluation_id(), "PRIME", cycles_per_second, gflops_per_second);
 	}
 }
 void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN::Core::Message::TRAINED> &payload)
@@ -192,7 +192,7 @@ void  TRN::Simulator::Performances::update(const TRN::Core::Message::Payload<TRN
 		auto gflops_per_second = (gflops * handle->batch_size) / s;
 		auto cycles_per_second = (handle->cycles *handle->batch_size) / s;
 
-		handle->functor(get_reservoir()->get_trial(), get_reservoir()->get_evaluation(), "TRAIN", cycles_per_second, gflops_per_second);
+		handle->functor(payload.get_evaluation_id(), "TRAIN", cycles_per_second, gflops_per_second);
 	}
 }
 
@@ -202,7 +202,7 @@ float TRN::Simulator::Performances::compute_gflops(const std::size_t &flops_per_
 }
 
 std::shared_ptr<TRN::Simulator::Performances> TRN::Simulator::Performances::create(const std::shared_ptr<TRN::Core::Simulator> decorated,
-	const std::function<void(const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor,
+	const std::function<void(const unsigned long long &evaluation_id, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)> &functor,
 	const bool &train, const bool &prime, const bool &test)
 {
 	return std::make_shared<TRN::Simulator::Performances>(decorated, functor, train, prime, test);

@@ -43,11 +43,12 @@ namespace TRN
 				class Handle;
 				mutable std::unique_ptr<Handle> handle;
 			public :
-				Payload(const std::shared_ptr<TRN::Core::Batch> &stimulus);
+				Payload(const std::shared_ptr<TRN::Core::Batch> &stimulus, const unsigned long long &evaluation_id);
 				Payload(const  Payload<TRN::Core::Message::Type::STIMULUS> &payload);
 				~Payload();
 			public:
 				const std::shared_ptr<TRN::Core::Batch> get_stimulus() const;
+				const unsigned long long get_evaluation_id() const;
 			};
 
 			template <>
@@ -57,14 +58,13 @@ namespace TRN
 				class Handle;
 				mutable std::unique_ptr<Handle> handle;
 			public:
-				Payload(const std::shared_ptr<TRN::Core::Batch> &predicted, const std::size_t &trial, const std::size_t &evaluation);
+				Payload(const std::shared_ptr<TRN::Core::Batch> &predicted, const unsigned long long &evaluation_id);
 				Payload(const  Payload<TRN::Core::Message::Type::PREDICTION> &payload);
 				~Payload();
 
 			public :
 				const std::shared_ptr<TRN::Core::Batch> get_predicted() const;
-				const std::size_t get_trial() const;
-				const std::size_t get_evaluation() const;
+				const unsigned long long get_evaluation_id() const;
 			};
 
 			template <>
@@ -74,14 +74,13 @@ namespace TRN
 				class Handle;
 				mutable std::unique_ptr<Handle> handle;
 			public:
-				Payload(const std::shared_ptr<TRN::Core::Batch> &position, const std::size_t &trial, const std::size_t &evaluation);
+				Payload(const std::shared_ptr<TRN::Core::Batch> &position, const unsigned long long &evaluation_id);
 				Payload(const  Payload<TRN::Core::Message::Type::POSITION> &payload);
 				~Payload();
 
 			public:
 				const std::shared_ptr<TRN::Core::Batch> get_position() const;
-				const std::size_t get_trial() const;
-				const std::size_t get_evaluation() const;
+				const unsigned long long get_evaluation_id() const;
 			};
 
 
@@ -179,29 +178,44 @@ namespace TRN
 			template <>
 			class CORE_EXPORT Payload<TRN::Core::Message::TESTED>
 			{
-
+			private:
+				class Handle;
+				mutable std::unique_ptr<Handle> handle;
 			public:
-				Payload();
+				Payload(const unsigned long long &evaluation_id);
 				Payload(const  Payload<TRN::Core::Message::Type::TESTED> &payload);
 				~Payload();
+
+			public:
+				const unsigned long long &get_evaluation_id() const;
 			};
 			template <>
 			class CORE_EXPORT Payload<TRN::Core::Message::PRIMED>
 			{
-
+			private:
+				class Handle;
+				mutable std::unique_ptr<Handle> handle;
 			public:
-				Payload();
+				Payload(const unsigned long long &evaluation_id);
 				Payload(const  Payload<TRN::Core::Message::Type::PRIMED> &payload);
 				~Payload();
+
+			public:
+				const unsigned long long &get_evaluation_id() const;
 			};
 			template <>
 			class CORE_EXPORT Payload<TRN::Core::Message::TRAINED>
 			{
-
+			private:
+				class Handle;
+				mutable std::unique_ptr<Handle> handle;
 			public:
-				Payload();
+				Payload(const unsigned long long &evaluation_id);
 				Payload(const  Payload<TRN::Core::Message::Type::TRAINED> &payload);
 				~Payload();
+
+			public :
+				const unsigned long long &get_evaluation_id() const;
 			};
 			template <>
 			class CORE_EXPORT Payload<TRN::Core::Message::CONFIGURED>
@@ -251,12 +265,12 @@ namespace TRN
 				class Handle;
 				mutable std::unique_ptr<Handle> handle;
 			public:
-				Payload(const std::size_t &trial, const std::shared_ptr<TRN::Core::Scheduling> &scheduling);
+				Payload(const unsigned long long &evaluation_id, const std::shared_ptr<TRN::Core::Scheduling> &scheduling);
 				Payload(const  Payload<TRN::Core::Message::Type::SCHEDULING> &payload);
 				~Payload();
 			public:
 				const std::shared_ptr<TRN::Core::Scheduling> get_scheduling() const;
-				const std::size_t get_trial() const;
+				const unsigned long long get_evaluation_id() const;
 			
 			};
 
@@ -270,7 +284,7 @@ namespace TRN
 				Payload(const std::string &label,
 						const std::string &incoming,
 						const std::string &expected,
-						const std::size_t &trial);
+						const 	unsigned long long  &evaluation_id);
 				Payload(const Payload<TRN::Core::Message::Type::SET> &ref);
 				~Payload();
 
@@ -278,7 +292,7 @@ namespace TRN
 				const std::string &get_label() const;
 				const std::string &get_incoming() const;
 				const std::string &get_expected() const;
-				const std::size_t &get_trial() const;
+				const unsigned long long &get_evaluation_id() const;
 			};
 
 			template <>

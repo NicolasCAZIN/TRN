@@ -48,13 +48,13 @@ void TRN::Network::Manager::start(const std::shared_ptr<TRN::Network::Connection
 
 	if (it == handle->pool.end())
 	{
-		id = 1;
+		
 	}
 	else
 	{
 		id = (*it)->get_id() + 1;
 	}
-	INFORMATION_LOGGER <<   "Connection ID = " << id ;
+	INFORMATION_LOGGER <<   "Connectionid = " << id;
 	connection->set_id(id);
 	handle->pool.insert(connection);
 

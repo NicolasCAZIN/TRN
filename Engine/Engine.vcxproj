@@ -187,7 +187,10 @@
     <ClCompile Include="Compressor.cpp" />
     <ClCompile Include="Frontend.cpp" />
     <ClCompile Include="Manager.cpp" />
-    <ClCompile Include="Messages.cpp" />
+    <ClCompile Include="Messages.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/std:c++latest %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/std:c++latest %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="Processor.cpp" />
     <ClCompile Include="Proxy.cpp" />

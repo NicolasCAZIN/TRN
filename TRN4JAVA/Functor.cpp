@@ -34,84 +34,84 @@ std::vector<jobject>  TRN4JAVA::Functor::events_global_ref;
 
 std::map<unsigned long long, std::vector<jobject>> TRN4JAVA::Functor::lookup_ref;
 
-std::map<jobject, std::function<void(const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)>> TRN4JAVA::Functor::loop_reply;
-std::map<jobject, std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)>> TRN4JAVA::Functor::scheduler_reply;
-std::map<jobject, std::function<void(const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)>> TRN4JAVA::Functor::mutator_reply;
-std::map<jobject, std::function<void(const unsigned long long &id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)>> TRN4JAVA::Functor::weights_reply;
+std::map<jobject, std::function<void(const unsigned long long &simulation_id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)>> TRN4JAVA::Functor::loop_reply;
+std::map<jobject, std::function<void(const unsigned long long &simulation_id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)>> TRN4JAVA::Functor::scheduler_reply;
+std::map<jobject, std::function<void(const unsigned long long &simulation_id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)>> TRN4JAVA::Functor::mutator_reply;
+std::map<jobject, std::function<void(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)>> TRN4JAVA::Functor::weights_reply;
 
-void TRN4JAVA::Functor::recording_scheduler_callback(jobject object, jmethodID method, const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)
+void TRN4JAVA::Functor::recording_scheduler_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();
 	env->CallVoidMethod(object, method, (jlong)id, (jlong)seed, (jlong)trial, TRN4JAVA::Convert::to_jfloat_array(env, elements), (jlong)rows, (jlong)cols, TRN4JAVA::Convert::to_jint_array(env, offsets), TRN4JAVA::Convert::to_jint_array(env, durations));
 }
-void TRN4JAVA::Functor::custom_mutator_callback(jobject object, jmethodID method, const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
+void TRN4JAVA::Functor::custom_mutator_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();
 	env->CallVoidMethod(object, method, (jlong)id, (jlong)seed, (jlong)trial, TRN4JAVA::Convert::to_jint_array(env, offsets), TRN4JAVA::Convert::to_jint_array(env, durations));
 }
-void TRN4JAVA::Functor::custom_weights_callback(jobject object, jmethodID method, const unsigned long long &id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
+void TRN4JAVA::Functor::custom_weights_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();
 	env->CallVoidMethod(object, method, (jlong)id, (jlong)seed, (jlong)matrices, (jlong)rows, (jlong)cols);
 }
-void TRN4JAVA::Functor::custom_scheduler_callback(jobject object, jmethodID method, const unsigned long long &id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)
+void TRN4JAVA::Functor::custom_scheduler_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();
 	env->CallVoidMethod(object, method, (jlong)id, (jlong)seed, (jlong)trial, TRN4JAVA::Convert::to_jfloat_array(env, elements), (jlong)rows, (jlong)cols, TRN4JAVA::Convert::to_jint_array(env, offsets), TRN4JAVA::Convert::to_jint_array(env, durations));
 }
-void TRN4JAVA::Functor::measurement_matrix_callback(jobject object, jmethodID method, const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)
+void TRN4JAVA::Functor::measurement_matrix_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();
 	env->CallVoidMethod(object, method, (jlong)id, (jlong)(trial), (jlong)evaluation, TRN4JAVA::Convert::to_jfloat_array(env, prediction), (jlong)rows, (jlong)cols);
 }
-void TRN4JAVA::Functor::measurement_raw_callback(jobject object, jmethodID method, const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)
+void TRN4JAVA::Functor::measurement_raw_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();
 	env->CallVoidMethod(object, method, (jlong)id, (jlong)(trial), (jlong)evaluation, TRN4JAVA::Convert::to_jfloat_array(env, primed), TRN4JAVA::Convert::to_jfloat_array(env, predicted), TRN4JAVA::Convert::to_jfloat_array(env, expected), (jlong)preamble, (jlong)pages, (jlong)rows, (jlong)cols);
 }
-void TRN4JAVA::Functor::recording_performances_callback(jobject object, jmethodID method, const unsigned long long &id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
+void TRN4JAVA::Functor::recording_performances_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::size_t &trial, const std::size_t &evaluation, const std::string &phase, const float &cycles_per_second, const float &gflops_per_second)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();
 	env->CallVoidMethod(object, method, (jlong)id, (jlong)(trial), (jlong)evaluation, TRN4JAVA::Convert::to_jstring(env, phase), (jfloat)cycles_per_second, (jfloat)gflops_per_second);
 }
-void TRN4JAVA::Functor::recording_states_callback(jobject object, jmethodID method, const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
+void TRN4JAVA::Functor::recording_states_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::size_t &evaluation, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();
 	env->CallVoidMethod(object, method, (jlong)id, TRN4JAVA::Convert::to_jstring(env, phase), TRN4JAVA::Convert::to_jstring(env, label), (jlong)(batch), (jlong)(trial), (jlong)evaluation, TRN4JAVA::Convert::to_jfloat_array(env, samples), (jlong)(rows), (jlong)(cols));
 }
-void TRN4JAVA::Functor::recording_weights_callback(jobject object, jmethodID method, const unsigned long long &id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)
+void TRN4JAVA::Functor::recording_weights_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::size_t &trial, const std::vector<float> &weights, const std::size_t &rows, const std::size_t &cols)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();
 	env->CallVoidMethod(object, method, (jlong)id, TRN4JAVA::Convert::to_jstring(env, phase), TRN4JAVA::Convert::to_jstring(env, label), (jlong)(batch), (jlong)(trial), TRN4JAVA::Convert::to_jfloat_array(env, weights), (jlong)(rows), (jlong)(cols));
 }
-void TRN4JAVA::Functor::recording_scheduling_callback(jobject object, jmethodID method, const unsigned long long &id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
+void TRN4JAVA::Functor::recording_scheduling_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();
 	env->CallVoidMethod(object, method, (jlong)id, (jlong)(trial), TRN4JAVA::Convert::to_jint_array(env, offsets), TRN4JAVA::Convert::to_jint_array(env, durations));
 }
-void TRN4JAVA::Functor::event_ack_callback(jobject object, jmethodID method, const unsigned long long &id, const std::size_t &counter, const bool &success, const std::string &cause)
+void TRN4JAVA::Functor::event_ack_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const std::size_t &counter, const bool &success, const std::string &cause)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();
 	env->CallVoidMethod(object, method, (jlong)id, (jlong)counter, (jboolean)success, TRN4JAVA::Convert::to_jstring(env, cause));
 }
-void TRN4JAVA::Functor::event_simulation_allocation_callback(jobject object, jmethodID method, const unsigned long long &id, const int &rank)
+void TRN4JAVA::Functor::event_simulation_allocation_callback(jobject object, jmethodID method, const unsigned long long &simulation_id, const int &rank)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();
 	env->CallVoidMethod(object, method, (jlong)id, (jint)rank);
 }
-void TRN4JAVA::Functor::event_simulation_state_callback(jobject object, jmethodID method, const unsigned long long &id)
+void TRN4JAVA::Functor::event_simulation_state_callback(jobject object, jmethodID method, const unsigned long long &simulation_id)
 {
 	TRACE_LOGGER;
 	auto env = TRN4JAVA::JNIEnv::get();

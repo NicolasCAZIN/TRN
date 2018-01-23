@@ -79,7 +79,7 @@ namespace TRN
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> &message) override;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::READOUT_WEIGHTS> &message) override;
 		private :
-			void send_configured(const unsigned long long &id);
+			void send_configured(const unsigned long long &simulation_id);
 		public :
 			static std::shared_ptr<TRN::Engine::Worker> create(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank, const std::shared_ptr<TRN::Backend::Driver> &driver);
 		};

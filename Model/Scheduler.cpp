@@ -15,8 +15,8 @@ std::shared_ptr<TRN::Core::Scheduler> TRN::Model::Scheduler::Snippets::create(co
 }
 
 std::shared_ptr<TRN::Core::Scheduler> TRN::Model::Scheduler::Custom::create(const unsigned long &seed,
-	const  std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
-	std::function<void(const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply,
+	const  std::function<void(const unsigned long long &evaluation_id, const unsigned long &seed, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> &request,
+	std::function<void(const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations)> &reply,
 	const std::string &tag)
 {
 	return TRN::Scheduler::Custom::create(seed, request, reply, tag);

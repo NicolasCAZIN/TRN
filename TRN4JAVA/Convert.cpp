@@ -22,14 +22,14 @@ std::map<std::string, std::string> TRN4JAVA::Convert::to_map(::JNIEnv *env, jobj
 
 	if (!env->IsInstanceOf(object, env->FindClass("java/util/Map")))
 		throw std::invalid_argument("Object is not a Map");
-	jmethodID keySet = env->GetMethodID(
+	jmethoid keySet = env->GetMethoid(
 		env->GetObjectClass(object),
 		"keySet",
 		"()Ljava/util/Set;"
 	);
 	if (keySet == 0)
 		throw std::invalid_argument("object does not implement a keySet() method");
-	jmethodID get = env->GetMethodID(
+	jmethoid get = env->GetMethoid(
 		env->GetObjectClass(object),
 		"get",
 		"(Ljava/lang/Object;)Ljava/lang/Object;"
@@ -39,7 +39,7 @@ std::map<std::string, std::string> TRN4JAVA::Convert::to_map(::JNIEnv *env, jobj
 	jobject set = env->CallObjectMethod(object, keySet);
 	if (set == NULL)
 		throw std::invalid_argument("Can't get map keys");
-	jmethodID toArray = env->GetMethodID(
+	jmethoid toArray = env->GetMethoid(
 		env->GetObjectClass(set),
 		"toArray",
 		"()[Ljava/lang/Object;"
