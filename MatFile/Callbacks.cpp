@@ -513,6 +513,7 @@ void Callbacks::callback_scheduling(const unsigned long long &simulation_id, con
 
 void Callbacks::callback_results(const unsigned short &condition_number, const std::size_t &generation_number, const std::vector<std::pair<std::map<std::string, std::string>, std::map < std::size_t, std::map < std::size_t, std::map<std::size_t, std::pair<float, std::vector<float>>>>>>> &results)
 {
+	std::size_t configuration_number = 0;
 	for (auto result : results)
 	{
 		for (auto by_trial : result.second)
@@ -540,12 +541,13 @@ void Callbacks::callback_results(const unsigned short &condition_number, const s
 					auto mx_test = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT64_CLASS, mxComplexity::mxREAL); *(unsigned long long *)mxGetData(mx_test) = by_test.first; results_map["test"] = mx_test;
 					auto mx_measurements = mxCreateNumericMatrix(measurements.size(), 1, mxClassID::mxSINGLE_CLASS, mxComplexity::mxREAL); std::copy(measurements.begin(), measurements.end(), (float *)mxGetData(mx_measurements)); results_map["measurements"] = mx_measurements;
 					auto mx_score = mxCreateNumericMatrix(1, 1, mxClassID::mxSINGLE_CLASS, mxComplexity::mxREAL); *(float *)mxGetData(mx_score) = score; results_map["score"] = mx_score;
-
+					auto mx_configuration = mxCreateNumericMatrix(1, 1, mxClassID::mxUINT64_CLASS, mxComplexity::mxREAL); *(unsigned long long *)mxGetData(mx_configuration) = configuration_number; results_map["configuration"] = mx_configuration;
 					append(handle->result, { "search", "population" }, results_map);
 					update();
 				}
 			}
 		}
+		configuration_number++;
 	}
 }
 
