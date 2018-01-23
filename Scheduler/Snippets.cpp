@@ -41,14 +41,14 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 		std::fill(reward_elements.begin(), reward_elements.end(), 0.0f);
 		std::size_t b = 0;
 	
-		for (std::size_t k = 0; k < batch_durations.size(); k++)
+		/*for (std::size_t k = 0; k < batch_durations.size(); k++)
 		{
 			auto e = b + batch_durations[k] - 1;
 			reward_elements[b] = 1.0f;
 			reward_elements[e] = 1.0f;
 
 			b = e + 1;
-		}
+		}*/
 
 	}
 	else
@@ -62,6 +62,17 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 
 	
 
+	}
+	{
+		std::size_t b = 0;
+		for (std::size_t k = 0; k < batch_durations.size(); k++)
+		{
+			auto e = b + batch_durations[k] - 1;
+			reward_elements[b] = 1.0f;
+			reward_elements[e] = 1.0f;
+
+			b = e + 1;
+		}
 	}
 	/*std::size_t b = 0;
 	for (std::size_t k = 0; k < batch_durations.size(); k++)

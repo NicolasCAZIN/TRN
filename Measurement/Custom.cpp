@@ -30,7 +30,7 @@ void TRN::Measurement::Custom::compute(const unsigned long long &evaluation_id, 
 	predicted->to(predicted_values, batch_size, predicted_rows, predicted_cols);
 	
 
-	handle->functor(evaluation_id, primed_values, predicted_values, expected_values, primed_rows, batch_size,expected_rows, expected_cols);
+	handle->functor(evaluation_id, primed_values, predicted_values, expected_values, primed_rows, batch_size, predicted_rows[0], expected_cols);
 }
 
 std::shared_ptr<TRN::Measurement::Custom> TRN::Measurement::Custom::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)

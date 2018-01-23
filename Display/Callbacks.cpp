@@ -253,7 +253,7 @@ void Callbacks::callback_measurement_position_raw(const unsigned long long &simu
 		handle->trajectories[trial][train][test]++;
 		handle->overall[trial][train][test] = handle->accumulator[trial][train][test] / handle->trajectories[trial][train][test];
 		//cv::equalizeHist(cv_accumulator, cv_overall);
-		handle->to_display.enqueue(std::make_pair("accumulated, condition #" + std::to_string(ID(simulation_id).condition_number) + ", trial #" + std::to_string(trial)+ ", train #" + std::to_string(train)+ ", test #" + std::to_string(test), handle->overall[train][trial][test]));
+		handle->to_display.enqueue(std::make_pair("accumulated, condition #" + std::to_string(ID(simulation_id).condition_number) + ", trial #" + std::to_string(trial)+ ", train #" + std::to_string(train)+ ", test #" + std::to_string(test), handle->overall[trial][train][test]));
 	}
 }
 void Callbacks::callback_measurement_readout_mean_square_error(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)

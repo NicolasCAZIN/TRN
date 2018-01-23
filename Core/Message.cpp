@@ -484,6 +484,7 @@ TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::Payload(const Paylo
 {
 	handle->label = ref.handle->label;
 	handle->preamble = ref.handle->preamble;
+	handle->supplementary_generations = ref.handle->supplementary_generations;
 }
 TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::~Payload()
 {
