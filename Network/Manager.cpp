@@ -48,7 +48,7 @@ void TRN::Network::Manager::start(const std::shared_ptr<TRN::Network::Connection
 
 	if (it == handle->pool.end())
 	{
-		
+		id = 1;
 	}
 	else
 	{
