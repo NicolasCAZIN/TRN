@@ -1707,10 +1707,10 @@ static void inside_circle_sector_kernel(
 				}
 
 				float4 s;
-				s.x = in.x ? p.x + r.x * scale : 0.0f;
-				s.y = in.y ? p.y + r.y * scale : 0.0f;
-				s.z = in.z ? p.z + r.z * scale : 0.0f;
-				s.w = in.w ? p.w + r.w * scale : 0.0f;
+				s.x = in.x ? p.x + r.x * scale + FLT_EPSILON : 0.0f;
+				s.y = in.y ? p.y + r.y * scale + FLT_EPSILON : 0.0f;
+				s.z = in.z ? p.z + r.z * scale + FLT_EPSILON : 0.0f;
+				s.w = in.w ? p.w + r.w * scale + FLT_EPSILON : 0.0f;
 
 				reinterpret_cast<float4 *>(&location_probability[row * location_probability_stride])[col] = s;
 			}
@@ -1848,9 +1848,10 @@ void compute_select_most_probable_location(const cudaStream_t &stream, const cub
 	std::vector<std::size_t> temp_storage_bytes(batch_size);*/
 
 
-
+	
 	checkCudaErrors(cudaMemcpyAsync(batched_location_probability_ptr.data(), batched_location_probability, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, stream));
 	checkCudaErrors(cudaMemcpyAsync(batched_predicted_location_ptr.data(), batched_predicted_location, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, stream));
+	checkCudaErrors(cudaStreamSynchronize(stream));
 	for (int batch = 0; batch < batch_size; batch++)
 	{
 
@@ -1861,11 +1862,20 @@ void compute_select_most_probable_location(const cudaStream_t &stream, const cub
 	checkCudaErrors(cudaStreamSynchronize(stream));
 	for (int batch = 0; batch < batch_size; batch++)
 	{
-		auto row = idx[batch] / batched_location_probability_strides;
-		auto col = idx[batch] % batched_location_probability_strides;
+		auto k = idx[batch] - 1;
+		if (k < 0)
+			throw std::runtime_error("Argmax index was not found");
+		auto row = k / batched_location_probability_strides;
+		auto col = k % batched_location_probability_strides;
+		if (col < 0 || col >= cols)
+			throw std::domain_error("argmax col overflow");
+		if (row < 0 || row>= rows)
+			throw std::domain_error("argmax row overflow");
 		checkCudaErrors(cudaMemcpyAsync(batched_predicted_location_ptr[batch] + 0, &x_grid[col], sizeof(float), cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
 		checkCudaErrors(cudaMemcpyAsync(batched_predicted_location_ptr[batch] + 1, &y_grid[row], sizeof(float), cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
 	}
+
+	checkCudaErrors(cudaStreamSynchronize(stream));
 	/*for (int batch = 0; batch < batch_size; batch++)
 	{
 		

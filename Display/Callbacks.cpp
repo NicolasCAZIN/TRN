@@ -211,8 +211,15 @@ void Callbacks::callback_measurement_position_raw(const unsigned long long &simu
 		cv::Point2d pt0(x_to_col(x0), y_to_row(y0));
 		cv::Point2d pt1(x_to_col(x1), y_to_row(y1));
 		cv::line(cv_expected, pt0, pt1, cv::Scalar(255, 100, 100), handle->thickness, cv::LineTypes::LINE_AA, 0);
+		cv::circle(cv_expected, pt0, handle->thickness * 5, cv::Scalar(255, 100, 100), handle->thickness, cv::LineTypes::LINE_AA, 0);
 	}
-	handle->to_display.enqueue(std::make_pair("expected", cv_expected));
+	{
+		x0 = expected[(rows - 1) * cols + 0];
+		y0 = expected[(rows - 1) * cols + 1];
+		cv::Point2d pt0(x_to_col(x0), y_to_row(y0));
+		cv::circle(cv_expected, pt0, handle->thickness * 5, cv::Scalar(255, 100, 100), handle->thickness, cv::LineTypes::LINE_AA, 0);
+	}
+	handle->to_display.enqueue(std::make_pair("expected, condition #" + std::to_string(ID(simulation_id).condition_number) + ", trial #" + std::to_string(trial) + ", train #" + std::to_string(train) + ", test #" + std::to_string(test), cv_expected));
 
 
 	for (std::size_t page = 0; page < pages; page++)
@@ -231,8 +238,14 @@ void Callbacks::callback_measurement_position_raw(const unsigned long long &simu
 			cv::Point2d pt0(x_to_col(x0), y_to_row(y0));
 			cv::Point2d pt1(x_to_col(x1), y_to_row(y1));
 			cv::line(cv_temp, pt0, pt1, cv::Scalar(1.0f), handle->thickness, cv::LineTypes::LINE_AA, 0);
+			cv::circle(cv_temp, pt0, handle->thickness*5, cv::Scalar(1.0f), handle->thickness, cv::LineTypes::LINE_AA, 0);
 		}
-
+		{
+			x0 = expected[(rows - 1) * cols + 0];
+			y0 = expected[(rows - 1) * cols + 1];
+			cv::Point2d pt0(x_to_col(x0), y_to_row(y0));
+			cv::circle(cv_temp, pt0, 10, cv::Scalar(1.0f), handle->thickness, cv::LineTypes::LINE_AA, 0);
+		}
 		cv_predicted += cv_temp;
 	}
 	cv_predicted /= pages;

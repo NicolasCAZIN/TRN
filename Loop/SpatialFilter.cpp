@@ -52,7 +52,7 @@ public :
 	std::shared_ptr<TRN::Core::Bundle> bundled_hypothesis_map;
 	
 	
-	std::vector<cv::KalmanFilter> kalman_filter;
+/*	std::vector<cv::KalmanFilter> kalman_filter;*/
 
 	std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_predicted_position;
 	std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_predicted_stimulus;
@@ -217,7 +217,7 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 		handle->batched_firing_rate_map->update(place_cell, sub_firing_rate_map);
 
 	}
-	handle->kalman_filter.resize(batch_size);
+/*	handle->kalman_filter.resize(batch_size);*/
 	for (std::size_t batch = 0; batch < batch_size; batch++)
 	{
 		auto batched_hypothesis_map = TRN::Core::Batch::create(driver, stimulus_size);
@@ -251,7 +251,7 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 		handle->batched_reduced_location_probability->update(batch, reduced_location_probability);
 		handle->batched_row_cumsum->update(batch, row_cumsum);
 		handle->batched_col_cumsum->update(batch, col_cumsum);
-		handle->kalman_filter[batch] = cv::KalmanFilter(4, 2, 0);
+		/*handle->kalman_filter[batch] = cv::KalmanFilter(4, 2, 0);*/
 	}
 }
 
@@ -278,15 +278,15 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 	std::vector<float> current({ trajectory_coordinates[t * 2] , trajectory_coordinates[t * 2 + 1] });
 	std::vector<float> previous({ trajectory_coordinates[(t-1) * 2] , trajectory_coordinates[(t-1) * 2 + 1] });
 
-	const float dt = 20;
+	/*const float dt = 20;*/
 
 	for (std::size_t batch = 0; batch < handle->batch_size; batch++)
 	{
-		handle->kalman_filter[batch].init(4, 2, 0);
+	/*	handle->kalman_filter[batch].init(4, 2, 0);*/
 		handle->batched_current_position->get_matrices(batch)->from(current, 1, 2);
 		handle->batched_previous_position->get_matrices(batch)->from(previous, 1, 2);
 
-		handle->kalman_filter[batch].transitionMatrix = (cv::Mat_<float>(4, 4) <<
+		/*handle->kalman_filter[batch].transitionMatrix = (cv::Mat_<float>(4, 4) <<
 			1, 0, dt, 0,
 			0, 1, 0, dt,
 			0, 0, 1, 0,
@@ -299,7 +299,7 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 		cv::setIdentity(handle->kalman_filter[batch].measurementMatrix);
 		cv::setIdentity(handle->kalman_filter[batch].processNoiseCov, cv::Scalar::all(1e-4));
 		cv::setIdentity(handle->kalman_filter[batch].measurementNoiseCov, cv::Scalar::all(1e-1));
-		cv::setIdentity(handle->kalman_filter[batch].errorCovPost, cv::Scalar::all(0.1f));
+		cv::setIdentity(handle->kalman_filter[batch].errorCovPost, cv::Scalar::all(0.1f));*/
 	};
 }
 static inline std::size_t clamp(const std::size_t &v, const std::size_t &a, const std::size_t &b)
@@ -356,8 +356,8 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 	std::size_t location_matrices;
 	std::vector<float> location_elements;
 	handle->batched_next_location_probability->to(location_elements, location_matrices, location_rows, location_cols);
-	cv::Mat location(location_rows[0] * location_matrices, location_cols[0], CV_32F, location_elements.data());
-	*/
+	cv::Mat location(location_rows[0] * location_matrices, location_cols[0], CV_32F, location_elements.data());*/
+	
 #if 1
 	implementor->get_algorithm()->select_most_probable_location(handle->batch_size, handle->rows, handle->cols,
 		handle->x_grid->get_elements(), handle->x_grid->get_rows(), handle->x_grid->get_cols(), handle->x_grid->get_stride(),
@@ -397,17 +397,19 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 
 	handle->batched_predicted_position->to(predicted_position, predicted_position_matrices, predicted_position_rows, predicted_position_cols);
 	assert(predicted_position_matrices == handle->batch_size);
-#pragma omp parallel for
+/*#pragma omp parallel for
 	for (int batch = 0; batch < handle->batch_size; batch++)
 	{
-		auto prediction = handle->kalman_filter[batch].predict();
+
+
+	auto prediction = handle->kalman_filter[batch].predict();
 		cv::Mat_<float> measurement(2, 1);
 		measurement(0) = predicted_position[batch * 2 + 0];
 		measurement(1) = predicted_position[batch * 2 + 1];
 		auto estimated = handle->kalman_filter[batch].correct(measurement);
 		predicted_position[batch * 2 + 0] = estimated.at<float>(0);
 		predicted_position[batch * 2 + 1] = estimated.at<float>(1);
-	}
+	}*/
 	
 //	INFORMATION_LOGGER << " current position " << current_position[0] << ", " << current_position[1] ;
 	//INFORMATION_LOGGER << " predicted position " << predicted_position[0] << ", " << predicted_position[1] ;
