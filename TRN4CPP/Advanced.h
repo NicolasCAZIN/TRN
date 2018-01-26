@@ -67,7 +67,7 @@ namespace TRN4CPP
 					const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
 					std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
 					const std::size_t &rows, const std::size_t &cols, const std::pair<float, float> &x, const std::pair<float, float> &y,
-					const std::vector<float> response, const float &sigma, const float &radius, const float &scale, const std::string &tag);
+					const std::vector<float> response, const float &sigma, const float &radius, const float &angle, const float &scale, const std::string &tag);
 			};
 		};
 		namespace Scheduler

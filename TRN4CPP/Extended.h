@@ -41,7 +41,7 @@ namespace TRN4CPP
 			{
 				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
 												  const std::size_t &rows, const std::size_t &cols, const std::pair<float, float> &x, const std::pair<float, float> &y,
-												  const std::vector<float> response, const float &sigma, const float &radius, const float &scale, const std::string &tag);
+												  const std::vector<float> response, const float &sigma, const float &radius, const float &angle, const float &scale, const std::string &tag);
 			};
 		};
 		namespace Scheduler

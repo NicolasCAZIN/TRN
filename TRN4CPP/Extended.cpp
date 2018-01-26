@@ -217,7 +217,7 @@ void TRN4CPP::Simulation::Loop::Copy::configure(const unsigned long long &simula
 
 void TRN4CPP::Simulation::Loop::SpatialFilter::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
 	const std::size_t &rows, const std::size_t &cols, const std::pair<float, float> &x, const std::pair<float, float> &y,
-	const std::vector<float> response, const float &sigma, const float &radius, const float &scale, const std::string &tag
+	const std::vector<float> response, const float &sigma, const float &radius, const float &angle, const float &scale, const std::string &tag
 )
 {
 	TRACE_LOGGER;
@@ -231,7 +231,7 @@ void TRN4CPP::Simulation::Loop::SpatialFilter::configure(const unsigned long lon
 		throw std::runtime_error("Stimulus reply functor is not installed");
 	auto old_reply_position = reply_position;
 	auto old_reply_stimulus = reply_stimulus;
-	TRN4CPP::Simulation::Loop::SpatialFilter::configure(simulation_id,batch_size, stimulus_size, seed, on_position, reply_position, on_stimulus, reply_stimulus, rows, cols, x, y, response, sigma, radius, scale, tag);
+	TRN4CPP::Simulation::Loop::SpatialFilter::configure(simulation_id,batch_size, stimulus_size, seed, on_position, reply_position, on_stimulus, reply_stimulus, rows, cols, x, y, response, sigma, radius, angle, scale, tag);
 	if (old_reply_position != reply_position)
 		throw std::runtime_error("Position reply functor changed");
 	if (old_reply_stimulus != reply_stimulus)

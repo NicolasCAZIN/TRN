@@ -896,6 +896,7 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned long long
 	const std::vector<float> &response,
 	const float &sigma,
 	const float &radius,
+	const float &angle,
 	const float &scale,
 	const std::string &tag)
 {
@@ -936,6 +937,7 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned long long
 			message.sigma = sigma;
 			message.radius = radius;
 			message.scale = scale;
+			message.angle = angle;
 			message.tag = tag;
 			message.seed = seed;
 			handle->communicator->send(message, processor->get_rank());

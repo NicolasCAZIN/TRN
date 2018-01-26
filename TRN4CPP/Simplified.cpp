@@ -175,6 +175,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 	const std::string filename_attribute = prefix + "filename";
 	const std::string path_attribute = prefix + "path";
 	const std::string name_attribute = prefix + "name";
+	const std::string angle_attribute = prefix + "angle";
 	const std::string interface_attribute = prefix + "interface";
 	const std::string arguments_attribute = prefix + "arguments";
 	std::size_t total_simulations = 0;
@@ -576,6 +577,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 															
 															auto sigma = get_variable<float>(_loop, sigma_attribute, condition_number, batch_number);
 															auto scale = get_variable<float>(_loop, scale_attribute, condition_number, batch_number);
+															auto angle = get_variable<float>(_loop, angle_attribute, condition_number, batch_number);
 															auto radius = get_variable<float>(_loop, radius_attribute, condition_number, batch_number);
 
 															auto tag = _loop.get_child(tag_attribute).get_value<std::string>();
@@ -595,7 +597,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 															auto rows = firing_rate_map_rows / stimulus_size;
 										
 
-															TRN4CPP::Simulation::Loop::SpatialFilter::configure(simulation_id,batch_size, stimulus_size, seed, rows, cols, x, y, firing_rate_map, sigma, radius, scale, tag);
+															TRN4CPP::Simulation::Loop::SpatialFilter::configure(simulation_id,batch_size, stimulus_size, seed, rows, cols, x, y, firing_rate_map, sigma, radius, angle, scale, tag);
 														}
 													}
 													/// SCHEDULER

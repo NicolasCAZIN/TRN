@@ -53,6 +53,18 @@ static float warpReduceSum(float val)
 	return val;
 }
 static inline __device__
+float4 rsqrtf(const float4 &a)
+{
+	float4 b;
+
+	b.x = rsqrtf(a.x);
+	b.y = rsqrtf(a.y);
+	b.z = rsqrtf(a.z);
+	b.w = rsqrtf(a.w);
+
+	return b;
+}
+static inline __device__
 float4 tanhf(const float4 &a)
 {
 	float4 b;
@@ -1613,67 +1625,173 @@ static void add_kernel( const float * __restrict__ a, const float * __restrict__
 }
 
 __global__
-static void inside_circle_kernel(
+static void direction_kernel(const int batch_size,
+	const float ** __restrict__ batched_previous_location,
+	const float ** __restrict__ batched_current_location,
+	float ** __restrict__ batched_direction)
+{
+	for (int batch = blockIdx.x * blockDim.x + threadIdx.x; batch < batch_size; batch += gridDim.x * blockDim.x)
+	{
+		float2 p = reinterpret_cast<float2 *>(const_cast<float *>(batched_previous_location[batch]))[0];
+		float2 c = reinterpret_cast<float2 *>(const_cast<float *>(batched_current_location[batch]))[0];
+
+		float2 d = c - p;
+
+
+		auto d2 = dot(d, d);
+		const float inv_norm = d2 > 0.0f ? rsqrtf(d2) : 0.0f;
+
+
+		reinterpret_cast<float2 *>(batched_direction[batch])[0] = d * inv_norm;
+	}
+}
+
+__global__
+static void inside_circle_sector_kernel(
 	const int batch_size, const int rows, const int cols, const int location_probability_stride,
 	const float radius2,
+	const float cos_half_angle,
 	const float scale,
 	const unsigned long seed,
-	const float   * __restrict__ x_grid,
-	const float   * __restrict__ y_grid,
+	const float   ** __restrict__ batched_x_grid_centered,
+	const float   ** __restrict__ batched_y_grid_centered,
 	const float ** __restrict__ batched_current_location,
+	const float ** __restrict__ batched_direction,
 	float   ** __restrict__ batched_location_probability)
 
 {
 	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
 	{
 		float *location_probability = batched_location_probability[batch];
-		const float *current_location = batched_current_location[batch];
-		const float x = current_location[0];
-		const float y = current_location[1];
+
+		auto a = reinterpret_cast<float2 *>(const_cast<float *>(batched_direction[batch]))[0];
+		auto da = dot(a, a);
+
+
 		for (int row = blockIdx.y * blockDim.y + threadIdx.y; row < rows; row += gridDim.y * blockDim.y)
 		{
-			const float dy = y_grid[row] - y;
-			const float dy2 = dy * dy;
+			const float by = batched_y_grid_centered[batch][row];
+			const float b2y = by * by;
+			const float aby = a.y * by;
+
 			for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < cols; col += gridDim.x * blockDim.x)
 			{
-				const float4 dx = reinterpret_cast<float4 *>(const_cast<float *>(x_grid))[col] - x;
-				const float4 dx2 = dx * dx;
-				const float4 lhs = dx2 + dy2;
 				float4 p = reinterpret_cast<float4 *>(&location_probability[row * location_probability_stride])[col];
 
-				curandStatePhilox4_32_10_t state;
+				const float4 bx = reinterpret_cast<float4 *>(const_cast<float *>(batched_x_grid_centered[batch]))[col];
+				const float4 dp_b2 = bx * bx + b2y;
 		
+
+
+
+				curandStatePhilox4_32_10_t state;
+
 				// seed a random number generator
 				curand_init(seed + col * rows + row + batch * rows * cols, 0, 0, &state);
 
-				p += curand_uniform4(&state) * scale;
+				auto r = curand_uniform4(&state);
+				int4 in;
+				
+				in.x = dp_b2.x < radius2;
+				in.y = dp_b2.y < radius2;
+				in.z = dp_b2.z < radius2;
+				in.w = dp_b2.w < radius2;
+
+				if (da > 0.0f && cos_half_angle < 1.0f)
+				{
+					const float4 dp_ab = (a.x * bx + aby) * rsqrtf(dp_b2);
+					in.x &= cos_half_angle < dp_ab.x;
+					in.y &= cos_half_angle < dp_ab.y;
+					in.z &= cos_half_angle < dp_ab.z;
+					in.w &= cos_half_angle < dp_ab.w;
+				}
+
 				float4 s;
-				s.x = lhs.x > radius2 ? 0.0f : p.x;
-				s.y = lhs.y > radius2 ? 0.0f : p.y;
-				s.z = lhs.z > radius2 ? 0.0f : p.z;
-				s.w = lhs.w > radius2 ? 0.0f : p.w;
+				s.x = in.x ? p.x + r.x * scale : 0.0f;
+				s.y = in.y ? p.y + r.y * scale : 0.0f;
+				s.z = in.z ? p.z + r.z * scale : 0.0f;
+				s.w = in.w ? p.w + r.w * scale : 0.0f;
 
 				reinterpret_cast<float4 *>(&location_probability[row * location_probability_stride])[col] = s;
 			}
 		}
-	
+
 	}
 }
+template <int coordinate>
+__global__
 
+static void range_centered_kernel(
+	const int batch_size,
+	const int cols,
+	const float **__restrict__ batched_current_location,
+	const float   * __restrict__ range,
+	float **__restrict__ batched_range_centered
+	 )
+{
+	for (int batch = blockIdx.y * blockDim.y + threadIdx.y; batch < batch_size; batch += gridDim.y * blockDim.z)
+	{
+		const float4 c = make_float4(batched_current_location[batch][coordinate]);
+		float4 *range_centered = reinterpret_cast<float4 *>(batched_range_centered[batch]);
+		for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < cols; col += gridDim.x * blockDim.x)
+		{
+			range_centered[col] = reinterpret_cast<float4 *>(const_cast<float *>(range))[col] - c;
+		}
 
+	}
+
+}
+
+void compute_direction(
+	const cudaStream_t &stream,
+	const cublasHandle_t &handle,
+	const std::size_t &batch_size,
+	const float **batched_previous_location, const std::size_t &batched_previous_location_rows, const std::size_t &batched_previous_location_cols, const std::size_t &batched_previous_location_stride,
+	const float **batched_current_location, const std::size_t &batched_current_location_rows, const std::size_t &batched_current_location_cols, const std::size_t &batched_current_location_stride,
+	float **batched_direction, const std::size_t &batched_direction_rows, const std::size_t &batched_direction_cols, const std::size_t &batched_direction_stride)
+{
+	dim3 grid, block;
+	block.x = 128;
+	block.y = 1;
+	block.z = 1;
+
+	grid.x = (batch_size + block.x - 1) / block.x;
+	direction_kernel << <grid, block, 0, stream >> > (batch_size,
+		batched_previous_location,
+		batched_current_location,
+		batched_direction);
+	checkCudaErrors(cudaGetLastError());
+}
 
 void compute_reachable_locations(
 	const cudaStream_t &stream,
 	const cublasHandle_t &handle,
 	const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
-	const float &radius, const float &scale, const unsigned long &seed,
+	const float &radius, const float &cos_half_angle, const float &scale, const unsigned long &seed,
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 	const float **batched_current_location, const std::size_t &batched_current_location_rows, const std::size_t &batched_current_location_cols, const std::size_t &batched_current_location_stride,
-	float **batched_x_grid_centered2, const std::size_t &batched_x_grid_centered2_rows, const std::size_t &batched_x_grid_centered2_cols, const std::size_t &batched_x_grid_centered2_stride,
-	float **batched_y_grid_centered2, const std::size_t &batched_y_grid_centered2_rows, const std::size_t &batched_y_grid_centered2_cols, const std::size_t &batched_y_grid_centered2_stride,
+	const float **batched_direction, const std::size_t &batched_direction_rows, const std::size_t &batched_direction_cols, const std::size_t &batched_direction_stride,
+	float **batched_x_grid_centered, const std::size_t &batched_x_grid_centered_rows, const std::size_t &batched_x_grid_centered_cols, const std::size_t &batched_x_grid_centered_stride,
+	float **batched_y_grid_centered, const std::size_t &batched_y_grid_centered_rows, const std::size_t &batched_y_grid_centered_cols, const std::size_t &batched_y_grid_centered_stride,
 	float  **batched_location_probability, const std::size_t &batched_location_probability_rows, const std::size_t &batched_location_probability_cols, const std::size_t &batched_location_probability_strides)
 {
+	{
+		dim3 grid, block;
+		block.x = 128;
+		block.y = 1;
+		block.z = 1;
+
+		grid.y = (batch_size + block.y - 1) / block.y;
+
+		grid.x = (x_grid_cols / 4 + block.x - 1) / block.x;
+		range_centered_kernel  <0> << <grid, block, 0, stream >> > (batch_size, x_grid_cols / 4, batched_current_location, x_grid, batched_x_grid_centered);
+		checkCudaErrors(cudaGetLastError());
+
+		grid.x = (y_grid_cols / 4 + block.x - 1) / block.x;
+		range_centered_kernel <1> << <grid, block, 0, stream >> > (batch_size, y_grid_cols / 4, batched_current_location, y_grid, batched_y_grid_centered);
+		checkCudaErrors(cudaGetLastError());
+	}
 
 	dim3 grid, block;
 	block.x = BLOCK_X;
@@ -1684,8 +1802,10 @@ void compute_reachable_locations(
 	grid.y = (batched_location_probability_rows  + block.y - 1) / block.y;
 	grid.z = (batch_size + block.z - 1) / block.z;
 
-		inside_circle_kernel << <grid, block, 0, stream >> > (batch_size, rows, cols / 4, batched_location_probability_strides, radius * radius, scale, seed,
-			x_grid, y_grid, batched_current_location, batched_location_probability);
+		inside_circle_sector_kernel << <grid, block, 0, stream >> > (batch_size, rows, cols / 4,
+			batched_location_probability_strides, radius * radius, cos_half_angle, scale, seed,
+			(const float **)batched_x_grid_centered, (const float **)batched_y_grid_centered,
+			batched_current_location, batched_direction, batched_location_probability);
 		checkCudaErrors(cudaGetLastError());
 
 }
@@ -1711,7 +1831,8 @@ struct normalize_functor
 
 
 
-void compute_select_most_probable_location(const cudaStream_t &stream,  const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+void compute_select_most_probable_location(const cudaStream_t &stream, const cublasHandle_t &handle, 
+	const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,	
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 	const float  **batched_location_probability, const std::size_t &batched_location_probability_rows, const std::size_t &batched_location_probability_cols, const std::size_t &batched_location_probability_strides,
@@ -1720,21 +1841,36 @@ void compute_select_most_probable_location(const cudaStream_t &stream,  const st
 {
 	std::vector<float *> batched_location_probability_ptr(batch_size);
 	std::vector<float *> batched_predicted_location_ptr(batch_size);
-	std::vector<cub::KeyValuePair <int, float> *> argmax_ptr(batch_size);
+	std::vector<int> idx(batch_size);
+	/*std::vector<cub::KeyValuePair <int, float> *> argmax_ptr(batch_size);
 	std::vector<cub::KeyValuePair <int, float>> argmax_host(batch_size);
 	std::vector<void *> temp_storage_ptr(batch_size);
-	std::vector<std::size_t> temp_storage_bytes(batch_size);
+	std::vector<std::size_t> temp_storage_bytes(batch_size);*/
 
 
 
 	checkCudaErrors(cudaMemcpyAsync(batched_location_probability_ptr.data(), batched_location_probability, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, stream));
 	checkCudaErrors(cudaMemcpyAsync(batched_predicted_location_ptr.data(), batched_predicted_location, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, stream));
-
-
-
 	for (int batch = 0; batch < batch_size; batch++)
 	{
+
 		float *d_in = batched_location_probability_ptr[batch];
+		checkCudaErrors(cublasIsamax(handle, batched_location_probability_strides * batched_location_probability_rows, d_in, 1, &idx[batch]));
+	}
+
+	checkCudaErrors(cudaStreamSynchronize(stream));
+	for (int batch = 0; batch < batch_size; batch++)
+	{
+		auto row = idx[batch] / batched_location_probability_strides;
+		auto col = idx[batch] % batched_location_probability_strides;
+		checkCudaErrors(cudaMemcpyAsync(batched_predicted_location_ptr[batch] + 0, &x_grid[col], sizeof(float), cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
+		checkCudaErrors(cudaMemcpyAsync(batched_predicted_location_ptr[batch] + 1, &y_grid[row], sizeof(float), cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
+	}
+	/*for (int batch = 0; batch < batch_size; batch++)
+	{
+		
+		float *d_in = batched_location_probability_ptr[batch];
+		cublasIsamax(handle, batched_location_probability_strides * batched_location_probability_rows, d_in, 1, &idx)
 		checkCudaErrors(cudaMalloc(&argmax_ptr[batch], sizeof(cub::KeyValuePair <int, float>)));
 		cub::DeviceReduce::ArgMax(temp_storage_ptr[batch], temp_storage_bytes[batch], d_in, argmax_ptr[batch], batched_location_probability_strides * batched_location_probability_rows, stream);
 		// Allocate temporary storage
@@ -1755,7 +1891,7 @@ void compute_select_most_probable_location(const cudaStream_t &stream,  const st
 		checkCudaErrors(cudaMemcpyAsync(batched_predicted_location_ptr[batch] + 0, &x_grid[col], sizeof(float), cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
 		checkCudaErrors(cudaMemcpyAsync(batched_predicted_location_ptr[batch] + 1, &y_grid[row], sizeof(float), cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
 		
-	}
+	}*/
 }
 
 

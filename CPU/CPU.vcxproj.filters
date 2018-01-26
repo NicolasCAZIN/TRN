@@ -47,9 +47,6 @@
     <ClCompile Include="Algorithm_sse2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Algorithm_mmx_sse.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Algorithm_fma3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

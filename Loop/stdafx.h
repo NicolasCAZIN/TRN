@@ -9,4 +9,5 @@
 #include <memory>
 #include <list>
 #include <functional>
+#include <cmath>
 #include <algorithm>

@@ -74,6 +74,7 @@ namespace TRN
 				const std::vector<float> &response,
 				const float &sigma,
 				const float &radius,
+				const float &angle,
 				const float &scale,
 				const std::string &tag);
 			void 	configure_loop_custom(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size);

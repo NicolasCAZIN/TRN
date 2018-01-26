@@ -53,6 +53,11 @@
 #define add_ps(__a, __b) (_mm256_add_ps((__a), (__b)))
 #define sub_ps(__a, __b) (_mm256_sub_ps((__a), (__b)))
 #define mul_ps(__a, __b) (_mm256_mul_ps((__a), (__b)))
+#define rsqrt_ps(__a) (_mm256_rsqrt_ps((__a)))
+#define and_ps(__a, __b) (_mm256_and_ps((__a), (__b)))
+#define or_ps(__a, __b) (_mm256_or_ps((__a), (__b)))
+#define abs_ps(__a) (_mm256_andnot_ps(_mm256_castsi256_ps(_mm256_set1_epi32(0x80000000)), (__a)))
+
 static inline __m256 sqr_ps(const __m256 &__a)
 {
 	return mul_ps(__a, __a);
@@ -69,7 +74,7 @@ static inline float hsum_ps(const __m256 &__a)
 
 #define blendv_ps(__a, __b, __c) (_mm256_blendv_ps((__a), (__b), (__c)))
 #define cmp_lt_ps(__a, __b) (_mm256_cmp_ps((__a), (__b), _CMP_LT_OQ))
-
+#define cmp_eq_ps(__a, __b) (_mm256_cmp_ps((__a), (__b), _CMP_EQ_OQ))
 #include "Algorithm_template_method.h"
 
 template  TRN::CPU::Algorithm<TRN::CPU::Implementation::AVX>;

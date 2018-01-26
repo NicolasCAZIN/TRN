@@ -33,7 +33,7 @@ static float recursive_c(float *ca, const std::size_t &n_d,
 	ca_ij = ca + (i - 1)*n_2 + (j - 1);
 
 
-	if (*ca_ij > -1.0)
+	if (*ca_ij > -1.0f)
 	{
 		return *ca_ij;
 	}

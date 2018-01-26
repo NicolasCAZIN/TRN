@@ -43,20 +43,27 @@ void compute_place_cell_location_probability(
 	float *** hypothesis_map, const std::size_t &hypothesis_map_rows, const std::size_t &hypothesis_map_cols, const std::size_t &hypothesis_map_stride,
 	float ** location_probability, const std::size_t &location_probability_rows, const std::size_t &location_probability_cols, const std::size_t &location_probability_stride
 );
+void compute_direction(const cudaStream_t &stream,
+	const cublasHandle_t &handle,
+	const std::size_t &batch_size,
+	const float **batched_previous_location, const std::size_t &batched_previous_location_rows, const std::size_t &batched_previous_location_cols, const std::size_t &batched_previous_location_stride,
+	const float **batched_current_location, const std::size_t &batched_current_location_rows, const std::size_t &batched_current_location_cols, const std::size_t &batched_current_location_stride,
+	float **batched_direction, const std::size_t &batched_direction_rows, const std::size_t &batched_direction_cols, const std::size_t &batched_direction_stride);
 
 void compute_reachable_locations(
 	const cudaStream_t &stream,
 	const cublasHandle_t &handle,
 	const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
-	const float &radius, const float &scale, const unsigned long &seed,
+	const float &radius, const float &cos_half_angle, const float &scale, const unsigned long &seed,
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 	const float **batched_current_location, const std::size_t &batched_current_location_rows, const std::size_t &batched_current_location_cols, const std::size_t &batched_current_location_stride,
-	float **batched_x_grid_centered2, const std::size_t &batched_x_grid_centered2_rows, const std::size_t &batched_x_grid_centered2_cols, const std::size_t &batched_x_grid_centered2_stride,
-	float **batched_y_grid_centered2, const std::size_t &batched_y_grid_centered2_rows, const std::size_t &batched_y_grid_centered2_cols, const std::size_t &batched_y_grid_centered2_stride,
+	const float **batched_direction, const std::size_t &batched_direction_rows, const std::size_t &batched_direction_cols, const std::size_t &batched_direction_stride,
+	float **batched_x_grid_centered, const std::size_t &batched_x_grid_centered_rows, const std::size_t &batched_x_grid_centered_cols, const std::size_t &batched_x_grid_centered_stride,
+	float **batched_y_grid_centered, const std::size_t &batched_y_grid_centered_rows, const std::size_t &batched_y_grid_centered_cols, const std::size_t &batched_y_grid_centered_stride,
 	float  **batched_location_probability, const std::size_t &batched_location_probability_rows, const std::size_t &batched_location_probability_cols, const std::size_t &batched_location_probability_strides);
 
-void compute_select_most_probable_location(const cudaStream_t &stream, const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+void compute_select_most_probable_location(const cudaStream_t &stream, const cublasHandle_t &handle, const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 	const float  **batched_location_probability, const std::size_t &batched_location_probability_rows, const std::size_t &batched_location_probability_cols, const std::size_t &batched_location_probability_strides,

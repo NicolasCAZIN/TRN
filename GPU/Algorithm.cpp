@@ -76,20 +76,30 @@ void TRN::GPU::Algorithm::place_cell_location_probability(
 void TRN::GPU::Algorithm::restrict_to_reachable_locations
 (
 	const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
-	const float &radius, const float &scale, const unsigned long &seed,
+	const float &radius, const float &cos_half_angle, const float &scale, const unsigned long &seed,
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
+	const float **batched_previous_location, const std::size_t *batched_previous_location_rows, const std::size_t *batched_previous_location_cols, const std::size_t *batched_previous_location_stride,
 	const float **batched_current_location, const std::size_t *batched_current_location_rows, const std::size_t *batched_current_location_cols, const std::size_t *batched_current_location_stride,
-	 float **batched_x_grid_centered2, const std::size_t *batched_x_grid_centered2_rows, const std::size_t *batched_x_grid_centered2_cols, const std::size_t *batched_x_grid_centered2_stride,
-	 float **batched_y_grid_centered2, const std::size_t *batched_y_grid_centered2_rows, const std::size_t *batched_y_grid_centered2_cols, const std::size_t *batched_y_grid_centered2_stride,
+	float **batched_direction, const std::size_t *batched_direction_rows, const std::size_t *batched_direction_cols, const std::size_t *batched_direction_stride,
+	float **batched_x_grid_centered, const std::size_t *batched_x_grid_centered_rows, const std::size_t *batched_x_grid_centered_cols, const std::size_t *batched_x_grid_centered_stride,
+	float **batched_y_grid_centered, const std::size_t *batched_y_grid_centered_rows, const std::size_t *batched_y_grid_centered_cols, const std::size_t *batched_y_grid_centered_stride,
 	float  **batched_location_probability, const std::size_t *batched_location_probability_rows, const std::size_t *batched_location_probability_cols, const std::size_t *batched_location_probability_strides)
 {
-	compute_reachable_locations(handle->context->get_stream(), handle->context->get_handle(),batch_size, place_cells_number, rows, cols, radius, scale,seed,
+	compute_direction(handle->context->get_stream(), handle->context->get_handle(), batch_size,
+		batched_previous_location, *batched_previous_location_rows, *batched_previous_location_cols, *batched_previous_location_stride,
+		batched_current_location, *batched_current_location_rows, *batched_current_location_cols, *batched_current_location_stride,
+		batched_direction, *batched_direction_rows, *batched_direction_cols, *batched_direction_stride
+	);
+
+	compute_reachable_locations(handle->context->get_stream(), handle->context->get_handle(),
+		batch_size, place_cells_number, rows, cols, radius, cos_half_angle,scale,seed,
 		x_grid, x_grid_rows, x_grid_cols, x_grid_stride,
 		y_grid, y_grid_rows, y_grid_cols, y_grid_stride,
 		batched_current_location, *batched_current_location_rows, *batched_current_location_cols, *batched_current_location_stride,
-		batched_x_grid_centered2, *batched_x_grid_centered2_rows,*batched_x_grid_centered2_cols, *batched_x_grid_centered2_stride,
-		batched_y_grid_centered2, *batched_y_grid_centered2_rows, *batched_y_grid_centered2_cols, *batched_y_grid_centered2_stride,
+		(const float **)batched_direction, *batched_direction_rows,*batched_direction_cols, *batched_direction_stride,
+		batched_x_grid_centered, *batched_x_grid_centered_rows, *batched_x_grid_centered_cols, *batched_x_grid_centered_stride,
+		batched_y_grid_centered, *batched_y_grid_centered_rows, *batched_y_grid_centered_cols, *batched_y_grid_centered_stride,
 		batched_location_probability, *batched_location_probability_rows, *batched_location_probability_cols, *batched_location_probability_strides
 
 		);
@@ -124,7 +134,7 @@ void TRN::GPU::Algorithm::select_most_probable_location(const std::size_t &batch
 	float **batched_predicted_location, const std::size_t *batched_predicted_location_rows, const std::size_t *batched_predicted_location_cols, const std::size_t *batched_predicted_location_strides
 )
 {
-	compute_select_most_probable_location(handle->context->get_stream(), batch_size, rows, cols,
+	compute_select_most_probable_location(handle->context->get_stream(), handle->context->get_handle(), batch_size, rows, cols,
 		x_grid, x_grid_rows, x_grid_cols, x_grid_stride,
 		y_grid, y_grid_rows, y_grid_cols, y_grid_stride,
 		batched_location_probability, *batched_location_probability_rows, *batched_location_probability_cols, *batched_location_probability_strides,

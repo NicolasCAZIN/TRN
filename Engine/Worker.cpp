@@ -620,7 +620,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 			locked->send(stimulus, 0);
 	},
 		TRN::Engine::Node::handle->perceived_stimulus[message.simulation_id],
-		message.rows, message.cols, message.x, message.y, firing_rate_map, message.sigma, message.radius, message.scale, message.tag));
+		message.rows, message.cols, message.x, message.y, firing_rate_map, message.sigma, message.radius, message.angle, message.scale, message.tag));
 
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_CUSTOM> &message)

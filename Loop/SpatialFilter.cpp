@@ -3,6 +3,13 @@
 #include "Core/Loop_impl.h"
 #include "Core/Bundle.h"
 #include "Helper/Logger.h"
+#include <iostream>
+#include <random>
+#include <algorithm>
+#include <numeric>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/video/tracking.hpp>
 
 class TRN::Loop::SpatialFilter::Handle
 {
@@ -14,20 +21,25 @@ public :
 	unsigned long seed;
 	float sigma;
 	float scale;
+	float cos_half_angle;
 	float radius;
+
 	std::vector<float> x_range;
 	std::vector<float> y_range;
+	//std::vector<float> current;
 	std::string tag;
 
 	std::shared_ptr<TRN::Core::Matrix> x_grid;
 	std::shared_ptr<TRN::Core::Matrix> y_grid;
 	std::shared_ptr<TRN::Core::Matrix> firing_rate_map;
-	std::shared_ptr<TRN::Core::Batch> batched_x_grid_centered2;
-	std::shared_ptr<TRN::Core::Batch> batched_y_grid_centered2;
+	std::shared_ptr<TRN::Core::Batch> batched_x_grid_centered;
+	std::shared_ptr<TRN::Core::Batch> batched_y_grid_centered;
 
 	std::shared_ptr<TRN::Core::Batch> batched_scale;
 	std::shared_ptr<TRN::Core::Batch> batched_predicted_position;
 	std::shared_ptr<TRN::Core::Batch> batched_current_position;
+	std::shared_ptr<TRN::Core::Batch> batched_previous_position;
+	std::shared_ptr<TRN::Core::Batch> batched_direction;
 
 	std::shared_ptr<TRN::Core::Batch> batched_firing_rate_map;
 	std::shared_ptr<TRN::Core::Batch> batched_next_location_probability;
@@ -40,11 +52,31 @@ public :
 	std::shared_ptr<TRN::Core::Bundle> bundled_hypothesis_map;
 	
 	
+	std::vector<cv::KalmanFilter> kalman_filter;
 
 	std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> on_predicted_position;
 	std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_predicted_stimulus;
 
 };
+
+static void cartesian_to_polar(const int &x, const int &y, float &rho, float &theta)
+{
+	rho = std::hypotf(x, y);
+	theta = std::atan2f(y, x);
+}
+static void polar_to_cartesian(const float &rho, const float &theta, int &x, int &y)
+{
+	x = std::ceil(std::cosf(theta) * rho);
+	y = std::ceil(std::sinf(theta) * rho);
+}
+
+static float compute_heading(const std::vector<float> &current, const std::vector<float> &previous)
+{
+	float vx = current[0] - previous[0];
+	float vy = current[1] - previous[1];
+
+	return std::atan2f(vy, vx);
+}
 
 TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
 	const std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
@@ -56,6 +88,7 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 	const std::shared_ptr<TRN::Core::Matrix> &firing_rate_map,
 	const float &sigma, 
 	const float &radius,
+	const float &angle,
 	const float &scale,
 	const std::string &tag
 	) :
@@ -73,8 +106,20 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 	handle->rows = rows;
 	handle->cols = cols;
 	
-
-
+	float corrected_angle = angle;
+	if (angle > 360.0f)
+	{
+		while (corrected_angle > 360.0f)
+			corrected_angle -= 360.0f;
+		WARNING_LOGGER << "Field of view (" << angle << "°) exceeds 360°. " << corrected_angle << "° will be used instead";
+	}
+	else if (angle < 0.0f)
+	{
+		while (corrected_angle < 0.0f)
+			corrected_angle += 360.0f;
+		WARNING_LOGGER << "Field of view (" << angle << "°) is negative. " << corrected_angle << "° will be used instead";
+	}
+	handle->cos_half_angle = std::cosf((M_PI * corrected_angle / 180.0f) / 2);
 	if (rows == 0)
 		throw std::invalid_argument("grid rows must be strictly positive");
 	if (cols == 0)
@@ -106,12 +151,14 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 	handle->batched_transition_probability = TRN::Core::Batch::create(driver, batch_size);
 	handle->bundled_hypothesis_map = TRN::Core::Bundle::create(driver, batch_size);
 
-	handle->batched_x_grid_centered2 = TRN::Core::Batch::create(driver, batch_size);
-	handle->batched_y_grid_centered2 = TRN::Core::Batch::create(driver, batch_size);
+	handle->batched_x_grid_centered = TRN::Core::Batch::create(driver, batch_size);
+	handle->batched_y_grid_centered = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_scale = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_predicted_position = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_current_position = TRN::Core::Batch::create(driver, batch_size);
 
+	handle->batched_previous_position = TRN::Core::Batch::create(driver, batch_size);
+	handle->batched_direction = TRN::Core::Batch::create(driver, batch_size);
 	perceived_stimulus = [this](const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)
 	{	
 		assert(rows == TRN::Core::Loop::handle->batch_size);
@@ -126,11 +173,17 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 	estimated_position = [this](const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
 	{
 		assert(rows == TRN::Core::Loop::handle->batch_size);
+		
 		for (std::size_t batch = 0; batch < TRN::Core::Loop::handle->batch_size; batch++)
 		{
-			std::vector<float> local(position.begin() + batch * cols, position.begin() + batch * cols + cols);
-			assert(local.size() == cols);
-			handle->batched_current_position->get_matrices(batch)->from(local, 1, cols);
+			std::vector<float> current(position.begin() + batch * cols, position.begin() + batch * cols + cols);
+			assert(current.size() == cols);
+			std::size_t previous_rows, previous_cols;
+			std::vector<float> previous;
+			handle->batched_current_position->get_matrices(batch)->to(previous, previous_rows, previous_cols);
+			handle->batched_current_position->get_matrices(batch)->from(current, 1, cols);
+			auto heading = compute_heading(current, previous);
+			handle->batched_previous_position->get_matrices(batch)->from(previous, 1, cols);
 		}
 	};
 
@@ -164,7 +217,7 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 		handle->batched_firing_rate_map->update(place_cell, sub_firing_rate_map);
 
 	}
-
+	handle->kalman_filter.resize(batch_size);
 	for (std::size_t batch = 0; batch < batch_size; batch++)
 	{
 		auto batched_hypothesis_map = TRN::Core::Batch::create(driver, stimulus_size);
@@ -176,23 +229,29 @@ TRN::Loop::SpatialFilter::SpatialFilter(const std::shared_ptr<TRN::Backend::Driv
 		}
 		handle->bundled_hypothesis_map->update(batch, batched_hypothesis_map);
 		auto scale = TRN::Core::Matrix::create(implementor, 1, stimulus_size);
-		auto x_grid_centered2 = TRN::Core::Matrix::create(driver, 1, cols);
-		auto y_grid_centered2 = TRN::Core::Matrix::create(driver, 1, rows);
+		auto x_grid_centered = TRN::Core::Matrix::create(driver, 1, cols);
+		auto y_grid_centered = TRN::Core::Matrix::create(driver, 1, rows);
 		auto reduced_location_probability = TRN::Core::Matrix::create(driver, 1, rows);
 		auto row_cumsum = TRN::Core::Matrix::create(driver, 1, rows);
 		auto col_cumsum = TRN::Core::Matrix::create(driver, 1, cols);
 		auto predicted_position = TRN::Core::Matrix::create(driver, 1, 2);
 		auto current_position = TRN::Core::Matrix::create(driver, 1, 2);
+		auto previous_position = TRN::Core::Matrix::create(driver, 1, 2);
+		auto direction = TRN::Core::Matrix::create(driver, 1, 2);
+
 		auto next_location_probability = TRN::Core::Matrix::create(implementor, rows, cols, true);
 		handle->batched_scale->update(batch, scale);
-		handle->batched_x_grid_centered2->update(batch, x_grid_centered2);
-		handle->batched_y_grid_centered2->update(batch, y_grid_centered2);
+		handle->batched_x_grid_centered->update(batch, x_grid_centered);
+		handle->batched_y_grid_centered->update(batch, y_grid_centered);
 		handle->batched_predicted_position->update(batch, predicted_position);
 		handle->batched_current_position->update(batch, current_position);
+		handle->batched_previous_position->update(batch, previous_position);
+		handle->batched_direction->update(batch, direction);
 		handle->batched_next_location_probability->update(batch, next_location_probability);
 		handle->batched_reduced_location_probability->update(batch, reduced_location_probability);
 		handle->batched_row_cumsum->update(batch, row_cumsum);
 		handle->batched_col_cumsum->update(batch, col_cumsum);
+		handle->kalman_filter[batch] = cv::KalmanFilter(4, 2, 0);
 	}
 }
 
@@ -212,13 +271,35 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 	trajectory->to(trajectory_coordinates, trajectory_rows, trajectory_cols);
 	if (trajectory_cols != 2)
 		throw std::invalid_argument("invalid position in test sequence for label " + payload.get_label() + " and tag " + handle->tag);
-	auto t = payload.get_preamble();
+	if (payload.get_preamble() < 2)
+		throw std::runtime_error("Preamble must be at least 2 time steps");
+	
+	auto t = payload.get_preamble() -1;
+	std::vector<float> current({ trajectory_coordinates[t * 2] , trajectory_coordinates[t * 2 + 1] });
+	std::vector<float> previous({ trajectory_coordinates[(t-1) * 2] , trajectory_coordinates[(t-1) * 2 + 1] });
+
+	const float dt = 20;
 
 	for (std::size_t batch = 0; batch < handle->batch_size; batch++)
 	{
-		std::vector<float> current({ trajectory_coordinates[t * 2] , trajectory_coordinates[t * 2 + 1] });
-
+		handle->kalman_filter[batch].init(4, 2, 0);
 		handle->batched_current_position->get_matrices(batch)->from(current, 1, 2);
+		handle->batched_previous_position->get_matrices(batch)->from(previous, 1, 2);
+
+		handle->kalman_filter[batch].transitionMatrix = (cv::Mat_<float>(4, 4) <<
+			1, 0, dt, 0,
+			0, 1, 0, dt,
+			0, 0, 1, 0,
+			0, 0, 0, 1);
+
+		handle->kalman_filter[batch].statePost.at<float>(0) = current[0];
+		handle->kalman_filter[batch].statePost.at<float>(1) = current[1];
+		handle->kalman_filter[batch].statePost.at<float>(2) = 0;
+		handle->kalman_filter[batch].statePost.at<float>(3) = 0;
+		cv::setIdentity(handle->kalman_filter[batch].measurementMatrix);
+		cv::setIdentity(handle->kalman_filter[batch].processNoiseCov, cv::Scalar::all(1e-4));
+		cv::setIdentity(handle->kalman_filter[batch].measurementNoiseCov, cv::Scalar::all(1e-1));
+		cv::setIdentity(handle->kalman_filter[batch].errorCovPost, cv::Scalar::all(0.1f));
 	};
 }
 static inline std::size_t clamp(const std::size_t &v, const std::size_t &a, const std::size_t &b)
@@ -230,24 +311,14 @@ static inline std::size_t clamp(const std::size_t &v, const std::size_t &a, cons
 	else 
 		return v;
 }
-#include <iostream>
-#include <random>
-#include <algorithm>
-#include <numeric>
-#include <opencv2\core.hpp>
+
+
+
+
+
 void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Core::Message::PREDICTION> &payload)
 {
-	{
-		std::vector<std::size_t>  rows, cols;
-		std::size_t matrices;
-		std::vector<float> predicted_stimulus;
 
-		payload.get_predicted()->to(predicted_stimulus, matrices, rows, cols);
-		assert(std::all_of(rows.begin(), rows.end(), [](const std::size_t &r) { return r == 1; }));
-		assert(std::all_of(cols.begin(), cols.end(), [cols](const std::size_t &c) { return c == cols[0]; }));
-		/*cv::Mat predicted(rows[0], cols[0], CV_32F, predicted_stimulus.data());
-		handle->on_predicted_stimulus(payload.get_trial(), payload.get_evaluation(), predicted_stimulus, matrices, cols[0]);*/
-	}
 
 	implementor->get_algorithm()->place_cell_location_probability(
 		handle->batch_size, handle->stimulus_size,
@@ -261,27 +332,32 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 	);
 	
 
+
+
 	if (handle->radius > 0.0f)
 	{
 		implementor->get_algorithm()->restrict_to_reachable_locations(
 			handle->batch_size, handle->stimulus_size,
 			handle->rows, handle->cols,
-			handle->radius, handle->scale, handle->seed,
+			handle->radius, handle->cos_half_angle, handle->scale, handle->seed,
 			handle->x_grid->get_elements(), handle->x_grid->get_rows(), handle->x_grid->get_cols(), handle->x_grid->get_stride(),
 			handle->y_grid->get_elements(), handle->y_grid->get_rows(), handle->y_grid->get_cols(), handle->y_grid->get_stride(),
+			(const float **)handle->batched_previous_position->get_elements(), handle->batched_previous_position->get_rows(), handle->batched_previous_position->get_cols(), handle->batched_previous_position->get_strides(),
 			(const float **)handle->batched_current_position->get_elements(), handle->batched_current_position->get_rows(), handle->batched_current_position->get_cols(), handle->batched_current_position->get_strides(),
-			handle->batched_x_grid_centered2->get_elements(), handle->batched_x_grid_centered2->get_rows(), handle->batched_x_grid_centered2->get_cols(), handle->batched_x_grid_centered2->get_strides(),
-			handle->batched_y_grid_centered2->get_elements(), handle->batched_y_grid_centered2->get_rows(), handle->batched_y_grid_centered2->get_cols(), handle->batched_y_grid_centered2->get_strides(),
+			handle->batched_direction->get_elements(), handle->batched_direction->get_rows(), handle->batched_direction->get_cols(), handle->batched_direction->get_strides(),
+			handle->batched_x_grid_centered->get_elements(), handle->batched_x_grid_centered->get_rows(), handle->batched_x_grid_centered->get_cols(), handle->batched_x_grid_centered->get_strides(),
+			handle->batched_y_grid_centered->get_elements(), handle->batched_y_grid_centered->get_rows(), handle->batched_y_grid_centered->get_cols(), handle->batched_y_grid_centered->get_strides(),
 			handle->batched_next_location_probability->get_elements(), handle->batched_next_location_probability->get_rows(), handle->batched_next_location_probability->get_cols(), handle->batched_next_location_probability->get_strides());
 		handle->seed += handle->rows * handle->cols;
 	}
 
-	/*std::size_t location_matrices;
-	std::vector<std::size_t> location_rows, location_cols;
-	std::vector<float> location_elements;
 
+	/*std::vector<std::size_t> location_rows, location_cols;
+	std::size_t location_matrices;
+	std::vector<float> location_elements;
 	handle->batched_next_location_probability->to(location_elements, location_matrices, location_rows, location_cols);
-	cv::Mat location(location_matrices * location_rows[0], location_cols[0], CV_32F, location_elements.data());*/
+	cv::Mat location(location_rows[0] * location_matrices, location_cols[0], CV_32F, location_elements.data());
+	*/
 #if 1
 	implementor->get_algorithm()->select_most_probable_location(handle->batch_size, handle->rows, handle->cols,
 		handle->x_grid->get_elements(), handle->x_grid->get_rows(), handle->x_grid->get_cols(), handle->x_grid->get_stride(),
@@ -320,7 +396,19 @@ void TRN::Loop::SpatialFilter::update(const TRN::Core::Message::Payload<TRN::Cor
 
 
 	handle->batched_predicted_position->to(predicted_position, predicted_position_matrices, predicted_position_rows, predicted_position_cols);
-
+	assert(predicted_position_matrices == handle->batch_size);
+#pragma omp parallel for
+	for (int batch = 0; batch < handle->batch_size; batch++)
+	{
+		auto prediction = handle->kalman_filter[batch].predict();
+		cv::Mat_<float> measurement(2, 1);
+		measurement(0) = predicted_position[batch * 2 + 0];
+		measurement(1) = predicted_position[batch * 2 + 1];
+		auto estimated = handle->kalman_filter[batch].correct(measurement);
+		predicted_position[batch * 2 + 0] = estimated.at<float>(0);
+		predicted_position[batch * 2 + 1] = estimated.at<float>(1);
+	}
+	
 //	INFORMATION_LOGGER << " current position " << current_position[0] << ", " << current_position[1] ;
 	//INFORMATION_LOGGER << " predicted position " << predicted_position[0] << ", " << predicted_position[1] ;
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::POSITION>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::POSITION>(handle->batched_predicted_position, payload.get_evaluation_id()));
@@ -385,8 +473,9 @@ std::shared_ptr<TRN::Loop::SpatialFilter> TRN::Loop::SpatialFilter::create(const
 	const std::shared_ptr<TRN::Core::Matrix> &firing_rate_map,
 	const float &sigma,
 	const float &radius,
+	const float &angle,
 	const float &scale,
 	const std::string &tag)
 {
-	return std::make_shared<TRN::Loop::SpatialFilter>(driver, batch_size, stimulus_size, seed, predicted_position, estimated_position, predicted_stimulus, perceived_stimulus, rows, cols, x, y, firing_rate_map, sigma,radius, scale,tag);
+	return std::make_shared<TRN::Loop::SpatialFilter>(driver, batch_size, stimulus_size, seed, predicted_position, estimated_position, predicted_stimulus, perceived_stimulus, rows, cols, x, y, firing_rate_map, sigma,radius, angle, scale,tag);
 }

@@ -57,7 +57,12 @@
 
 #define cmp_lt_ps(__a, __b) ((__a) < (__b)) 
 
+#define cmp_eq_ps(__a, __b) ((__a) == (__b)) 
+#define rsqrt_ps(__a) ((1.0f/sqrtf((__a))))
+#define and_ps(__a, __b) ((__a) && (__b))
+#define or_ps(__a, __b) ((__a) || (__b))
 
+#define abs_ps(__a) (std::fabs(__a))
 #include "Algorithm_template_method.h"
 
 template  TRN::CPU::Algorithm<TRN::CPU::Implementation::SCALAR>;

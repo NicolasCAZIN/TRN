@@ -627,6 +627,7 @@ namespace TRN
 			float sigma;
 			float radius;
 			float scale;
+			float angle;
 			std::string tag;
 			unsigned long seed;
 			unsigned int checksum;
@@ -644,6 +645,7 @@ namespace TRN
 				ar & y;
 				ar & sigma;
 				ar & radius;
+				ar & angle;
 				ar & scale;
 				ar & tag;
 				ar & seed;

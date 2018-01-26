@@ -50,6 +50,11 @@
 #define add_ps(__a, __b) (_mm_add_ps((__a), (__b)))
 #define sub_ps(__a, __b) (_mm_sub_ps((__a), (__b)))
 #define mul_ps(__a, __b) (_mm_mul_ps((__a), (__b)))
+#define rsqrt_ps(__a) (_mm_rsqrt_ps((__a)))
+#define and_ps(__a, __b) (_mm_and_ps((__a), (__b)))
+#define or_ps(__a, __b) (_mm_or_ps((__a), (__b)))
+#define abs_ps(__a) (_mm_andnot_ps(_mm_castsi128_ps(_mm_set1_epi32(0x80000000)), (__a)))
+
 static inline __m128 sqr_ps(const __m128 &__a)
 {
 	return mul_ps(__a, __a);
@@ -67,7 +72,7 @@ static inline float hsum_ps(const __m128 &__a)
 
 #define blendv_ps(__a, __b, __c) (_mm_blendv_ps((__a), (__b), (__c)))
 #define cmp_lt_ps(__a, __b) (_mm_cmplt_ps((__a), (__b)))
-
+#define cmp_eq_ps(__a, __b) (_mm_cmpeq_ps((__a), (__b)))
 #include "Algorithm_template_method.h"
 
 template  TRN::CPU::Algorithm<TRN::CPU::Implementation::SSE2>;

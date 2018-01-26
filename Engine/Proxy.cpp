@@ -272,7 +272,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CO
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_SPATIAL_FILTER> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_loop_spatial_filter(global_id(message.simulation_id), message.batch_size, message.stimulus_size, message.seed, message.rows, message.cols, message.x, message.y, message.sequence, message.sigma, message.radius, message.scale, message.tag);
+	handle->dispatcher->configure_loop_spatial_filter(global_id(message.simulation_id), message.batch_size, message.stimulus_size, message.seed, message.rows, message.cols, message.x, message.y, message.sequence, message.sigma, message.radius, message.angle, message.scale, message.tag);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_CUSTOM> &message)
 {

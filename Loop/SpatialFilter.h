@@ -25,11 +25,10 @@ namespace TRN
 				const std::shared_ptr<TRN::Core::Matrix> &firing_rate_map,
 				const float &sigma, 
 				const float &radius,
+				const float &angle,
 				const float &scale,
 				const std::string &tag);
 			virtual ~SpatialFilter();
-
-		private :
 
 
 		public:
@@ -48,6 +47,7 @@ namespace TRN
 				const std::shared_ptr<TRN::Core::Matrix> &firing_rate_map,
 				const float &sigma, 
 				const float &radius,
+				const float &angle,
 				const float &scale,
 				const std::string &tag);
 		};

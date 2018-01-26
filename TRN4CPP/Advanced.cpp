@@ -183,7 +183,7 @@ void TRN4CPP::Simulation::Loop::SpatialFilter::configure(const unsigned long lon
 	const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
 	std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
 	const std::size_t &rows, const std::size_t &cols, const std::pair<float, float> &x, const std::pair<float, float> &y,
-	const std::vector<float> response, const float &sigma, const float &radius, const float &scale, const std::string &tag
+	const std::vector<float> response, const float &sigma, const float &radius, const float &angle, const float &scale, const std::string &tag
 )
 {
 	TRACE_LOGGER;
@@ -194,7 +194,7 @@ void TRN4CPP::Simulation::Loop::SpatialFilter::configure(const unsigned long lon
 	frontend->install_position(simulation_id, predicted_position);
 	frontend->install_stimulus(simulation_id, predicted_stimulus);
 	frontend->configure_loop_spatial_filter(simulation_id, batch_size, stimulus_size, seed,
-		rows, cols, x, y, response, sigma, radius, scale, tag);
+		rows, cols, x, y, response, sigma, radius, angle, scale, tag);
 }
 void TRN4CPP::Simulation::Loop::Custom::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
 	const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
