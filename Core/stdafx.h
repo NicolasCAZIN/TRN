@@ -2,6 +2,8 @@
 #ifdef USE_VLD
 #include <vld.h>
 #endif 
+#include <opencv2/core.hpp>
+
 #include <boost/multi_array.hpp>
 #include <numeric>
 #include <string>

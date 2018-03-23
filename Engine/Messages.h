@@ -60,6 +60,9 @@ namespace TRN
 			CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE,
 			CONFIGURE_MEASUREMENT_POSITION_CUSTOM,
 			CONFIGURE_RESERVOIR_WIDROW_HOFF,
+			CONFIGURE_DECODER_LINEAR,
+			CONFIGURE_DECODER_KERNEL_MODEL,
+			CONFIGURE_DECODER_KERNEL_MAP,
 			CONFIGURE_LOOP_COPY,
 			CONFIGURE_LOOP_SPATIAL_FILTER,
 			CONFIGURE_LOOP_CUSTOM,
@@ -76,9 +79,6 @@ namespace TRN
 			CONFIGURE_RECURRENT_UNIFORM,
 			CONFIGURE_RECURRENT_GAUSSIAN,
 			CONFIGURE_RECURRENT_CUSTOM,
-			CONFIGURE_FEEDBACK_UNIFORM,
-			CONFIGURE_FEEDBACK_GAUSSIAN,
-			CONFIGURE_FEEDBACK_CUSTOM,
 			CONFIGURE_READOUT_UNIFORM,
 			CONFIGURE_READOUT_GAUSSIAN,
 			CONFIGURE_READOUT_CUSTOM,
@@ -88,13 +88,11 @@ namespace TRN
 			SCHEDULING,
 			FEEDFORWARD_WEIGHTS,
 			RECURRENT_WEIGHTS,
-			FEEDBACK_WEIGHTS,
 			READOUT_WEIGHTS,
 			MUTATOR_CUSTOM,
 			SCHEDULER_CUSTOM,
 			FEEDFORWARD_DIMENSIONS,
 			RECURRENT_DIMENSIONS,
-			FEEDBACK_DIMENSIONS,
 			READOUT_DIMENSIONS,
 			STATES,
 			WEIGHTS,
@@ -500,7 +498,20 @@ namespace TRN
 			}
 			virtual ~ConfigureMeasurement() {}
 		};
+		struct ConfigureFrechetDistance : public ConfigureMeasurement
+		{
+			std::string norm;
+			std::string aggregator;
 
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<ConfigureMeasurement>(*this);
+				ar & norm;
+				ar & aggregator;
+			}
+			virtual ~ConfigureFrechetDistance() {}
+		};
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_MEAN_SQUARE_ERROR> : public ConfigureMeasurement
 		{
@@ -512,12 +523,12 @@ namespace TRN
 			virtual ~Message() {}
 		};
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_FRECHET_DISTANCE> : public ConfigureMeasurement
+		struct Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_FRECHET_DISTANCE> : public ConfigureFrechetDistance
 		{
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<ConfigureMeasurement>(*this);
+				ar & boost::serialization::base_object<ConfigureFrechetDistance>(*this);
 			}
 			virtual ~Message() {}
 		};
@@ -542,12 +553,12 @@ namespace TRN
 			virtual ~Message() {}
 		};
 		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> : public ConfigureMeasurement
+		struct Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> : public ConfigureFrechetDistance
 		{
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<ConfigureMeasurement>(*this);
+				ar & boost::serialization::base_object<ConfigureFrechetDistance>(*this);
 			}
 			virtual ~Message() {}
 		};
@@ -572,6 +583,7 @@ namespace TRN
 			float initial_state_scale;
 			float learning_rate;
 			std::size_t batch_size;
+			std::size_t mini_batch_size;
 			unsigned long seed;
 
 			template<class Archive>
@@ -585,6 +597,7 @@ namespace TRN
 				ar & initial_state_scale;
 				ar & learning_rate;
 				ar & batch_size;
+				ar & mini_batch_size;
 				ar & seed;
 			}
 			virtual ~Message() {}
@@ -606,6 +619,100 @@ namespace TRN
 			virtual ~Loop() {}
 		};
 
+
+		struct Decoder : public Simulation
+		{
+			std::size_t stimulus_size;
+			std::size_t batch_size;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Simulation>(*this);
+				ar & stimulus_size;
+				ar & batch_size;
+			}
+			virtual ~Decoder() {}
+		};
+
+		struct Kernel : public Decoder
+		{
+			std::size_t rows;
+			std::size_t cols;
+			std::pair<float, float> x;
+			std::pair<float, float> y;
+			float sigma;
+			float radius;
+			float scale;
+			float angle;
+			unsigned long seed;
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Decoder>(*this);
+				ar & rows;
+				ar & cols;
+				ar & x;
+				ar & y;
+				ar & sigma;
+				ar & radius;
+				ar & angle;
+				ar & scale;
+				ar & seed;
+			}
+			virtual ~Kernel() {}
+		};
+
+		template<>
+		struct Message<TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR> : public Decoder
+		{
+			std::vector<float> cx;
+			std::vector<float> cy;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Decoder>(*this);
+				ar & cx;
+				ar & cy;
+			}
+			virtual ~Message() {}
+		};
+
+
+
+		template<>
+		struct Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL> : public Kernel
+		{
+			std::vector<float> cx;
+			std::vector<float> cy;
+			std::vector<float> K;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Kernel>(*this);
+				ar & cx;
+				ar & cy;
+				ar & K;
+			}
+			virtual ~Message() {}
+		};
+		template<>
+		struct Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP> : public Kernel
+		{
+
+			std::pair<unsigned int, std::vector<float>> response;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Kernel>(*this);
+				ar & response;
+			}
+			virtual ~Message() {}
+		};
+
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_LOOP_COPY> : public Loop
 		{
@@ -620,35 +727,13 @@ namespace TRN
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_LOOP_SPATIAL_FILTER> : public Loop
 		{
-			std::size_t rows;
-			std::size_t cols;
-			std::pair<float, float> x;
-			std::pair<float, float> y;
-			float sigma;
-			float radius;
-			float scale;
-			float angle;
 			std::string tag;
-			unsigned long seed;
-			unsigned int checksum;
-			std::vector<float> sequence;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
 				ar & boost::serialization::base_object<Loop>(*this);
-				ar & checksum;
-				ar & sequence;
-				ar & rows;
-				ar & cols;
-				ar & x;
-				ar & y;
-				ar & sigma;
-				ar & radius;
-				ar & angle;
-				ar & scale;
 				ar & tag;
-				ar & seed;
 			}
 			virtual ~Message() {}
 		};
@@ -861,38 +946,7 @@ namespace TRN
 			virtual ~Message() {}
 		};
 
-		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_UNIFORM> : public Uniform
-		{
-			template<class Archive>
-			void serialize(Archive & ar, const unsigned int version)
-			{
-				ar & boost::serialization::base_object<Uniform>(*this);
-			}
-			virtual ~Message() {}
-		};
-
-		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_GAUSSIAN> : public Gaussian
-		{
-			template<class Archive>
-			void serialize(Archive & ar, const unsigned int version)
-			{
-				ar & boost::serialization::base_object<Gaussian>(*this);
-			}
-			virtual ~Message() {}
-		};
-
-		template<>
-		struct Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM> : public Simulation
-		{
-			template<class Archive>
-			void serialize(Archive & ar, const unsigned int version)
-			{
-				ar & boost::serialization::base_object<Simulation>(*this);
-			}
-			virtual ~Message() {}
-		};
+		
 
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_READOUT_UNIFORM> : public Uniform
@@ -945,20 +999,35 @@ namespace TRN
 			virtual ~Dimensions() {}
 		};
 
-		struct Matrix : public Dimensions
+		struct Matrix
 		{
 			std::vector<float> elements;
+			std::size_t rows;
+			std::size_t cols;
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+			
+				ar & elements;
+				ar & rows;
+				ar & cols;
+			}
+			virtual ~Matrix() {}
+		};
+		struct MatrixBatch : public Matrix
+		{
+			std::size_t matrices;
 
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Dimensions>(*this);
-				ar & elements;
+				ar & boost::serialization::base_object<Matrix>(*this);
+				ar & matrices;
+			
 			}
-			virtual ~Matrix() {}
+			virtual ~MatrixBatch() {}
 		};
-
-		struct Measurement : public Matrix
+		struct Measurement : public MatrixBatch
 		{
 			std::vector<float> expected;
 			std::vector<float> primed;
@@ -967,7 +1036,7 @@ namespace TRN
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
 			{
-				ar & boost::serialization::base_object<Matrix>(*this);
+				ar & boost::serialization::base_object<MatrixBatch>(*this);
 				ar & expected;
 				ar & primed;
 				ar & preamble;
@@ -1055,17 +1124,8 @@ namespace TRN
 		};
 
 
-		template<>
-		struct Message<TRN::Engine::Tag::FEEDBACK_DIMENSIONS> : public Simulation, public Dimensions
-		{
-			template<class Archive>
-			void serialize(Archive & ar, const unsigned int version)
-			{
-				ar & boost::serialization::base_object<Simulation>(*this);
-				ar & boost::serialization::base_object<Dimensions>(*this);
-			}
-			virtual ~Message() {}
-		};
+
+
 
 		template<>
 		struct Message<TRN::Engine::Tag::FEEDFORWARD_DIMENSIONS> : public Simulation, public Dimensions
@@ -1105,7 +1165,7 @@ namespace TRN
 
 
 		template<>
-		struct Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> : public Simulation, public Matrix
+		struct Message<TRN::Engine::Tag::FEEDFORWARD_WEIGHTS> : public Simulation, public MatrixBatch
 		{
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
@@ -1117,7 +1177,7 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::FEEDFORWARD_WEIGHTS> : public Simulation, public Matrix
+		struct Message<TRN::Engine::Tag::RECURRENT_WEIGHTS> : public Simulation, public MatrixBatch
 		{
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
@@ -1129,7 +1189,7 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::RECURRENT_WEIGHTS> : public Simulation, public Matrix
+		struct Message<TRN::Engine::Tag::READOUT_WEIGHTS> : public Simulation, public MatrixBatch
 		{
 			template<class Archive>
 			void serialize(Archive & ar, const unsigned int version)
@@ -1141,19 +1201,7 @@ namespace TRN
 		};
 
 		template<>
-		struct Message<TRN::Engine::Tag::READOUT_WEIGHTS> : public Simulation, public Matrix
-		{
-			template<class Archive>
-			void serialize(Archive & ar, const unsigned int version)
-			{
-				ar & boost::serialization::base_object<Simulation>(*this);
-				ar & boost::serialization::base_object<Matrix>(*this);
-			}
-			virtual ~Message() {}
-		};
-
-		template<>
-		struct Message<TRN::Engine::Tag::WEIGHTS> : public Result, public Matrix
+		struct Message<TRN::Engine::Tag::WEIGHTS> : public Result, public MatrixBatch
 		{
 			std::size_t batch;
 			std::string label;

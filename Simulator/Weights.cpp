@@ -30,6 +30,10 @@ const std::shared_ptr<TRN::Core::Loop> TRN::Simulator::Weights::get_loop()
 {
 	return decorated->get_loop();
 }
+const std::shared_ptr<TRN::Core::Decoder> TRN::Simulator::Weights::get_decoder()
+{
+	return decorated->get_decoder();
+}
 const std::shared_ptr<TRN::Core::Scheduler> TRN::Simulator::Weights::get_scheduler()
 {
 	return decorated->get_scheduler();
@@ -42,10 +46,6 @@ void TRN::Simulator::Weights::set_feedforward(const std::shared_ptr<TRN::Core::I
 void TRN::Simulator::Weights::set_recurrent(const std::shared_ptr<TRN::Core::Initializer> &recurrent)
 {
 	decorated->set_recurrent(recurrent);
-}
-void TRN::Simulator::Weights::set_feedback(const std::shared_ptr<TRN::Core::Initializer> &feedback)
-{
-	decorated->set_feedback(feedback);
 }
 void TRN::Simulator::Weights::set_readout(const std::shared_ptr<TRN::Core::Initializer> &readout)
 {
@@ -63,7 +63,10 @@ void TRN::Simulator::Weights::set_loop(const std::shared_ptr<TRN::Core::Loop> &l
 {
 	decorated->set_loop(loop);
 }
-
+void TRN::Simulator::Weights::set_decoder(const std::shared_ptr<TRN::Core::Decoder> &decoder)
+{
+	decorated->set_decoder(decoder);
+}
 void TRN::Simulator::Weights::append_measurement(const std::shared_ptr<TRN::Core::Measurement::Abstraction> &measurement)
 {
 	decorated->append_measurement(measurement);
@@ -143,12 +146,6 @@ void  TRN::Simulator::Weights::update(const TRN::Core::Message::Payload<TRN::Cor
 			std::size_t recurrent_cols;
 			handle->weights->get_recurrent()->get_matrices(batch)->to(recurrent_data, recurrent_rows, recurrent_cols);
 			handle->functor(evaluation_id, "INITIALIZATION", "recurrent", batch,  recurrent_data, recurrent_rows, recurrent_cols);
-
-			std::vector<float> feedback_data;
-			std::size_t feedback_rows;
-			std::size_t feedback_cols;
-			handle->weights->get_feedback()->get_matrices(batch)->to(feedback_data, feedback_rows, feedback_cols);
-			handle->functor(evaluation_id, "INITIALIZATION", "feedback", batch,feedback_data, feedback_rows, feedback_cols);
 
 			std::vector<float> readout_data;
 			std::size_t readout_rows;

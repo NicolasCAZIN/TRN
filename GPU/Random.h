@@ -12,7 +12,7 @@ namespace TRN
 		{
 		private:
 			class Handle;
-			mutable std::unique_ptr<Handle> handle;
+			std::unique_ptr<Handle> handle;
 
 		public:
 			Random(const std::shared_ptr<Context> context);

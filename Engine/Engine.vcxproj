@@ -183,7 +183,12 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Executor.cpp" />
     <ClCompile Include="Broker.cpp" />
-    <ClCompile Include="Communicator.cpp" />
+    <ClCompile Include="Communicator.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="Compressor.cpp" />
     <ClCompile Include="Frontend.cpp" />
     <ClCompile Include="Manager.cpp" />

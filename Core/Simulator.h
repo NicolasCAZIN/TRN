@@ -6,6 +6,7 @@
 #include "Scheduler.h"
 #include "Loop.h"
 #include "Measurement.h"
+#include "Decoder.h"
 #include "Container.h"
 #include "Mutator.h"
 #include "Helper/Delegate.h"
@@ -32,16 +33,17 @@ namespace TRN
 			virtual const std::shared_ptr<TRN::Core::Reservoir> get_reservoir() = 0;
 			virtual const std::shared_ptr<TRN::Core::Loop> get_loop() = 0;
 			virtual const std::shared_ptr<TRN::Core::Scheduler> get_scheduler() = 0;
+			virtual const std::shared_ptr<TRN::Core::Decoder> get_decoder() = 0;
 			virtual const std::vector<std::shared_ptr<TRN::Core::Mutator>> get_mutators() = 0;
 	
 		public:
 			virtual void set_feedforward(const std::shared_ptr<TRN::Core::Initializer> &feedforward) = 0;
 			virtual void set_recurrent(const std::shared_ptr<TRN::Core::Initializer> &recurrent) = 0;
-			virtual void set_feedback(const std::shared_ptr<TRN::Core::Initializer> &feedback) = 0;
 			virtual void set_readout(const std::shared_ptr<TRN::Core::Initializer> &readout) = 0;
 			virtual void set_reservoir(const std::shared_ptr<TRN::Core::Reservoir> &reservoir) = 0;
 			virtual void set_scheduler(const std::shared_ptr<TRN::Core::Scheduler> &scheduler) = 0;
 			virtual void set_loop(const std::shared_ptr<TRN::Core::Loop> &loop) = 0;
+			virtual void set_decoder(const std::shared_ptr<TRN::Core::Decoder> &decoder) = 0;
 			virtual void append_measurement(const std::shared_ptr<TRN::Core::Measurement::Abstraction> &measurement) = 0;
 			virtual void append_mutator(const std::shared_ptr<TRN::Core::Mutator> &mutator) = 0;
 		public :

@@ -11,7 +11,7 @@ namespace TRN
 		{
 		private :
 			class Handle;
-			mutable std::unique_ptr<Handle> handle;
+			std::unique_ptr<Handle> handle;
 
 		public :
 			Acceptor(const std::string &address, const  unsigned short &port,

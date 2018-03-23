@@ -11,9 +11,9 @@ std::shared_ptr<TRN::Core::Measurement::Implementation> MODEL_EXPORT TRN::Model:
 	return TRN::Measurement::MeanSquareError::create(driver, functor);
 }
 
-std::shared_ptr<TRN::Core::Measurement::Implementation> MODEL_EXPORT TRN::Model::Measurement::FrechetDistance::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> &functor)
+std::shared_ptr<TRN::Core::Measurement::Implementation> MODEL_EXPORT TRN::Model::Measurement::FrechetDistance::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::string &norm, const std::string &aggregator, const std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> &functor)
 {
-	return TRN::Measurement::FrechetDistance::create(driver, functor);
+	return TRN::Measurement::FrechetDistance::create(driver, norm, aggregator, functor);
 }
 
 std::shared_ptr<TRN::Core::Measurement::Implementation> MODEL_EXPORT TRN::Model::Measurement::Custom::create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const  std::size_t &cols)> &functor)

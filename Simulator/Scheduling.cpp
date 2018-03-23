@@ -26,7 +26,10 @@ const std::shared_ptr<TRN::Core::Loop> TRN::Simulator::Scheduling::get_loop()
 {
 	return decorated->get_loop();
 }
-
+const std::shared_ptr<TRN::Core::Decoder> TRN::Simulator::Scheduling::get_decoder()
+{
+	return decorated->get_decoder();
+}
 const std::shared_ptr<TRN::Core::Scheduler> TRN::Simulator::Scheduling::get_scheduler()
 {
 	return decorated->get_scheduler();
@@ -49,10 +52,7 @@ void TRN::Simulator::Scheduling::set_recurrent(const std::shared_ptr<TRN::Core::
 {
 	decorated->set_recurrent(recurrent);
 }
-void TRN::Simulator::Scheduling::set_feedback(const std::shared_ptr<TRN::Core::Initializer> &feedback)
-{
-	decorated->set_feedback(feedback);
-}
+
 void TRN::Simulator::Scheduling::set_readout(const std::shared_ptr<TRN::Core::Initializer> &readout)
 {
 	decorated->set_readout(readout);
@@ -69,6 +69,11 @@ void TRN::Simulator::Scheduling::set_scheduler(const std::shared_ptr<TRN::Core::
 void TRN::Simulator::Scheduling::set_loop(const std::shared_ptr<TRN::Core::Loop> &loop)
 {
 	decorated->set_loop(loop);
+}
+
+void TRN::Simulator::Scheduling::set_decoder(const std::shared_ptr<TRN::Core::Decoder> &decoder)
+{
+	decorated->set_decoder(decoder);
 }
 
 void TRN::Simulator::Scheduling::append_measurement(const std::shared_ptr<TRN::Core::Measurement::Abstraction> &measurement)

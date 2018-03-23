@@ -114,7 +114,10 @@ void TRN::Core::Matrix::to(std::vector<float> &elements, std::size_t &rows, std:
 	assert(std::any_of(elements.begin(), elements.end(), isnan<float>) == false);
 }
 
-void TRN::Core::Matrix::from(const TRN::Core::Matrix &matrix) 
+
+
+
+void TRN::Core::Matrix::from(const TRN::Core::Matrix &matrix) const
 {
 	if (matrix.get_cols() != handle->cols)
 		throw std::logic_error("Source and destination matrices must have the same width");
@@ -125,7 +128,7 @@ void TRN::Core::Matrix::from(const TRN::Core::Matrix &matrix)
 }
 
 
-void TRN::Core::Matrix::from(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols)
+void TRN::Core::Matrix::from(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols) const
 {
 	if (rows != handle->rows)
 		throw std::runtime_error("invalid row number");

@@ -2,6 +2,7 @@
 #include "Callbacks.h"
 #include "Helper/Queue.h"
 #include "Helper/Logger.h"
+#include "Helper/Parser.h"
 
 static const std::string FILENAME_TOKEN = "FILENAME";
 static const std::string WIDTH_TOKEN = "WIDTH";
@@ -35,7 +36,10 @@ struct Callbacks::Handle
 	std::mutex traj_mutex;
 	std::map<std::string, cv::Mat> windows;
 	std::set<std::string> allocated;
-	std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, cv::Mat>>> accumulator;
+	std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, cv::Mat>>> angle_accumulator;
+	std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, cv::Mat>>> count_accumulator;
+	std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, cv::Mat>>> u_accumulator;
+	std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, cv::Mat>>> v_accumulator;
 	std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, cv::Mat>>> overall;
 	std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, std::size_t>>> trajectories;
 
@@ -69,39 +73,16 @@ void Callbacks::initialize(const std::map<std::string, std::string> &arguments)
 	handle->x = std::make_pair(std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
 	handle->y = std::make_pair(std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
 
-	std::ifstream in(filename);
-	if (!in.is_open())
-		throw std::invalid_argument("File " + filename + " can't be opened");
-
-	std::vector< std::string > tuple;
-	std::vector< std::string > header;
-	std::string line;
-	boost::char_separator<char> sep("\t ");
-
-	if (!std::getline(in, line))
-		throw std::runtime_error("Empty file");
-	boost::tokenizer<boost::char_separator<char>>  htok(line, sep);
-	header.assign(htok.begin(), htok.end());
-
-	if (header.size() < 0)
-		throw std::runtime_error("Format error at line " + 0);
-	int line_number = 1;
-	while (std::getline(in, line))
-	{
-		boost::tokenizer<boost::char_separator<char>>  ttok(line, sep);
-		tuple.assign(ttok.begin(), ttok.end());
-		auto x_center = std::stof(tuple[3]);
-		auto y_center = std::stof(tuple[4]);
+	std::vector<float> cx, cy, K;
+	TRN::Helper::Parser::place_cells_model(filename, 0.2f, cx, cy, K);
 
 
-		if (tuple.size() != header.size())
-			throw std::runtime_error("Format error at line " + line_number);
-		handle->x.first = std::min(handle->x.first, x_center);
-		handle->x.second = std::max(handle->x.second, x_center);
-		handle->y.first = std::min(handle->y.first, y_center);
-		handle->y.second = std::max(handle->y.second, y_center);
-		line_number++;
-	}
+	auto xi = std::minmax_element(cx.begin(), cx.end());
+	auto yi = std::minmax_element(cy.begin(), cy.end());
+	handle->x.first = *xi.first;
+	handle->x.second = *xi.second;
+	handle->y.first = *yi.first;
+	handle->y.second = *yi.second;
 
 
 
@@ -178,11 +159,13 @@ void Callbacks::callback_measurement_position_raw(const unsigned long long &simu
 	unsigned short trial, train, test, repeat;
 	TRN4CPP::Simulation::Evaluation::decode(evaluation_id, trial, train, test, repeat);
 
-	cv::Mat cv_expected(handle->height, handle->width, CV_8UC3);
-	cv::Mat cv_predicted(handle->height, handle->width, CV_32F);
+	
+	cv::Mat cv_angle = cv::Mat::zeros(handle->height, handle->width, CV_32F);
+	cv::Mat cv_u = cv::Mat::zeros(handle->height, handle->width, CV_32F);
+	cv::Mat cv_v = cv::Mat::zeros(handle->height, handle->width, CV_32F);
+	cv::Mat cv_count = cv::Mat::zeros(handle->height, handle->width, CV_32F);
+	cv::Mat cv_expected(handle->height, handle->width, CV_8UC3, cv::Scalar::all(0));
 
-	cv_expected = 0.0f;
-	cv_predicted = 0.0f;
 	float x0, y0, x1, y1;
 	for (std::size_t row = 1; row < preamble; row++)
 	{
@@ -208,6 +191,10 @@ void Callbacks::callback_measurement_position_raw(const unsigned long long &simu
 		x1 = expected[row * cols + 0];
 		y1 = expected[row * cols + 1];
 
+	
+
+
+
 		cv::Point2d pt0(x_to_col(x0), y_to_row(y0));
 		cv::Point2d pt1(x_to_col(x1), y_to_row(y1));
 		cv::line(cv_expected, pt0, pt1, cv::Scalar(255, 100, 100), handle->thickness, cv::LineTypes::LINE_AA, 0);
@@ -224,9 +211,10 @@ void Callbacks::callback_measurement_position_raw(const unsigned long long &simu
 
 	for (std::size_t page = 0; page < pages; page++)
 	{
-		cv::Mat cv_temp(handle->height, handle->width, CV_32F);
-		cv_temp = 0.0f;
-
+		cv::Mat cv_temp_angle = cv::Mat::zeros(handle->height, handle->width, CV_32F);
+		cv::Mat cv_temp_count = cv::Mat::zeros(handle->height, handle->width, CV_32F);
+		cv::Mat cv_temp_u = cv::Mat::zeros(handle->height, handle->width, CV_32F);
+		cv::Mat cv_temp_v = cv::Mat::zeros(handle->height, handle->width, CV_32F);
 
 		for (std::size_t row = 1; row < rows; row++)
 		{
@@ -235,38 +223,138 @@ void Callbacks::callback_measurement_position_raw(const unsigned long long &simu
 			x1 = predicted[page * rows * cols + row * cols + 0];
 			y1 = predicted[page * rows * cols + row * cols + 1];
 
+
+			auto u = x1 - x0;
+			auto v = y1 - y0;
+
+			auto angle =  360*(std::atan2f(v, u) + M_PI) / (2 * M_PI);
+
+
 			cv::Point2d pt0(x_to_col(x0), y_to_row(y0));
 			cv::Point2d pt1(x_to_col(x1), y_to_row(y1));
-			cv::line(cv_temp, pt0, pt1, cv::Scalar(1.0f), handle->thickness, cv::LineTypes::LINE_AA, 0);
-			cv::circle(cv_temp, pt0, handle->thickness*5, cv::Scalar(1.0f), handle->thickness, cv::LineTypes::LINE_AA, 0);
+			cv::line(cv_temp_angle, pt0, pt1, cv::Scalar(angle), handle->thickness, cv::LineTypes::LINE_8, 0);
+			cv::line(cv_temp_count, pt0, pt1, cv::Scalar(1.0f), handle->thickness, cv::LineTypes::LINE_8, 0);
+			cv::line(cv_temp_u, pt0, pt1, cv::Scalar(u), handle->thickness, cv::LineTypes::LINE_8, 0);
+			cv::line(cv_temp_v, pt0, pt1, cv::Scalar(v), handle->thickness, cv::LineTypes::LINE_8, 0);
+
+			//cv::circle(cv_temp, pt0, handle->thickness*5, cv::Scalar(1.0f), handle->thickness, cv::LineTypes::LINE_AA, 0);
 		}
-		{
-			x0 = expected[(rows - 1) * cols + 0];
-			y0 = expected[(rows - 1) * cols + 1];
+		/*{
+			x0 = predicted[page * rows * cols + (rows - 1)* cols + 0];
+			y0 = predicted[page * rows * cols + (rows - 1)* cols + 1];
 			cv::Point2d pt0(x_to_col(x0), y_to_row(y0));
-			cv::circle(cv_temp, pt0, 10, cv::Scalar(1.0f), handle->thickness, cv::LineTypes::LINE_AA, 0);
-		}
-		cv_predicted += cv_temp;
+			//cv::circle(cv_temp, pt0, 10, cv::Scalar(1.0f), handle->thickness, cv::LineTypes::LINE_AA, 0);
+		}*/
+		cv_angle += cv_temp_angle;
+		cv_count += cv_temp_count;
+		cv_u += cv_temp_u;
+		cv_v += cv_temp_v;
 	}
-	cv_predicted /= pages;
+
+	cv_angle /= (float)pages;
+	cv_count /= (float)pages;
+	cv_u /= (float)pages;
+	cv_v /= (float)pages;
 
 	//to_display.enqueue(std::make_pair("predcited, trial #" + std::to_string(trial), cv_predicted));
 
 	{
 		std::unique_lock<std::mutex> lock(handle->traj_mutex);
 
-		if (handle->accumulator[trial][train][test].empty())
+		if (handle->angle_accumulator[trial][train][test].empty())
 		{
-			handle->accumulator[trial][train][test] = cv::Mat(handle->height, handle->width, CV_32F);
-			handle->accumulator[trial][train][test] = 0.0f;
+			handle->angle_accumulator[trial][train][test] = cv::Mat::zeros(handle->height, handle->width, CV_32F);
+			handle->count_accumulator[trial][train][test] = cv::Mat::zeros(handle->height, handle->width, CV_32F);
+			handle->u_accumulator[trial][train][test] = cv::Mat::zeros(handle->height, handle->width, CV_32F);
+			handle->v_accumulator[trial][train][test] = cv::Mat::zeros(handle->height, handle->width, CV_32F);
 			handle->trajectories[trial][train][test] = 0;
 		}
 
-		handle->accumulator[trial][train][test] += cv_predicted;
+		handle->angle_accumulator[trial][train][test] += cv_angle;
+		handle->count_accumulator[trial][train][test] += cv_count;
+
+		handle->u_accumulator[trial][train][test] += cv_u;
+		handle->v_accumulator[trial][train][test] += cv_v;
 		handle->trajectories[trial][train][test]++;
-		handle->overall[trial][train][test] = handle->accumulator[trial][train][test] / handle->trajectories[trial][train][test];
+
+		cv::Mat angle = handle->angle_accumulator[trial][train][test] / handle->trajectories[trial][train][test];
+		cv::Mat count = handle->count_accumulator[trial][train][test] / handle->trajectories[trial][train][test];
+		cv::Mat u = handle->u_accumulator[trial][train][test] / handle->trajectories[trial][train][test];
+		cv::Mat v = handle->v_accumulator[trial][train][test] / handle->trajectories[trial][train][test];
+
+	
+		int downsample = 1;
+		const int target = 8;
+		do
+		{
+			cv::Mat ud, vd;
+			cv::pyrDown(u, ud);
+			cv::pyrDown(v, vd);
+			downsample *= 2;
+			u = ud;
+			v = vd;
+		} while (downsample < target);
+
+		cv::Mat h;
+		cv::sqrt(u * u + v * v, h);
+
+		double m, M;
+		cv::minMaxLoc(h, &m, &M);
+
+	
+		u /= M;
+		v /= M;
+		h /= M;
+
+		cv::normalize(count, count, 0.0f, 1.0f, cv::NORM_MINMAX);
+
+		cv::Mat density;
+		cv::cvtColor(count, density, cv::COLOR_GRAY2RGB);
+
+		handle->overall[trial][train][test] = density;
+			/*
+			
+		cv::Mat quiver = cv::Mat::zeros(handle->height, handle->width, CV_8UC3);
+
+		for (int row = 0; row < h.rows; row++)
+			for (int col = 0; col < h.cols; col++)
+			{
+				if (h.at<float>(row, col) > 0.0f)
+				{
+					//float spinSize = (downsample/2) * l / M;
+					float &v_ = v.at<float>(row, col);
+					float &u_ = u.at<float>(row, col);
+					int dy = v_ * (target - 1);
+					int dx = u_ * (target - 1);
+					//float angle = std::atan2f(dy,dx);
+
+					cv::Point p(row * (target-1), col * (target-1));
+					CvPoint p2 = cvPoint(p.x + dx, p.y + dy);
+					cv::line(quiver, p, p2, cv::Scalar(0, 0, 255));
+				}
+			}
+
+
+	
+		cv::Mat saturation(handle->height, handle->width, CV_32F); saturation = 1.0f;
+		cv::Mat hsv(handle->height, handle->width, CV_32FC3);
+		cv::Mat A[3] = { angle, saturation, saturation };
+		cv::merge(A, 3, hsv);
+		cv::cvtColor(hsv, handle->overall[trial][train][test], cv::COLOR_HSV2RGB_FULL);*/
+		handle->to_display.enqueue(std::make_pair("accumulated, condition #" + std::to_string(ID(simulation_id).condition_number) + ", trial #" + std::to_string(trial) + ", train #" + std::to_string(train) + ", test #" + std::to_string(test), handle->overall[trial][train][test]));
+
+		/*cv::Mat saturation = handle->count_accumulator[trial][train][test] / handle->trajectories[trial][train][test];
+
+
+
+
+	
+
+	
+
+
 		//cv::equalizeHist(cv_accumulator, cv_overall);
-		handle->to_display.enqueue(std::make_pair("accumulated, condition #" + std::to_string(ID(simulation_id).condition_number) + ", trial #" + std::to_string(trial)+ ", train #" + std::to_string(train)+ ", test #" + std::to_string(test), handle->overall[trial][train][test]));
+		*/
 	}
 }
 void Callbacks::callback_measurement_readout_mean_square_error(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
@@ -296,7 +384,7 @@ void Callbacks::callback_states(const unsigned long long &simulation_id, const u
 	cv::Mat(rows, cols, CV_32FC1, (char *)samples.data()).copyTo(copy);
 	unsigned short trial, train, test, repeat;
 	TRN4CPP::Simulation::Evaluation::decode(evaluation_id, trial, train, test, repeat);
-	handle->to_display.enqueue(std::make_pair("accumulated, condition #" + std::to_string(ID(simulation_id).condition_number) + ", trial #" + std::to_string(trial) + ", train #" + std::to_string(train) + ", test #" + std::to_string(test), copy));
+	handle->to_display.enqueue(std::make_pair(label + "@" + phase + " : condition #" + std::to_string(ID(simulation_id).condition_number) + ", trial #" + std::to_string(trial) + ", train #" + std::to_string(train) + ", test #" + std::to_string(test), copy));
 }
 void Callbacks::callback_weights(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch,const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {

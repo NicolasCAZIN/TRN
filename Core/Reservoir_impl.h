@@ -7,33 +7,30 @@
 class TRN::Core::Reservoir::Handle
 {
 public:
-
-	/*std::vector<std::shared_ptr<TRN::Core::Matrix>> _W_ro;
-	std::vector<std::shared_ptr<TRN::Core::Matrix>> _W_rec;
-	std::vector<std::shared_ptr<TRN::Core::Matrix>> _W_in;
-	std::vector<std::shared_ptr<TRN::Core::Matrix>> _W_fbck;
-	std::vector<std::shared_ptr<TRN::Core::Matrix>> _W_ffwd;*/
 	std::shared_ptr<TRN::Core::Matrix> unitary_sub_u_ffwd;
 	std::shared_ptr<TRN::Core::Batch> batched_incoming;
 	std::shared_ptr<TRN::Core::Batch> batched_expected;
-	std::shared_ptr<TRN::Core::Batch> batched_error;
+
 	std::shared_ptr<TRN::Core::Batch> batched_u_ffwd;
 	std::shared_ptr<TRN::Core::Batch> batched_u;
 	std::shared_ptr<TRN::Core::Batch> batched_p;
 	std::shared_ptr<TRN::Core::Batch> batched_W_ffwd;
-	std::shared_ptr<TRN::Core::Batch> batched_X_in;
-	std::shared_ptr<TRN::Core::Batch> batched_W_in;
+	
 	std::shared_ptr<TRN::Core::Batch> batched_W_rec;
-	std::shared_ptr<TRN::Core::Batch> batched_W_fbck;
 	std::shared_ptr<TRN::Core::Batch> batched_X_res;
 	std::shared_ptr<TRN::Core::Batch> batched_X_ro;
 	std::shared_ptr<TRN::Core::Batch> batched_W_ro;
 	std::shared_ptr<TRN::Core::Batch> batched_W_ro_reset;
 
+	std::shared_ptr<TRN::Core::Batch> batched_post;
+	std::shared_ptr<TRN::Core::Batch> batched_pre;
+	std::shared_ptr<TRN::Core::Batch> batched_desired;
+
 	std::size_t stimulus_size;
 	std::size_t reservoir_size;
 	std::size_t prediction_size;
 	std::size_t batch_size;
+	std::size_t mini_batch_size;
 	std::size_t stimulus_stride;
 	std::size_t reservoir_stride;
 	std::size_t prediction_stride;

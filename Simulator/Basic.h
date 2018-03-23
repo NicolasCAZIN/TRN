@@ -16,7 +16,7 @@ namespace TRN
 
 		private:
 			class Handle;
-			mutable std::unique_ptr<Handle> handle;
+			std::unique_ptr<Handle> handle;
 
 		public:
 			Basic( const std::function<void()> &trained, const std::function<void()> &primed, const std::function<void()> &tested);
@@ -29,17 +29,18 @@ namespace TRN
 
 			virtual const std::shared_ptr<TRN::Core::Reservoir> get_reservoir() override;
 			virtual const std::shared_ptr<TRN::Core::Loop> get_loop() override;
+			virtual const std::shared_ptr<TRN::Core::Decoder> get_decoder() override;
 			virtual const std::shared_ptr<TRN::Core::Scheduler> get_scheduler() override;
 			virtual const std::vector<std::shared_ptr<TRN::Core::Mutator>> get_mutators() override;
 
 		public:
 			virtual void set_feedforward(const std::shared_ptr<TRN::Core::Initializer> &feedforward) override;
 			virtual void set_recurrent(const std::shared_ptr<TRN::Core::Initializer> &recurrent) override;
-			virtual void set_feedback(const std::shared_ptr<TRN::Core::Initializer> &feedback) override;
 			virtual void set_readout(const std::shared_ptr<TRN::Core::Initializer> &readout) override;
 			virtual void set_reservoir(const std::shared_ptr<TRN::Core::Reservoir> &reservoir) override;
 			virtual void set_scheduler(const std::shared_ptr<TRN::Core::Scheduler> &scheduler) override;
 			virtual void set_loop(const std::shared_ptr<TRN::Core::Loop> &loop) override;
+			virtual void set_decoder(const std::shared_ptr<TRN::Core::Decoder> &decoder) override;
 			virtual void append_measurement(const std::shared_ptr<TRN::Core::Measurement::Abstraction> &measurement) override;
 			virtual void append_mutator(const std::shared_ptr<TRN::Core::Mutator> &mutator) override;
 

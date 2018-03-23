@@ -237,10 +237,6 @@ const std::shared_ptr<TRN::Core::Batch> TRN::Core::Message::Payload<TRN::Core::M
 {
 	return handle->recurrent;
 }
-const std::shared_ptr<TRN::Core::Batch> TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::get_feedback() const
-{
-	return handle->feedback;
-}
 const std::shared_ptr<TRN::Core::Batch> TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::get_readout() const
 {
 	return handle->readout;
@@ -252,10 +248,6 @@ void TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::set_feedfor
 void TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::set_recurrent(const std::shared_ptr<TRN::Core::Batch> &recurrent) const
 {
 	handle->recurrent = recurrent;
-}
-void TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::set_feedback(const std::shared_ptr<TRN::Core::Batch> &feedback) const
-{
-	handle->feedback = feedback;
 }
 void TRN::Core::Message::Payload<TRN::Core::Message::Type::WEIGHTS>::set_readout(const std::shared_ptr<TRN::Core::Batch> &readout) const
 {
@@ -472,11 +464,12 @@ const unsigned long long &TRN::Core::Message::Payload<TRN::Core::Message::Type::
 {
 	return handle->evaluation_id;
 }
-TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::Payload(const std::string &label, const std::size_t &preamble, const std::size_t &supplementary_generations) :
+TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::Payload(const std::string &label, const bool &autonomous, const std::size_t &preamble, const std::size_t &supplementary_generations) :
 	handle(std::make_unique<Handle>())
 {
 	handle->label = label;
 	handle->preamble = preamble;
+	handle->autonomous = autonomous;
 	handle->supplementary_generations = supplementary_generations;
 }
 TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::Payload(const Payload<TRN::Core::Message::Type::TEST> &ref) :
@@ -484,6 +477,7 @@ TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::Payload(const Paylo
 {
 	handle->label = ref.handle->label;
 	handle->preamble = ref.handle->preamble;
+	handle->autonomous = ref.handle->autonomous;
 	handle->supplementary_generations = ref.handle->supplementary_generations;
 }
 TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::~Payload()
@@ -499,7 +493,10 @@ const std::size_t &TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::
 {
 	return handle->preamble;
 }
-
+const bool &TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::get_autonomous() const
+{
+	return handle->autonomous;
+}
 const std::size_t &TRN::Core::Message::Payload<TRN::Core::Message::Type::TEST>::get_supplementary_generations() const
 {
 	return handle->supplementary_generations;

@@ -23,6 +23,7 @@
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
+#include <strtk.hpp>
 #include <vector>
 #include <memory>
 #include <functional>

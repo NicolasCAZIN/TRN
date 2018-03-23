@@ -422,17 +422,7 @@ void TRN::Engine::Dispatcher::callback_feedforward(const unsigned long long &sim
 	message.seed = seed;
 	send_to_frontend(handle->to_frontend,message, simulation_id);
 }
-void TRN::Engine::Dispatcher::callback_feedback(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
-{
-	TRACE_LOGGER;
-	TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_DIMENSIONS> message;
 
-	message.matrices = matrices;
-	message.rows = rows;
-	message.cols = cols;
-	message.seed = seed;
-	send_to_frontend(handle->to_frontend,message, simulation_id);
-}
 void TRN::Engine::Dispatcher::callback_readout(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRACE_LOGGER;

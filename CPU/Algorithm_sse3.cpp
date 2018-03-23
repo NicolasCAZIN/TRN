@@ -3,7 +3,7 @@
 #if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
 #include "Algorithm.h"
 
-
+#include "sse_mathfun.h"
 #define _0 0
 #define _1 4
 #define _2 8
@@ -48,6 +48,7 @@
 #define add_ps(__a, __b) (_mm_add_ps((__a), (__b)))
 #define sub_ps(__a, __b) (_mm_sub_ps((__a), (__b)))
 #define mul_ps(__a, __b) (_mm_mul_ps((__a), (__b)))
+#define div_ps(__a, __b) (_mm_div_ps((__a), (__b)))
 #define rsqrt_ps(__a) (_mm_rsqrt_ps((__a)))
 #define and_ps(__a, __b) (_mm_and_ps((__a), (__b)))
 #define or_ps(__a, __b) (_mm_or_ps((__a), (__b)))

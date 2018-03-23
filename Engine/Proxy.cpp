@@ -238,7 +238,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CO
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_FRECHET_DISTANCE> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_measurement_readout_frechet_distance(global_id(message.simulation_id), message.batch_size);
+	handle->dispatcher->configure_measurement_readout_frechet_distance(global_id(message.simulation_id), message.batch_size, message.norm, message.aggregator);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_CUSTOM> &message)
 {
@@ -252,7 +252,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CO
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_measurement_position_frechet_distance(global_id(message.simulation_id), message.batch_size);
+	handle->dispatcher->configure_measurement_position_frechet_distance(global_id(message.simulation_id), message.batch_size, message.norm, message.aggregator);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_CUSTOM> &message)
 {
@@ -262,8 +262,26 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CO
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RESERVOIR_WIDROW_HOFF> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_reservoir_widrow_hoff(global_id(message.simulation_id), message.stimulus_size, message.prediction_size, message.reservoir_size, message.leak_rate, message.initial_state_scale, message.learning_rate, message.seed, message.batch_size);
+	handle->dispatcher->configure_reservoir_widrow_hoff(global_id(message.simulation_id), message.stimulus_size, message.prediction_size, message.reservoir_size, message.leak_rate, message.initial_state_scale, message.learning_rate, message.seed, message.batch_size, message.mini_batch_size);
 }
+
+void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR> &message)
+{
+	TRACE_LOGGER;
+	handle->dispatcher->configure_decoder_linear(global_id(message.simulation_id), message.batch_size, message.stimulus_size, message.cx, message.cy);
+
+}
+void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP> &message)
+{
+	TRACE_LOGGER;
+	handle->dispatcher->configure_decoder_kernel_map(global_id(message.simulation_id), message.batch_size, message.stimulus_size, message.rows, message.cols, message.x, message.y, message.sigma, message.radius, message.angle, message.scale, message.seed, message.response.second);
+}
+void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL> &message)
+{
+	TRACE_LOGGER;
+	handle->dispatcher->configure_decoder_kernel_model(global_id(message.simulation_id), message.batch_size, message.stimulus_size, message.rows, message.cols, message.x, message.y, message.sigma, message.radius, message.angle, message.scale, message.seed, message.cx, message.cy, message.K);
+}
+
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_COPY> &message)
 {
 	TRACE_LOGGER;
@@ -272,8 +290,9 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CO
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_SPATIAL_FILTER> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_loop_spatial_filter(global_id(message.simulation_id), message.batch_size, message.stimulus_size, message.seed, message.rows, message.cols, message.x, message.y, message.sequence, message.sigma, message.radius, message.angle, message.scale, message.tag);
+	handle->dispatcher->configure_loop_spatial_filter(global_id(message.simulation_id), message.batch_size, message.stimulus_size, message.tag);
 }
+
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_CUSTOM> &message)
 {
 	TRACE_LOGGER;
@@ -330,21 +349,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CO
 	TRACE_LOGGER;
 	handle->dispatcher->configure_feedforward_custom(global_id(message.simulation_id));
 }
-void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_UNIFORM> &message)
-{
-	TRACE_LOGGER;
-	handle->dispatcher->configure_feedback_uniform(global_id(message.simulation_id), message.a, message.b, message.sparsity);
-}
-void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_GAUSSIAN> &message)
-{
-	TRACE_LOGGER;
-	handle->dispatcher->configure_feedback_gaussian(global_id(message.simulation_id), message.mu, message.sigma, message.sparsity);
-}
-void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM> &message)
-{
-	TRACE_LOGGER;
-	handle->dispatcher->configure_feedback_custom(global_id(message.simulation_id));
-}
+
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_UNIFORM> &message)
 {
 	TRACE_LOGGER;
@@ -407,11 +412,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::RE
 	TRACE_LOGGER;
 	handle->dispatcher->notify_recurrent(global_id(message.simulation_id), message.elements, message.matrices, message.rows, message.cols);
 }
-void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> &message)
-{
-	TRACE_LOGGER;
-	handle->dispatcher->notify_feedback(global_id(message.simulation_id), message.elements, message.matrices, message.rows, message.cols);
-}
+
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::READOUT_WEIGHTS> &message)
 {
 	TRACE_LOGGER;

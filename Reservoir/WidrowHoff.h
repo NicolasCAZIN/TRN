@@ -12,7 +12,7 @@ namespace TRN
 		{
 		private :
 			class Handle;
-			mutable std::unique_ptr<Handle> handle;
+			std::unique_ptr<Handle> handle;
 		public:
 			WidrowHoff(const std::shared_ptr<TRN::Backend::Driver> &driver,
 				const std::size_t &stimulus, const std::size_t &prediction, const std::size_t &reservoir,
@@ -20,7 +20,7 @@ namespace TRN
 				const float &initial_state_scale,
 				const float &learning_rate,
 				const unsigned long &seed,
-				const std::size_t &batch_size);
+				const std::size_t &batch_size, const std::size_t &mini_batch_size);
 
 		public :
 			virtual void train(const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::shared_ptr<TRN::Core::Scheduling> &scheduling,
@@ -33,7 +33,7 @@ namespace TRN
 				const float &initial_state_scale,
 				const float &learning_rate,
 				const unsigned long &seed,
-				const std::size_t &batch_size);
+				const std::size_t &batch_size, const std::size_t &mini_batch_size);
 			
 		};
 

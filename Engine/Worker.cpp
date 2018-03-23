@@ -3,6 +3,7 @@
 #include "Simulator/Basic.h"
 #include "Model/Simulator.h"
 #include "Model/Reservoir.h"
+#include "Model/Decoder.h"
 #include "Model/Loop.h"
 #include "Model/Scheduler.h"
 #include "Model/Initializer.h"
@@ -426,7 +427,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
 	handle->simulators[message.simulation_id]->append_measurement(
 		TRN::Model::Measurement::Sequence::create(
-			TRN::Model::Measurement::FrechetDistance::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor,
+			TRN::Model::Measurement::FrechetDistance::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.norm, message.aggregator,
 				[this, message](const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 	{
 		TRN::Engine::Message<TRN::Engine::MEASUREMENT_READOUT_FRECHET_DISTANCE> measurement;
@@ -502,7 +503,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
 	handle->simulators[message.simulation_id]->append_measurement(
 		TRN::Model::Measurement::Position::create(
-			TRN::Model::Measurement::FrechetDistance::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor,
+			TRN::Model::Measurement::FrechetDistance::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.norm, message.aggregator,
 				[this, message](const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)
 	{
 		TRN::Engine::Message<TRN::Engine::MEASUREMENT_POSITION_FRECHET_DISTANCE> measurement;
@@ -551,8 +552,67 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	if (handle->simulators.find(message.simulation_id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
-	handle->simulators[message.simulation_id]->set_reservoir(TRN::Model::Reservoir::WidrowHoff::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.stimulus_size, message.prediction_size, message.reservoir_size, message.leak_rate, message.initial_state_scale, message.learning_rate, message.seed, message.batch_size));
+	handle->simulators[message.simulation_id]->set_reservoir(TRN::Model::Reservoir::WidrowHoff::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.stimulus_size, message.prediction_size, message.reservoir_size, message.leak_rate, message.initial_state_scale, message.learning_rate, message.seed, message.batch_size, message.mini_batch_size));
 }
+
+void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR> &message)
+{
+	TRACE_LOGGER;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
+	if (handle->simulators.find(message.simulation_id) == handle->simulators.end())
+		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
+	handle->simulators[message.simulation_id]->set_decoder(TRN::Model::Decoder::Linear::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor,
+		message.batch_size, message.stimulus_size,
+		TRN::Core::Matrix::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.cx, 1, message.cx.size()),
+		TRN::Core::Matrix::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.cy, 1, message.cy.size())));
+	
+}
+void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP> &message)
+{
+	TRACE_LOGGER;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
+	if (handle->simulators.find(message.simulation_id) == handle->simulators.end())
+		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
+
+	std::shared_ptr<TRN::Core::Matrix> firing_rate_map;
+
+	auto response_key = std::make_pair(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->index(), message.response.first);
+	std::unique_lock<std::mutex> guard(cache_mutex);
+	if (cache.find(response_key) == cache.end())
+	{
+
+		cache[response_key] = TRN::Core::Matrix::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.response.second, message.rows * message.cols, message.stimulus_size);
+
+		DEBUG_LOGGER << "Device matrix having checksum 0x" << std::hex << message.response.first << " is stored in process cache";
+	}
+	else
+	{
+		DEBUG_LOGGER << "Device matrix having checksum 0x" << std::hex << message.response.first << " had been retreived from process cache";
+	}
+
+	firing_rate_map = cache[response_key];
+
+	handle->simulators[message.simulation_id]->set_decoder(TRN::Model::Decoder::Kernel::Map::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor,
+		message.batch_size, message.stimulus_size,
+		message.rows, message.cols, message.x, message.y, message.sigma, message.radius, message.angle, message.scale, message.seed, 
+		firing_rate_map));
+}
+void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL> &message)
+{
+	TRACE_LOGGER;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
+	if (handle->simulators.find(message.simulation_id) == handle->simulators.end())
+		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
+	handle->simulators[message.simulation_id]->set_decoder(TRN::Model::Decoder::Kernel::Model::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor,
+		message.batch_size, message.stimulus_size,
+		message.rows, message.cols, message.x, message.y, message.sigma, message.radius, message.angle, message.scale, message.seed,
+		TRN::Core::Matrix::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.cx, 1, message.cx.size()),
+		TRN::Core::Matrix::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.cy, 1, message.cy.size()),
+		TRN::Core::Matrix::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.K, 1, message.K.size())
+	));
+}
+
+
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_COPY> &message)
 {
 	TRACE_LOGGER;
@@ -568,20 +628,6 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	if (handle->simulators.find(message.simulation_id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
-	std::shared_ptr<TRN::Core::Matrix> firing_rate_map;
-	auto key = std::make_pair(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->index(), message.checksum);
-	std::unique_lock<std::mutex> guard(cache_mutex);
-	if (cache.find(key) == cache.end())
-	{
-		cache[key] = TRN::Core::Matrix::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.sequence, message.rows * message.stimulus_size, message.cols);
-		DEBUG_LOGGER << "Device matrix having checksum 0x" << std::hex << message.checksum << " is stored in process cache";
-	}
-	else
-	{
-		DEBUG_LOGGER << "Device matrix having checksum 0x" << std::hex << message.checksum << " had been retreived from process cache";
-	}
-	firing_rate_map = cache[key];
-	
 
 	if (TRN::Engine::Node::handle->estimated_position.find(message.simulation_id) != TRN::Engine::Node::handle->estimated_position.end())
 	{
@@ -591,7 +637,11 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 	{
 		throw std::runtime_error("Perceived stimulus functor is already setup for simulator #" + std::to_string(message.simulation_id));
 	}
-	handle->simulators[message.simulation_id]->set_loop(TRN::Model::Loop::SpatialFilter::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.batch_size, message.stimulus_size, message.seed,
+
+	auto decoder = handle->simulators[message.simulation_id]->get_decoder();
+	if (!decoder)
+		throw std::runtime_error("Decoder not configured");
+	handle->simulators[message.simulation_id]->set_loop(TRN::Model::Loop::SpatialFilter::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.batch_size, message.stimulus_size, 
 		[this, message]
 	(const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)
 	{
@@ -601,6 +651,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 		position.elements = values;
 		position.rows = rows;
 		position.cols = cols;
+
 		 auto locked = TRN::Engine::Node::implementor.lock();
 		if (locked)
 			locked->send(position, 0);
@@ -620,7 +671,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 			locked->send(stimulus, 0);
 	},
 		TRN::Engine::Node::handle->perceived_stimulus[message.simulation_id],
-		message.rows, message.cols, message.x, message.y, firing_rate_map, message.sigma, message.radius, message.angle, message.scale, message.tag));
+		decoder, message.tag));
 
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_CUSTOM> &message)
@@ -789,49 +840,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 	}, TRN::Engine::Node::handle->feedforward_weights[message.simulation_id]));
 	handle->remaining_initializations[message.simulation_id]++;
 }
-void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_UNIFORM> &message)
-{
-	TRACE_LOGGER;
-	// INFORMATION_LOGGER <<   __FUNCTION__ ;
-	if (handle->simulators.find(message.simulation_id) == handle->simulators.end())
-		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
-	handle->simulators[message.simulation_id]->set_feedback(TRN::Model::Initializer::Uniform::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.a, message.b, message.sparsity));
 
-}
-void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_GAUSSIAN> &message) 
-{
-	TRACE_LOGGER;
-	// INFORMATION_LOGGER <<   __FUNCTION__ ;
-	if (handle->simulators.find(message.simulation_id) == handle->simulators.end())
-		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
-	handle->simulators[message.simulation_id]->set_feedback(TRN::Model::Initializer::Gaussian::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.mu, message.sigma, message.sparsity));
-}
-void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM> &message)
-{
-	TRACE_LOGGER;
-	// INFORMATION_LOGGER <<   __FUNCTION__ ;
-	if (handle->simulators.find(message.simulation_id) == handle->simulators.end())
-		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
-
-	if (TRN::Engine::Node::handle->feedback_weights.find(message.simulation_id) != TRN::Engine::Node::handle->feedback_weights.end())
-	{
-		throw std::runtime_error("Feedback functor is already setup for simulator #" + std::to_string(message.simulation_id));
-	}
-	handle->simulators[message.simulation_id]->set_feedback(TRN::Model::Initializer::Custom::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, [=](const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
-	{
-		TRN::Engine::Message<FEEDBACK_DIMENSIONS> feedback_dimensions;
-
-		feedback_dimensions.simulation_id = message.simulation_id;
-		feedback_dimensions.matrices = matrices;
-		feedback_dimensions.rows = rows;
-		feedback_dimensions.cols = cols;
-		feedback_dimensions.seed = seed;
-		 auto locked = TRN::Engine::Node::implementor.lock();
-		if (locked)
-			locked->send(feedback_dimensions, 0);
-	}, TRN::Engine::Node::handle->feedback_weights[message.simulation_id]));
-	handle->remaining_initializations[message.simulation_id]++;
-}
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_UNIFORM> &message) 
 {
 	TRACE_LOGGER;
@@ -966,16 +975,6 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::R
 	if (TRN::Engine::Node::handle->recurrent.find(message.simulation_id) == TRN::Engine::Node::handle->recurrent.end())
 		throw std::runtime_error("Recurrent stimulus functor is not setup for simulator #" + std::to_string(message.simulation_id));
 	TRN::Engine::Node::handle->recurrent[message.simulation_id](message.elements, message.matrices, message.rows, message.cols);
-	handle->remaining_initializations[message.simulation_id]--;
-	send_configured(message.simulation_id);
-}
-void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> &message)
-{
-	TRACE_LOGGER;
-	// INFORMATION_LOGGER <<   __FUNCTION__ ;
-	if (TRN::Engine::Node::handle->feedback_weights.find(message.simulation_id) == TRN::Engine::Node::handle->feedback_weights.end())
-		throw std::runtime_error("Feedback stimulus functor is not setup for simulator #" + std::to_string(message.simulation_id));
-	TRN::Engine::Node::handle->feedback_weights[message.simulation_id](message.elements, message.matrices, message.rows, message.cols);
 	handle->remaining_initializations[message.simulation_id]--;
 	send_configured(message.simulation_id);
 }

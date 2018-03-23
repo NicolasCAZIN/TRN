@@ -381,11 +381,7 @@ void TRN::Engine::Frontend::callback_feedforward(const unsigned long long &simul
 	TRACE_LOGGER;
 	get_map(handle->on_feedforward, simulation_id)(simulation_id, seed, matrices, rows, cols);
 }
-void TRN::Engine::Frontend::callback_feedback(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
-{
-	TRACE_LOGGER;
-	get_map(handle->on_feedback, simulation_id)(simulation_id, seed, matrices, rows, cols);
-}
+
 void TRN::Engine::Frontend::callback_readout(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)
 {
 	TRACE_LOGGER;

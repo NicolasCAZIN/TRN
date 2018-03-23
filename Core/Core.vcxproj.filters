@@ -68,6 +68,9 @@
     <ClCompile Include="Bundle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Decoder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -138,6 +141,12 @@
     </ClInclude>
     <ClInclude Include="Mutator.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Decoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Decoder_impl.h">
+      <Filter>Header Files\private</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

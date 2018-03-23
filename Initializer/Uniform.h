@@ -11,7 +11,7 @@ namespace TRN
 		{
 		private:
 			class Handle;
-			mutable std::unique_ptr<Handle> handle;
+			std::unique_ptr<Handle> handle;
 
 		public:
 			Uniform(const std::shared_ptr<TRN::Backend::Driver> &driver,const float &a, const float &b, const float &sparsity);

@@ -11,7 +11,7 @@ namespace TRN
 		{
 		private :
 			class Handle;
-			mutable std::unique_ptr<Handle> handle;
+			std::unique_ptr<Handle> handle;
 
 		public:
 			Snippets(const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag = "");

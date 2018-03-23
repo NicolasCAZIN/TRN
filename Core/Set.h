@@ -12,7 +12,7 @@ namespace TRN
 		{
 		private :
 			class Handle;
-			mutable std::unique_ptr<Handle> handle;
+			std::unique_ptr<Handle> handle;
 
 		public :
 			Set(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::vector<std::shared_ptr<TRN::Core::Matrix>> &sequences);

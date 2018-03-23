@@ -20,7 +20,7 @@ namespace TRN
 
 		private :
 			class Handle;
-			mutable std::unique_ptr<Handle> handle;
+			std::unique_ptr<Handle> handle;
 		
 		public:
 			Matrix(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::size_t &rows = DEFAULT_ROWS, const std::size_t &cols = DEFAULT_COLS, const bool &blank = DEFAULT_BLANK);
@@ -30,11 +30,11 @@ namespace TRN
 			virtual ~Matrix();
 
 		public :
-			void from(const TRN::Core::Matrix &matrix);
-			void from(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols);
+			void from(const TRN::Core::Matrix &matrix) const;
+			void from(const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols) const;
 			void to(std::vector<float> &elements, std::size_t &rows, std::size_t &cols);
 			void to(TRN::Core::Matrix &matrix);
-
+	
 		public:
 			float *get_elements() const;
 	

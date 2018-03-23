@@ -57,7 +57,7 @@ float TRN4CPP::Search::score(const std::vector<float> &score)
 	float variance = score.size() > 1 ? new_s / (score.size() - 1) : 0.0f;
 	float stddev = std::sqrtf(variance);
 
-	return mean * (1.0f + stddev);
+	return mean + stddev;
 }
 
 struct Measurement

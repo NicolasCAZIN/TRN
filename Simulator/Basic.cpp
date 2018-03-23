@@ -30,6 +30,10 @@ const std::shared_ptr<TRN::Core::Loop> TRN::Simulator::Basic::get_loop()
 {
 	return handle->loop;
 }
+const std::shared_ptr<TRN::Core::Decoder> TRN::Simulator::Basic::get_decoder()
+{
+	return handle->decoder;
+}
 const std::shared_ptr<TRN::Core::Scheduler> TRN::Simulator::Basic::get_scheduler()
 {
 	return handle->scheduler;
@@ -44,10 +48,7 @@ void TRN::Simulator::Basic::set_recurrent(const std::shared_ptr<TRN::Core::Initi
 {
 	handle->recurrent = recurrent;
 }
-void TRN::Simulator::Basic::set_feedback(const std::shared_ptr<TRN::Core::Initializer> &feedback)
-{
-	handle->feedback = feedback;
-}
+
 void TRN::Simulator::Basic::set_readout(const std::shared_ptr<TRN::Core::Initializer> &readout)
 {
 	handle->readout = readout;
@@ -66,7 +67,10 @@ void TRN::Simulator::Basic::set_loop(const std::shared_ptr<TRN::Core::Loop> &loo
 {
 	handle->loop = loop;
 }
-
+void TRN::Simulator::Basic::set_decoder(const std::shared_ptr<TRN::Core::Decoder> &decoder)
+{
+	handle->decoder = decoder;
+}
 void TRN::Simulator::Basic::append_measurement(const std::shared_ptr<TRN::Core::Measurement::Abstraction> &measurement)
 {
 	handle->measurements.push_back(measurement);
@@ -142,7 +146,7 @@ void TRN::Simulator::Basic::test(const unsigned long long &evaluation_id, const 
 	auto incoming_sequence = retrieve_sequence(label, incoming);
 	auto expected_sequence = retrieve_sequence(label, expected);
 
-	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TEST>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::TEST>(label, preamble, supplementary_generations));
+	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TEST>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::TEST>(label, autonomous, preamble, supplementary_generations));
 	auto total_cycles = expected_sequence->get_rows() + supplementary_generations;
 	auto observations = expected_sequence->get_rows() + supplementary_generations;
 	auto batch_size = handle->reservoir->get_batch_size();
@@ -202,7 +206,7 @@ void TRN::Simulator::Basic::initialize()
 		}
 	}
 
-	handle->reservoir->initialize(handle->feedforward, handle->recurrent, handle->feedback, handle->readout);
+	handle->reservoir->initialize(handle->feedforward, handle->recurrent, handle->readout);
 	handle->reservoir->start();
 	handle->initialized = true;
 }
@@ -238,7 +242,6 @@ void TRN::Simulator::Basic::uninitialize()
 		handle->reservoir.reset();
 		handle->feedforward.reset();
 		handle->recurrent.reset();
-		handle->feedback.reset();
 		handle->readout.reset();
 		handle->scheduler.reset();
 

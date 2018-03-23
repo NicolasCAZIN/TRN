@@ -80,6 +80,16 @@ std::ostream &operator << (std::ostream &os, const TRN::Engine::Tag &tag)
 		case TRN::Engine::Tag::CONFIGURE_RESERVOIR_WIDROW_HOFF:
 			os << "CONFIGURE_RESERVOIR_WIDROW_HOFF";
 			break;
+		case TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR:
+			os << "CONFIGURE_DECODER_LINEAR";
+			break;
+		case TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL:
+			os << "CONFIGURE_DECODER_KERNEL_MODEL";
+			break;
+		case TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP:
+			os << "CONFIGURE_DECODER_KERNEL_MAP";
+			break;
+
 		case TRN::Engine::Tag::CONFIGURE_LOOP_COPY:
 			os << "CONFIGURE_LOOP_COPY";
 			break;
@@ -128,15 +138,7 @@ std::ostream &operator << (std::ostream &os, const TRN::Engine::Tag &tag)
 		case TRN::Engine::Tag::CONFIGURE_RECURRENT_CUSTOM:
 			os << "CONFIGURE_RECURRENT_CUSTOM";
 			break;
-		case TRN::Engine::Tag::CONFIGURE_FEEDBACK_UNIFORM:
-			os << "CONFIGURE_FEEDBACK_UNIFORM";
-			break;
-		case TRN::Engine::Tag::CONFIGURE_FEEDBACK_GAUSSIAN:
-			os << "CONFIGURE_FEEDBACK_GAUSSIAN";
-			break;
-		case TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM:
-			os << "CONFIGURE_FEEDBACK_CUSTOM";
-			break;
+	
 		case TRN::Engine::Tag::CONFIGURE_READOUT_UNIFORM:
 			os << "CONFIGURE_READOUT_UNIFORM";
 			break;
@@ -161,9 +163,7 @@ std::ostream &operator << (std::ostream &os, const TRN::Engine::Tag &tag)
 		case TRN::Engine::Tag::RECURRENT_WEIGHTS:
 			os << "RECURRENT_WEIGHTS";
 			break;
-		case TRN::Engine::Tag::FEEDBACK_WEIGHTS:
-			os << "FEEDBACK_WEIGHTS";
-			break;
+		
 		case TRN::Engine::Tag::READOUT_WEIGHTS:
 			os << "READOUT_WEIGHTS";
 			break;
@@ -179,9 +179,7 @@ std::ostream &operator << (std::ostream &os, const TRN::Engine::Tag &tag)
 		case TRN::Engine::Tag::RECURRENT_DIMENSIONS:
 			os << "RECURRENT_DIMENSIONS";
 			break;
-		case TRN::Engine::Tag::FEEDBACK_DIMENSIONS:
-			os << "FEEDBACK_DIMENSIONS";
-			break;
+	
 		case TRN::Engine::Tag::READOUT_DIMENSIONS:
 			os << "READOUT_DIMENSIONS";
 			break;

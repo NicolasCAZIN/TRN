@@ -39,9 +39,35 @@ namespace TRN4CPP
 			};
 			namespace SpatialFilter
 			{
-				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
-												  const std::size_t &rows, const std::size_t &cols, const std::pair<float, float> &x, const std::pair<float, float> &y,
-												  const std::vector<float> response, const float &sigma, const float &radius, const float &angle, const float &scale, const std::string &tag);
+				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const std::string &tag);
+			};
+		};
+
+		namespace Decoder
+		{
+			namespace Linear
+			{
+				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const std::vector<float> &cx, const std::vector<float> &cy);
+			};
+
+			namespace Kernel
+			{
+				namespace Map
+				{
+					void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const std::size_t &rows, const std::size_t &cols,
+						const std::pair<float, float> &arena_x, const std::pair<float, float> &arena_y,
+						const float &sigma, const float &radius, const float &angle, const float &scale, const unsigned long &seed, const std::vector<float> &response);
+				};
+
+				namespace Model
+				{
+					void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
+						const std::size_t &rows, const std::size_t &cols,
+						const std::pair<float, float> &arena_x, const std::pair<float, float> &arena_y,
+						const float &sigma, const float &radius, const float &angle, const float &scale, const unsigned long &seed,
+						const std::vector<float> &cx, const std::vector<float> &cy, const std::vector<float> &width
+						);
+				};
 			};
 		};
 		namespace Scheduler
@@ -84,7 +110,7 @@ namespace TRN4CPP
 		{
 			namespace WidrowHoff
 			{
-				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate, const float &initial_state_scale, const float &learning_rate, const unsigned long &seed, const std::size_t &batch_size);
+				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate, const float &initial_state_scale, const float &learning_rate, const unsigned long &seed, const std::size_t &batch_size, const std::size_t &mini_batch_size);
 			};
 
 			namespace Weights
@@ -106,23 +132,7 @@ namespace TRN4CPP
 						void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id);
 					};
 				};
-				namespace Feedback
-				{
-					namespace Gaussian
-					{
-						void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const float &mu, const float &sigma, const float &sparsity);
-					};
-
-					namespace Uniform
-					{
-						void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const float &a, const float &b, const float &sparsity);
-					};
-
-					namespace Custom
-					{
-						void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id);
-					};
-				};
+	
 				namespace Recurrent
 				{
 					namespace Gaussian
@@ -173,7 +183,7 @@ namespace TRN4CPP
 				};
 				namespace FrechetDistance
 				{
-					void TRN4CPP_EXPORT 	configure(const unsigned long long &simulation_id, const std::size_t &batch_size);
+					void TRN4CPP_EXPORT 	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::string &norm, const std::string &aggregator);
 
 				};
 				namespace Custom
@@ -190,7 +200,7 @@ namespace TRN4CPP
 				};
 				namespace FrechetDistance
 				{
-					void TRN4CPP_EXPORT 	configure(const unsigned long long &simulation_id, const std::size_t &batch_size);
+					void TRN4CPP_EXPORT 	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::string &norm, const std::string &aggregator);
 
 				};
 				namespace Custom

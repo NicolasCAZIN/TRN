@@ -23,7 +23,14 @@ public:
 class Nothing
 {
 };
-
+ void compute_decode_placecells_linear(
+	 const cudaStream_t &stream,
+	 const cublasHandle_t &handle,
+	const std::size_t &batch_size, const std::size_t &place_cells_number,
+	const float *cx,
+	const float *cy,
+	const float **batched_prediction, const std::size_t &batched_prediction_strides,
+	float **batched_decoded_position, const std::size_t &batched_decoded_position_strides);
  void compute_mean_square_error(
 	 const cudaStream_t &stream,
 	 const cublasHandle_t &handle,
@@ -32,10 +39,34 @@ class Nothing
 	 const float *expected, const std::size_t &expected_rows, const std::size_t &expected_cols, const std::size_t &expected_stride,
 	 float *result, const std::size_t &result_rows, const std::size_t &result_cols, const std::size_t &result_stride);
 
+ void compute_decode_most_probable_location(
+	 const cudaStream_t &stream,
+	 const cublasHandle_t &handle,
+	 const std::size_t &batch_size, const std::size_t &stimulus_size,
+	 const std::size_t &roi_row_begin, const std::size_t &roi_row_end,
+	 const std::size_t &roi_col_begin, const std::size_t &roi_col_end,
+	 const std::size_t &order,
+	 const unsigned long &seed, const float &sigma, const float &scale, const float &radius, const float &cos_half_angle,
+	 const float *firing_rate_map, const std::size_t &firing_rate_map_stride,
+	 const float *coefficients, const std::size_t &coefficients_stride,
+	 const float *x_grid, const std::size_t &x_grid_stride,
+	 const float *y_grid, const std::size_t &y_grid_stride,
+	 const float **batched_previous_position, const std::size_t &batched_previous_position_stride,
+	 const float **batched_current_position, const std::size_t &batched_current_position_stride,
+	 const float **batched_prediction, const std::size_t &batched_prediction_stride,
+	 float *hypothesis_scale, const std::size_t &hypothesis_scale_stride,
+	 float **batched_x_grid_centered, const std::size_t &batched_x_grid_centered_stride,
+	 float **batched_y_grid_centered, const std::size_t &batched_y_grid_centered_stride,
+	 float **batched_direction, const std::size_t &batched_direction_stride,
+	 float **batched_decoded_position, const std::size_t &batched_decoded_position_stride
+ );
+
 void compute_place_cell_location_probability(
 	const cudaStream_t &stream,
 	const cublasHandle_t &handle,
-	const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
+	const std::size_t &batch_size, const std::size_t &place_cells_number, 
+	const std::size_t &rows_begin, const std::size_t &rows_end,
+	const std::size_t &cols_begin, const std::size_t &cols_end,
 	const float &sigma,
 	const float ** firing_rate_map, const std::size_t &firing_rate_map_rows, const std::size_t &firing_rate_map_cols, const std::size_t &firing_rate_map_stride,
 	float **scale, const std::size_t &scale_rows, const std::size_t &scale_cols, const std::size_t &scale_stride,
@@ -53,7 +84,9 @@ void compute_direction(const cudaStream_t &stream,
 void compute_reachable_locations(
 	const cudaStream_t &stream,
 	const cublasHandle_t &handle,
-	const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
+	const std::size_t &batch_size, const std::size_t &place_cells_number, 
+	const std::size_t &rows_begin, const std::size_t &rows_end,
+	const std::size_t &cols_begin, const std::size_t &cols_end,
 	const float &radius, const float &cos_half_angle, const float &scale, const unsigned long &seed,
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
@@ -96,13 +129,13 @@ void update_model(
 	float **batched_expected, const std::size_t &batched_expected_rows, const std::size_t &batched_expected_cols, const std::size_t &batched_expected_strides,
 	float **batched_w_ffwd, const std::size_t &batched_w_ffwd_rows, const std::size_t &batched_w_ffwd_cols, const std::size_t &batched_w_ffwd_strides,
 	float **batched_u_ffwd, const std::size_t &batched_u_ffwd_rows, const std::size_t &batched_u_ffwd_cols, const std::size_t &batched_u_ffwd_strides,
-	float **batched_x_in, const std::size_t &batched_x_in_rows, const std::size_t &batched_x_in_cols, const std::size_t &batched_x_in_strides,
-	float **batched_w_in, const std::size_t &batched_w_in_rows, const std::size_t &batched_w_in_cols, const std::size_t &batched_w_in_strides,
+	float **batched_x_res, const std::size_t &batched_x_res_rows, const std::size_t &batched_x_res_cols, const std::size_t &batched_x_res_strides,
+	float **batched_w_rec, const std::size_t &batched_w_rec_rows, const std::size_t &batched_w_rec_cols, const std::size_t &batched_w_rec_strides,
 	float **batched_u, const std::size_t &batched_u_rows, const std::size_t &batched_u_cols, const std::size_t &batched_u_strides,
 	float **batched_p, const std::size_t &batched_p_rows, const std::size_t &batched_p_cols, const std::size_t &batched_p_strides,
-	float **batched_x_res, const std::size_t &batched_x_res_rows, const std::size_t &batched_x_res_cols, const std::size_t &batched_x_res_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	float **batched_error, const std::size_t & batched_error_rows, const std::size_t &batched_error_cols, const std::size_t &batched_error_strides,
-	const int *offsets, const int *durations, const std::size_t &repetitions,
+	float **batched_pre, const std::size_t &batched_pre_rows, const std::size_t &batched_pre_cols, const std::size_t &batched_pre_stride,
+	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_stride,
+	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride);

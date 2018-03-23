@@ -8,8 +8,8 @@ TRN::Reservoir::WidrowHoff::WidrowHoff(const std::shared_ptr<TRN::Backend::Drive
 							const float &initial_state_scale,
 							const float &learning_rate,
 							const unsigned long &seed,
-							const std::size_t &batch_size) :
-	TRN::Core::Reservoir(driver, stimulus, prediction, reservoir, leak_rate, initial_state_scale, seed, batch_size),
+							const std::size_t &batch_size, const std::size_t &mini_batch_size) :
+	TRN::Core::Reservoir(driver, stimulus, prediction, reservoir, leak_rate, initial_state_scale, seed, batch_size, mini_batch_size),
 	handle(std::make_unique<TRN::Reservoir::WidrowHoff::Handle >())
 {
 	handle->learning_rate = learning_rate;
@@ -23,7 +23,7 @@ void TRN::Reservoir::WidrowHoff::train(const std::shared_ptr<TRN::Core::Matrix> 
 
 
 		implementor->get_algorithm()->learn_widrow_hoff(
-			TRN::Core::Reservoir::handle->batch_size,
+			TRN::Core::Reservoir::handle->batch_size, TRN::Core::Reservoir::handle->mini_batch_size,
 			TRN::Core::Reservoir::handle->seed,
 			TRN::Core::Reservoir::handle->stimulus_stride, TRN::Core::Reservoir::handle->reservoir_stride, TRN::Core::Reservoir::handle->prediction_stride,
 			TRN::Core::Reservoir::handle->stimulus_size, TRN::Core::Reservoir::handle->reservoir_size, TRN::Core::Reservoir::handle->prediction_size,
@@ -34,16 +34,16 @@ void TRN::Reservoir::WidrowHoff::train(const std::shared_ptr<TRN::Core::Matrix> 
 			TRN::Core::Reservoir::handle->batched_expected->get_elements(), TRN::Core::Reservoir::handle->batched_expected->get_rows(), TRN::Core::Reservoir::handle->batched_expected->get_cols(), TRN::Core::Reservoir::handle->batched_expected->get_strides(),
 			TRN::Core::Reservoir::handle->batched_W_ffwd->get_elements(), TRN::Core::Reservoir::handle->batched_W_ffwd->get_rows(), TRN::Core::Reservoir::handle->batched_W_ffwd->get_cols(), TRN::Core::Reservoir::handle->batched_W_ffwd->get_strides(),
 			TRN::Core::Reservoir::handle->batched_u_ffwd->get_elements(), TRN::Core::Reservoir::handle->batched_u_ffwd->get_rows(), TRN::Core::Reservoir::handle->batched_u_ffwd->get_cols(), TRN::Core::Reservoir::handle->batched_u_ffwd->get_strides(),
-			TRN::Core::Reservoir::handle->batched_X_in->get_elements(), TRN::Core::Reservoir::handle->batched_X_in->get_rows(), TRN::Core::Reservoir::handle->batched_X_in->get_cols(), TRN::Core::Reservoir::handle->batched_X_in->get_strides(),
-			TRN::Core::Reservoir::handle->batched_W_in->get_elements(), TRN::Core::Reservoir::handle->batched_W_in->get_rows(), TRN::Core::Reservoir::handle->batched_W_in->get_cols(), TRN::Core::Reservoir::handle->batched_W_in->get_strides(),
+			TRN::Core::Reservoir::handle->batched_X_res->get_elements(), TRN::Core::Reservoir::handle->batched_X_res->get_rows(), TRN::Core::Reservoir::handle->batched_X_res->get_cols(), TRN::Core::Reservoir::handle->batched_X_res->get_strides(),
+			TRN::Core::Reservoir::handle->batched_W_rec->get_elements(), TRN::Core::Reservoir::handle->batched_W_rec->get_rows(), TRN::Core::Reservoir::handle->batched_W_rec->get_cols(), TRN::Core::Reservoir::handle->batched_W_rec->get_strides(),
 			TRN::Core::Reservoir::handle->batched_u->get_elements(), TRN::Core::Reservoir::handle->batched_u->get_rows(), TRN::Core::Reservoir::handle->batched_u->get_cols(), TRN::Core::Reservoir::handle->batched_u->get_strides(),
 			TRN::Core::Reservoir::handle->batched_p->get_elements(), TRN::Core::Reservoir::handle->batched_p->get_rows(), TRN::Core::Reservoir::handle->batched_p->get_cols(), TRN::Core::Reservoir::handle->batched_p->get_strides(),
-			TRN::Core::Reservoir::handle->batched_X_res->get_elements(), TRN::Core::Reservoir::handle->batched_X_res->get_rows(), TRN::Core::Reservoir::handle->batched_X_res->get_cols(), TRN::Core::Reservoir::handle->batched_X_res->get_strides(),
 			TRN::Core::Reservoir::handle->batched_X_ro->get_elements(), TRN::Core::Reservoir::handle->batched_X_ro->get_rows(), TRN::Core::Reservoir::handle->batched_X_ro->get_cols(), TRN::Core::Reservoir::handle->batched_X_ro->get_strides(),
 			TRN::Core::Reservoir::handle->batched_W_ro->get_elements(), TRN::Core::Reservoir::handle->batched_W_ro->get_rows(), TRN::Core::Reservoir::handle->batched_W_ro->get_cols(), TRN::Core::Reservoir::handle->batched_W_ro->get_strides(),
-			TRN::Core::Reservoir::handle->batched_error->get_elements(), TRN::Core::Reservoir::handle->batched_error->get_rows(), TRN::Core::Reservoir::handle->batched_error->get_cols(), TRN::Core::Reservoir::handle->batched_error->get_strides(),
-
-			scheduling->get_offsets().data(), scheduling->get_durations().data(), scheduling->get_durations().size(),
+			TRN::Core::Reservoir::handle->batched_pre->get_elements(), TRN::Core::Reservoir::handle->batched_pre->get_rows(), TRN::Core::Reservoir::handle->batched_pre->get_cols(), TRN::Core::Reservoir::handle->batched_pre->get_strides(),
+			TRN::Core::Reservoir::handle->batched_post->get_elements(), TRN::Core::Reservoir::handle->batched_post->get_rows(), TRN::Core::Reservoir::handle->batched_post->get_cols(), TRN::Core::Reservoir::handle->batched_post->get_strides(),
+			TRN::Core::Reservoir::handle->batched_desired->get_elements(), TRN::Core::Reservoir::handle->batched_desired->get_rows(), TRN::Core::Reservoir::handle->batched_desired->get_cols(), TRN::Core::Reservoir::handle->batched_desired->get_strides(),
+			scheduling->get_offsets().data(), scheduling->get_durations().data(), scheduling->get_durations().size(), scheduling->get_total_duration(),
 			states->get_elements(), states->get_rows(), states->get_cols(), states->get_stride(),
 			handle->learning_rate);
 }
@@ -66,7 +66,8 @@ std::shared_ptr<TRN::Reservoir::WidrowHoff> TRN::Reservoir::WidrowHoff::create(c
 																				const float &initial_state_scale,
 																				const float &learning_rate,
 																				const unsigned long &seed,
-																				const std::size_t &batch_size)
+																				const std::size_t &batch_size,
+																				const std::size_t &mini_batch_size)
 {
-	return std::make_shared<TRN::Reservoir::WidrowHoff>(driver, stimulus, prediction, reservoir, leak_rate, initial_state_scale, learning_rate, seed, batch_size);
+	return std::make_shared<TRN::Reservoir::WidrowHoff>(driver, stimulus, prediction, reservoir, leak_rate, initial_state_scale, learning_rate, seed, batch_size, mini_batch_size);
 }

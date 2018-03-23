@@ -11,7 +11,7 @@ namespace TRN
 		{
 		private:
 			class Handle;
-			mutable std::unique_ptr<Handle> handle;
+			std::unique_ptr<Handle> handle;
 
 		public:
 			Gaussian(const std::shared_ptr<TRN::Backend::Driver> &driver, const float &mu, const float &sigma, const float &sparsity);

@@ -39,31 +39,8 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 		set->get_scheduling()->to(batch_offsets, batch_durations);
 		reward_elements.resize(batch_offsets.size());
 		std::fill(reward_elements.begin(), reward_elements.end(), 0.0f);
-		std::size_t b = 0;
-	
-		/*for (std::size_t k = 0; k < batch_durations.size(); k++)
-		{
-			auto e = b + batch_durations[k] - 1;
-			reward_elements[b] = 1.0f;
-			reward_elements[e] = 1.0f;
 
-			b = e + 1;
-		}*/
 
-	}
-	else
-	{
-		std::size_t reward_rows;
-		std::size_t reward_cols;
-
-		set = delegate.lock()->retrieve_set(payload.get_label(), handle->tag);
-		set->get_sequence()->to(reward_elements, reward_rows, reward_cols);
-		set->get_scheduling()->to(batch_offsets, batch_durations);
-
-	
-
-	}
-	{
 		std::size_t b = 0;
 		for (std::size_t k = 0; k < batch_durations.size(); k++)
 		{
@@ -74,12 +51,22 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 			b = e + 1;
 		}
 	}
-	/*std::size_t b = 0;
-	for (std::size_t k = 0; k < batch_durations.size(); k++)
+	else
 	{
-		auto e = b + batch_durations[k] - 1;
+		std::size_t reward_rows;
+		std::size_t reward_cols;
+
+		set = delegate.lock()->retrieve_set(payload.get_label(), handle->tag);
+		set->get_sequence()->to(reward_elements, reward_rows, reward_cols);
+		set->get_scheduling()->to(batch_offsets, batch_durations);
+
+
+
+	}
+	/*{
 
 	}*/
+
 	std::vector<std::vector<float>> reward_sites;
 	std::vector<std::vector<int>> relative_offsets;
 
@@ -87,9 +74,6 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 
 	for (std::size_t k = 0; k < batch_durations.size(); k++)
 	{
-		/*auto e = b + batch_durations[k]-1;
-		reward_elements[b] = 1.0f;
-		reward_elements[e] = 1.0f;*/
 		std::vector<float> batch_reward(batch_durations[k]);
 		std::vector<int> batch_offset(batch_durations[k]);
 
@@ -112,49 +96,37 @@ void TRN::Scheduler::Snippets::update(const TRN::Core::Message::Payload<TRN::Cor
 		std::size_t s = sequence(handle->random_engine);
 		std::discrete_distribution<std::size_t> d(reward_sites[s].begin(), reward_sites[s].end());
 		std::size_t r0 = d(handle->random_engine);
-		std::size_t r1 = r0;
-		while (r0 == r1)
-		{
-			r1 = d(handle->random_engine);
-		} 
 
-		if (r0 > r1)
-			std::swap(r0, r1);
-		std::uniform_int<std::size_t> offset(r0, r1);
+		std::size_t o = 0;
+		std::size_t duration = 0;
 
-		std::size_t o = offset(handle->random_engine);
-		auto duration = handle->snippets_size;
-		if (r1 - r0 < handle->snippets_size)
+		do
 		{
-			unsigned int t = reward_sites[s].size() - o;
-			duration = std::min(t + 1, handle->snippets_size);
-		}
-		else
-		{
-			while (o + duration >= reward_sites[s].size())
-			{
-				o = offset(handle->random_engine);
-			}
-			
-		}
-	
-		int extra_steps = offsets.size() + duration - handle->time_budget;
-		if (extra_steps > 0)
-		{
-			if (extra_steps >= handle->snippets_size)
-				throw std::runtime_error("");
-			duration -= extra_steps;
-		}
-		
+			std::size_t r1 = d(handle->random_engine);
+			if (r1 == r0)
+				continue;
+			if (r0 > r1)
+				std::swap(r0, r1);
+			std::uniform_int<std::size_t> offset(r0, r1 - 1);
+
+			o = offset(handle->random_engine);
+			duration = std::min((std::size_t)handle->snippets_size, (std::size_t)(reward_sites[s].size() - o));
+			/*while (duration > 0 && (o + duration >= ))
+				duration--;*/
+		} while (duration == 0);
+
+		if (duration <= 0 || duration > handle->snippets_size || o + duration > reward_sites[s].size())
+			throw std::runtime_error("invalid snippet duration : " + std::to_string(duration));
 
 		std::vector<int> snippet(duration);
+
 		std::iota(snippet.begin(), snippet.end(), relative_offsets[s][o]);
 
 		durations.push_back(static_cast<int>(snippet.size()));
-		offsets.insert(offsets.begin(), snippet.begin(), snippet.end());
+		offsets.insert(offsets.end(), snippet.begin(), snippet.end());
 
 	}
-	assert(handle->time_budget == offsets.size());
+
 	notify(TRN::Core::Message::Payload<TRN::Core::Message::SCHEDULING>(payload.get_evaluation_id(), TRN::Core::Scheduling::create(offsets, durations)));
 }
 

@@ -24,7 +24,7 @@ typedef std::pair<const KeyType, MappedType> EntryType;
 typedef boost::interprocess::allocator<EntryType, boost::interprocess::managed_shared_memory::segment_manager> ShmEntryAllocator;
 typedef boost::interprocess::map<KeyType, MappedType, std::less<KeyType>, ShmEntryAllocator> Map;
 
- static boost::interprocess::managed_windows_shared_memory segment(boost::interprocess::open_or_create, SEGMENT_IDENTIFIER, GB(1));
+ static boost::interprocess::managed_windows_shared_memory segment(boost::interprocess::open_or_create, SEGMENT_IDENTIFIER, GB(1) + MB(500));
 static unsigned int process_id()
 {
 #ifdef _WIN32

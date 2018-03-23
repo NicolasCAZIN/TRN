@@ -12,7 +12,6 @@ std::function<void(const unsigned long long &simulation_id, const unsigned long 
 std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const unsigned long &seed, const std::vector<int> &offsets, const std::vector<int> &durations)> on_mutator;
 std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const unsigned long &seed, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols, const std::vector<int> &offsets, const std::vector<int> &durations)> on_scheduler;
 std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedforward;
-std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_feedback;
 std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols)> on_readout;
 std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> on_recurrent;
 
@@ -21,7 +20,6 @@ std::function<void(const unsigned long long &simulation_id, const unsigned long 
 std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations)> reply_scheduler;
 std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations)> reply_mutator;
 std::function<void(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> reply_feedforward;
-std::function<void(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> reply_feedback;
 std::function<void(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> reply_recurrent;
 std::function<void(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> reply_readout;
 
@@ -52,9 +50,6 @@ void TRN4CPP::Plugin::Custom::initialize(const std::string &library_path, const 
 
 	TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Custom::install(std::bind(&TRN4CPP::Plugin::Custom::Interface::callback_feedforward, custom, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), reply_feedforward);
 	custom->install_feedforward(reply_feedforward);
-
-	TRN4CPP::Simulation::Reservoir::Weights::Feedback::Custom::install(std::bind(&TRN4CPP::Plugin::Custom::Interface::callback_feedback, custom, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), reply_feedback);
-	custom->install_feedback(reply_feedback);
 
 	TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::install(std::bind(&TRN4CPP::Plugin::Custom::Interface::callback_recurrent, custom, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), reply_recurrent);
 	custom->install_recurrent(reply_recurrent);
@@ -107,18 +102,7 @@ void TRN4CPP::Simulation::Reservoir::Weights::Feedforward::Custom::install(const
 	on_feedforward = request;
 	reply = std::bind(&TRN::Engine::Broker::notify_feedforward, frontend, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
 }
-void TRN4CPP::Simulation::Reservoir::Weights::Feedback::Custom::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
-	std::function<void(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply)
-{
-	std::unique_lock<std::recursive_mutex> guard(mutex);
-	TRACE_LOGGER;
-	if (on_feedback)
-		throw std::runtime_error("Feedbackfunctor is already installed");
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-	on_feedback = request;
-	reply = std::bind(&TRN::Engine::Broker::notify_feedback, frontend, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
-}
+
 void TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply)
 {

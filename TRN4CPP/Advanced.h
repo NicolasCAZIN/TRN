@@ -61,13 +61,11 @@ namespace TRN4CPP
 			};
 			namespace SpatialFilter
 			{
-				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
+				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
 					const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
 					std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
 					const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
-					std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
-					const std::size_t &rows, const std::size_t &cols, const std::pair<float, float> &x, const std::pair<float, float> &y,
-					const std::vector<float> response, const float &sigma, const float &radius, const float &angle, const float &scale, const std::string &tag);
+					std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus, const std::string &tag);
 			};
 		};
 		namespace Scheduler
@@ -103,15 +101,7 @@ namespace TRN4CPP
 							std::function<void(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply);
 					};
 				};
-				namespace Feedback
-				{
-					namespace Custom
-					{
-						void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id,
-							const std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
-							std::function<void(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply);
-					};
-				};
+		
 				namespace Recurrent
 				{
 					namespace Custom
@@ -142,7 +132,7 @@ namespace TRN4CPP
 				};
 				namespace FrechetDistance
 				{
-					void TRN4CPP_EXPORT 	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
+					void TRN4CPP_EXPORT 	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::string &norm, const std::string &aggregator, const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
 				};
 				namespace Custom
 				{
@@ -157,7 +147,7 @@ namespace TRN4CPP
 				};
 				namespace FrechetDistance
 				{
-					void TRN4CPP_EXPORT 	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
+					void TRN4CPP_EXPORT 	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::string &norm, const std::string &aggregator, const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor);
 				};
 				namespace Custom
 				{

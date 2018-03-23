@@ -17,7 +17,7 @@ namespace TRN
 
 			namespace FrechetDistance
 			{
-				std::shared_ptr<TRN::Core::Measurement::Implementation> MODEL_EXPORT create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> &functor);
+				std::shared_ptr<TRN::Core::Measurement::Implementation> MODEL_EXPORT create(const std::shared_ptr<TRN::Backend::Driver> &driver, const std::string &norm, const std::string &aggregator, const std::function<void(const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const  std::size_t &cols)> &functor);
 			};
 
 			namespace Custom

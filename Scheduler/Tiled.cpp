@@ -21,7 +21,11 @@ void  TRN::Scheduler::Tiled::update(const TRN::Core::Message::Payload<TRN::Core:
 {
 
 	auto incoming = delegate.lock()->retrieve_set(payload.get_label(), payload.get_incoming());
+	/*std::vector<float> seq_elements;
+	std::size_t seq_rows, seq_cols;
+	incoming->get_sequence()->to(seq_elements, seq_rows, seq_cols);
 
+	cv::Mat seq(seq_rows, seq_cols, CV_32F, seq_elements.data());*/
 	std::vector<int> offsets(handle->epochs * incoming->get_sequence()->get_rows());
 	std::vector<int> durations(handle->epochs);
 

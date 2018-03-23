@@ -93,6 +93,9 @@ template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_CU
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_CUSTOM>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_COPY> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_LOOP_COPY>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_SPATIAL_FILTER> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_LOOP_SPATIAL_FILTER>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_LOOP_CUSTOM>(const int &destination);
@@ -109,9 +112,6 @@ template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDFORWARD_CUSTOM> TR
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_UNIFORM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_RECURRENT_UNIFORM>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_GAUSSIAN> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_RECURRENT_GAUSSIAN>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_RECURRENT_CUSTOM>(const int &destination);
-template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_UNIFORM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_FEEDBACK_UNIFORM>(const int &destination);
-template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_GAUSSIAN> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_FEEDBACK_GAUSSIAN>(const int &destination);
-template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_UNIFORM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_READOUT_UNIFORM>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_GAUSSIAN> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_READOUT_GAUSSIAN>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_READOUT_CUSTOM>(const int &destination);
@@ -120,13 +120,11 @@ template TRN::Engine::Message<TRN::Engine::Tag::STIMULUS> TRN::Engine::Communica
 template TRN::Engine::Message<TRN::Engine::Tag::SCHEDULING> TRN::Engine::Communicator::receive<TRN::Engine::Tag::SCHEDULING>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::FEEDFORWARD_WEIGHTS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::FEEDFORWARD_WEIGHTS>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_WEIGHTS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::RECURRENT_WEIGHTS>(const int &destination);
-template TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::FEEDBACK_WEIGHTS>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::READOUT_WEIGHTS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::READOUT_WEIGHTS>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::MUTATOR_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::MUTATOR_CUSTOM>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::SCHEDULER_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::SCHEDULER_CUSTOM>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::FEEDFORWARD_DIMENSIONS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::FEEDFORWARD_DIMENSIONS>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_DIMENSIONS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::RECURRENT_DIMENSIONS>(const int &destination);
-template TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_DIMENSIONS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::FEEDBACK_DIMENSIONS>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::READOUT_DIMENSIONS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::READOUT_DIMENSIONS>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::STATES> TRN::Engine::Communicator::receive<TRN::Engine::Tag::STATES>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::WEIGHTS> TRN::Engine::Communicator::receive<TRN::Engine::Tag::WEIGHTS>(const int &destination);
@@ -173,6 +171,9 @@ template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::En
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_CUSTOM> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_COPY> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_SPATIAL_FILTER> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_CUSTOM> &message, const int &destination);
@@ -189,9 +190,6 @@ template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::En
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_UNIFORM> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_GAUSSIAN> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RECURRENT_CUSTOM> &message, const int &destination);
-template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_UNIFORM> &message, const int &destination);
-template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_GAUSSIAN> &message, const int &destination);
-template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_FEEDBACK_CUSTOM> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_UNIFORM> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_GAUSSIAN> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_READOUT_CUSTOM> &message, const int &destination);
@@ -200,13 +198,11 @@ template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::En
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::SCHEDULING> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::FEEDFORWARD_WEIGHTS> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_WEIGHTS> &message, const int &destination);
-template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_WEIGHTS> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::READOUT_WEIGHTS> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::MUTATOR_CUSTOM> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::SCHEDULER_CUSTOM> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::FEEDFORWARD_DIMENSIONS> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::RECURRENT_DIMENSIONS> &message, const int &destination);
-template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::FEEDBACK_DIMENSIONS> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::READOUT_DIMENSIONS> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::STATES> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::WEIGHTS> &message, const int &destination);

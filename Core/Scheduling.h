@@ -10,7 +10,7 @@ namespace TRN
 		{
 		private :
 			class Handle;
-			mutable std::unique_ptr<Handle> handle;
+			std::unique_ptr<Handle> handle;
 
 		public :
 			Scheduling(const std::vector<int> &offsets, const std::vector<int> &durations);

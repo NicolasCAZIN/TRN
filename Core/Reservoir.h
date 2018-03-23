@@ -27,7 +27,7 @@ namespace TRN
 
 		protected :
 			class Handle;
-			mutable std::unique_ptr<Handle> handle;
+			std::unique_ptr<Handle> handle;
 
 		protected :
 			Reservoir(const std::shared_ptr<TRN::Backend::Driver> &driver,
@@ -36,8 +36,8 @@ namespace TRN
 				const float &leak_rate,
 				const float &initial_state_scale,
 				const unsigned long &seed,
-				const std::size_t &batch_size
-		
+				const std::size_t &batch_size,
+				const std::size_t &mini_batch_size
 			);
 			virtual ~Reservoir();
 
@@ -45,7 +45,6 @@ namespace TRN
 	
 			void initialize(const std::shared_ptr<TRN::Core::Initializer> &feedforward, 
 							const std::shared_ptr<TRN::Core::Initializer> &recurrent,
-							const std::shared_ptr<TRN::Core::Initializer> &feedback,
 							const std::shared_ptr<TRN::Core::Initializer> &readout);
 			void reset_readout();
 			void initialize();

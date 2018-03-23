@@ -54,28 +54,49 @@ namespace TRN
 			void	configure_end(const unsigned long long &simulation_id);
 
 			void 	configure_measurement_readout_mean_square_error(const unsigned long long &simulation_id, const std::size_t &batch_size);
-			void  	configure_measurement_readout_frechet_distance(const unsigned long long &simulation_id, const std::size_t &batch_size);
+			void  	configure_measurement_readout_frechet_distance(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::string &norm, const std::string &aggregator);
 			void  	configure_measurement_readout_custom(const unsigned long long &simulation_id, const std::size_t &batch_size);
 
 			void  	configure_measurement_position_mean_square_error(const unsigned long long &simulation_id, const std::size_t &batch_size);
-			void  	configure_measurement_position_frechet_distance(const unsigned long long &simulation_id, const std::size_t &batch_size);
+			void  	configure_measurement_position_frechet_distance(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::string &norm, const std::string &aggregator);
 			void  	configure_measurement_position_custom(const unsigned long long &simulation_id, const std::size_t &batch_size);
 
 			void 	configure_reservoir_widrow_hoff(const unsigned long long &simulation_id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate,
-				const float &initial_state_scale, const float &learning_rate, const unsigned long &seed, const std::size_t &batch_size);
+				const float &initial_state_scale, const float &learning_rate, const unsigned long &seed, const std::size_t &batch_size, const std::size_t &mini_batch_size);
 			/*virtual void 	configure_reservoir_online_force(const unsigned long long &simulation_id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate,
 			const float &initial_state_scale, const float &learning_rate) = 0;*/
 			/*	virtual void 	configure_reservoir_offline_svd(const unsigned long long &simulation_id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate,
 			const float &initial_state_scale, const float &learning_rate) = 0;*/
-			void 	configure_loop_copy(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size);
-			void 	configure_loop_spatial_filter(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
+
+			void	configure_decoder_linear(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, 
+				const std::vector<float> &cx, const std::vector<float> &cy);
+			void	configure_decoder_kernel_map(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, 
 				const std::size_t &rows, const std::size_t &cols,
 				const std::pair<float, float> &x, const std::pair<float, float> &y,
-				const std::vector<float> &response,
 				const float &sigma,
 				const float &radius,
 				const float &angle,
 				const float &scale,
+				const unsigned long &seed,
+				const std::vector<float> &response
+				);
+			void	configure_decoder_kernel_model(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, 
+				const std::size_t &rows, const std::size_t &cols,
+				const std::pair<float, float> &x, const std::pair<float, float> &y,
+				const float &sigma,
+				const float &radius,
+				const float &angle,
+				const float &scale,
+				const unsigned long &seed,
+				const std::vector<float> &cx, 
+				const std::vector<float> &cy,
+				const std::vector<float> &K
+				);
+
+				
+
+			void 	configure_loop_copy(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size);
+			void 	configure_loop_spatial_filter(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, 
 				const std::string &tag);
 			void 	configure_loop_custom(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size);
 
@@ -93,10 +114,6 @@ namespace TRN
 			void 	configure_readout_uniform(const unsigned long long &simulation_id, const float &a, const float &b, const float &sparsity);
 			void 	configure_readout_gaussian(const unsigned long long &simulation_id, const float &mu, const float &sigma, const float &sparsity);
 			void 	configure_readout_custom(const unsigned long long &simulation_id);
-
-			void 	configure_feedback_uniform(const unsigned long long &simulation_id, const float &a, const float &b, const float &sparsity);
-			void 	configure_feedback_gaussian(const unsigned long long &simulation_id, const float &mu, const float &sigma, const float &sparsity);
-			void 	configure_feedback_custom(const unsigned long long &simulation_id);
 
 			void 	configure_recurrent_uniform(const unsigned long long &simulation_id, const float &a, const float &b, const float &sparsity);
 			void 	configure_recurrent_gaussian(const unsigned long long &simulation_id, const float &mu, const float &sigma, const float &sparsity);
@@ -143,7 +160,6 @@ namespace TRN
 			virtual void callback_scheduling(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations) = 0;
 
 			virtual void callback_feedforward(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols) = 0;
-			virtual void callback_feedback(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols) = 0;
 			virtual void callback_readout(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const  std::size_t &cols) = 0;
 			virtual void callback_recurrent(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols) = 0;
 		public :
@@ -152,7 +168,6 @@ namespace TRN
 			void notify_scheduler(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations);
 			void notify_mutator(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<int> &offsets, const std::vector<int> &durations);
 			void notify_feedforward(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols);
-			void notify_feedback(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols);
 			void notify_readout(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols);
 			void notify_recurrent(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols);
 		private :

@@ -3,6 +3,8 @@
 #include <vld.h>
 #endif 
 
+#include <opencv2\core.hpp>
+
 #include <sstream>
 #include <list>
 #include <iostream>

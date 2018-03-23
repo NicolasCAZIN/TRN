@@ -41,7 +41,7 @@ namespace TRN
 			{
 			private :
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public :
 				Payload(const std::shared_ptr<TRN::Core::Batch> &stimulus, const unsigned long long &evaluation_id);
 				Payload(const  Payload<TRN::Core::Message::Type::STIMULUS> &payload);
@@ -56,7 +56,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload(const std::shared_ptr<TRN::Core::Batch> &predicted, const unsigned long long &evaluation_id);
 				Payload(const  Payload<TRN::Core::Message::Type::PREDICTION> &payload);
@@ -72,7 +72,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload(const std::shared_ptr<TRN::Core::Batch> &position, const unsigned long long &evaluation_id);
 				Payload(const  Payload<TRN::Core::Message::Type::POSITION> &payload);
@@ -89,7 +89,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload(const float &cycles_per_second);
 				Payload(const  Payload<TRN::Core::Message::Type::PERFORMANCES> &payload);
@@ -100,7 +100,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload(const std::shared_ptr<TRN::Core::Matrix> &trajectory);
 				Payload(const  Payload<TRN::Core::Message::Type::TARGET_TRAJECTORY> &payload);
@@ -114,7 +114,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload(const std::shared_ptr<TRN::Core::Matrix> &sequence);
 				Payload(const  Payload<TRN::Core::Message::Type::TARGET_SEQUENCE> &payload);
@@ -129,7 +129,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload();
 				Payload(const  Payload<TRN::Core::Message::Type::STATES> &payload);
@@ -156,7 +156,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload();
 				Payload(const  Payload<TRN::Core::Message::Type::WEIGHTS> &payload);
@@ -164,12 +164,10 @@ namespace TRN
 			public:
 			 const std::shared_ptr<TRN::Core::Batch> get_feedforward() const;
 			 const std::shared_ptr<TRN::Core::Batch> get_recurrent() const;
-			 const std::shared_ptr<TRN::Core::Batch> get_feedback() const;
 			 const std::shared_ptr<TRN::Core::Batch> get_readout() const;
 			public :
 			 void set_feedforward(const std::shared_ptr<TRN::Core::Batch> &feedforward) const;
 			 void set_recurrent(const std::shared_ptr<TRN::Core::Batch> &recurrent) const;
-			 void set_feedback(const std::shared_ptr<TRN::Core::Batch> &feedback) const;
 			 void set_readout(const std::shared_ptr<TRN::Core::Batch> &readout) const;
 			public:
 				static std::shared_ptr<Payload> create();
@@ -180,7 +178,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload(const unsigned long long &evaluation_id);
 				Payload(const  Payload<TRN::Core::Message::Type::TESTED> &payload);
@@ -194,7 +192,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload(const unsigned long long &evaluation_id);
 				Payload(const  Payload<TRN::Core::Message::Type::PRIMED> &payload);
@@ -208,7 +206,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload(const unsigned long long &evaluation_id);
 				Payload(const  Payload<TRN::Core::Message::Type::TRAINED> &payload);
@@ -231,7 +229,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload(const std::size_t &batch_size,  const std::size_t &cycles, const std::size_t &observations);
 				Payload(const  Payload<TRN::Core::Message::Type::CYCLES> &payload);
@@ -246,7 +244,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload(const size_t &flops_per_epoch_factor, const size_t &flops_per_cycle);
 				Payload(const  Payload<TRN::Core::Message::Type::FLOPS> &payload);
@@ -263,7 +261,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload(const unsigned long long &evaluation_id, const std::shared_ptr<TRN::Core::Scheduling> &scheduling);
 				Payload(const  Payload<TRN::Core::Message::Type::SCHEDULING> &payload);
@@ -279,7 +277,7 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
 				Payload(const std::string &label,
 						const std::string &incoming,
@@ -300,13 +298,14 @@ namespace TRN
 			{
 			private:
 				class Handle;
-				mutable std::unique_ptr<Handle> handle;
+				std::unique_ptr<Handle> handle;
 			public:
-				Payload(const std::string &label, const std::size_t &preamble, const std::size_t &supplementary_generations);
+				Payload(const std::string &label, const bool &autonomous, const std::size_t &preamble, const std::size_t &supplementary_generations);
 				Payload(const Payload<TRN::Core::Message::Type::TEST> &ref);
 				~Payload();
 
 			public:
+				const bool &get_autonomous() const;
 				const std::string &get_label() const;
 				const std::size_t &get_preamble() const;
 				const std::size_t &get_supplementary_generations() const;

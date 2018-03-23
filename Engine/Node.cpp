@@ -254,6 +254,42 @@ void TRN::Engine::Node::body()
 				}
 				break;
 
+				case TRN::Engine::CONFIGURE_DECODER_LINEAR:
+				{
+					process(unpack<TRN::Engine::CONFIGURE_DECODER_LINEAR>(locked, handle->rank, simulation_id, counter, number));
+				}
+				break;
+				case TRN::Engine::CONFIGURE_DECODER_KERNEL_MODEL:
+				{
+					process(unpack<TRN::Engine::CONFIGURE_DECODER_KERNEL_MODEL>(locked, handle->rank, simulation_id, counter, number));
+				}
+				break;
+				case TRN::Engine::CONFIGURE_DECODER_KERNEL_MAP:
+				{
+					auto message = unpack<TRN::Engine::CONFIGURE_DECODER_KERNEL_MAP>(locked, handle->rank, simulation_id, counter, number);
+					std::set<unsigned int> checksums;
+
+					if (!message.response.second.empty())
+					{
+						handle->cache->store(message.response.first, message.response.second);
+						checksums.insert(message.response.first);
+					}
+					else
+					{
+						message.response.second = handle->cache->retrieve(message.response.first);
+					}
+			
+					if (!checksums.empty())
+					{
+						TRN::Engine::Message<TRN::Engine::Tag::CACHED> cached;
+						cached.rank = TRN::Engine::Node::handle->rank;
+						cached.checksums = checksums;
+						locked->send(cached, 0);
+					}
+					process(message);
+				}
+				break;
+
 				case TRN::Engine::CONFIGURE_LOOP_COPY:
 				{
 					process(unpack<TRN::Engine::CONFIGURE_LOOP_COPY>(locked, handle->rank, simulation_id, counter, number));
@@ -262,21 +298,7 @@ void TRN::Engine::Node::body()
 
 				case TRN::Engine::CONFIGURE_LOOP_SPATIAL_FILTER:
 				{
-					auto message = unpack<TRN::Engine::CONFIGURE_LOOP_SPATIAL_FILTER>(locked, handle->rank, simulation_id, counter, number);
-					if (!message.sequence.empty())
-					{
-						handle->cache->store(message.checksum, message.sequence);
-						TRN::Engine::Message<TRN::Engine::Tag::CACHED> cached;
-						cached.rank = TRN::Engine::Node::handle->rank;
-						cached.checksums = { message.checksum };
-						locked->send(cached, 0);
-					}
-					else
-					{
-						message.sequence = handle->cache->retrieve(message.checksum);
-					}
-
-					process(message);
+					process(unpack<TRN::Engine::CONFIGURE_LOOP_SPATIAL_FILTER>(locked, handle->rank, simulation_id, counter, number));
 				}
 				break;
 
@@ -347,24 +369,6 @@ void TRN::Engine::Node::body()
 				}
 				break;
 
-				case TRN::Engine::CONFIGURE_FEEDBACK_UNIFORM:
-				{
-					process(unpack<TRN::Engine::CONFIGURE_FEEDBACK_UNIFORM>(locked, handle->rank, simulation_id, counter, number));
-				}
-				break;
-
-				case TRN::Engine::CONFIGURE_FEEDBACK_GAUSSIAN:
-				{
-					process(unpack<TRN::Engine::CONFIGURE_FEEDBACK_GAUSSIAN>(locked, handle->rank, simulation_id, counter, number));
-				}
-				break;
-
-				case TRN::Engine::CONFIGURE_FEEDBACK_CUSTOM:
-				{
-					process(unpack<TRN::Engine::CONFIGURE_FEEDBACK_CUSTOM>(locked, handle->rank, simulation_id, counter, number));
-				}
-				break;
-
 				case TRN::Engine::CONFIGURE_RECURRENT_UNIFORM:
 				{
 					process(unpack<TRN::Engine::CONFIGURE_RECURRENT_UNIFORM>(locked, handle->rank, simulation_id, counter, number));
@@ -428,12 +432,6 @@ void TRN::Engine::Node::body()
 				case TRN::Engine::RECURRENT_WEIGHTS:
 				{
 					process(unpack<TRN::Engine::RECURRENT_WEIGHTS>(locked, handle->rank, simulation_id, counter, number));
-				}
-				break;
-
-				case TRN::Engine::FEEDBACK_WEIGHTS:
-				{
-					process(unpack<TRN::Engine::FEEDBACK_WEIGHTS>(locked, handle->rank, simulation_id, counter, number));
 				}
 				break;
 

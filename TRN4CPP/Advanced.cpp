@@ -137,13 +137,13 @@ void TRN4CPP::Simulation::Measurement::Readout::MeanSquareError::configure(const
 	frontend->install_measurement_readout_mean_square_error(simulation_id, functor);
 	frontend->configure_measurement_readout_mean_square_error(simulation_id, batch_size);
 }
-void TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void TRN4CPP::Simulation::Measurement::Readout::FrechetDistance::configure(const unsigned long long &simulation_id,  const std::size_t &batch_size, const std::string &norm, const std::string &aggregator, const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	TRACE_LOGGER;
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->install_measurement_readout_frechet_distance(simulation_id, functor);
-	frontend->configure_measurement_readout_frechet_distance(simulation_id, batch_size);
+	frontend->configure_measurement_readout_frechet_distance(simulation_id, batch_size, norm, aggregator);
 }
 void TRN4CPP::Simulation::Measurement::Readout::Custom::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
@@ -161,13 +161,13 @@ void TRN4CPP::Simulation::Measurement::Position::MeanSquareError::configure(cons
 	frontend->install_measurement_position_mean_square_error(simulation_id, functor);
 	frontend->configure_measurement_position_mean_square_error(simulation_id, batch_size);
 }
-void TRN4CPP::Simulation::Measurement::Position::FrechetDistance::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
+void TRN4CPP::Simulation::Measurement::Position::FrechetDistance::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::string &norm, const std::string &aggregator, const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
 	TRACE_LOGGER;
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->install_measurement_position_frechet_distance(simulation_id, functor);
-	frontend->configure_measurement_position_frechet_distance(simulation_id, batch_size);
+	frontend->configure_measurement_position_frechet_distance(simulation_id, batch_size, norm, aggregator);
 }
 void TRN4CPP::Simulation::Measurement::Position::Custom::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &primed, const std::vector<float> &predicted, const std::vector<float> &expected, const std::size_t &preamble, const std::size_t &pages, const std::size_t &rows, const std::size_t &cols)> &functor)
 {
@@ -177,13 +177,12 @@ void TRN4CPP::Simulation::Measurement::Position::Custom::configure(const unsigne
 	frontend->install_measurement_position_custom(simulation_id, functor);
 	frontend->configure_measurement_position_custom(simulation_id, batch_size);
 }
-void TRN4CPP::Simulation::Loop::SpatialFilter::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
+void TRN4CPP::Simulation::Loop::SpatialFilter::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
 	const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
 	std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
 	const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
 	std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
-	const std::size_t &rows, const std::size_t &cols, const std::pair<float, float> &x, const std::pair<float, float> &y,
-	const std::vector<float> response, const float &sigma, const float &radius, const float &angle, const float &scale, const std::string &tag
+const std::string &tag
 )
 {
 	TRACE_LOGGER;
@@ -193,8 +192,7 @@ void TRN4CPP::Simulation::Loop::SpatialFilter::configure(const unsigned long lon
 	perceived_stimulus = std::bind(&TRN::Engine::Broker::notify_stimulus, frontend, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
 	frontend->install_position(simulation_id, predicted_position);
 	frontend->install_stimulus(simulation_id, predicted_stimulus);
-	frontend->configure_loop_spatial_filter(simulation_id, batch_size, stimulus_size, seed,
-		rows, cols, x, y, response, sigma, radius, angle, scale, tag);
+	frontend->configure_loop_spatial_filter(simulation_id, batch_size, stimulus_size, tag);
 }
 void TRN4CPP::Simulation::Loop::Custom::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
 	const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
@@ -241,16 +239,7 @@ void TRN4CPP::Simulation::Reservoir::Weights::Readout::Custom::configure(const u
 	frontend->install_readout(simulation_id, request);
 	frontend->configure_readout_custom(simulation_id);
 }
-void TRN4CPP::Simulation::Reservoir::Weights::Feedback::Custom::configure(const unsigned long long &simulation_id, const std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
-	std::function<void(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply)
-{
-	TRACE_LOGGER;
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-	reply = std::bind(&TRN::Engine::Broker::notify_feedback, frontend, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
-	frontend->install_feedback(simulation_id, request);
-	frontend->configure_feedback_custom(simulation_id);
-}
+
 void TRN4CPP::Simulation::Reservoir::Weights::Recurrent::Custom::configure(const unsigned long long &simulation_id, const std::function<void(const unsigned long long &simulation_id, const unsigned long &seed, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)> &reply)
 {

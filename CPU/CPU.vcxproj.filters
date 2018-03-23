@@ -85,6 +85,12 @@
     <ClInclude Include="Algorithm_template_method.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="avx_mathfun.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sse_mathfun.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cpu_global.h">

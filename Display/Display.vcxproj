@@ -78,7 +78,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>TRN_MODULE="$(ProjectName)";_WIN32_WINNT=0x0501;BOOST_ALL_DYN_LINK;DISPLAY_LIB;UNICODE;WIN32;WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;TRN_MODULE="$(ProjectName)";_WIN32_WINNT=0x0501;BOOST_ALL_DYN_LINK;DISPLAY_LIB;UNICODE;WIN32;WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\Libraries\Build\opencv\include;$(BOOST_ROOT)\include;.\GeneratedFiles;.;..;.\GeneratedFiles\$(ConfigurationName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -120,7 +120,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>TRN_MODULE="$(ProjectName)";_WIN32_WINNT=0x0501;BOOST_ALL_DYN_LINK;QT_NO_DEBUG;NDEBUG;DISPLAY_LIB;UNICODE;WIN32;WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;TRN_MODULE="$(ProjectName)";_WIN32_WINNT=0x0501;BOOST_ALL_DYN_LINK;QT_NO_DEBUG;NDEBUG;DISPLAY_LIB;UNICODE;WIN32;WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\Libraries\Build\opencv\include;$(BOOST_ROOT)\include;.\GeneratedFiles;.;..;.\GeneratedFiles\$(ConfigurationName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>

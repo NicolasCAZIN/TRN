@@ -1,5 +1,8 @@
 #pragma once
 
+#include <math.h>
+
+#include <cmath>
 #include <queue>
 #include <set>
 #include <thread>

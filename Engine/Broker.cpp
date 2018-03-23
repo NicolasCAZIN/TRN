@@ -252,15 +252,7 @@ void TRN::Engine::Broker::body()
 				});
 			}
 			break;
-			case TRN::Engine::FEEDBACK_DIMENSIONS:
-			{
-				auto message = handle->communicator->receive<TRN::Engine::FEEDBACK_DIMENSIONS>(0);
-				handle->to_caller->post([=]()
-				{
-					callback_feedback(message.simulation_id, message.seed, message.matrices, message.rows, message.cols);
-				});
-			}
-			break;
+
 			case TRN::Engine::READOUT_DIMENSIONS:
 			{
 				auto message = handle->communicator->receive<TRN::Engine::READOUT_DIMENSIONS>(0);
@@ -762,7 +754,7 @@ void TRN::Engine::Broker::configure_measurement_readout_mean_square_error(const 
 		});
  });
 }
-void TRN::Engine::Broker::configure_measurement_readout_frechet_distance(const unsigned long long &simulation_id, const std::size_t &batch_size)
+void TRN::Engine::Broker::configure_measurement_readout_frechet_distance(const unsigned long long &simulation_id,  const std::size_t &batch_size, const std::string &norm, const std::string &aggregator)
 {
 	TRACE_LOGGER;
 	retrieve_simulation(simulation_id)->post([=]()
@@ -775,6 +767,8 @@ void TRN::Engine::Broker::configure_measurement_readout_frechet_distance(const u
 			TRN::Engine::Message<CONFIGURE_MEASUREMENT_READOUT_FRECHET_DISTANCE> message;
 			message.simulation_id = simulation_id;
 			message.batch_size = batch_size;
+			message.norm = norm;
+			message.aggregator = aggregator;
 			handle->communicator->send(message, processor->get_rank());
 		});
 	});
@@ -813,7 +807,7 @@ void TRN::Engine::Broker::configure_measurement_position_mean_square_error(const
 		});
 	});
 }
-void TRN::Engine::Broker::configure_measurement_position_frechet_distance(const unsigned long long &simulation_id, const std::size_t &batch_size)
+void TRN::Engine::Broker::configure_measurement_position_frechet_distance(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::string &norm, const std::string &aggregator)
 {
 	TRACE_LOGGER;
 	retrieve_simulation(simulation_id)->post([=]()
@@ -827,6 +821,8 @@ void TRN::Engine::Broker::configure_measurement_position_frechet_distance(const 
 			TRN::Engine::Message<CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> message;
 			message.simulation_id = simulation_id;
 			message.batch_size = batch_size;
+			message.norm = norm;
+			message.aggregator = aggregator;
 			handle->communicator->send(message, processor->get_rank());
 		});
 	});
@@ -848,7 +844,7 @@ void TRN::Engine::Broker::configure_measurement_position_custom(const unsigned l
 		});
 	});
 }
-void TRN::Engine::Broker::configure_reservoir_widrow_hoff(const unsigned long long &simulation_id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate, const float &initial_state_scale, const float &learning_rate, const unsigned long &seed, const std::size_t &batch_size)
+void TRN::Engine::Broker::configure_reservoir_widrow_hoff(const unsigned long long &simulation_id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate, const float &initial_state_scale, const float &learning_rate, const unsigned long &seed, const std::size_t &batch_size, const std::size_t &mini_batch_size)
 {
 	TRACE_LOGGER;
 	retrieve_simulation(simulation_id)->post([=]()
@@ -867,6 +863,7 @@ void TRN::Engine::Broker::configure_reservoir_widrow_hoff(const unsigned long lo
 			message.initial_state_scale = initial_state_scale;
 			message.learning_rate = learning_rate;
 			message.batch_size = batch_size;
+			message.mini_batch_size = mini_batch_size;
 			message.seed = seed;
 			handle->communicator->send(message, processor->get_rank());
 		});
@@ -890,14 +887,131 @@ void TRN::Engine::Broker::configure_loop_copy(const unsigned long long &simulati
 		});
 	});
 }
-void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const unsigned long &seed,
+
+
+void	TRN::Engine::Broker::configure_decoder_linear(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
+	const std::vector<float> &cx, const std::vector<float> &cy)
+{
+	TRACE_LOGGER;
+	retrieve_simulation(simulation_id)->post([=]()
+	{
+		auto processor = handle->manager->retrieve(simulation_id);
+		processor->configuring();
+		processor->post([=]()
+		{
+
+			TRN::Engine::Message<CONFIGURE_DECODER_LINEAR> message;
+
+			message.simulation_id = simulation_id;
+			message.batch_size = batch_size;
+			message.stimulus_size = stimulus_size;
+			message.cx = cx;
+			message.cy = cy;
+			handle->communicator->send(message, processor->get_rank());
+		});
+	});
+}
+void	TRN::Engine::Broker::configure_decoder_kernel_map(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
 	const std::size_t &rows, const std::size_t &cols,
 	const std::pair<float, float> &x, const std::pair<float, float> &y,
-	const std::vector<float> &response,
 	const float &sigma,
 	const float &radius,
 	const float &angle,
 	const float &scale,
+	const unsigned long &seed,
+	const std::vector<float> &response
+	)
+{
+	TRACE_LOGGER;
+	retrieve_simulation(simulation_id)->post([=]()
+	{
+		auto processor = handle->manager->retrieve(simulation_id);
+		processor->configuring();
+		auto rank = processor->get_rank();
+		std::vector<float> response_to_send;
+		auto response_checksum = TRN::Engine::checksum(response);
+		std::unique_lock<std::mutex> guard(handle->cache_mutex);
+		if (handle->cached[rank].find(response_checksum) == handle->cached[rank].end())
+		{
+			DEBUG_LOGGER << "Data having checksum 0x" << std::hex << response_checksum << " is not cached. Will send it";
+			response_to_send = response;
+			handle->cached[rank].insert(response_checksum);
+		}
+		else
+		{
+			DEBUG_LOGGER << "Data having checksum 0x" << std::hex << response_checksum << " is cached. Won't send it";
+		}
+		processor->post([=]()
+		{
+
+			TRN::Engine::Message<CONFIGURE_DECODER_KERNEL_MAP> message;
+
+			message.simulation_id = simulation_id;
+			message.batch_size = batch_size;
+			message.stimulus_size = stimulus_size;
+			message.rows = rows;
+			message.cols = cols;
+			message.x = x;
+			message.y = y;
+			message.response.first = response_checksum;
+			message.response.second = response_to_send;
+
+			message.sigma = sigma;
+			message.radius = radius;
+			message.scale = scale;
+			message.angle = angle;
+			message.seed = seed;
+
+			handle->communicator->send(message, processor->get_rank());
+		});
+	});
+}
+void	TRN::Engine::Broker::configure_decoder_kernel_model(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
+	const std::size_t &rows, const std::size_t &cols,
+	const std::pair<float, float> &x, const std::pair<float, float> &y,
+	const float &sigma,
+	const float &radius,
+	const float &angle,
+	const float &scale,
+	const unsigned long &seed,
+	const std::vector<float> &cx,
+	const std::vector<float> &cy,
+	const std::vector<float> &K
+)
+{
+	TRACE_LOGGER;
+	retrieve_simulation(simulation_id)->post([=]()
+	{
+		auto processor = handle->manager->retrieve(simulation_id);
+		processor->configuring();
+		processor->post([=]()
+		{
+
+			TRN::Engine::Message<CONFIGURE_DECODER_KERNEL_MODEL> message;
+
+			message.simulation_id = simulation_id;
+			message.batch_size = batch_size;
+			message.stimulus_size = stimulus_size;
+			message.rows = rows;
+			message.cols = cols;
+			message.x = x;
+			message.y = y;
+			message.cx = cx;
+			message.cy = cy;
+			message.K = K;
+
+			message.sigma = sigma;
+			message.radius = radius;
+			message.scale = scale;
+			message.angle = angle;
+			message.seed = seed;
+
+			handle->communicator->send(message, processor->get_rank());
+		});
+	});
+}
+
+void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, 
 	const std::string &tag)
 {
 	TRACE_LOGGER;
@@ -906,21 +1020,7 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned long long
 		auto processor = handle->manager->retrieve(simulation_id);
 		
 		processor->configuring();
-		auto rank = processor->get_rank();
-		std::vector<float> to_send;
-		auto checksum = TRN::Engine::checksum(response);
-		std::unique_lock<std::mutex> guard(handle->cache_mutex);
-		if (handle->cached[rank].find(checksum) == handle->cached[rank].end())
-		{
-			DEBUG_LOGGER << "Data having checksum 0x" << std::hex << checksum << " is not cached. Will send it";
-			to_send = response;
-			handle->cached[rank].insert(checksum);
-		}
-		else
-		{
-			DEBUG_LOGGER << "Data having checksum 0x" << std::hex << checksum << " is cached. Won't send it";
-		}
-
+		
 		processor->post([=]()
 		{
 			TRN::Engine::Message<CONFIGURE_LOOP_SPATIAL_FILTER> message;
@@ -928,18 +1028,9 @@ void TRN::Engine::Broker::configure_loop_spatial_filter(const unsigned long long
 			message.simulation_id = simulation_id;
 			message.stimulus_size = stimulus_size;
 			message.batch_size = batch_size;
-			message.rows = rows;
-			message.cols = cols;
-			message.x = x;
-			message.y = y;
-			message.sequence = to_send;
-			message.checksum = checksum;
-			message.sigma = sigma;
-			message.radius = radius;
-			message.scale = scale;
-			message.angle = angle;
+	
 			message.tag = tag;
-			message.seed = seed;
+	
 			handle->communicator->send(message, processor->get_rank());
 		});
 	});
@@ -1153,62 +1244,7 @@ void TRN::Engine::Broker::configure_readout_custom(const unsigned long long &sim
 		});
 	});
 }
-void TRN::Engine::Broker::configure_feedback_uniform(const unsigned long long &simulation_id, const float &a, const float &b, const float &sparsity)
-{
-	TRACE_LOGGER;
-	retrieve_simulation(simulation_id)->post([=]()
-	{
-		auto processor = handle->manager->retrieve(simulation_id);
-		processor->configuring();
-		processor->post([=]()
-		{
 
-			TRN::Engine::Message<CONFIGURE_FEEDBACK_UNIFORM> message;
-			message.simulation_id = simulation_id;
-			message.a = a;
-			message.b = b;
-			message.sparsity = sparsity;
-			handle->communicator->send(message, processor->get_rank());
-		});
-	});
-}
-void TRN::Engine::Broker::configure_feedback_gaussian(const unsigned long long &simulation_id, const float &mu, const float &sigma, const float &sparsity)
-{
-	TRACE_LOGGER;
-	retrieve_simulation(simulation_id)->post([=]()
-	{
-		auto processor = handle->manager->retrieve(simulation_id);
-		processor->configuring();
-		processor->post([=]()
-		{
-		
-			TRN::Engine::Message<CONFIGURE_FEEDBACK_GAUSSIAN> message;
-			message.simulation_id = simulation_id;
-			message.mu = mu;
-			message.sigma = sigma;
-			message.sparsity = sparsity;
-
-			handle->communicator->send(message, processor->get_rank());
-		});
-	});
-}
-void TRN::Engine::Broker::configure_feedback_custom(const unsigned long long &simulation_id)
-{
-	TRACE_LOGGER;
-	retrieve_simulation(simulation_id)->post([=]()
-	{
-	 auto processor = handle->manager->retrieve(simulation_id);
-	 processor->configuring();
-		processor->post([=]()
-		{
-		
-			TRN::Engine::Message<CONFIGURE_FEEDBACK_CUSTOM> message;
-			message.simulation_id = simulation_id;
-
-			handle->communicator->send(message, processor->get_rank());
-		});
-	});
-}
 void TRN::Engine::Broker::configure_recurrent_uniform(const unsigned long long &simulation_id, const float &a, const float &b, const float &sparsity)
 {
 	TRACE_LOGGER;
@@ -1417,26 +1453,7 @@ void TRN::Engine::Broker::notify_feedforward(const unsigned long long &simulatio
 	/*	});
 	});*/
 }
-void TRN::Engine::Broker::notify_feedback(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
-{
-	TRACE_LOGGER;
-	/*retrieve_simulation(simulation_id)->post([=]()
-	{*/
-		auto processor = handle->manager->retrieve(simulation_id);
-		/*processor->configuring();
-		processor->post([=]()
-		{*/
-	
-			TRN::Engine::Message<FEEDBACK_WEIGHTS> message;
-			message.simulation_id = simulation_id;
-			message.elements = weights;
-			message.matrices = matrices;
-			message.rows = rows;
-			message.cols = cols;
-			handle->communicator->send(message, processor->get_rank());
-	/*	});
-	});*/
-}
+
 void TRN::Engine::Broker::notify_readout(const unsigned long long &simulation_id, const std::vector<float> &weights, const std::size_t &matrices, const std::size_t &rows, const std::size_t &cols)
 {
 	TRACE_LOGGER;

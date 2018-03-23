@@ -28,7 +28,7 @@
 #include <boost/log/support/date_time.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
-
+#include <strtk.hpp>
 #include <queue>
 #include <functional>
 #include <mutex>
