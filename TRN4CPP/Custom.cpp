@@ -36,10 +36,10 @@ void TRN4CPP::Plugin::Custom::initialize(const std::string &library_path, const 
 	custom = boost::dll::import<TRN4CPP::Plugin::Custom::Interface>(path, "plugin_custom", boost::dll::load_mode::append_decorations);
 	custom->initialize(arguments);
 
-	TRN4CPP::Simulation::Loop::Position::install(std::bind(&TRN4CPP::Plugin::Custom::Interface::callback_position, custom, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), reply_position);
+	TRN4CPP::Simulation::Encoder::Custom::install(std::bind(&TRN4CPP::Plugin::Custom::Interface::callback_position, custom, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), reply_position);
 	custom->install_position(reply_position);
 
-	TRN4CPP::Simulation::Loop::Stimulus::install(std::bind(&TRN4CPP::Plugin::Custom::Interface::callback_stimulus, custom, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), reply_stimulus);
+	TRN4CPP::Simulation::Loop::Custom::install(std::bind(&TRN4CPP::Plugin::Custom::Interface::callback_stimulus, custom, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5), reply_stimulus);
 	custom->install_stimulus(reply_stimulus);
 
 	TRN4CPP::Simulation::Scheduler::Custom::install(std::bind(&TRN4CPP::Plugin::Custom::Interface::callback_scheduler, custom, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8), reply_scheduler);
@@ -128,7 +128,7 @@ void TRN4CPP::Simulation::Reservoir::Weights::Readout::Custom::install(const std
 	reply = std::bind(&TRN::Engine::Broker::notify_readout, frontend, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
 }
 
-void TRN4CPP::Simulation::Loop::Stimulus::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
+void TRN4CPP::Simulation::Loop::Custom::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);
@@ -138,7 +138,7 @@ void TRN4CPP::Simulation::Loop::Stimulus::install(const std::function<void(const
 	on_stimulus = request;
 	reply = std::bind(&TRN::Engine::Broker::notify_stimulus, frontend, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
 }
-void TRN4CPP::Simulation::Loop::Position::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
+void TRN4CPP::Simulation::Encoder::Custom::install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &reply)
 {
 	std::unique_lock<std::recursive_mutex> guard(mutex);

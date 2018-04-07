@@ -60,6 +60,8 @@ namespace TRN
 			CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE,
 			CONFIGURE_MEASUREMENT_POSITION_CUSTOM,
 			CONFIGURE_RESERVOIR_WIDROW_HOFF,
+			CONFIGURE_ENCODER_MODEL,
+			CONFIGURE_ENCODER_CUSTOM,
 			CONFIGURE_DECODER_LINEAR,
 			CONFIGURE_DECODER_KERNEL_MODEL,
 			CONFIGURE_DECODER_KERNEL_MAP,
@@ -678,9 +680,44 @@ namespace TRN
 			}
 			virtual ~Message() {}
 		};
+		template<>
+		struct Message<TRN::Engine::Tag::CONFIGURE_ENCODER_CUSTOM> : public Simulation
+		{
+			std::size_t batch_size;
+			std::size_t stimulus_size;
 
 
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Simulation>(*this);
+				ar & stimulus_size;
+				ar & batch_size;
 
+			}
+			virtual ~Message() {}
+		};
+
+		template<>
+		struct Message<TRN::Engine::Tag::CONFIGURE_ENCODER_MODEL> : public Message<TRN::Engine::Tag::CONFIGURE_ENCODER_CUSTOM>
+		{
+
+			std::vector<float> cx;
+			std::vector<float> cy;
+			std::vector<float> K;
+
+			template<class Archive>
+			void serialize(Archive & ar, const unsigned int version)
+			{
+				ar & boost::serialization::base_object<Message<TRN::Engine::Tag::CONFIGURE_ENCODER_CUSTOM>>(*this);
+				ar & stimulus_size;
+				ar & batch_size;
+				ar & cx;
+				ar & cy;
+				ar & K;
+			}
+			virtual ~Message() {}
+		};
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL> : public Kernel
 		{

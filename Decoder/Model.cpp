@@ -50,6 +50,8 @@ void TRN::Decoder::Model::location_probability(
 		TRN::Decoder::Kernel::handle->roi_rows, TRN::Decoder::Kernel::handle->roi_cols,
 		TRN::Decoder::Kernel::handle->roi_row_begin, TRN::Decoder::Kernel::handle->roi_row_end,
 		TRN::Decoder::Kernel::handle->roi_col_begin, TRN::Decoder::Kernel::handle->roi_col_end,
+		TRN::Decoder::Kernel::handle->arena_x.first, TRN::Decoder::Kernel::handle->arena_x.second,
+		TRN::Decoder::Kernel::handle->arena_y.first, TRN::Decoder::Kernel::handle->arena_y.second,
 		TRN::Decoder::Kernel::handle->radius,
 		TRN::Decoder::Kernel::handle->cos_half_angle,
 		TRN::Decoder::Kernel::handle->scale,
@@ -82,11 +84,10 @@ void TRN::Decoder::Model::visit(std::shared_ptr<TRN::Core::Message::Payload<TRN:
 	auto roi_rows = TRN::Decoder::Kernel::handle->roi_rows;
 	auto roi_cols = TRN::Decoder::Kernel::handle->roi_cols;
 
-	flops_per_cycle += place_cells * roi_cols * 3;
-	flops_per_cycle += place_cells * roi_rows * 3;
-	flops_per_cycle += place_cells * roi_rows * roi_cols; // add
+	flops_per_cycle += place_cells * roi_rows * roi_cols * 2; // sub
+	flops_per_cycle += place_cells * roi_rows * roi_cols * 4; // mul sub
 	flops_per_cycle += place_cells * roi_rows * roi_cols * 32; // exp
-	flops_per_cycle += place_cells * roi_rows * roi_cols; // sub
+	flops_per_cycle += roi_rows * roi_cols; // sub
 	
 	flops_per_cycle += place_cells * (roi_rows * roi_cols); // mul
 	flops_per_cycle += place_cells * (roi_rows * roi_cols); // add

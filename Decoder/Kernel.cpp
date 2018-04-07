@@ -18,7 +18,7 @@ TRN::Decoder::Kernel::Kernel(const std::shared_ptr<TRN::Backend::Driver> &driver
 	handle->arena_y = arena_y;
 	handle->sigma = sigma;
 	handle->radius = radius;
-	
+
 	handle->scale = scale;
 
 	float corrected_angle = angle;
@@ -62,6 +62,9 @@ TRN::Decoder::Kernel::Kernel(const std::shared_ptr<TRN::Backend::Driver> &driver
 	driver->get_memory()->allocate((void **)&handle->roi_col_begin, sizeof(std::size_t), batch_size);
 	driver->get_memory()->allocate((void **)&handle->roi_col_end, sizeof(std::size_t), batch_size);
 
+	handle->argmax.resize(batch_size);
+
+
 	handle->x_range[0] = arena_x.first;
 	for (std::size_t col = 0; col < cols - 1; col++)
 		handle->x_range[col] = arena_x.first + col * x_step;
@@ -76,8 +79,8 @@ TRN::Decoder::Kernel::Kernel(const std::shared_ptr<TRN::Backend::Driver> &driver
 
 	if (radius > 0.0f)
 	{
-		auto roi_cols = static_cast<std::size_t>(std::floor((radius * 2.0f) / x_step) + 1);
-		auto roi_rows = static_cast<std::size_t>(std::floor((radius * 2.0f) / y_step) + 1);
+		auto roi_cols = std::min(cols, static_cast<std::size_t>(std::floor((radius * 2.0f) / x_step) + 1));
+		auto roi_rows = std::min(rows, static_cast<std::size_t>(std::floor((radius * 2.0f) / y_step) + 1));
 		std::size_t roi_cols_size;
 		std::size_t roi_rows_size;
 
@@ -95,8 +98,14 @@ TRN::Decoder::Kernel::Kernel(const std::shared_ptr<TRN::Backend::Driver> &driver
 		handle->roi_cols = cols;
 	}
 
+	driver->get_memory()->allocate((void **)&handle->dev_argmax, sizeof(int *), batch_size);
 	for (std::size_t batch = 0; batch < batch_size; batch++)
 	{
+		int *ptr;
+		driver->get_memory()->allocate((void **)&ptr, sizeof(int), 1);
+		handle->argmax[batch] = ptr;
+		
+
 		auto x_grid_centered = TRN::Core::Matrix::create(implementor, 1, handle->roi_cols);
 		auto y_grid_centered = TRN::Core::Matrix::create(implementor, 1, handle->roi_rows);
 		auto next_location_probability = TRN::Core::Matrix::create(implementor, handle->roi_rows, handle->roi_cols);
@@ -107,10 +116,15 @@ TRN::Decoder::Kernel::Kernel(const std::shared_ptr<TRN::Backend::Driver> &driver
 		handle->batched_next_location_probability->update(batch, next_location_probability);
 		handle->batched_direction->update(batch, direction);
 	}
+	handle->host_argmax = handle->argmax.data();
+	driver->get_memory()->upload(handle->host_argmax, handle->dev_argmax, sizeof(int *), batch_size);
 }
 
 TRN::Decoder::Kernel::~Kernel()
 {
+	for (auto ptr : handle->argmax)
+		implementor->get_memory()->deallocate(ptr);
+	implementor->get_memory()->deallocate(handle->dev_argmax);
 	handle.reset();
 }
 
@@ -139,16 +153,28 @@ void TRN::Decoder::Kernel::decode(
 
 	handle->batched_next_location_probability->to(e, b, r, c);
 	cv::Mat m(r[0] * b, c[0], CV_32F, e.data());*/
-
-
+	
+	
 	implementor->get_algorithm()->select_most_probable_location(
 		TRN::Core::Decoder::handle->batch_size, handle->rows, handle->cols,
 		handle->roi_row_begin, handle->roi_row_end, handle->roi_col_begin, handle->roi_col_end,
 		handle->x_grid->get_elements(), handle->x_grid->get_rows(), handle->x_grid->get_cols(), handle->x_grid->get_stride(),
 		handle->y_grid->get_elements(), handle->x_grid->get_rows(), handle->x_grid->get_cols(), handle->x_grid->get_stride(),
-		(const float **)handle->batched_next_location_probability->get_elements(), handle->batched_next_location_probability->get_rows(), handle->batched_next_location_probability->get_cols(), handle->batched_next_location_probability->get_strides(),
-		decoded_position->get_elements(), decoded_position->get_rows(), decoded_position->get_cols(), decoded_position->get_strides()
+		(const float **)handle->batched_next_location_probability->get_elements(true), handle->batched_next_location_probability->get_rows(), handle->batched_next_location_probability->get_cols(), handle->batched_next_location_probability->get_strides(),
+		handle->host_argmax
 	);
+
+	implementor->get_algorithm()->assign_most_probable_location
+	(
+		TRN::Core::Decoder::handle->batch_size, handle->rows, handle->cols,
+		handle->roi_row_begin, handle->roi_row_end, handle->roi_col_begin, handle->roi_col_end,
+		handle->arena_x.first, handle->arena_x.second - handle->arena_x.first,
+		handle->arena_y.first, handle->arena_y.second - handle->arena_y.first,
+		(const int **)handle->dev_argmax,
+		handle->batched_next_location_probability->get_strides(),
+		decoded_position->get_elements()
+	);
+
 }
 
 

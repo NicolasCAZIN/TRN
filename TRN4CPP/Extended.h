@@ -42,6 +42,19 @@ namespace TRN4CPP
 				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const std::string &tag);
 			};
 		};
+		namespace Encoder
+		{
+			namespace Model
+			{
+				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
+					const std::vector<float> &cx, const std::vector<float> &cy, const std::vector<float> &width
+				);
+			};
+			namespace Custom
+			{
+				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size);
+			};
+		};
 
 		namespace Decoder
 		{

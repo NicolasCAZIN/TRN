@@ -253,7 +253,16 @@ void TRN::Engine::Node::body()
 					process(unpack<TRN::Engine::CONFIGURE_RESERVOIR_WIDROW_HOFF>(locked, handle->rank, simulation_id, counter, number));
 				}
 				break;
-
+				case TRN::Engine::CONFIGURE_ENCODER_MODEL:
+				{
+					process(unpack<TRN::Engine::CONFIGURE_ENCODER_MODEL>(locked, handle->rank, simulation_id, counter, number));
+				}
+				break;
+				case TRN::Engine::CONFIGURE_ENCODER_CUSTOM:
+				{
+					process(unpack<TRN::Engine::CONFIGURE_ENCODER_CUSTOM>(locked, handle->rank, simulation_id, counter, number));
+				}
+				break;
 				case TRN::Engine::CONFIGURE_DECODER_LINEAR:
 				{
 					process(unpack<TRN::Engine::CONFIGURE_DECODER_LINEAR>(locked, handle->rank, simulation_id, counter, number));

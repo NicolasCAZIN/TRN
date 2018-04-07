@@ -41,48 +41,48 @@ void  TRN::GPU::Memory::deallocate(void *remote)
 
 void  TRN::GPU::Memory::copy(const void *src, void *dst, const std::size_t &depth, const std::size_t &size, const bool &async)
 {
-	checkCudaErrors(cudaMemcpyAsync(dst, src, size * depth, cudaMemcpyKind::cudaMemcpyDeviceToDevice, handle->context->get_stream()));
+	checkCudaErrors(cudaMemcpyAsync(dst, src, size * depth, cudaMemcpyKind::cudaMemcpyDeviceToDevice, *handle->context->get_streams()));
 	if (!async)
-		checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+		checkCudaErrors(cudaStreamSynchronize(*handle->context->get_streams()));
 }
 
 void  TRN::GPU::Memory::copy(const void *src, void *dst, const std::size_t &depth, const std::size_t &width, const std::size_t &height, const std::size_t &src_stride, const std::size_t &dst_stride, const bool &async)
 {
-	checkCudaErrors(cudaMemcpy2DAsync(dst, dst_stride * depth, src, src_stride * depth,width * depth, height, cudaMemcpyKind::cudaMemcpyDeviceToDevice, handle->context->get_stream()));
+	checkCudaErrors(cudaMemcpy2DAsync(dst, dst_stride * depth, src, src_stride * depth,width * depth, height, cudaMemcpyKind::cudaMemcpyDeviceToDevice, *handle->context->get_streams()));
 	if (!async)
-		checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+		checkCudaErrors(cudaStreamSynchronize(*handle->context->get_streams()));
 }
 void  TRN::GPU::Memory::upload(const void *local, void *remote, const std::size_t &depth, const std::size_t &size, const bool &async)
 {
-	checkCudaErrors(cudaMemcpyAsync(remote, local, depth * size, cudaMemcpyKind::cudaMemcpyHostToDevice, handle->context->get_stream()));
+	checkCudaErrors(cudaMemcpyAsync(remote, local, depth * size, cudaMemcpyKind::cudaMemcpyHostToDevice, *handle->context->get_streams()));
 	if (!async)
-		checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+		checkCudaErrors(cudaStreamSynchronize(*handle->context->get_streams()));
 }
 void  TRN::GPU::Memory::upload(const void *local, void *remote, const std::size_t &depth, const std::size_t &width, const std::size_t &height, const std::size_t &stride, const bool &async)
 {
-	checkCudaErrors(cudaMemcpy2DAsync(remote, stride * depth, local,width * depth,width * depth, height, cudaMemcpyKind::cudaMemcpyHostToDevice, handle->context->get_stream()));
+	checkCudaErrors(cudaMemcpy2DAsync(remote, stride * depth, local,width * depth,width * depth, height, cudaMemcpyKind::cudaMemcpyHostToDevice, *handle->context->get_streams()));
 	if (!async)
-		checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+		checkCudaErrors(cudaStreamSynchronize(*handle->context->get_streams()));
 }
 
 void  TRN::GPU::Memory::download(void *local, const void *remote, const std::size_t &depth, const std::size_t &size, const bool &async)
 {
-	checkCudaErrors(cudaMemcpyAsync(local, remote, size * depth, cudaMemcpyKind::cudaMemcpyDeviceToHost, handle->context->get_stream()));
+	checkCudaErrors(cudaMemcpyAsync(local, remote, size * depth, cudaMemcpyKind::cudaMemcpyDeviceToHost, *handle->context->get_streams()));
 	if (!async)
-		checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+		checkCudaErrors(cudaStreamSynchronize(*handle->context->get_streams()));
 }
 void  TRN::GPU::Memory::download(void *local, const void *remote, const std::size_t &depth, const std::size_t &width, const std::size_t &height, const std::size_t &stride, const bool &async)
 {
-	checkCudaErrors(cudaMemcpy2DAsync(local,width * depth, remote, stride * depth,width * depth, height, cudaMemcpyKind::cudaMemcpyDeviceToHost, handle->context->get_stream()));
+	checkCudaErrors(cudaMemcpy2DAsync(local,width * depth, remote, stride * depth,width * depth, height, cudaMemcpyKind::cudaMemcpyDeviceToHost, *handle->context->get_streams()));
 	if (!async)
-		checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+		checkCudaErrors(cudaStreamSynchronize(*handle->context->get_streams()));
 }
 
 void  TRN::GPU::Memory::blank(void *remote, const std::size_t &depth, const std::size_t &width, const std::size_t &height, const std::size_t &stride, const bool &async)
 {
-	checkCudaErrors(cudaMemset2DAsync(remote, stride * sizeof(float), 0,width * sizeof(float), height, handle->context->get_stream()));
+	checkCudaErrors(cudaMemset2DAsync(remote, stride * sizeof(float), 0,width * sizeof(float), height, *handle->context->get_streams()));
 	if (!async)
-		checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+		checkCudaErrors(cudaStreamSynchronize(*handle->context->get_streams()));
 }
 
 

@@ -42,6 +42,7 @@ static const std::string decorator_name = "DECORATOR";
 static const std::string variable_name = "VARIABLE";
 static const std::string plugin_name = "PLUGIN";
 static const std::string decoder_name = "DECODER";
+static const std::string encoder_name = "ENCODER";
 static const std::string widrowhoff_type = "WIDROWHOFF";
 static const std::string copy_type = "COPY";
 
@@ -555,9 +556,33 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														else if (boost::iequals(loop_type, spatial_filter_type))
 														{
 															bool decoder_initialized = false;
+															bool encoder_initialized = false;
 															for (auto loop_element : _loop)
 															{
-																if (boost::iequals(loop_element.first, decoder_name))
+																if (boost::iequals(loop_element.first, encoder_name))
+																{
+																	auto _encoder = loop_element.second;
+																	auto encoder_type = _encoder.get_child(type_attribute).get_value<std::string>();
+
+																	if (boost::iequals(encoder_type, model_type))
+																	{
+																		std::vector<float> cx, cy, K;
+																		auto csv_filename = _encoder.get_child(filename_attribute).get_value<std::string>();
+																		auto radius_threshold = get_attribute(_encoder, filename_attribute, DEFAULT_RADIUS_THRESHOLD);
+																		TRN::Helper::Parser::place_cells_model(csv_filename, radius_threshold, cx, cy, K);
+																		if (K.size() != prediction_size)
+																			throw std::runtime_error("Place cell prediction size mismatch");
+																	
+																		TRN4CPP::Simulation::Encoder::Model::configure(simulation_id, batch_size, prediction_size, cx, cy, K);
+																		encoder_initialized = true;
+																	}
+																	else if (boost::iequals(encoder_type, custom_type))
+																	{
+																		TRN4CPP::Simulation::Encoder::Custom::configure(simulation_id, batch_size, prediction_size);
+																		encoder_initialized = true;
+																	}
+																}
+																else if (boost::iequals(loop_element.first, decoder_name))
 																{
 																	auto _decoder = loop_element.second;
 																	auto decoder_type = _decoder.get_child(type_attribute).get_value<std::string>();
@@ -634,6 +659,8 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 											
 															if (!decoder_initialized)
 																throw std::runtime_error("Decoder not initialized for spatial filter");
+															if (!encoder_initialized)
+																throw std::runtime_error("Encoder not initialized for spatial filter");
 															auto tag = _loop.get_child(tag_attribute).get_value<std::string>();
 															TRN4CPP::Simulation::Loop::SpatialFilter::configure(simulation_id, batch_size, stimulus_size, tag);
 														}

@@ -12,7 +12,8 @@ TRN::Reservoir::WidrowHoff::WidrowHoff(const std::shared_ptr<TRN::Backend::Drive
 	TRN::Core::Reservoir(driver, stimulus, prediction, reservoir, leak_rate, initial_state_scale, seed, batch_size, mini_batch_size),
 	handle(std::make_unique<TRN::Reservoir::WidrowHoff::Handle >())
 {
-	handle->learning_rate = learning_rate;
+	std::vector<float> l = { learning_rate };
+	handle->learning_rate = TRN::Core::Matrix::create(driver, l, 1, 1);
 }
 
 void TRN::Reservoir::WidrowHoff::train(const std::shared_ptr<TRN::Core::Matrix> &incoming, 
@@ -40,12 +41,12 @@ void TRN::Reservoir::WidrowHoff::train(const std::shared_ptr<TRN::Core::Matrix> 
 			TRN::Core::Reservoir::handle->batched_p->get_elements(), TRN::Core::Reservoir::handle->batched_p->get_rows(), TRN::Core::Reservoir::handle->batched_p->get_cols(), TRN::Core::Reservoir::handle->batched_p->get_strides(),
 			TRN::Core::Reservoir::handle->batched_X_ro->get_elements(), TRN::Core::Reservoir::handle->batched_X_ro->get_rows(), TRN::Core::Reservoir::handle->batched_X_ro->get_cols(), TRN::Core::Reservoir::handle->batched_X_ro->get_strides(),
 			TRN::Core::Reservoir::handle->batched_W_ro->get_elements(), TRN::Core::Reservoir::handle->batched_W_ro->get_rows(), TRN::Core::Reservoir::handle->batched_W_ro->get_cols(), TRN::Core::Reservoir::handle->batched_W_ro->get_strides(),
-			TRN::Core::Reservoir::handle->batched_pre->get_elements(), TRN::Core::Reservoir::handle->batched_pre->get_rows(), TRN::Core::Reservoir::handle->batched_pre->get_cols(), TRN::Core::Reservoir::handle->batched_pre->get_strides(),
+			TRN::Core::Reservoir::handle->bundled_pre->get_elements(true), TRN::Core::Reservoir::handle->bundled_pre->get_rows(), TRN::Core::Reservoir::handle->bundled_pre->get_cols(), TRN::Core::Reservoir::handle->bundled_pre->get_strides(),
 			TRN::Core::Reservoir::handle->batched_post->get_elements(), TRN::Core::Reservoir::handle->batched_post->get_rows(), TRN::Core::Reservoir::handle->batched_post->get_cols(), TRN::Core::Reservoir::handle->batched_post->get_strides(),
-			TRN::Core::Reservoir::handle->batched_desired->get_elements(), TRN::Core::Reservoir::handle->batched_desired->get_rows(), TRN::Core::Reservoir::handle->batched_desired->get_cols(), TRN::Core::Reservoir::handle->batched_desired->get_strides(),
+			TRN::Core::Reservoir::handle->bundled_desired->get_elements(true), TRN::Core::Reservoir::handle->bundled_desired->get_rows(), TRN::Core::Reservoir::handle->bundled_desired->get_cols(), TRN::Core::Reservoir::handle->bundled_desired->get_strides(),
 			scheduling->get_offsets().data(), scheduling->get_durations().data(), scheduling->get_durations().size(), scheduling->get_total_duration(),
 			states->get_elements(), states->get_rows(), states->get_cols(), states->get_stride(),
-			handle->learning_rate);
+			 TRN::Core::Reservoir::handle->one->get_elements(), TRN::Core::Reservoir::handle->zero->get_elements(), handle->learning_rate->get_elements());
 }
 
 

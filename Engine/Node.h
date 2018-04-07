@@ -53,6 +53,8 @@ namespace TRN
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> &message) = 0;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_CUSTOM> &message) = 0;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_RESERVOIR_WIDROW_HOFF> &message) = 0;
+			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_ENCODER_MODEL> &message) = 0;
+			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_ENCODER_CUSTOM> &message) = 0;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR> &message) = 0;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL> &message) = 0;
 			virtual void process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP> &message) = 0;

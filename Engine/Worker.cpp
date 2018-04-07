@@ -4,6 +4,7 @@
 #include "Model/Simulator.h"
 #include "Model/Reservoir.h"
 #include "Model/Decoder.h"
+#include "Model/Encoder.h"
 #include "Model/Loop.h"
 #include "Model/Scheduler.h"
 #include "Model/Initializer.h"
@@ -555,6 +556,53 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 	handle->simulators[message.simulation_id]->set_reservoir(TRN::Model::Reservoir::WidrowHoff::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.stimulus_size, message.prediction_size, message.reservoir_size, message.leak_rate, message.initial_state_scale, message.learning_rate, message.seed, message.batch_size, message.mini_batch_size));
 }
 
+void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_ENCODER_MODEL> &message)
+{
+	TRACE_LOGGER;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
+	if (handle->simulators.find(message.simulation_id) == handle->simulators.end())
+		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
+	handle->simulators[message.simulation_id]->set_encoder(TRN::Model::Encoder::Model::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor,
+		message.batch_size, message.stimulus_size,
+		TRN::Core::Matrix::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.cx, 1, message.cx.size()),
+		TRN::Core::Matrix::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.cy, 1, message.cy.size()),
+		TRN::Core::Matrix::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.K, 1, message.K.size())
+		));
+
+}
+void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_ENCODER_CUSTOM> &message)
+{
+	TRACE_LOGGER;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
+	if (handle->simulators.find(message.simulation_id) == handle->simulators.end())
+		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
+
+	if (TRN::Engine::Node::handle->estimated_position.find(message.simulation_id) != TRN::Engine::Node::handle->estimated_position.end())
+	{
+		throw std::runtime_error("Estimated position functor is already setup for simulator #" + std::to_string(message.simulation_id));
+	}
+
+	handle->simulators[message.simulation_id]->set_encoder(TRN::Model::Encoder::Custom::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor,
+		message.batch_size, message.stimulus_size,
+		[this, message]
+	(const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)
+	{
+		TRN::Engine::Message<POSITION> position;
+		position.simulation_id = message.simulation_id;
+		position.evaluation_id = evaluation_id;
+		position.elements = values;
+		position.rows = rows;
+		position.cols = cols;
+
+		auto locked = TRN::Engine::Node::implementor.lock();
+		if (locked)
+			locked->send(position, 0);
+	},
+		TRN::Engine::Node::handle->estimated_position[message.simulation_id],
+		TRN::Engine::Node::handle->perceived_stimulus[message.simulation_id]
+	));
+
+}
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR> &message)
 {
 	TRACE_LOGGER;
@@ -629,49 +677,22 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 	if (handle->simulators.find(message.simulation_id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
 
-	if (TRN::Engine::Node::handle->estimated_position.find(message.simulation_id) != TRN::Engine::Node::handle->estimated_position.end())
-	{
-		throw std::runtime_error("Estimated position functor is already setup for simulator #" + std::to_string(message.simulation_id));
-	}
-	if (TRN::Engine::Node::handle->perceived_stimulus.find(message.simulation_id) != TRN::Engine::Node::handle->perceived_stimulus.end())
-	{
-		throw std::runtime_error("Perceived stimulus functor is already setup for simulator #" + std::to_string(message.simulation_id));
-	}
+
 
 	auto decoder = handle->simulators[message.simulation_id]->get_decoder();
+	auto encoder = handle->simulators[message.simulation_id]->get_encoder();
 	if (!decoder)
 		throw std::runtime_error("Decoder not configured");
-	handle->simulators[message.simulation_id]->set_loop(TRN::Model::Loop::SpatialFilter::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.batch_size, message.stimulus_size, 
-		[this, message]
-	(const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)
-	{
-		TRN::Engine::Message<POSITION> position;
-		position.simulation_id = message.simulation_id;
-		position.evaluation_id = evaluation_id;
-		position.elements = values;
-		position.rows = rows;
-		position.cols = cols;
+	if (!encoder)
+		throw std::runtime_error("Encoder not configured");
+	auto loop = TRN::Model::Loop::SpatialFilter::create(TRN::Helper::Bridge<TRN::Backend::Driver>::implementor, message.batch_size, message.stimulus_size,
+		
+		encoder,
+		decoder, message.tag);
 
-		 auto locked = TRN::Engine::Node::implementor.lock();
-		if (locked)
-			locked->send(position, 0);
-	},
-		TRN::Engine::Node::handle->estimated_position[message.simulation_id],
-		[this, message]
-	(const unsigned long long &evaluation_id, const std::vector<float> &values, const std::size_t &rows, const std::size_t &cols)
-	{
-		TRN::Engine::Message<STIMULUS> stimulus;
-		stimulus.simulation_id = message.simulation_id;
-		stimulus.evaluation_id = evaluation_id;
-		stimulus.elements = values;
-		stimulus.rows = rows;
-		stimulus.cols = cols;
-		 auto locked = TRN::Engine::Node::implementor.lock();
-		if (locked)
-			locked->send(stimulus, 0);
-	},
-		TRN::Engine::Node::handle->perceived_stimulus[message.simulation_id],
-		decoder, message.tag));
+
+	handle->simulators[message.simulation_id]->set_loop(loop
+	);
 
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_LOOP_CUSTOM> &message)

@@ -34,6 +34,10 @@ const std::shared_ptr<TRN::Core::Decoder> TRN::Simulator::Weights::get_decoder()
 {
 	return decorated->get_decoder();
 }
+const std::shared_ptr<TRN::Core::Encoder> TRN::Simulator::Weights::get_encoder()
+{
+	return decorated->get_encoder();
+}
 const std::shared_ptr<TRN::Core::Scheduler> TRN::Simulator::Weights::get_scheduler()
 {
 	return decorated->get_scheduler();
@@ -66,6 +70,10 @@ void TRN::Simulator::Weights::set_loop(const std::shared_ptr<TRN::Core::Loop> &l
 void TRN::Simulator::Weights::set_decoder(const std::shared_ptr<TRN::Core::Decoder> &decoder)
 {
 	decorated->set_decoder(decoder);
+}
+void TRN::Simulator::Weights::set_encoder(const std::shared_ptr<TRN::Core::Encoder> &encoder)
+{
+	decorated->set_encoder(encoder);
 }
 void TRN::Simulator::Weights::append_measurement(const std::shared_ptr<TRN::Core::Measurement::Abstraction> &measurement)
 {

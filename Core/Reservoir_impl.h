@@ -2,11 +2,14 @@
 
 #include "Reservoir.h"
 #include "Helper/Queue.h"
-#include "Batch.h"
+
+#include "Bundle.h"
 
 class TRN::Core::Reservoir::Handle
 {
 public:
+	std::shared_ptr<TRN::Core::Matrix> one;
+	std::shared_ptr<TRN::Core::Matrix> zero;
 	std::shared_ptr<TRN::Core::Matrix> unitary_sub_u_ffwd;
 	std::shared_ptr<TRN::Core::Batch> batched_incoming;
 	std::shared_ptr<TRN::Core::Batch> batched_expected;
@@ -23,8 +26,8 @@ public:
 	std::shared_ptr<TRN::Core::Batch> batched_W_ro_reset;
 
 	std::shared_ptr<TRN::Core::Batch> batched_post;
-	std::shared_ptr<TRN::Core::Batch> batched_pre;
-	std::shared_ptr<TRN::Core::Batch> batched_desired;
+	std::shared_ptr<TRN::Core::Bundle> bundled_pre;
+	std::shared_ptr<TRN::Core::Bundle> bundled_desired;
 
 	std::size_t stimulus_size;
 	std::size_t reservoir_size;

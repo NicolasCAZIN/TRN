@@ -29,6 +29,7 @@ namespace TRN
 			virtual const std::shared_ptr<TRN::Core::Reservoir> get_reservoir() override;
 			virtual const std::shared_ptr<TRN::Core::Loop> get_loop() override;
 			virtual const std::shared_ptr<TRN::Core::Decoder> get_decoder() override;
+			virtual const std::shared_ptr<TRN::Core::Encoder> get_encoder() override;
 			virtual const std::shared_ptr<TRN::Core::Scheduler> get_scheduler() override;
 			virtual const std::vector<std::shared_ptr<TRN::Core::Mutator>> get_mutators() override;
 		
@@ -40,6 +41,7 @@ namespace TRN
 			virtual void set_scheduler(const std::shared_ptr<TRN::Core::Scheduler> &scheduler) override;
 			virtual void set_loop(const std::shared_ptr<TRN::Core::Loop> &loop) override;
 			virtual void set_decoder(const std::shared_ptr<TRN::Core::Decoder> &decoder) override;
+			virtual void set_encoder(const std::shared_ptr<TRN::Core::Encoder> &encoder) override;
 			virtual void append_measurement(const std::shared_ptr<TRN::Core::Measurement::Abstraction> &measurement) override;
 			virtual void append_mutator(const std::shared_ptr<TRN::Core::Mutator> &mutator) override;
 		public:

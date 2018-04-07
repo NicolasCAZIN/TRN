@@ -10,6 +10,9 @@ TRN::GPU::Algorithm::Algorithm(const std::shared_ptr<Context> context):
 	handle(std::make_unique<TRN::GPU::Algorithm::Handle>())
 {
 	handle->context = context;
+
+
+
 	/*checkCudaErrors(cudaMalloc(&handle->max_value, sizeof(float)));
 	checkCudaErrors(cudaMalloc(&handle->argmax_value, 2 * sizeof(float)));*/
 }
@@ -38,8 +41,8 @@ void TRN::GPU::Algorithm::mean_square_error
 {
 	compute_mean_square_error
 	(
-		handle->context->get_stream(),
-		handle->context->get_handle(),
+		handle->context->get_streams(),
+		handle->context->get_handles(),
 		batch_size,
 		batched_predicted, *batched_predicted_rows, *batched_predicted_cols, *batched_predicted_strides,
 		expected, expected_rows, expected_cols, expected_stride,
@@ -54,7 +57,28 @@ void  TRN::GPU::Algorithm::compute_roi(const std::size_t &batch_size,
 	const float **current_position, const std::size_t *current_position_strides,
 	std::size_t *roi_row_begin, std::size_t *roi_row_end, std::size_t *roi_col_begin, std::size_t *roi_col_end)
 {
+	::compute_roi(
+		handle->context->get_streams(), handle->context->get_handles(), handle->context->get_events(),
+		batch_size, rows, cols, x_min, x_max, y_min, y_max, radius,
+		current_position, *current_position_strides,
+		roi_row_begin, roi_row_end, roi_col_begin, roi_col_end);
 
+}
+
+void TRN::GPU::Algorithm::encode_placecells_model(
+	const std::size_t &batch_size, const std::size_t &place_cells_number,
+	const float *cx,
+	const float *cy,
+	const float *width,
+	const float **batched_decoded_position, const std::size_t *batched_decoded_position_strides,
+	float **batched_stimulus, const std::size_t *batched_stimulus_strides)
+{
+	compute_encode_placecells_model(handle->context->get_streams(),
+		handle->context->get_handles(), handle->context->get_events(),
+		batch_size, place_cells_number,
+		cx, cy, width,
+		batched_decoded_position, *batched_decoded_position_strides,
+		batched_stimulus, *batched_stimulus_strides);
 }
 
 void TRN::GPU::Algorithm::decode_placecells_linear(
@@ -64,15 +88,19 @@ void TRN::GPU::Algorithm::decode_placecells_linear(
 	const float **batched_prediction, const std::size_t *batched_prediction_strides,
 	float **batched_decoded_position, const std::size_t *batched_decoded_position_strides)
 {
-	compute_decode_placecells_linear(handle->context->get_stream(),
-		handle->context->get_handle(), batch_size, place_cells_number, cx, cy, batched_prediction, *batched_prediction_strides, batched_decoded_position, *batched_decoded_position_strides);
+	compute_decode_placecells_linear(handle->context->get_streams(),
+		handle->context->get_handles(), batch_size, place_cells_number, cx, cy, batched_prediction, *batched_prediction_strides, batched_decoded_position, *batched_decoded_position_strides);
 }
+
+
+
 void TRN::GPU::Algorithm::decode_placecells_kernel_model
 (
 	const std::size_t &batch_size, const std::size_t &place_cells_number,
 	const std::size_t &rows, const std::size_t &cols,
 	const std::size_t &roi_rows, const std::size_t &roi_cols,
 	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+	const float &x_min, const float &x_max, const float &y_min, const float &y_max,
 	const float &radius,
 	const float &cos_half_angle,
 	const float &scale,
@@ -92,7 +120,28 @@ void TRN::GPU::Algorithm::decode_placecells_kernel_model
 	float **batched_location_probability, const std::size_t *batched_location_probability_strides
 )
 {
-
+	::decode_placecells_bayesian(
+		handle->context->get_streams(), handle->context->get_handles(), handle->context->get_events(),
+		batch_size, place_cells_number,
+		rows, cols,
+		roi_rows, roi_cols,
+		roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
+		radius,
+		cos_half_angle,
+		scale,
+		sigma,
+		seed,
+		Model(cx, cy, width, gx2w, gy2w, *gx2w_strides, *gy2w_strides),
+		x_min, x_max, y_min, y_max,
+		x_grid, x_grid_stride,
+		y_grid, y_grid_stride,
+		batched_previous_position, *batched_previous_position_stride,
+		batched_current_position, *batched_current_position_stride,
+		batched_predicted_activations, *batched_predicted_activations_stride,
+		batched_direction, *batched_direction_stride,
+		batched_x_grid_centered, *batched_x_grid_centered_stride,
+		batched_y_grid_centered, *batched_y_grid_centered_stride,
+		batched_location_probability, *batched_location_probability_strides);
 }
 void TRN::GPU::Algorithm::decode_placecells_kernel_map
 (
@@ -100,6 +149,7 @@ void TRN::GPU::Algorithm::decode_placecells_kernel_map
 	const std::size_t &rows, const std::size_t &cols,
 	const std::size_t &roi_rows, const std::size_t &roi_cols,
 	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+	const float &x_min, const float &x_max, const float &y_min, const float &y_max,
 	const float &radius,
 	const float &cos_half_angle,
 	const float &scale,
@@ -117,7 +167,29 @@ void TRN::GPU::Algorithm::decode_placecells_kernel_map
 	float **batched_location_probability, const std::size_t *batched_location_probability_strides
 )
 {
+	decode_placecells_bayesian(
+		handle->context->get_streams(), handle->context->get_handles(), handle->context->get_events(),
+		batch_size, place_cells_number,
+		rows, cols,
+		roi_rows, roi_cols,
+		roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
 
+		radius,
+		cos_half_angle,
+		scale,
+		sigma,
+		seed,
+		Map(firing_rate_map, firing_rate_maps_stride),
+		x_min, x_max, y_min, y_max,
+		x_grid, x_grid_stride,
+		y_grid, y_grid_stride,
+		batched_previous_position, *batched_previous_position_stride,
+		batched_current_position, *batched_current_position_stride,
+		batched_predicted_activations, *batched_predicted_activations_stride,
+		batched_direction, *batched_direction_stride,
+		batched_x_grid_centered, *batched_x_grid_centered_stride,
+		batched_y_grid_centered, *batched_y_grid_centered_stride,
+		batched_location_probability, *batched_location_probability_strides);
 }
 
 void TRN::GPU::Algorithm::decode_most_probable_location(
@@ -140,9 +212,9 @@ void TRN::GPU::Algorithm::decode_most_probable_location(
 	float **batched_decoded_position, const std::size_t *batched_decoded_position_strides
 )
 {
-	compute_decode_most_probable_location
+	/*compute_decode_most_probable_location
 	(
-		handle->context->get_stream(), handle->context->get_handle(),
+		handle->context->get_streams(), handle->context->get_handles(),
 		batch_size, stimulus_size,
 		roi_row_begin, roi_row_end,
 		roi_col_begin, roi_col_end,
@@ -160,7 +232,7 @@ void TRN::GPU::Algorithm::decode_most_probable_location(
 		batched_y_grid_centered, *batched_y_grid_centered_strides,
 		batched_direction, *batched_direction_strides,
 		batched_decoded_position, *batched_decoded_position_strides
-	);
+	);*/
 }
 
 void TRN::GPU::Algorithm::place_cell_location_probability(
@@ -175,7 +247,7 @@ void TRN::GPU::Algorithm::place_cell_location_probability(
 	float ** location_probability, const std::size_t *location_probability_rows, const std::size_t *location_probability_cols, const std::size_t *location_probability_strides)
 {
 
-	compute_place_cell_location_probability(handle->context->get_stream(), handle->context->get_handle(),
+	/*compute_place_cell_location_probability(handle->context->get_streams(), handle->context->get_handles(),
 			batch_size, place_cells_number, 
 			rows_begin, rows_end, 
 			cols_begin, cols_end,
@@ -184,13 +256,13 @@ void TRN::GPU::Algorithm::place_cell_location_probability(
 			scale, *scale_rows, *scale_cols, *scale_strides,
 			prediction, *prediction_rows, *prediction_cols, *prediction_strides,
 			hypothesis_map, **hypothesis_map_rows, **hypothesis_map_cols, **hypothesis_map_strides,
-			location_probability, *location_probability_rows, *location_probability_cols, *location_probability_strides);
+			location_probability, *location_probability_rows, *location_probability_cols, *location_probability_strides);*/
 
 
 }
 
 
-void TRN::GPU::Algorithm::restrict_to_reachable_locations
+/*void TRN::GPU::Algorithm::restrict_to_reachable_locations
 (
 	const std::size_t &batch_size, const std::size_t &place_cells_number, 
 	
@@ -206,13 +278,13 @@ void TRN::GPU::Algorithm::restrict_to_reachable_locations
 	float **batched_y_grid_centered, const std::size_t *batched_y_grid_centered_rows, const std::size_t *batched_y_grid_centered_cols, const std::size_t *batched_y_grid_centered_stride,
 	float  **batched_location_probability, const std::size_t *batched_location_probability_rows, const std::size_t *batched_location_probability_cols, const std::size_t *batched_location_probability_strides)
 {
-	compute_direction(handle->context->get_stream(), handle->context->get_handle(), batch_size,
+	compute_direction(handle->context->get_streams(), handle->context->get_handles(), batch_size,
 		batched_previous_location, *batched_previous_location_rows, *batched_previous_location_cols, *batched_previous_location_stride,
 		batched_current_location, *batched_current_location_rows, *batched_current_location_cols, *batched_current_location_stride,
 		batched_direction, *batched_direction_rows, *batched_direction_cols, *batched_direction_stride
 	);
 
-	compute_reachable_locations(handle->context->get_stream(), handle->context->get_handle(),
+	compute_reachable_locations(handle->context->get_streams(), handle->context->get_handles(),
 		batch_size, place_cells_number,
 		rows_begin, rows_end,
 		cols_begin, cols_end,
@@ -227,9 +299,9 @@ void TRN::GPU::Algorithm::restrict_to_reachable_locations
 
 		);
 }
+*/
 
-
-void TRN::GPU::Algorithm::draw_probable_location(const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+/*void TRN::GPU::Algorithm::draw_probable_location(const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 	const float  **batched_location_probability, const std::size_t *batched_location_probability_rows, const std::size_t *batched_location_probability_cols, const std::size_t *batched_location_probability_strides,
@@ -239,7 +311,7 @@ void TRN::GPU::Algorithm::draw_probable_location(const std::size_t &batch_size, 
 	float **batched_predicted_location, const std::size_t *batched_predicted_location_rows, const std::size_t *batched_predicted_location_cols, const std::size_t *batched_predicted_location_strides
 )
 {
-	compute_draw_probable_location(handle->context->get_stream(), handle->context->get_handle(), batch_size, rows, cols,
+	compute_draw_probable_location(handle->context->get_streams(), handle->context->get_handles(), batch_size, rows, cols,
 		x_grid, x_grid_rows, x_grid_cols, x_grid_stride,
 		y_grid, y_grid_rows, y_grid_cols, y_grid_stride,
 		batched_location_probability, *batched_location_probability_rows, *batched_location_probability_cols, *batched_location_probability_strides,
@@ -248,23 +320,49 @@ void TRN::GPU::Algorithm::draw_probable_location(const std::size_t &batch_size, 
 		batched_col_cumsum, *batched_col_cumsum_rows, *batched_col_cumsum_cols, *batched_col_cumsum_strides,
 		batched_predicted_location, *batched_predicted_location_rows, *batched_predicted_location_cols, *batched_predicted_location_strides
 		);
- }
+ }*/
+
+ void TRN::GPU::Algorithm::assign_most_probable_location(
+	const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+	const float &x_min, const float &x_range, const float &y_min, const float &y_range,
+	const int **batched_argmax, const std::size_t *batched_location_probability_strides,
+	float **batched_predicted_location)
+{
+	 compute_assign_most_probable_location(handle->context->get_streams(), handle->context->get_handles(), handle->context->get_events(),
+		 batch_size, rows, cols, roi_row_begin, roi_row_end, roi_col_begin, roi_col_end, x_min, x_range, y_min, y_range, batched_argmax, *batched_location_probability_strides, batched_predicted_location);
+}
 
 void TRN::GPU::Algorithm::select_most_probable_location(const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
 	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 	const float  **batched_location_probability, const std::size_t *batched_location_probability_rows, const std::size_t *batched_location_probability_cols, const std::size_t *batched_location_probability_strides,
-	float **batched_predicted_location, const std::size_t *batched_predicted_location_rows, const std::size_t *batched_predicted_location_cols, const std::size_t *batched_predicted_location_strides
-
+	int **argmax
 )
 {
-	/*compute_select_most_probable_location(handle->context->get_stream(), handle->context->get_handle(), batch_size, rows, cols,
+/*	if (handle->batched_temp_storage.empty())
+	{
+		for (std::size_t batch = 0; batch < batch_size; batch++)
+		{
+
+			cub::DeviceReduce::ArgMax(
+				batched_temp_storage[batch], batched_temp_storage_bytes[batch],
+				batched_location_probability[batch],
+				batched_argmax[batch],
+				batched_location_probability_rows * batched_location_probability_strides,
+				streams[0]);
+		}
+	}*/
+
+
+	compute_select_most_probable_location(handle->context->get_streams(), handle->context->get_handles(), handle->context->get_events(), batch_size, rows, cols,
+		roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
 		x_grid, x_grid_rows, x_grid_cols, x_grid_stride,
 		y_grid, y_grid_rows, y_grid_cols, y_grid_stride,
 		batched_location_probability, *batched_location_probability_rows, *batched_location_probability_cols, *batched_location_probability_strides,
-		batched_predicted_location, *batched_predicted_location_rows, *batched_predicted_location_cols, *batched_predicted_location_strides
-	);*/
+	 argmax
+	);
 }
 void TRN::GPU::Algorithm::learn_widrow_hoff(
 	const std::size_t &batch_size, const std::size_t &mini_batch_size,
@@ -283,21 +381,22 @@ void TRN::GPU::Algorithm::learn_widrow_hoff(
 	float **batched_p, const std::size_t *batched_p_rows, const std::size_t *batched_p_cols, const std::size_t *batched_p_strides,
 	float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
-	float **batched_pre, const std::size_t *batched_pre_rows, const std::size_t *batched_pre_cols, const std::size_t *batched_pre_strides,
+	float ***bundled_pre, const std::size_t **bundled_pre_rows, const std::size_t **bundled_pre_cols, const std::size_t **bundled_pre_strides,
 	float **batched_post, const std::size_t *batched_post_rows, const std::size_t *batched_post_cols, const std::size_t *batched_post_strides,
-	float **batched_desired, const std::size_t *batched_desired_rows, const std::size_t *batched_desired_cols, const std::size_t *batched_desired_strides,
+	float ***bundled_desired, const std::size_t **bundled_desired_rows, const std::size_t **bundled_desired_cols, const std::size_t **bundled_desired_strides,
 	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
 	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
 
-	const float &learning_rate
+
+	const float *one, const float *zero, const float *learning_rate
 	) 
 {
 	if (states_samples == NULL)
 	{
 		update_model<false, true>(
-			batch_size,
+			batch_size, mini_batch_size,
 			seed,
-			handle->context->get_stream(), handle->context->get_handle(), Widrow_Hoff(learning_rate),
+			handle->context->get_streams(), handle->context->get_handles(), handle->context->get_events(), Widrow_Hoff(learning_rate),
 			stimulus_stride, reservoir_stride, prediction_stride,
 			stimulus_size, reservoir_size, prediction_size,
 			leak_rate, initial_state_scale,	
@@ -311,17 +410,18 @@ void TRN::GPU::Algorithm::learn_widrow_hoff(
 			batched_p,* batched_p_rows, *batched_p_cols, *batched_p_strides,
 			batched_x_ro, *batched_x_ro_rows, *batched_x_ro_cols, *batched_x_ro_strides,
 			batched_w_ro, *batched_w_ro_rows, *batched_w_ro_cols, *batched_w_ro_strides,
-			batched_pre, *batched_pre_rows, *batched_pre_cols, *batched_pre_strides,
+			bundled_pre, **bundled_pre_rows, **bundled_pre_cols, **bundled_pre_strides,
 			batched_post, *batched_post_rows, *batched_post_cols, *batched_post_strides,
+			bundled_desired, **bundled_desired_rows, **bundled_desired_cols, **bundled_desired_strides,
 			offsets, durations, repetitions, total_duration,
-			states_samples, states_rows, states_cols, states_stride);
+			states_samples, states_rows, states_cols, states_stride, one, zero);
 	}
 	else
 	{
 		update_model<true, true>(
-			batch_size,
+			batch_size, mini_batch_size,
 			seed,
-			handle->context->get_stream(), handle->context->get_handle(), Widrow_Hoff(learning_rate),
+			handle->context->get_streams(), handle->context->get_handles(), handle->context->get_events(), Widrow_Hoff(learning_rate),
 			stimulus_stride, reservoir_stride, prediction_stride,
 			stimulus_size, reservoir_size, prediction_size,
 			leak_rate, initial_state_scale,
@@ -335,11 +435,13 @@ void TRN::GPU::Algorithm::learn_widrow_hoff(
 			batched_p, *batched_p_rows, *batched_p_cols, *batched_p_strides,
 			batched_x_ro, *batched_x_ro_rows, *batched_x_ro_cols, *batched_x_ro_strides,
 			batched_w_ro, *batched_w_ro_rows, *batched_w_ro_cols, *batched_w_ro_strides,
-			batched_pre, *batched_pre_rows, *batched_pre_cols, *batched_pre_strides,
+			bundled_pre, **bundled_pre_rows, **bundled_pre_cols, **bundled_pre_strides,
 			batched_post, *batched_post_rows, *batched_post_cols, *batched_post_strides,
+			bundled_desired, **bundled_desired_rows, **bundled_desired_cols, **bundled_desired_strides,
 			offsets, durations, repetitions, total_duration,
-			states_samples, states_rows, states_cols, states_stride);
+			states_samples, states_rows, states_cols, states_stride, one, zero);
 	}
+
 }
 
 void TRN::GPU::Algorithm::prime(
@@ -359,18 +461,19 @@ void TRN::GPU::Algorithm::prime(
 	float **batched_p, const std::size_t *batched_p_rows, const std::size_t *batched_p_cols, const std::size_t *batched_p_strides,
 	float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
-	float **batched_pre, const std::size_t *batched_pre_rows, const std::size_t *batched_pre_cols, const std::size_t *batched_pre_strides,
+	float ***bundled_pre, const std::size_t **bundled_pre_rows, const std::size_t **bundled_pre_cols, const std::size_t **bundled_pre_strides,
 	float **batched_post, const std::size_t *batched_post_rows, const std::size_t *batched_post_cols, const std::size_t *batched_post_strides,
-	float **batched_desired, const std::size_t *batched_desired_rows, const std::size_t *batched_desired_cols, const std::size_t *batched_desired_strides,
+	float ***bundled_desired, const std::size_t **bundled_desired_rows, const std::size_t **bundled_desired_cols, const std::size_t **bundled_desired_strides,
 	const int *offsets, const int *durations, const std::size_t &repetitions,const std::size_t &total_duration,
-	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride)
+	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+	const float *one, const float *zero)
 {
 	if (states_samples == NULL)
 	{
 		update_model<false, true>(
-			batch_size,
+			batch_size, mini_batch_size,
 			seed,
-				handle->context->get_stream(), handle->context->get_handle(), Nothing(),
+				handle->context->get_streams(), handle->context->get_handles(), handle->context->get_events(), Nothing(),
 			stimulus_stride, reservoir_stride, prediction_stride,
 			stimulus_size, reservoir_size, prediction_size,
 			leak_rate, initial_state_scale,
@@ -384,17 +487,18 @@ void TRN::GPU::Algorithm::prime(
 			batched_p, *batched_p_rows, *batched_p_cols, *batched_p_strides,
 			batched_x_ro, *batched_x_ro_rows, *batched_x_ro_cols, *batched_x_ro_strides,
 			batched_w_ro, *batched_w_ro_rows, *batched_w_ro_cols, *batched_w_ro_strides,
-			batched_pre, *batched_pre_rows, *batched_pre_cols, *batched_pre_strides,
+			bundled_pre, **bundled_pre_rows, **bundled_pre_cols, **bundled_pre_strides,
 			batched_post, *batched_post_rows, *batched_post_cols, *batched_post_strides,
+			bundled_desired, **bundled_desired_rows, **bundled_desired_cols, **bundled_desired_strides,
 			offsets, durations, repetitions, total_duration,
-			states_samples, states_rows, states_cols, states_stride);
+			states_samples, states_rows, states_cols, states_stride, one, zero);
 	}
 	else
 	{
 		update_model< true, true>(
-			batch_size,
+			batch_size, mini_batch_size,
 			seed,
-			handle->context->get_stream(), handle->context->get_handle(),  Nothing(),
+			handle->context->get_streams(), handle->context->get_handles(), handle->context->get_events(), Nothing(),
 			stimulus_stride, reservoir_stride, prediction_stride,
 			stimulus_size, reservoir_size, prediction_size,
 			leak_rate, initial_state_scale,
@@ -408,10 +512,11 @@ void TRN::GPU::Algorithm::prime(
 			batched_p, *batched_p_rows, *batched_p_cols, *batched_p_strides,
 			batched_x_ro, *batched_x_ro_rows, *batched_x_ro_cols, *batched_x_ro_strides,
 			batched_w_ro, *batched_w_ro_rows, *batched_w_ro_cols, *batched_w_ro_strides,
-			batched_pre, *batched_pre_rows, *batched_pre_cols, *batched_pre_strides,
+			bundled_pre, **bundled_pre_rows, **bundled_pre_cols, **bundled_pre_strides,
 			batched_post, *batched_post_rows, *batched_post_cols, *batched_post_strides,
+			bundled_desired, **bundled_desired_rows, **bundled_desired_cols, **bundled_desired_strides,
 			offsets, durations, repetitions, total_duration,
-			states_samples, states_rows, states_cols, states_stride);
+			states_samples, states_rows, states_cols, states_stride, one, zero);
 	}
 		
 }
@@ -433,18 +538,19 @@ void TRN::GPU::Algorithm::generate(
 	float **batched_p, const std::size_t *batched_p_rows, const std::size_t *batched_p_cols, const std::size_t *batched_p_strides,
 	float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
-	float **batched_pre, const std::size_t *batched_pre_rows, const std::size_t *batched_pre_cols, const std::size_t *batched_pre_strides,
+	float ***bundled_pre, const std::size_t **bundled_pre_rows, const std::size_t **bundled_pre_cols, const std::size_t **bundled_pre_strides,
 	float **batched_post, const std::size_t *batched_post_rows, const std::size_t *batched_post_cols, const std::size_t *batched_post_strides,
-	float **batched_desired, const std::size_t *batched_desired_rows, const std::size_t *batched_desired_cols, const std::size_t *batched_desired_strides,
+	float ***bundled_desired, const std::size_t **bundled_desired_rows, const std::size_t **bundled_desired_cols, const std::size_t **bundled_desired_strides,
 	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride)
+	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride, 
+	const float *one, const float *zero)
 {
 	if (states_samples == NULL)
 	{
 		update_model<false, false>(
-			batch_size,
+			batch_size, mini_batch_size,
 			seed,
-				handle->context->get_stream(), handle->context->get_handle(), Nothing(),
+				handle->context->get_streams(), handle->context->get_handles(), handle->context->get_events(), Nothing(),
 			stimulus_stride, reservoir_stride, prediction_stride,
 			stimulus_size, reservoir_size, prediction_size,
 			leak_rate, initial_state_scale,
@@ -458,17 +564,18 @@ void TRN::GPU::Algorithm::generate(
 			batched_p, *batched_p_rows, *batched_p_cols, *batched_p_strides,
 			batched_x_ro, *batched_x_ro_rows, *batched_x_ro_cols, *batched_x_ro_strides,
 			batched_w_ro, *batched_w_ro_rows, *batched_w_ro_cols, *batched_w_ro_strides,
-			batched_pre, *batched_pre_rows, *batched_pre_cols, *batched_pre_strides,
+			bundled_pre, **bundled_pre_rows, **bundled_pre_cols, **bundled_pre_strides,
 			batched_post, *batched_post_rows, *batched_post_cols, *batched_post_strides,
+			bundled_desired, **bundled_desired_rows, **bundled_desired_cols, **bundled_desired_strides,
 			offsets, durations, repetitions,total_duration,
-			states_samples, states_rows, states_cols, states_stride);
+			states_samples, states_rows, states_cols, states_stride, one, zero);
 	}
 	else
 	{
 		update_model<true, false>(
-			batch_size,
+			batch_size, mini_batch_size,
 			seed,
-			handle->context->get_stream(), handle->context->get_handle(), Nothing(),
+			handle->context->get_streams(), handle->context->get_handles(), handle->context->get_events(), Nothing(),
 			stimulus_stride, reservoir_stride, prediction_stride,
 			stimulus_size, reservoir_size, prediction_size,
 			leak_rate, initial_state_scale,
@@ -484,10 +591,11 @@ void TRN::GPU::Algorithm::generate(
 	
 			batched_x_ro, *batched_x_ro_rows, *batched_x_ro_cols, *batched_x_ro_strides,
 			batched_w_ro, *batched_w_ro_rows, *batched_w_ro_cols, *batched_w_ro_strides,
-			batched_pre, *batched_pre_rows, *batched_pre_cols, *batched_pre_strides,
+			bundled_pre, **bundled_pre_rows, **bundled_pre_cols, **bundled_pre_strides,
 			batched_post, *batched_post_rows, *batched_post_cols, *batched_post_strides,
+			bundled_desired, **bundled_desired_rows, **bundled_desired_cols, **bundled_desired_strides,
 			offsets, durations, repetitions, total_duration,
-			states_samples, states_rows, states_cols, states_stride);
+			states_samples, states_rows, states_cols, states_stride, one, zero);
 	}
 }
 

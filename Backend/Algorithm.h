@@ -30,6 +30,13 @@ namespace TRN
 				const float &radius,
 				const float **current_position, const std::size_t *current_position_strides,
 				std::size_t *roi_row_begin, std::size_t *roi_row_end, std::size_t *roi_col_begin, std::size_t *roi_col_end) = 0;
+			virtual void encode_placecells_model(
+				const std::size_t &batch_size, const std::size_t &place_cells_number,
+				const float *cx,
+				const float *cy,
+				const float *width,
+				const float **batched_decoded_position, const std::size_t *batched_decoded_position_strides,
+				float **batched_stimulus, const std::size_t *batched_stimulus_strides) = 0;
 
 			virtual void decode_placecells_linear(
 				const std::size_t &batch_size, const std::size_t &place_cells_number,
@@ -43,6 +50,7 @@ namespace TRN
 				const std::size_t &rows, const std::size_t &cols,
 				const std::size_t &roi_rows, const std::size_t &roi_cols,
 				const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+				const float &x_min, const float &x_max, const float &y_min, const float &y_max,
 				const float &radius,
 				const float &cos_half_angle,
 				const float &scale,
@@ -67,6 +75,7 @@ namespace TRN
 				const std::size_t &rows, const std::size_t &cols,
 				const std::size_t &roi_rows, const std::size_t &roi_cols,
 				const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+				const float &x_min, const float &x_max, const float &y_min, const float &y_max,
 				const float &radius,
 				const float &cos_half_angle,
 				const float &scale,
@@ -116,7 +125,7 @@ namespace TRN
 				float *** hypothesis_map, const std::size_t **hypothesis_map_rows, const std::size_t **hypothesis_map_cols, const std::size_t **hypothesis_map_strides,
 				float ** location_probability, const std::size_t *location_probability_rows, const std::size_t *location_probability_cols, const std::size_t *location_probability_strides) = 0;
 
-			virtual void restrict_to_reachable_locations(
+		/*	virtual void restrict_to_reachable_locations(
 
 				const std::size_t &batch_size, const std::size_t &place_cells_number, 
 				const std::size_t &rows_begin, const std::size_t &rows_end,
@@ -129,9 +138,9 @@ namespace TRN
 				float **batched_direction, const std::size_t *batched_direction_rows, const std::size_t *batched_direction_cols, const std::size_t *batched_direction_stride,
 				float **batched_x_grid_centered, const std::size_t *batched_x_grid_centered_rows, const std::size_t *batched_x_grid_centered_cols, const std::size_t *batched_x_grid_centered_stride,
 				float **batched_y_grid_centered, const std::size_t *batched_y_grid_centered_rows, const std::size_t *batched_y_grid_centered_cols, const std::size_t *batched_y_grid_centered_stride,
-				float  **batched_location_probability, const std::size_t *batched_location_probability_rows, const std::size_t *batched_location_probability_cols, const std::size_t *batched_location_probability_strides)  = 0;
+				float  **batched_location_probability, const std::size_t *batched_location_probability_rows, const std::size_t *batched_location_probability_cols, const std::size_t *batched_location_probability_strides)  = 0;*/
 
-			virtual void draw_probable_location(const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+			/*virtual void draw_probable_location(const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
 				const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 				const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 				const float  **batched_location_probability, const std::size_t *batched_location_probability_rows, const std::size_t *batched_location_probability_cols, const std::size_t *batched_location_probability_strides,
@@ -139,15 +148,21 @@ namespace TRN
 				float **batched_row_cumsum, const std::size_t *batched_row_cumsum_rows, const std::size_t *batched_row_cumsum_cols, const std::size_t *batched_row_cumsum_stride,
 				float **batched_col_cumsum, const std::size_t *batched_col_cumsum_rows, const std::size_t *batched_col_cumsum_cols, const std::size_t *batched_col_cumsum_stride,
 				float **batched_predicted_location, const std::size_t *batched_predicted_location_rows, const std::size_t *batched_predicted_location_cols, const std::size_t *batched_predicted_location_strides
-			) = 0;
+			) = 0;*/
 			virtual void select_most_probable_location(
 				const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
 				const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
 				const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 				const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 				const float  **batched_location_probability, const std::size_t *batched_location_probability_rows, const std::size_t *batched_location_probability_cols, const std::size_t *batched_location_probability_strides,
-				float **batched_predicted_location, const std::size_t *batched_predicted_location_rows, const std::size_t *batched_predicted_location_cols, const std::size_t *batched_predicted_location_strides
-			) = 0;
+				int **argmax) = 0;
+
+			virtual void assign_most_probable_location(
+				const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+				const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+				const float &x_min, const float &x_range, const float &y_min, const float &y_range,
+				const int **batched_argmax, const std::size_t *batched_location_probability_strides,
+				float **batched_predicted_location) = 0;
 
 			virtual void learn_widrow_hoff(
 				const std::size_t &batch_size, const std::size_t &mini_batch_size,
@@ -166,13 +181,13 @@ namespace TRN
 				float **batched_p, const std::size_t *batched_p_rows, const std::size_t *batched_p_cols, const std::size_t *batched_p_strides,
 				float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 				float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
-				float **batched_pre, const std::size_t *batched_pre_rows, const std::size_t *batched_pre_cols, const std::size_t *batched_pre_stride,
+				float ***bundled_pre, const std::size_t **bundled_pre_rows, const std::size_t **bundled_pre_cols, const std::size_t **bundled_pre_stride,
 				float **batched_post, const std::size_t *batched_post_rows, const std::size_t *batched_post_cols, const std::size_t *batched_post_stride,
-				float **batched_desired, const std::size_t *batched_desired_rows, const std::size_t *batched_desired_cols, const std::size_t *batched_desired_strides,
+				float ***bundled_desired, const std::size_t **bundled_desired_rows, const std::size_t **bundled_desired_cols, const std::size_t **bundled_desired_strides,
 				const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
 				float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
-
-				const float &learning_rate
+				const float *one, const float *zero,
+				const float *learning_rate
 			) = 0;
 			virtual void prime(
 				const std::size_t &batch_size,const std::size_t &mini_batch_size,
@@ -191,11 +206,13 @@ namespace TRN
 				float **batched_p, const std::size_t *batched_p_rows, const std::size_t *batched_p_cols, const std::size_t *batched_p_strides,
 				float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 				float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
-				float **batched_pre, const std::size_t *batched_pre_rows, const std::size_t *batched_pre_cols, const std::size_t *batched_pre_stride,
+				float ***bundled_pre, const std::size_t **bundled_pre_rows, const std::size_t **bundled_pre_cols, const std::size_t **bundled_pre_stride,
 				float **batched_post, const std::size_t *batched_post_rows, const std::size_t *batched_post_cols, const std::size_t *batched_post_stride,
-				float **batched_desired, const std::size_t *batched_desired_rows, const std::size_t *batched_desired_cols, const std::size_t *batched_desired_strides,
+				float ***bundled_desired, const std::size_t **bundled_desired_rows, const std::size_t **bundled_desired_cols, const std::size_t **bundled_desired_strides,
 				const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-				float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride) = 0;
+				float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+				const float *one, const float *zero
+				) = 0;
 			virtual void generate(
 				const std::size_t &batch_size, const std::size_t &mini_batch_size,
 				unsigned long &seed,
@@ -213,11 +230,13 @@ namespace TRN
 				float **batched_p, const std::size_t *batched_p_rows, const std::size_t *batched_p_cols, const std::size_t *batched_p_strides,
 				float **batched_x_ro, const std::size_t *batched_x_ro_rows, const std::size_t *batched_x_ro_cols, const std::size_t *batched_x_ro_strides,
 				float **batched_w_ro, const std::size_t *batched_w_ro_rows, const std::size_t *batched_w_ro_cols, const std::size_t *batched_w_ro_strides,
-				float **batched_pre, const std::size_t *batched_pre_rows, const std::size_t *batched_pre_cols, const std::size_t *batched_pre_stride,
+				float ***bundled_pre, const std::size_t **bundled_pre_rows, const std::size_t **bundled_pre_cols, const std::size_t **bundled_pre_stride,
 				float **batched_post, const std::size_t *batched_post_rows, const std::size_t *batched_post_cols, const std::size_t *batched_post_stride,
-				float **batched_desired, const std::size_t *batched_desired_rows, const std::size_t *batched_desired_cols, const std::size_t *batched_desired_strides,
+				float ***bundled_desired, const std::size_t **bundled_desired_rows, const std::size_t **bundled_desired_cols, const std::size_t **bundled_desired_strides,
 				const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-				float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride) = 0;
+				float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+				const float *one, const float *zero
+				) = 0;
 		};
 	};
 };

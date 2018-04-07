@@ -7,9 +7,9 @@ class TRN::GPU::Context::Handle
 public:
 	int device;
 	std::size_t stride_alignement;
-	cudaStream_t stream;
-	cublasHandle_t handle;
-	curandGenerator_t generator;
+	std::vector<cudaStream_t> streams;
+	std::vector<cublasHandle_t> handles;
+	std::vector<cudaEvent_t> events;
 	std::string name;
 	std::size_t max_block_size;
 };

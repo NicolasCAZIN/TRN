@@ -10,7 +10,13 @@ namespace TRN
 	{
 		class Context
 		{
+		public :
+			static const std::size_t STREAM_NUMBER;
+			static const std::size_t EVENT_NUMBER;
 		private: 
+
+		
+
 			static const std::size_t DEFAULT_DIV;
 			static const std::size_t DEFAULT_DIMS;
 			static const std::size_t DEFAULT_DYNAMIC_MEMORY_SIZE;
@@ -28,9 +34,10 @@ namespace TRN
 			void toggle();
 			const std::size_t &get_stride_alignment();
 			const int &get_device();
-			const cudaStream_t &get_stream();
-			const cublasHandle_t &get_handle();
-			const curandGenerator_t &get_generator();
+			const cudaStream_t *get_streams();
+			const cublasHandle_t *get_handles();
+			const cudaEvent_t *get_events();
+			//const curandGenerator_t &get_generator();
 			const std::string &get_name();
 			template < class T >
 			static void get_block_dims(T func, const std::vector < std::size_t> &dimensions, dim3 &grid, dim3 &block, const std::size_t &div = DEFAULT_DIV, const std::size_t &dynamic_memory_size = DEFAULT_DYNAMIC_MEMORY_SIZE)

@@ -208,8 +208,34 @@ void TRN4CPP::Simulation::Reservoir::WidrowHoff::configure(const unsigned long l
 
 
 
+void   TRN4CPP::Simulation::Encoder::Model::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const std::vector<float> &cx, const std::vector<float> &cy, const std::vector<float> &K)
+{
+	TRACE_LOGGER;
+	if (!frontend)
+		throw std::runtime_error("Frontend is not initialized");
+	frontend->configure_encoder_model(simulation_id, batch_size, stimulus_size, cx, cy, K);
+}
 
-
+void   TRN4CPP::Simulation::Encoder::Custom::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size)
+{
+	TRACE_LOGGER;
+	if (!on_position)
+		throw std::runtime_error("Position callback is not installed");
+	if (!reply_position)
+		throw std::runtime_error("Position reply functor is not installed");
+	if (!reply_stimulus)
+		throw std::runtime_error("Stimulus reply functor is not installed");
+	auto old_reply_position = reply_position;
+	auto old_reply_stimulus = reply_stimulus;
+	if (!frontend)
+		throw std::runtime_error("Frontend is not initialized");
+	TRN4CPP::Simulation::Encoder::Custom::configure(simulation_id, batch_size, stimulus_size, on_position, reply_position, reply_stimulus);
+	//TRN4CPP::Simulation::Loop::SpatialFilter::configure(simulation_id,batch_size, stimulus_size/*, on_position, reply_position, on_stimulus, reply_stimulus*/, tag);
+	if (old_reply_position != reply_position)
+	throw std::runtime_error("Position reply functor changed");
+	if (old_reply_stimulus != reply_stimulus)
+	throw std::runtime_error("Stimulus reply functor changed");
+}
 void   TRN4CPP::Simulation::Decoder::Linear::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const std::vector<float> &cx, const std::vector<float> &cy)
 {
 	TRACE_LOGGER;
@@ -252,21 +278,9 @@ void TRN4CPP::Simulation::Loop::Copy::configure(const unsigned long long &simula
 void TRN4CPP::Simulation::Loop::SpatialFilter::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, const std::string &tag)
 {
 	TRACE_LOGGER;
-	if (!on_position)
-		throw std::runtime_error("Position callback is not installed");
-	if (!reply_position)
-		throw std::runtime_error("Position reply functor is not installed");
-	if (!on_stimulus)
-		throw std::runtime_error("Stimulus callback is not installed");
-	if (!reply_stimulus)
-		throw std::runtime_error("Stimulus reply functor is not installed");
-	auto old_reply_position = reply_position;
-	auto old_reply_stimulus = reply_stimulus;
-	TRN4CPP::Simulation::Loop::SpatialFilter::configure(simulation_id,batch_size, stimulus_size, on_position, reply_position, on_stimulus, reply_stimulus, tag);
-	if (old_reply_position != reply_position)
-		throw std::runtime_error("Position reply functor changed");
-	if (old_reply_stimulus != reply_stimulus)
-		throw std::runtime_error("Stimulus reply functor changed");
+	if (!frontend)
+		throw std::runtime_error("Frontend is not initialized");
+	frontend->configure_loop_spatial_filter(simulation_id, batch_size, stimulus_size, tag);
 }
 void TRN4CPP::Simulation::Loop::Custom::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size)
 {

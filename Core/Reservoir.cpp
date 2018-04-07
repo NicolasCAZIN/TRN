@@ -29,13 +29,15 @@ TRN::Core::Reservoir::Reservoir(
 
 	handle->leak_rate = leak_rate;
 	handle->initial_state_scale = initial_state_scale;
-
-
+	std::vector<float> one = { 1.0f };
+	std::vector<float> zero = { 0.0f };
+	handle->one = TRN::Core::Matrix::create(driver,one, 1, 1);
+	handle->zero = TRN::Core::Matrix::create(driver, zero, 1, 1);
 	handle->batched_p = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_u = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_post = TRN::Core::Batch::create(driver, batch_size);
-	handle->batched_pre = TRN::Core::Batch::create(driver, batch_size);
-	handle->batched_desired = TRN::Core::Batch::create(driver, batch_size);
+	handle->bundled_pre = TRN::Core::Bundle::create(driver, 2);
+	handle->bundled_desired = TRN::Core::Bundle::create(driver, 2);
 	handle->batched_incoming = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_expected = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_u_ffwd = TRN::Core::Batch::create(driver, batch_size);
@@ -46,13 +48,29 @@ TRN::Core::Reservoir::Reservoir(
 	handle->batched_X_res = TRN::Core::Batch::create(driver, batch_size);
 	handle->batched_W_rec = TRN::Core::Batch::create(driver, batch_size);
 
+	
+
+	for (std::size_t bundle = 0; bundle < 2; bundle++)
+	{
+		auto batched_pre = TRN::Core::Batch::create(driver, batch_size);
+		auto batched_desired = TRN::Core::Batch::create(driver, batch_size);
+		for (std::size_t batch = 0; batch < batch_size; batch++)
+		{
+			auto pre = TRN::Core::Matrix::create(driver, mini_batch_size, reservoir);
+			auto desired = TRN::Core::Matrix::create(driver, mini_batch_size, prediction);
+			batched_pre->update(batch, pre);
+			batched_desired->update(batch, desired);
+		}
+		handle->bundled_pre->update(bundle, batched_pre);
+		handle->bundled_desired->update(bundle, batched_desired);
+	}
+
 	for (std::size_t batch = 0; batch < batch_size; batch++)
 	{
 		auto p = TRN::Core::Matrix::create(driver, 1, reservoir);
 		auto u = TRN::Core::Matrix::create(driver, 1, reservoir);
 		auto post = TRN::Core::Matrix::create(driver, mini_batch_size, prediction);
-		auto desired = TRN::Core::Matrix::create(driver, mini_batch_size, prediction);
-		auto pre = TRN::Core::Matrix::create(driver, mini_batch_size, reservoir);
+	
 		auto W_ffwd = TRN::Core::Matrix::create(driver,    stimulus, reservoir, true);
 		auto W_rec = TRN::Core::Matrix::create(driver, reservoir, reservoir, true);
 
@@ -63,8 +81,7 @@ TRN::Core::Reservoir::Reservoir(
 	
 
 		handle->batched_post->update(batch, post);
-		handle->batched_pre->update(batch, pre);
-		handle->batched_desired->update(batch, desired);
+
 		handle->batched_u->update(batch, u);
 		handle->batched_p->update(batch, p);
 
@@ -233,11 +250,12 @@ void TRN::Core::Reservoir::test(const unsigned long long &evaluation_id, const s
 		handle->batched_p->get_elements(), handle->batched_p->get_rows(), handle->batched_p->get_cols(), handle->batched_p->get_strides(),
 		handle->batched_X_ro->get_elements(), handle->batched_X_ro->get_rows(), handle->batched_X_ro->get_cols(), handle->batched_X_ro->get_strides(),
 		handle->batched_W_ro->get_elements(), handle->batched_W_ro->get_rows(), handle->batched_W_ro->get_cols(), handle->batched_W_ro->get_strides(),
-		handle->batched_pre->get_elements(), handle->batched_pre->get_rows(), handle->batched_pre->get_cols(), handle->batched_pre->get_strides(),
+		handle->bundled_pre->get_elements(true), handle->bundled_pre->get_rows(), handle->bundled_pre->get_cols(), handle->bundled_pre->get_strides(),
 		handle->batched_post->get_elements(), handle->batched_post->get_rows(), handle->batched_post->get_cols(), handle->batched_post->get_strides(),
-		handle->batched_desired->get_elements(), handle->batched_desired->get_rows(), handle->batched_desired->get_cols(), handle->batched_desired->get_strides(),
+		handle->bundled_desired->get_elements(true), handle->bundled_desired->get_rows(), handle->bundled_desired->get_cols(), handle->bundled_desired->get_strides(),
 			sub_scheduling->get_offsets().data(), sub_scheduling->get_durations().data(), sub_scheduling->get_durations().size(), sub_scheduling->get_total_duration(),
-			sub_states->get_elements(), sub_states->get_rows(), sub_states->get_cols(), sub_states->get_stride());
+			sub_states->get_elements(), sub_states->get_rows(), sub_states->get_cols(), sub_states->get_stride(), 
+		handle->one->get_elements(), handle->zero->get_elements());
 	
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>(evaluation_id));
 
@@ -298,11 +316,12 @@ void TRN::Core::Reservoir::update(const TRN::Core::Message::Payload<TRN::Core::M
 			handle->batched_p->get_elements(), handle->batched_p->get_rows(), handle->batched_p->get_cols(), handle->batched_p->get_strides(),
 			handle->batched_X_ro->get_elements(), handle->batched_X_ro->get_rows(), handle->batched_X_ro->get_cols(), handle->batched_X_ro->get_strides(),
 			handle->batched_W_ro->get_elements(), handle->batched_W_ro->get_rows(), handle->batched_W_ro->get_cols(), handle->batched_W_ro->get_strides(),
-			handle->batched_pre->get_elements(), handle->batched_pre->get_rows(), handle->batched_pre->get_cols(), handle->batched_pre->get_strides(),
+			handle->bundled_pre->get_elements(true), handle->bundled_pre->get_rows(), handle->bundled_pre->get_cols(), handle->bundled_pre->get_strides(),
 			handle->batched_post->get_elements(), handle->batched_post->get_rows(), handle->batched_post->get_cols(), handle->batched_post->get_strides(),
-			handle->batched_desired->get_elements(), handle->batched_desired->get_rows(), handle->batched_desired->get_cols(), handle->batched_desired->get_strides(),
+			handle->bundled_desired->get_elements(true), handle->bundled_desired->get_rows(), handle->bundled_desired->get_cols(), handle->bundled_desired->get_strides(),
 			sub_scheduling->get_offsets().data(), sub_scheduling->get_durations().data(), sub_scheduling->get_durations().size(), sub_scheduling->get_total_duration(),
-			sub_states->get_elements(), sub_states->get_rows(), sub_states->get_cols(), sub_states->get_stride());
+			sub_states->get_elements(), sub_states->get_rows(), sub_states->get_cols(), sub_states->get_stride(),
+			handle->one->get_elements(), handle->zero->get_elements());
 		handle->cycle++;
 	
 		handle->prediction.enqueue(std::make_tuple(handle->batched_X_ro, incoming.get_evaluation_id()));
@@ -310,7 +329,7 @@ void TRN::Core::Reservoir::update(const TRN::Core::Message::Payload<TRN::Core::M
 	}
 	else
 	{
-	
+		synchronize();
 		handle->target_expected.reset();
 		handle->max_cycle = 0;
 		handle->cycle = 0;
@@ -346,7 +365,6 @@ void TRN::Core::Reservoir::train(const unsigned long long &evaluation_id, const 
 	}*/
 
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::TRAINED>(evaluation_id));
-
 }
 
 void TRN::Core::Reservoir::visit(std::shared_ptr<TRN::Core::Message::Payload<TRN::Core::Message::WEIGHTS>> &payload)

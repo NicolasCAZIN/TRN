@@ -184,6 +184,7 @@
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="Bundle.cpp" />
     <ClCompile Include="Decoder.cpp" />
+    <ClCompile Include="Encoder.cpp" />
     <ClCompile Include="Set.cpp" />
     <ClCompile Include="Measurement.cpp" />
     <ClCompile Include="Message.cpp" />
@@ -208,6 +209,8 @@
     <ClInclude Include="Bundle_impl.h" />
     <ClInclude Include="Decoder.h" />
     <ClInclude Include="Decoder_impl.h" />
+    <ClInclude Include="Encoder.h" />
+    <ClInclude Include="Encoder_impl.h" />
     <ClInclude Include="Mutator.h" />
     <ClInclude Include="Set_impl.h" />
     <ClInclude Include="Container.h" />

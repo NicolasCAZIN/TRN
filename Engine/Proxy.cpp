@@ -264,12 +264,20 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CO
 	TRACE_LOGGER;
 	handle->dispatcher->configure_reservoir_widrow_hoff(global_id(message.simulation_id), message.stimulus_size, message.prediction_size, message.reservoir_size, message.leak_rate, message.initial_state_scale, message.learning_rate, message.seed, message.batch_size, message.mini_batch_size);
 }
-
+void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_ENCODER_MODEL> &message)
+{
+	TRACE_LOGGER;
+	handle->dispatcher->configure_encoder_model(global_id(message.simulation_id), message.batch_size, message.stimulus_size, message.cx, message.cy, message.K);
+}
+void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_ENCODER_CUSTOM> &message)
+{
+	TRACE_LOGGER;
+	handle->dispatcher->configure_encoder_custom(global_id(message.simulation_id), message.batch_size, message.stimulus_size);
+}
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR> &message)
 {
 	TRACE_LOGGER;
 	handle->dispatcher->configure_decoder_linear(global_id(message.simulation_id), message.batch_size, message.stimulus_size, message.cx, message.cy);
-
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP> &message)
 {

@@ -887,7 +887,50 @@ void TRN::Engine::Broker::configure_loop_copy(const unsigned long long &simulati
 		});
 	});
 }
+void	TRN::Engine::Broker::configure_encoder_custom(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size
+)
+{
+	TRACE_LOGGER;
+	retrieve_simulation(simulation_id)->post([=]()
+	{
+		auto processor = handle->manager->retrieve(simulation_id);
+		processor->configuring();
+		processor->post([=]()
+		{
+			TRN::Engine::Message<CONFIGURE_ENCODER_CUSTOM> message;
 
+			message.simulation_id = simulation_id;
+			message.batch_size = batch_size;
+			message.stimulus_size = stimulus_size;
+			handle->communicator->send(message, processor->get_rank());
+		});
+	});
+}
+void	TRN::Engine::Broker::configure_encoder_model(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
+	const std::vector<float> &cx,
+	const std::vector<float> &cy,
+	const std::vector<float> &K
+)
+{
+	TRACE_LOGGER;
+	retrieve_simulation(simulation_id)->post([=]()
+	{
+		auto processor = handle->manager->retrieve(simulation_id);
+		processor->configuring();
+		processor->post([=]()
+		{
+			TRN::Engine::Message<CONFIGURE_ENCODER_MODEL> message;
+
+			message.simulation_id = simulation_id;
+			message.batch_size = batch_size;
+			message.stimulus_size = stimulus_size;
+			message.cx = cx;
+			message.cy = cy;
+			message.K = K;
+			handle->communicator->send(message, processor->get_rank());
+		});
+	});
+}
 
 void	TRN::Engine::Broker::configure_decoder_linear(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
 	const std::vector<float> &cx, const std::vector<float> &cy)

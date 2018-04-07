@@ -34,20 +34,16 @@ static void decrease_reference(const std::size_t &index)
 	}
 }
 
-
 TRN::GPU::Driver::Driver(const int &device) :
 	TRN::GPU::Driver::Driver(TRN::GPU::Context::create(device))
 {
 	increase_reference(device);
 }
 
-
-
 TRN::GPU::Driver::Driver(const std::shared_ptr<TRN::GPU::Context> context) :
 	handle(std::make_unique<Handle>()),
 	TRN::Backend::Driver(TRN::GPU::Memory::create(context), TRN::GPU::Random::create(context), TRN::GPU::Algorithm::create(context))
 {
-	
 	handle->context = context;
 }
 TRN::GPU::Driver::~Driver()
@@ -64,7 +60,8 @@ void TRN::GPU::Driver::dispose()
 
 void TRN::GPU::Driver::synchronize()
 {
-	checkCudaErrors(cudaStreamSynchronize(handle->context->get_stream()));
+	for (std::size_t k = 0; k < TRN::GPU::Context::STREAM_NUMBER; k++)
+		checkCudaErrors(cudaStreamSynchronize(handle->context->get_streams()[k]));
 }
 
 void TRN::GPU::Driver::toggle()
@@ -116,10 +113,6 @@ std::list<std::pair<int, std::string>> TRN::GPU::enumerate_devices()
 				}
 				break;
 		}
-
-	
-
-
 	}
 	return enumerated;
 }

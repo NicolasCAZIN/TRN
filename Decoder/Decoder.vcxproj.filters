@@ -24,39 +24,24 @@
       <Extensions>moc;h;cpp</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="Header Files\private">
+      <UniqueIdentifier>{7e575ece-7b23-49a4-8cd5-1553b75df3e4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Initializer.cpp">
+    <ClCompile Include="Linear.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Scheduler.cpp">
+    <ClCompile Include="Kernel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Loop.cpp">
+    <ClCompile Include="Map.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Reservoir.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Simulator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Driver.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Measurement.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Mutator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Decoder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Encoder.cpp">
+    <ClCompile Include="Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -64,39 +49,33 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Initializer.h">
+    <ClInclude Include="Linear.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Reservoir.h">
+    <ClInclude Include="Kernel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Scheduler.h">
+    <ClInclude Include="Map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Loop.h">
+    <ClInclude Include="Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Simulator.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Linear_impl.h">
+      <Filter>Header Files\private</Filter>
     </ClInclude>
-    <ClInclude Include="Driver.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Kernel_impl.h">
+      <Filter>Header Files\private</Filter>
     </ClInclude>
-    <ClInclude Include="Measurement.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Map_impl.h">
+      <Filter>Header Files\private</Filter>
     </ClInclude>
-    <ClInclude Include="Mutator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Decoder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Encoder.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Model_impl.h">
+      <Filter>Header Files\private</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="model_global.h">
+    <ClInclude Include="decoder_global.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

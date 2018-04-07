@@ -5,5 +5,5 @@
 class TRN::Reservoir::WidrowHoff::Handle
 {
 public:
-	float learning_rate;
+	std::shared_ptr<TRN::Core::Matrix> learning_rate;
 };

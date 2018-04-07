@@ -34,6 +34,10 @@ const std::shared_ptr<TRN::Core::Decoder> TRN::Simulator::Basic::get_decoder()
 {
 	return handle->decoder;
 }
+const std::shared_ptr<TRN::Core::Encoder> TRN::Simulator::Basic::get_encoder()
+{
+	return handle->encoder;
+}
 const std::shared_ptr<TRN::Core::Scheduler> TRN::Simulator::Basic::get_scheduler()
 {
 	return handle->scheduler;
@@ -70,6 +74,10 @@ void TRN::Simulator::Basic::set_loop(const std::shared_ptr<TRN::Core::Loop> &loo
 void TRN::Simulator::Basic::set_decoder(const std::shared_ptr<TRN::Core::Decoder> &decoder)
 {
 	handle->decoder = decoder;
+}
+void TRN::Simulator::Basic::set_encoder(const std::shared_ptr<TRN::Core::Encoder> &encoder)
+{
+	handle->encoder = encoder;
 }
 void TRN::Simulator::Basic::append_measurement(const std::shared_ptr<TRN::Core::Measurement::Abstraction> &measurement)
 {

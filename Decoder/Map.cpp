@@ -37,6 +37,8 @@ void TRN::Decoder::Map::location_probability(
 		TRN::Decoder::Kernel::handle->roi_rows, TRN::Decoder::Kernel::handle->roi_cols,
 		TRN::Decoder::Kernel::handle->roi_row_begin, TRN::Decoder::Kernel::handle->roi_row_end,
 		TRN::Decoder::Kernel::handle->roi_col_begin, TRN::Decoder::Kernel::handle->roi_col_end,
+		TRN::Decoder::Kernel::handle->arena_x.first, TRN::Decoder::Kernel::handle->arena_x.second,
+		TRN::Decoder::Kernel::handle->arena_y.first, TRN::Decoder::Kernel::handle->arena_y.second,
 		TRN::Decoder::Kernel::handle->radius,
 		TRN::Decoder::Kernel::handle->cos_half_angle,
 		TRN::Decoder::Kernel::handle->scale,

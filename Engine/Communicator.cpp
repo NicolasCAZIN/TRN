@@ -93,6 +93,8 @@ template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_CU
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_CUSTOM>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_ENCODER_MODEL> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_ENCODER_MODEL>(const int &destination);
+template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_ENCODER_CUSTOM> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_ENCODER_CUSTOM>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP>(const int &destination);
 template TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL> TRN::Engine::Communicator::receive<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL>(const int &destination);
@@ -171,6 +173,8 @@ template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::En
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_CUSTOM> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_ENCODER_MODEL> &message, const int &destination);
+template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_ENCODER_CUSTOM> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_LINEAR> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP> &message, const int &destination);
 template void TRN::Engine::Communicator::send(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL> &message, const int &destination);

@@ -87,7 +87,19 @@ void TRN4CPP::Engine::Events::Processor::install(const std::function<void(const 
 	on_processor = functor;
 }
 
-
+void   	TRN4CPP::Simulation::Encoder::Custom::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
+	const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
+	std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
+	std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus)
+{
+	TRACE_LOGGER;
+	if (!frontend)
+		throw std::runtime_error("Frontend is not initialized");
+	estimated_position = std::bind(&TRN::Engine::Broker::notify_position, frontend, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
+	perceived_stimulus = std::bind(&TRN::Engine::Broker::notify_stimulus, frontend, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
+	frontend->install_position(simulation_id, predicted_position);
+	frontend->configure_encoder_custom(simulation_id, batch_size, stimulus_size);
+}
 
 void TRN4CPP::Simulation::Recording::States::configure(const unsigned long long &simulation_id, const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch, const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)> &functor, const bool &train, const bool &prime, const bool &generate)
 {
@@ -177,23 +189,8 @@ void TRN4CPP::Simulation::Measurement::Position::Custom::configure(const unsigne
 	frontend->install_measurement_position_custom(simulation_id, functor);
 	frontend->configure_measurement_position_custom(simulation_id, batch_size);
 }
-void TRN4CPP::Simulation::Loop::SpatialFilter::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
-	const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
-	std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
-	const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
-	std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus,
-const std::string &tag
-)
-{
-	TRACE_LOGGER;
-	if (!frontend)
-		throw std::runtime_error("Frontend is not initialized");
-	estimated_position = std::bind(&TRN::Engine::Broker::notify_position, frontend, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
-	perceived_stimulus = std::bind(&TRN::Engine::Broker::notify_stimulus, frontend, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
-	frontend->install_position(simulation_id, predicted_position);
-	frontend->install_stimulus(simulation_id, predicted_stimulus);
-	frontend->configure_loop_spatial_filter(simulation_id, batch_size, stimulus_size, tag);
-}
+
+
 void TRN4CPP::Simulation::Loop::Custom::configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
 	const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
 	std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply

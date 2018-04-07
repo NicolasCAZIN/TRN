@@ -3,61 +3,265 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 #include <helper_math.h>
-
 #include <cub/cub.cuh>
 
+#include "Context.h"
 #include "Algorithm.cuh"
 #include "Random.cuh"
 #include "Driver.cuh"
-
-
 
 #define BLOCK_X 32
 #define BLOCK_Y 32
 #define warpSize 32
 
+static inline void sgemm(
+	const cublasHandle_t handle,
+	const cublasOperation_t &trans_a,
+	const cublasOperation_t &trans_b,
+	const int batch_size,
 
-
-/*template< typename T >
-void check(T result, char const *const func, const char *const file, int const line)
+	const float **a, const int a_rows, const int a_cols, const int a_stride,
+	const float **b, const int b_rows, const int b_cols, const int b_stride,
+	float **c, const int c_rows, const int c_cols, const int c_stride,
+	const float *alpha, 
+	const float *beta
+)
 {
-	if (result)
+	int m, n, k;
+	if (trans_a == cublasOperation_t::CUBLAS_OP_N)
 	{
-		fprintf(stderr, "CUDA error at %s:%d code=%d(%s) \"%s\" \n",
-			file, line, static_cast<unsigned int>(result), _cudaGetErrorEnum(result), func);
-		DEVICE_RESET
-			// Make sure we call CUDA Device Reset before exiting
-			exit(EXIT_FAILURE);
+		m = a_rows;
+		k = a_cols;
 	}
-}*/
+	else
+	{
+		m = a_cols;
+		k = a_rows;
+	}
+	if (trans_b == cublasOperation_t::CUBLAS_OP_N)
+	{
+		assert(k == b_rows);
+		k = b_rows;
+		n = b_cols;
+	}
+	else
+	{
+		assert(k == b_cols);
+		k = b_cols;
+		n = b_rows;
+	}
+	assert(m == c_rows);
+	assert(n = c_cols);
 
 
-// This will output the proper CUDA error strings in the event that a CUDA host call returns an error
-
-
-//#define checkCudaErrors(val)           throw_on_cuda_error ( (val), #val, __FILE__, __LINE__ )
-
-/*__inline__ __device__
-static bool isnan(float4 v)
-{
-	return isnan(v.x) || isnan(v.y) || isnan(v.z) || isnan(v.w);
-}*/
-
-#define warpSize 32
-__inline__ __device__
-static float warpReduceSum(float val)
-{
-	val += __shfl_down(val, 16);
-	val += __shfl_down(val, 8);
-	val += __shfl_down(val, 4);
-	val += __shfl_down(val, 2);
-	val += __shfl_down(val, 1);
-
-	return val;
+	checkCudaErrors(cublasSgemmBatched(handle,
+		trans_a, trans_b,
+		m, n, k,
+		alpha,
+		a, a_stride,
+		b, b_stride,
+		beta,
+		c, c_stride,
+		batch_size
+	));
 }
 
-static inline __device__
-float4 tanhf(const float4 &a)
+__device__
+static inline std::size_t round_down(const std::size_t &offset)
+{
+	return (offset / warpSize) *  warpSize;
+}
+__device__
+static inline std::size_t round_up(const std::size_t &offset, const std::size_t &max_offset)
+{
+	return min(max_offset, (round_down(offset + warpSize - 1)));
+}
+
+__global__
+static void compute_roi_kernel(const std::size_t batch_size,
+	const std::size_t rows, const std::size_t cols,
+	const float x_min, const float x_max, const float y_min, const float y_max,
+	const float x_range, const float y_range,
+	const float radius,
+	const float **current_position, const std::size_t &current_position_strides,
+	std::size_t *roi_row_begin, std::size_t *roi_row_end, std::size_t *roi_col_begin, std::size_t *roi_col_end)
+{
+	for (int batch = blockIdx.x * blockDim.x + threadIdx.x; batch < batch_size; batch += gridDim.x * blockDim.x)
+	{
+		auto p = *reinterpret_cast<float2 *>(const_cast<float *>(current_position[batch]));
+	
+
+		auto roi_x_min = clamp(p.x - radius, x_min, x_max);
+		auto roi_x_max = clamp(p.x + radius, x_min, x_max);
+		auto roi_y_min = clamp(p.y - radius, y_min, y_max);
+		auto roi_y_max = clamp(p.y + radius, y_min, y_max);
+
+		roi_row_begin[batch] = (rows - 1) * ((roi_y_min - y_min) / y_range);
+		roi_row_end[batch] = (rows - 1) * ((roi_y_max - y_min) / y_range);
+		roi_col_begin[batch] = round_down((cols - 1) * ((roi_x_min - x_min) / x_range));
+		roi_col_end[batch] = round_up((cols - 1) * ((roi_x_max - x_min) / x_range), cols);
+
+		assert(roi_row_begin[batch] <= roi_row_end[batch]);
+		assert(roi_col_begin[batch] <= roi_col_end[batch]);
+	}
+}
+__global__
+static void compute_roi_kernel(const std::size_t batch_size,
+	const std::size_t rows, const std::size_t cols,
+	std::size_t *roi_row_begin, std::size_t *roi_row_end, std::size_t *roi_col_begin, std::size_t *roi_col_end)
+{
+	for (int batch = blockIdx.x * blockDim.x + threadIdx.x; batch < batch_size; batch += gridDim.x * blockDim.x)
+	{
+		roi_row_begin[batch] = 0;
+		roi_row_end[batch] = rows;
+		roi_col_begin[batch] = 0;
+		roi_col_end[batch] = cols;
+	}
+}
+
+void compute_roi(
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
+	const std::size_t &batch_size,
+	const std::size_t &rows, const std::size_t &cols,
+	const float &x_min, const float &x_max, const float &y_min, const float &y_max,
+	const float &radius,
+	const float **current_position, const std::size_t &current_position_strides,
+	std::size_t *__restrict__ roi_row_begin, std::size_t *__restrict__ roi_row_end, std::size_t *__restrict__ roi_col_begin, std::size_t *__restrict__ roi_col_end)
+{
+	dim3 grid, block;
+
+	block.x = BLOCK_X * BLOCK_Y;
+	grid.x = (batch_size + block.x - 1) / block.x;
+	if (radius > 0.0f)
+	{
+		compute_roi_kernel << <grid, block, 0, streams[0] >> > (
+			batch_size, rows, cols, x_min, x_max, y_min, y_max,
+			x_max - x_min, y_max - y_min, radius, current_position, current_position_strides,
+			roi_row_begin, roi_row_end, roi_col_begin, roi_col_end
+			);
+	}
+	else
+	{
+		compute_roi_kernel << <grid, block, 0, streams[0] >> > (
+			batch_size, rows, cols,
+			roi_row_begin, roi_row_end, roi_col_begin, roi_col_end
+			);
+	}
+	checkCudaErrors(cudaGetLastError());
+}
+
+template <typename Parameter >
+static inline void prepare(
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
+	const Parameter &parameter, 
+	const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
+	const float *x_grid, const float *y_grid,
+	const std::size_t &roi_rows, const std::size_t &roi_cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end)
+{
+}
+
+__global__
+static  void diff2_kernel(
+	const int batch_size, 
+	const int place_cells_number,
+	const std::size_t *roi_begin, const std::size_t *roi_end,
+	const float * __restrict__ grid,
+	const float * __restrict__ center, const float * __restrict__ width,
+	float ** __restrict__ batched_grid_centered2, const int grid_centered2_stride)
+{
+	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
+	{
+		auto grid_centered2 = batched_grid_centered2[batch];
+		for (int k = roi_begin[batch] + blockIdx.y * blockDim.y + threadIdx.y; k < roi_end[batch]; k += gridDim.y * blockDim.y)
+		{
+			for (int place_cell = blockIdx.x * blockDim.x + threadIdx.x; place_cell < place_cells_number; place_cell += gridDim.x * blockDim.x)
+			{
+				auto d = grid[k] - center[place_cell];
+				grid_centered2[k * grid_centered2_stride + place_cell] = d * d * width[place_cell];
+			}
+		}
+	}
+}
+
+template <>
+static inline void prepare(
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
+	const Model &parameter,
+	const std::size_t &batch_size, const std::size_t &place_cells_number, const std::size_t &rows, const std::size_t &cols,
+	const float *x_grid, const float *y_grid,
+	const std::size_t &roi_rows, const std::size_t &roi_cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end)
+{
+	{
+		dim3 grid, block;
+
+		block.x = BLOCK_X;
+		block.y = BLOCK_Y;
+		block.z = 1;
+
+		grid.x = (place_cells_number + block.x - 1) / block.x;
+		grid.y = (roi_cols + block.y - 1) / block.y;
+		grid.z = (batch_size + block.z - 1) / block.z;
+
+		diff2_kernel<<<grid, block, 0, streams[0]>>>(batch_size, place_cells_number, roi_col_begin, roi_col_end, x_grid, parameter.cx, parameter.width, parameter.gx2w, parameter.gx2w_strides);
+		checkCudaErrors(cudaGetLastError());
+	}
+	{
+		dim3 grid, block;
+
+		block.x = BLOCK_X;
+		block.y = BLOCK_Y;
+		block.z = 1;
+
+		grid.x = (place_cells_number + block.x - 1) / block.x;
+		grid.y = (roi_rows + block.y - 1) / block.y;
+		grid.z = (batch_size + block.z - 1) / block.z;
+
+		diff2_kernel << <grid, block, 0, streams[0] >> >(batch_size, place_cells_number, roi_row_begin, roi_row_end, y_grid, parameter.cy, parameter.width, parameter.gy2w, parameter.gy2w_strides);
+		checkCudaErrors(cudaGetLastError());
+	}
+}
+
+__device__
+struct float44
+{
+	float4 a, b, c, d;
+};
+
+__device__ __forceinline__
+float44 inline operator * (const float44 &a, const float44 &b)
+{
+	float44 c;
+
+	c.a = a.a * b.a;
+	c.b = a.b * b.b;
+	c.c = a.c * b.c;
+	c.d = a.d * b.d;
+
+	return c;
+}
+__device__ __forceinline__
+float44 inline operator + (const float44 &a, const float44 &b)
+{
+	float44 c;
+
+	c.a = a.a + b.a;
+	c.b = a.b + b.b;
+	c.c = a.c + b.c;
+	c.d = a.d + b.d;
+
+	return c;
+}
+
+__device__ __forceinline__
+static inline float4 tanhf(const float4 a)
 {
 	float4 b;
 
@@ -66,10 +270,10 @@ float4 tanhf(const float4 &a)
 	b.z = tanhf(a.z);
 	b.w = tanhf(a.w);
 
-	return b;
+	return (b);
 }
-static inline __device__
-float4 expf(const float4 &a)
+__device__ __forceinline__
+static inline float4 expf(const float4 a)
 {
 	float4 b;
 
@@ -78,100 +282,455 @@ float4 expf(const float4 &a)
 	b.z = expf(a.z);
 	b.w = expf(a.w);
 
-	return b;
+	return (b);
 }
-/*__global__
-static void scale_kernel(float ** __restrict__ a,
-	const int batch_size, const int rows, const int cols, const int stride, const float scale)
-
+__device__ __forceinline__
+static inline float col_to_x(const int &col, const int &cols, const float &x_min, const float &x_range)
 {
-	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
-	{
-		for (int col = blockIdx.y * blockDim.y + threadIdx.y; col < cols; col += gridDim.y * blockDim.y)
+	return ((col) / (float)(cols - 1)) * x_range + x_min;
+}
+__device__ __forceinline__
+static inline float row_to_y(const int &row, const int &rows, const float &y_min, const float &y_range)
+{
+	return ((row) / (float)(rows - 1)) * y_range + y_min;
+}
+
+
+template <bool use_circle>
+__device__ __forceinline__
+static inline float4 inside_circle(
+	const int batch,
+	const float radius2,
+	const unsigned long seed,
+	const float2 previous_position,
+	const float2 current_position,
+	const int row, const int col0,
+	const int rows, const int cols,
+	const float &x_min, const float &x_range, const float &y_min, const float &y_range,
+	const float4 p, const float &cos_half_angle, const float &scale)
+{
+	return p;
+}
+
+
+template <>
+__device__ __forceinline__
+static inline float4 inside_circle<true>(
+	const int batch,
+	const float radius2,
+	const unsigned long seed,
+	const float2 previous_position,
+	const float2 current_position,
+	const int row, const int col0,
+	const int rows, const int cols,
+	const float &x_min, const float &x_range, const float &y_min, const float &y_range,
+	const float4 p, const float &cos_half_angle, const float &scale)
+{
+		auto a = current_position - previous_position;
+		auto da = dot(a, a);
+
+		float4 bx;
+		float by;
+
+		bx.x = col_to_x(col0 + 0, cols, x_min, x_range) - current_position.x;
+		bx.y = col_to_x(col0 + 1, cols, x_min, x_range) - current_position.x;
+		bx.z = col_to_x(col0 + 2, cols, x_min, x_range) - current_position.x;
+		bx.w = col_to_x(col0 + 3, cols, x_min, x_range) - current_position.x;
+		by = (row_to_y(row, rows, y_min, y_range) - current_position.y);
+		const float b2y = by * by;
+		const float4 dp_b2 = bx * bx + b2y;
+
+
+		int4 in;
+
+		in.x = dp_b2.x < radius2;
+		in.y = dp_b2.y < radius2;
+		in.z = dp_b2.z < radius2;
+		in.w = dp_b2.w < radius2;
+
+		if (da > 0.0f && cos_half_angle < 1.0f)
 		{
-			for (int row = blockIdx.x * blockDim.x + threadIdx.x; row < rows; row += gridDim.x * blockDim.x)
+			a *= rsqrtf(da);
+
+			const float aby = a.y * by;
+
+			float4 dp_ab = (a.x * bx + aby);
+			if (dp_b2.x > 0.0f)
 			{
-				a[batch][col * stride + row] *= scale;
+				in.x &= cos_half_angle < dp_ab.x * rsqrtf(dp_b2.x);
+			}
+			if (dp_b2.y > 0.0f)
+			{
+				in.y &= cos_half_angle < dp_ab.y * rsqrtf(dp_b2.y);
+			}
+			if (dp_b2.z > 0.0f)
+			{
+				in.z &= cos_half_angle < dp_ab.z * rsqrtf(dp_b2.z);
+			}
+			if (dp_b2.w > 0.0f)
+			{
+				in.w &= cos_half_angle < dp_ab.w * rsqrtf(dp_b2.w);
 			}
 		}
-	}
-}*/
-static std::size_t round_down(const std::size_t &offset)
-{
-	return (offset / warpSize) *  warpSize;
+		
+
+		curandStatePhilox4_32_10_t state;
+
+		// seed a random number generator
+		curand_init(seed + col0 * rows + row + batch * rows * cols, 0, 0, &state);
+
+		auto r = curand_uniform4(&state) * scale;
+
+		float4 s;
+		s.x = in.x ? p.x + r.x : 0.0f;
+		s.y = in.y ? p.y + r.y : 0.0f;
+		s.z = in.z ? p.z + r.z : 0.0f;
+		s.w = in.w ? p.w + r.w : 0.0f;
+
+		return s;
 }
 
-static std::size_t round_up(const std::size_t &offset, const std::size_t &max_offset)
-{
-	return min(max_offset, ((offset + warpSize) / warpSize) * warpSize);
-}
-
+template <bool use_circle>
 __global__
-static void mean_square_error_naive_kernel(
-	const int batch_size, const int rows, const int cols, const float scale,
-	const float ** __restrict__ batched_predicted, const int batched_predicted_stride, 
-	const float * __restrict__  expected,const int expected_stride,
-	float *__restrict__  result, const int result_stride
+static void decode_placecells_bayesian_kernel(
+	const int batch_size,
+	const int rows, const int cols,
+	const int place_cells_number,
+	const int roi_rows, const int roi_cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+	const Model parameter,
+	const float x_min, const float x_range, const float y_min, const float y_range,
+	const unsigned long seed,
+	const float scale,
+	const float radius2,
+	const float cos_half_angle,
+	const float inv_sigma2,
+	const float **batched_previous_position, 
+	const float **batched_current_position,
+	const float **batched_predicted_activations,
 
+	float **batched_location_probability, const int location_probability_stride
 )
 {
-	
 	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
 	{
-		const float *predicted = batched_predicted[batch];
-		for (int row = blockIdx.y * blockDim.y + threadIdx.y; row < rows; row += gridDim.y * blockDim.y)
+		//const int roi_valid_rows = min((int)(roi_row_end[batch] - roi_row_begin[batch]), rows);
+	//	const int roi_valid_cols = min((int)(roi_col_end[batch] - roi_col_begin[batch]), cols);
+		float *location_probability = batched_location_probability[batch];
+		const float *previous_position = batched_previous_position[batch];
+		const float *current_position = batched_current_position[batch];
+		const float *predicted_activations = batched_predicted_activations[batch];
+
+		for (int roi_row = blockIdx.y * blockDim.y + threadIdx.y; roi_row < roi_rows; roi_row += gridDim.y * blockDim.y)
 		{
-			float sum = 0.0f;
-			for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < cols; col += gridDim.x * blockDim.x)
+			for (int roi_col = blockIdx.x * blockDim.x + threadIdx.x; roi_col < roi_cols / 4; roi_col += gridDim.x * blockDim.x)
 			{
-				float d = predicted[row * batched_predicted_stride + col] - expected[row * expected_stride + col];
+				const int roi_col4 = roi_col * 4;
+				const int row = roi_row_begin[batch] + roi_row;
+				const int col = roi_col_begin[batch] + roi_col4;
 
-				sum += (d * d);
+				float4 gx;
+				float gy;
+
+				gx.x = col_to_x(col + 0, cols, x_min, x_range);
+				gx.y = col_to_x(col + 1, cols, x_min, x_range);
+				gx.z = col_to_x(col + 2, cols, x_min, x_range);
+				gx.w = col_to_x(col + 3, cols, x_min, x_range);
+				gy = row_to_y(row, rows, y_min, y_range);
+
+				float4 v = make_float4(0.0f);
+#pragma unroll 
+				for (int pc = 0; pc < place_cells_number; pc++)
+				{
+					/*float4 p = reinterpret_cast<float4*>(const_cast<float *>(predicted_activations))[pc];
+					float4 cx = reinterpret_cast<float4*>(const_cast<float *>(parameter.cx))[pc];
+					float4 cy = reinterpret_cast<float4*>(const_cast<float *>(parameter.cy))[pc];
+					float4 w = reinterpret_cast<float4*>(const_cast<float *>(parameter.width))[pc];*/
+					float p = predicted_activations[pc];
+					float cx = parameter.cx[pc];
+					float cy = parameter.cy[pc];
+					float w = parameter.width[pc];
+					auto dx = gx - cx;
+					auto dy = gy - cy;
+
+					float4 d = expf((dx * dx + dy * dy) * w) - p;
+					v += d * d;
+				}
+				float4 p = expf(inv_sigma2 * v);
+				float4 l = inside_circle<use_circle>(batch,
+					radius2,
+					seed,
+					*reinterpret_cast<float2 *>(const_cast<float *>(previous_position)),
+					*reinterpret_cast<float2 *>(const_cast<float *>(current_position)),
+
+					row, col,
+					rows, cols,
+					x_min, x_range, y_min, y_range,
+					p, cos_half_angle, scale);
+				reinterpret_cast<float4 *>(&location_probability[roi_row * location_probability_stride])[roi_col] = l;
 			}
-
-			sum = warpReduceSum(sum);
-			if ((threadIdx.x & 31) == 0)
-				atomicAdd(&result[row * result_stride + batch], sum * scale);
 		}
 	}
 }
 
-__global__
-static void mean_square_error_float4_kernel(
-	const int batch_size, const int rows, const int cols, const float scale,
-	const float ** __restrict__ batched_predicted, const int batched_predicted_stride,
-	const float * __restrict__  expected, const int expected_stride,
-	float *__restrict__  result, const int result_stride
+void decode_placecells_bayesian(
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
+	const std::size_t &batch_size, const std::size_t &place_cells_number,
+	const std::size_t &rows, const std::size_t &cols,
+	const std::size_t &roi_rows, const std::size_t &roi_cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+	const float &radius,
+	const float &cos_half_angle,
+	const float &scale,
+	const float &sigma,
+	const unsigned long &seed,
+	const Model &parameter,
+	const float &x_min, const float &x_max, const float &y_min, const float &y_max,
+	const float *x_grid, const std::size_t &x_grid_stride,
+	const float *y_grid, const std::size_t &y_grid_stride,
+	const float **batched_previous_position, const std::size_t &batched_previous_position_stride,
+	const float **batched_current_position, const std::size_t &batched_current_position_stride,
+	const float **batched_predicted_activations, const std::size_t &batched_predicted_activations_stride,
+	float **batched_direction, const std::size_t &batched_direction_stride,
+	float **batched_x_grid_centered, const std::size_t &batched_x_grid_centered_stride,
+	float **batched_y_grid_centered, const std::size_t &batched_y_grid_centered_stride,
+	float **batched_location_probability, const std::size_t &batched_location_probability_stride)
+{
+	//prepare(streams, handles, events, parameter, batch_size, place_cells_number, rows, cols, x_grid, y_grid, roi_rows, roi_cols, roi_row_begin, roi_row_end, roi_col_begin, roi_col_end);
 
+	dim3 grid, block;
+
+	block.x = BLOCK_X;
+	block.y = BLOCK_Y;
+	block.z = 1;
+
+	grid.x = (roi_cols / 4 + block.x - 1) / block.x;
+	grid.y = (roi_rows + block.y - 1) / block.y;
+	grid.z = (batch_size  + block.z - 1) / block.z;
+
+	/*for (std::size_t batch = 0; batch < batch_size; batch++)
+	{*/
+	//	auto stream_number = batch % TRN::GPU::Context::STREAM_NUMBER;*/
+		if (radius > 0.0f)
+		{
+
+				decode_placecells_bayesian_kernel<true> << <grid, block, 0, streams[0] >> > (
+					batch_size,
+					rows, cols, place_cells_number,
+					roi_rows, roi_cols,
+					roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
+					parameter,
+					x_min, x_max - x_min,
+					y_min, y_max - y_min,
+					seed,
+					scale,
+					radius * radius,
+					cos_half_angle,
+					-1.0f / (2.0f * sigma * sigma),
+					batched_previous_position,
+					batched_current_position,
+					batched_predicted_activations,
+					batched_location_probability, batched_location_probability_stride
+					);
+		
+		}
+		else
+		{
+			decode_placecells_bayesian_kernel<false> << <grid, block, 0, streams[0] >> > (
+				batch_size,
+				rows, cols, place_cells_number,
+				roi_rows, roi_cols,
+				roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
+				parameter,
+				x_min, x_max - x_min,
+				y_min, y_max - y_min,
+				seed,
+				scale,
+				radius * radius,
+				cos_half_angle,
+				-1.0f / (2.0f * sigma * sigma),
+				batched_previous_position,
+				batched_current_position,
+				batched_predicted_activations,
+				batched_location_probability, batched_location_probability_stride
+				);
+		}
+		checkCudaErrors(cudaGetLastError());
+	/*}*/
+
+	//checkCudaErrors(cudaDeviceSynchronize());
+}
+
+template <bool use_circle>
+__global__
+static void decode_placecells_bayesian_kernel(
+	const int batch,
+	const int rows, const int cols,
+	const int place_cells_number,
+	const int roi_rows, const int roi_cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+	const Map parameter,
+	const float x_min, const float x_range, const float y_min, const float y_range,
+	const unsigned long seed,
+	const float scale,
+	const float radius2,
+	const float cos_half_angle,
+	const float inv_sigma2,
+	const float **batched_previous_position,
+	const float **batched_current_position,
+	const float **batched_predicted_activations,
+
+	float **batched_location_probability, const int location_probability_stride
 )
 {
-	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
+	const int roi_row = blockIdx.z * blockDim.z + threadIdx.z;
+	const int roi_col = blockIdx.y * blockDim.y + threadIdx.y;
+	const int pc = blockIdx.x * blockDim.x + threadIdx.x;
+
+	float *location_probability = batched_location_probability[batch];
+	const float *previous_position = batched_previous_position[batch];
+	const float *current_position = batched_current_position[batch];
+	const float *predicted_activations = batched_predicted_activations[batch];
+	const int row = roi_row_begin[batch] + roi_row;
+	const int col = roi_col_begin[batch] + roi_col * 4;
+	const int roi_valid_cols = roi_col_end[batch] - roi_col_begin[batch];
+	const int roi_valid_rows = roi_row_end[batch] - roi_row_begin[batch];
+
+	if (roi_row < roi_valid_rows && roi_col * 4 < roi_valid_cols)
 	{
-		const float *predicted = batched_predicted[batch];
-		for (int row = blockIdx.y * blockDim.y + threadIdx.y; row < rows; row += gridDim.y * blockDim.y)
+		typedef cub::BlockReduce<float4, 256, cub::BLOCK_REDUCE_RAKING_COMMUTATIVE_ONLY> BlockReduceT;
+		__shared__ typename BlockReduceT::TempStorage temp_storage;
+
+		const float p_ = predicted_activations[threadIdx.x];
+
+		//const int rc = ;
+		float4 d;
+		d.x = parameter.data[(row * cols + (col + 0)) * parameter.stride + threadIdx.x] - p_;
+		d.y = parameter.data[(row * cols + (col + 1)) * parameter.stride + threadIdx.x] - p_;
+		d.z = parameter.data[(row * cols + (col + 2)) * parameter.stride + threadIdx.x] - p_;
+		d.w = parameter.data[(row * cols + (col + 3)) * parameter.stride + threadIdx.x] - p_;
+
+		float4 v = BlockReduceT(temp_storage).Sum(d * d);
+		if (threadIdx.x == 0)
 		{
-			float sum = 0.0f;
+			float4 p = expf(inv_sigma2 * v);
+			float4 l = inside_circle<use_circle>(batch,
+				radius2,
+				seed,
+				*reinterpret_cast<float2 *>(const_cast<float *>(previous_position)),
+				*reinterpret_cast<float2 *>(const_cast<float *>(current_position)),
 
-			for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < cols; col += gridDim.x * blockDim.x)
-			{
-				 float4 p = reinterpret_cast<float4 *>(const_cast<float *>(&predicted[row * batched_predicted_stride]))[col];
-				 float4 e = reinterpret_cast<float4 *>(const_cast<float *>(&expected[row * expected_stride]))[col];
-				 float4 d = p - e;
-				 float4 c = (d * d);
-				sum += c.x + c.y + c.z + c.w;
-			}
-
-			sum = warpReduceSum(sum);
-			if ((threadIdx.x & 31) == 0)
-				atomicAdd(&result[row * result_stride + batch], sum * scale);
+				row, col,
+				rows, cols,
+				x_min, x_range, y_min, y_range,
+				p, cos_half_angle, scale);
+			reinterpret_cast<float4 *>(&location_probability[roi_row * location_probability_stride])[roi_col] = l;
 		}
 	}
+	else
+	{
+		if (threadIdx.x == 0)
+		{
+			reinterpret_cast<float4 *>(&location_probability[roi_row * location_probability_stride])[roi_col] = make_float4(0.0f);
+		}
+	}
+}
+void decode_placecells_bayesian(
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
+	const std::size_t &batch_size, const std::size_t &place_cells_number,
+	const std::size_t &rows, const std::size_t &cols,
+	const std::size_t &roi_rows, const std::size_t &roi_cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+	const float &radius,
+	const float &cos_half_angle,
+	const float &scale,
+	const float &sigma,
+	const unsigned long &seed,
+	const Map &parameter,
+	const float &x_min, const float &x_max, const float &y_min, const float &y_max,
+	const float *x_grid, const std::size_t &x_grid_stride,
+	const float *y_grid, const std::size_t &y_grid_stride,
+	const float **batched_previous_position, const std::size_t &batched_previous_position_stride,
+	const float **batched_current_position, const std::size_t &batched_current_position_stride,
+	const float **batched_predicted_activations, const std::size_t &batched_predicted_activations_stride,
+	float **batched_direction, const std::size_t &batched_direction_stride,
+	float **batched_x_grid_centered, const std::size_t &batched_x_grid_centered_stride,
+	float **batched_y_grid_centered, const std::size_t &batched_y_grid_centered_stride,
+	float **batched_location_probability, const std::size_t &batched_location_probability_stride)
+{
+	//prepare(streams, handles, events, parameter, batch_size, place_cells_number, rows, cols, x_grid, y_grid, roi_rows, roi_cols, roi_row_begin, roi_row_end, roi_col_begin, roi_col_end);
+
+	dim3 grid, block;
+
+	block.x = 256;
+	block.y = 1;
+	block.z = 1;
+
+	grid.x = (256 + block.x - 1) / block.x;
+	grid.y = (roi_cols / 4 + block.y - 1) / block.y;
+	grid.z = (roi_rows + block.z - 1) / block.z;
+
+	for (std::size_t batch = 0; batch < batch_size; batch++)
+	{
+	//	auto stream_number = batch % TRN::GPU::Context::STREAM_NUMBER;*/
+	if (radius > 0.0f)
+	{
+
+		decode_placecells_bayesian_kernel<true> << <grid, block, 0, streams[0] >> > (
+			batch,
+			rows, cols, place_cells_number,
+			roi_rows, roi_cols,
+			roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
+			parameter,
+			x_min, x_max - x_min,
+			y_min, y_max - y_min,
+			seed,
+			scale,
+			radius * radius,
+			cos_half_angle,
+			-1.0f / (2.0f * sigma * sigma),
+			batched_previous_position,
+			batched_current_position,
+			batched_predicted_activations,
+			batched_location_probability, batched_location_probability_stride
+			);
+
+	}
+	else
+	{
+		decode_placecells_bayesian_kernel<false> << <grid, block, 0, streams[0] >> > (
+			batch,
+			rows, cols, place_cells_number,
+			roi_rows, roi_cols,
+			roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
+			parameter,
+			x_min, x_max - x_min,
+			y_min, y_max - y_min,
+			seed,
+			scale,
+			radius * radius,
+			cos_half_angle,
+			-1.0f / (2.0f * sigma * sigma),
+			batched_previous_position,
+			batched_current_position,
+			batched_predicted_activations,
+			batched_location_probability, batched_location_probability_stride
+			);
+	}
+	checkCudaErrors(cudaGetLastError());
+	}
+
+	//checkCudaErrors(cudaDeviceSynchronize());
 }
 
 void compute_mean_square_error
 (
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
 	const std::size_t &batch_size,
 	const float **batched_predicted, const std::size_t &batched_predicted_rows, const std::size_t &batched_predicted_cols, const std::size_t &batched_predicted_stride,
 	const float *expected, const std::size_t &expected_rows, const std::size_t &expected_cols, const std::size_t &expected_stride,
@@ -179,48 +738,7 @@ void compute_mean_square_error
 )
 {
 
-	assert(expected_rows == result_rows);
-	assert(batched_predicted_cols == expected_cols);
-	assert(result_cols == batch_size);
-	const float scale = 1.0f / expected_cols;
-	checkCudaErrors(cudaMemset2DAsync(result, result_stride * sizeof(float), 0, result_cols * sizeof(float), result_rows, stream));
-	{
-		dim3 grid, block;
-
-		block.x = BLOCK_X;
-		block.y = BLOCK_Y;
-		block.z = 1;
-
-		if (expected_cols >= 4)
-		{
-			grid.x = (expected_cols / 4 + block.x - 1) / block.x;
-			grid.y = (result_rows + block.y - 1) / block.y;
-			grid.z = (batch_size + block.z - 1) / block.z;
-
-			mean_square_error_float4_kernel << < grid, block, 0, stream >> > (
-				batch_size, result_rows, expected_cols/4,scale,
-				batched_predicted, batched_predicted_stride,
-				expected, expected_stride,
-				result, result_stride);
-		}
-		else
-		{
-			grid.x = (expected_cols + block.x - 1) / block.x;
-			grid.y = (result_rows + block.y - 1) / block.y;
-			grid.z = (batch_size + block.z - 1) / block.z;
-
-			mean_square_error_naive_kernel << < grid, block, 0, stream >> > (
-				batch_size, result_rows, expected_cols,scale,
-				batched_predicted, batched_predicted_stride,
-				expected, expected_stride,
-				result, result_stride);
-		}
-
-	
-
-
-		checkCudaErrors(cudaGetLastError());
-	}
+	throw std::runtime_error("Not yet implemented");
 }
 
 
@@ -233,7 +751,7 @@ static void decode_placecells_linear_kernel(
 	float **batched_decoded_position, const int batched_decoded_position_strides)
 {
 	cudaStream_t *streams;
-	cublasHandle_t *handles;
+	cublasHandle_t *handless;
 
 	assert(cudaMalloc(&streams, sizeof(cudaStream_t) * batch_size));
 	assert(cudaMalloc(&handles, sizeof(cublasHandle_t) * batch_size));
@@ -269,8 +787,8 @@ static void decode_placecells_linear_kernel(
 }*/
 
 void compute_decode_placecells_linear(
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
 	const std::size_t &batch_size, const std::size_t &place_cells_number,
 	const float *cx,
 	const float *cy,
@@ -283,526 +801,153 @@ void compute_decode_placecells_linear(
 		float sum;
 		float x, y;
 
-		checkCudaErrors(cublasSasum(handle, place_cells_number, batched_prediction[batch], 1, &sum));
-		checkCudaErrors(cublasSdot(handle, place_cells_number, batched_prediction[batch], 1, cx, 1, &x));
-		checkCudaErrors(cublasSdot(handle, place_cells_number, batched_prediction[batch], 1, cy, 1, &y));
+		checkCudaErrors(cublasSasum(*handles, place_cells_number, batched_prediction[batch], 1, &sum));
+		checkCudaErrors(cublasSdot(*handles, place_cells_number, batched_prediction[batch], 1, cx, 1, &x));
+		checkCudaErrors(cublasSdot(*handles, place_cells_number, batched_prediction[batch], 1, cy, 1, &y));
 
 		float position[2] = { x / sum, y / sum };
 
-		checkCudaErrors(cudaMemcpyAsync(batched_decoded_position[batch], position, sizeof(position), cudaMemcpyKind::cudaMemcpyHostToDevice, stream));
+		checkCudaErrors(cudaMemcpyAsync(batched_decoded_position[batch], position, sizeof(position), cudaMemcpyKind::cudaMemcpyHostToDevice, *streams));
 
 	}
 
-	/*decode_placecells_linear_kernel << <1, 1, 0, stream >> > (batch_size, place_cells_number, cx, cy, batched_prediction, batched_prediction_strides, batched_decoded_position, batched_decoded_position_strides);
+	/*decode_placecells_linear_kernel << <1, 1, 0, *streams>> > (batch_size, place_cells_number, cx, cy, batched_prediction, batched_prediction_strides, batched_decoded_position, batched_decoded_position_strides);
 	checkCudaErrors(cudaGetLastError());*/
 }
-
 __global__
-static void batched_sgemv_kernel
-(
-	const int batch_size,
-	float ** __restrict__ w, const int w_rows, const int w_cols, const int w_stride,
-	float ** __restrict__ x, const int x_rows, const int x_cols, const int x_stride,
-	float ** __restrict__ y, const int y_rows, const int  y_cols, const int y_stride
-)
-
-{
-	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
-	{
-		float *w_ = w[batch];
-		float *x_ = x[batch];
-		float *y_ = y[batch];
-
-		for (int row = blockIdx.y * blockDim.y + threadIdx.y; row < w_rows; row += gridDim.y * blockDim.y)
-		{
-			float sum = 0.0f;
-			for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < w_cols; col += gridDim.x * blockDim.x)
-			{				
-				sum += dot(reinterpret_cast<float4 *>(&w_[row * w_stride])[col], reinterpret_cast<float4 *>(x_)[col]);
-			}
-
-			sum = warpReduceSum(sum);
-			if ((threadIdx.x & 31) == 0)
-			{
-				atomicAdd(&y_[row], sum);
-			}
-		}
-	}
-}
-
-__global__
-static void batched_reset_kernel(
-	const int batch_size, const int rows, const int cols,
-	float ** __restrict__ x, const int x_stride
-)
-{
-	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
-	{
-		float *X = x[batch];
-		for (int row = blockIdx.y * blockDim.y + threadIdx.y; row < rows; row += gridDim.y * blockDim.y)
-		{
-#pragma unroll 8
-			for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < cols; col += gridDim.x * blockDim.x)
-			{
-				reinterpret_cast<float4 *>(&X[row * x_stride])[col] = make_float4(0.0f);
-			}
-		}
-	}
-}
-
-static inline void batched_reset(const cudaStream_t &stream,
-	const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
-	float **x, const std::size_t &x_stride)
-{
-	dim3 grid, block;
-	block.x = BLOCK_X;
-	block.y = BLOCK_Y;
-	block.z = 1;
-	grid.x = (cols / 4 + block.x - 1) / block.x;
-	grid.y = (rows + block.y - 1) / block.y;
-	grid.z = (batch_size + block.z - 1) / block.z;
-
-	batched_reset_kernel << < grid, block, 0, stream >> > (
-		batch_size, rows, cols / 4, x, x_stride);
-
-	checkCudaErrors(cudaGetLastError());
-}
-__host__ 
-static inline void batched_sgemv(
-	const cudaStream_t &stream,
-	const std::size_t & batch_size,
-	float ** w, const std::size_t &w_rows, const std::size_t &w_cols, const std::size_t &w_stride,
-	float ** x, const std::size_t &x_rows, const std::size_t &x_cols, const std::size_t &x_stride,
-	float ** y, const std::size_t &y_rows, const std::size_t &y_cols, const std::size_t &y_stride)
-{
-
-
-
-
-	assert(x_rows == 1);
-	assert(y_rows == 1);
-	assert(x_cols == w_cols);
-	assert(y_cols == w_rows);
-	dim3 grid, block;
-
-	block.x = BLOCK_X;
-	block.y = BLOCK_Y;
-	block.z = 1;
-
-	grid.x = (w_cols / 4 + block.x - 1) / block.x;
-	grid.y = (w_rows + block.y - 1) / block.y;
-	grid.z = (batch_size + block.z - 1) / block.z;
-
-	batched_reset(stream, batch_size, y_rows, y_cols, y, y_stride);
-	batched_sgemv_kernel << <grid, block, 0, stream >> >
-		(
-			batch_size, w, w_rows, w_cols/4, w_stride,
-			x, x_rows, x_cols/4, x_stride,
-			y, y_rows, y_cols, y_stride
-			);
-	checkCudaErrors(cudaGetLastError());
-
-}
-
-
-
-__global__
-static void batched_update_reservoir_kernel(
-	const int batch_size,
-	const int t, const float leak_rate,
-	 float ** __restrict__ u_ffwd, const int u_ffwd_rows, const int u_ffwd_cols, const int u_ffwd_stride,
-	 float ** __restrict__ u, const int u_rows, const int u_cols, const int u_stride,
-
-	float ** __restrict__ p, const int p_rows, const int p_cols, const int p_stride,
-	float ** __restrict__ x_res, const int x_res_rows, const int x_res_cols, const int x_res_stride
+static void encode_placecells_model_kernel(const int batch_size, const int place_cells_number,
+	const float *__restrict__ cx,
+	const float *__restrict__ cy,
+	const float *__restrict__ w,
+	const float **__restrict__ batched_decoded_position, const int batched_decoded_position_strides,
+	float **__restrict__ batched_stimulus, const int batched_stimulus_strides
 )
 {
 	for (int batch = blockIdx.y * blockDim.y + threadIdx.y; batch < batch_size; batch += gridDim.y * blockDim.y)
 	{
-		float *P = p[batch];
-		float *U = u[batch];
-		float *X = x_res[batch];
-		float *U_ffwd = u_ffwd[batch];
-
-		float *u_ffwd_t = &U_ffwd[t * u_ffwd_stride];
-		assert(t < u_ffwd_rows);
-//#pragma unroll 8
-		for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < x_res_cols ; col += gridDim.x * blockDim.x)
+		auto p = *reinterpret_cast<float2 *>(const_cast<float *>(batched_decoded_position[batch]));
+		auto stimulus= batched_stimulus[batch];
+		for (int place_cell = blockIdx.x * blockDim.x + threadIdx.x; place_cell < place_cells_number; place_cell += gridDim.x * blockDim.x)
 		{
-			float4 _p = reinterpret_cast<float4 *>(P)[col];
-			float4 _u = reinterpret_cast<float4 *>(U)[col];
-			float4 _u_ffwd = reinterpret_cast<float4 *>(u_ffwd_t)[col];
-
-			_p += leak_rate * ( _u_ffwd + _u - _p);
-			reinterpret_cast<float4 *>(X)[col] = tanhf(_p);
-			reinterpret_cast<float4 *>(P)[col] = _p;
+			auto dx = p.x - cx[place_cell];
+			auto dy = p.y - cy[place_cell];
+			stimulus[place_cell] = expf((dx * dx + dy * dy) * w[place_cell]);
 		}
 	}
 }
-__global__
-static void batched_update_reservoir_no_input_kernel(
-	const int batch_size,
-	const int t, const float leak_rate,
-	float ** __restrict__ u, const int u_rows, const int u_cols, const int u_stride,
 
-	float ** __restrict__ p, const int p_rows, const int p_cols, const int p_stride,
-	float ** __restrict__ x_res, const int x_res_rows, const int x_res_cols, const int x_res_stride
+void compute_encode_placecells_model(const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
+	const std::size_t &batch_size, const std::size_t &place_cells_number,
+	const float *cx,
+	const float *cy,
+	const float *w,
+	const float **batched_decoded_position, const std::size_t &batched_decoded_position_strides,
+	float **batched_stimulus, const std::size_t &batched_stimulus_strides
+)
+{
+	dim3 grid, block;
+
+	block.x = BLOCK_X;
+	block.y = 1;
+
+	grid.x = (place_cells_number  + block.x - 1) / block.x;
+	grid.y = (batch_size + block.y - 1) / block.y;
+
+	encode_placecells_model_kernel << <grid, block, 0, streams[0] >> > (
+		batch_size, place_cells_number, 
+		cx, cy, w, 
+		batched_decoded_position, batched_decoded_position_strides,
+		batched_stimulus, batched_stimulus_strides);
+
+	checkCudaErrors(cudaGetLastError());
+}
+
+__global__
+static void update_reservoir_kernel(
+	const int batch_size, const int mini_batch, const int t,
+	const float leak_rate,
+	const float ** __restrict__ batched_u, const int batched_u_rows, const int batched_u_cols, const int batched_u_stride,
+	const float ** __restrict__ batched_u_ffwd, const int batched_u_ffwd_rows, const int batched_u_ffwd_cols, const int batched_u_ffwd_stride,
+
+	float ** __restrict__ batched_p, const int batched_p_rows, const int batched_p_cols, const int batched_p_stride,
+	float ** __restrict__ batched_x_res, const int batched_x_res_rows, const int batched_x_res_cols, const int batched_x_res_stride,
+	float ** __restrict__ batched_pre, const int batched_pre_rows, const int batched_pre_cols, const int batched_pre_stride
 )
 {
 	for (int batch = blockIdx.y * blockDim.y + threadIdx.y; batch < batch_size; batch += gridDim.y * blockDim.y)
 	{
-		float *P = p[batch];
-		float *U = u[batch];
-		float *X = x_res[batch];
+		float4 *U = reinterpret_cast<float4 *>(const_cast<float *>(batched_u[batch]));
+		float4 *U_ffwd = reinterpret_cast<float4 *>(const_cast<float *>(&batched_u_ffwd[batch][t * batched_u_ffwd_stride]));
+		float4 *X = reinterpret_cast<float4 *>(batched_x_res[batch]);
+		float4 *P = reinterpret_cast<float4 *>(batched_p[batch]);
+		float4 *PRE = reinterpret_cast<float4 *>(&batched_pre[batch][mini_batch * batched_pre_stride]);
 
-		for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < x_res_cols; col += gridDim.x * blockDim.x)
+		for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < batched_x_res_cols / 4; col += gridDim.x * blockDim.x)
 		{
-			float4 _p = reinterpret_cast<float4 *>(P)[col];
-			float4 _u = reinterpret_cast<float4 *>(U)[col];
-
-			_p += leak_rate * (_u - _p);
-			reinterpret_cast<float4 *>(X)[col] = tanhf(_p);
-			reinterpret_cast<float4 *>(P)[col] = _p;
+			auto p = P[col];
+			p += leak_rate * (U[col] + U_ffwd[col] - p);
+			auto x = tanhf(p);
+			P[col] = p;
+			X[col] = x;	
+			PRE[col] = x;
 		}
 	}
 }
-__host__
-static inline void batched_update_reservoir_no_input
-(
-	const cudaStream_t &stream,
-	const std::size_t &batch_size, const std::size_t t, const float &leak_rate, 
-
-	float **u, const std::size_t &u_rows, const std::size_t &u_cols, const std::size_t &u_stride,
-	float **p, const std::size_t &p_rows, const std::size_t &p_cols, const std::size_t &p_stride,
-	float **x_res, const std::size_t &x_res_rows, const std::size_t &x_res_cols, const std::size_t &x_res_stride
-)
-{
-	dim3 grid, block;
-
-	block.x = 128;
-	block.y = 1;
-
-	grid.x = (x_res_cols / 4 + block.x - 1) / block.x;
-	grid.y = (batch_size + block.y - 1) / block.y;
-
-	batched_update_reservoir_no_input_kernel << < grid, block, 0, stream >> > (
-		batch_size, t, leak_rate,
-		
-		u, u_rows, u_cols / 4, u_stride,
-
-		p, p_rows, p_cols / 4, p_stride,
-		x_res, x_res_rows, x_res_cols / 4, x_res_stride);
-
-	checkCudaErrors(cudaGetLastError());
-}
 
 __host__
-static inline void batched_update_reservoir
+static inline void update_reservoir
 (
-	const cudaStream_t &stream,
-	const std::size_t &batch_size, const std::size_t t, const float &leak_rate, 
-	 float **u_ffwd, const std::size_t &u_ffwd_rows, const std::size_t &u_ffwd_cols, const std::size_t &u_ffwd_stride,
-	 float **u, const std::size_t &u_rows, const std::size_t &u_cols, const std::size_t &u_stride,
-	float **p, const std::size_t &p_rows, const std::size_t &p_cols, const std::size_t &p_stride,
-	float **x_res, const std::size_t &x_res_rows, const std::size_t &x_res_cols, const std::size_t &x_res_stride
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
+	const std::size_t &batch_size, const std::size_t &mini_batch_size, const std::size_t &mini_batch, const std::size_t &bundle,
+	const int *offsets, const std::size_t &ts, const std::size_t &total_duration,
+	const float **batched_w_rec, const std::size_t &batched_w_rec_rows, const std::size_t &batched_w_rec_cols, const  std::size_t &batched_w_rec_stride,
+	float **batched_x_res, const std::size_t &batched_x_res_rows, const std::size_t &batched_x_res_cols, const  std::size_t &batched_x_res_stride,
+	float **batched_u, const std::size_t &batched_u_rows, const std::size_t &batched_u_cols, const  std::size_t &batched_u_stride,
+	const float **batched_u_ffwd, const std::size_t &batched_u_ffwd_rows, const std::size_t &batched_u_ffwd_cols, const  std::size_t &batched_u_ffwd_stride,
+	float **batched_p, const std::size_t &batched_p_rows, const std::size_t &batched_p_cols, const  std::size_t &batched_p_stride,
+	float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const  std::size_t &bundled_pre_stride,
+	const float &leak_rate,
+	const float *one, const float *zero
 )
 {
+	sgemm(
+			handles[0],
+			cublasOperation_t::CUBLAS_OP_N,
+			cublasOperation_t::CUBLAS_OP_N,
+			batch_size,
+
+			(const float **)batched_w_rec, batched_w_rec_cols, batched_w_rec_rows, batched_w_rec_stride,
+			(const float **)batched_x_res, batched_x_res_cols, batched_x_res_rows, batched_x_res_stride,
+			batched_u, batched_u_cols, batched_u_rows, batched_u_stride, one, zero);
+
+	auto t = offsets[ts];
 	dim3 grid, block;
 
-	block.x = 128;
+	block.x = warpSize * 4;
 	block.y = 1;
 
-	grid.x = (x_res_cols / 4 + block.x - 1) / block.x;
+	grid.x = (batched_x_res_cols / 4 + block.x - 1) / block.x;
 	grid.y = (batch_size + block.y - 1) / block.y;
 
-	batched_update_reservoir_kernel  << < grid, block, 0, stream >> > (
-		batch_size, t, leak_rate,
-		u_ffwd, u_ffwd_rows, u_ffwd_cols, u_ffwd_stride,
-		u, u_rows, u_cols/4, u_stride,
-
-		p, p_rows, p_cols/4, p_stride,
-		x_res, x_res_rows, x_res_cols/4, x_res_stride);
-
+	update_reservoir_kernel << < grid, block, 0, streams[0] >> > (
+		batch_size, mini_batch, t,
+		leak_rate,
+		(const float **)batched_u, batched_u_rows, batched_u_cols, batched_u_stride,
+		(const float **)batched_u_ffwd, batched_u_ffwd_rows, batched_u_ffwd_cols, batched_u_ffwd_stride,
+		batched_p, batched_p_rows, batched_p_cols, batched_p_stride,
+		batched_x_res, batched_x_res_rows,  batched_x_res_cols, batched_x_res_stride,
+		bundled_pre[bundle], bundled_pre_rows, bundled_pre_cols, bundled_pre_stride);
 	checkCudaErrors(cudaGetLastError());
 }
-/*__device__
-static const char *dev_cudaGetErrorEnum(cudaError_t error)
-{
-	switch (error)
-	{
-		case cudaSuccess:
-			return "cudaSuccess";
-
-		case cudaErrorMissingConfiguration:
-			return "cudaErrorMissingConfiguration";
-
-		case cudaErrorMemoryAllocation:
-			return "cudaErrorMemoryAllocation";
-
-		case cudaErrorInitializationError:
-			return "cudaErrorInitializationError";
-
-		case cudaErrorLaunchFailure:
-			return "cudaErrorLaunchFailure";
-
-		case cudaErrorPriorLaunchFailure:
-			return "cudaErrorPriorLaunchFailure";
-
-		case cudaErrorLaunchTimeout:
-			return "cudaErrorLaunchTimeout";
-
-		case cudaErrorLaunchOutOfResources:
-			return "cudaErrorLaunchOutOfResources";
-
-		case cudaErrorInvalidDeviceFunction:
-			return "cudaErrorInvalidDeviceFunction";
-
-		case cudaErrorInvalidConfiguration:
-			return "cudaErrorInvalidConfiguration";
-
-		case cudaErrorInvalidDevice:
-			return "cudaErrorInvalidDevice";
-
-		case cudaErrorInvalidValue:
-			return "cudaErrorInvalidValue";
-
-		case cudaErrorInvalidPitchValue:
-			return "cudaErrorInvalidPitchValue";
-
-		case cudaErrorInvalidSymbol:
-			return "cudaErrorInvalidSymbol";
-
-		case cudaErrorMapBufferObjectFailed:
-			return "cudaErrorMapBufferObjectFailed";
-
-		case cudaErrorUnmapBufferObjectFailed:
-			return "cudaErrorUnmapBufferObjectFailed";
-
-		case cudaErrorInvalidHostPointer:
-			return "cudaErrorInvalidHostPointer";
-
-		case cudaErrorInvalidDevicePointer:
-			return "cudaErrorInvalidDevicePointer";
-
-		case cudaErrorInvalidTexture:
-			return "cudaErrorInvalidTexture";
-
-		case cudaErrorInvalidTextureBinding:
-			return "cudaErrorInvalidTextureBinding";
-
-		case cudaErrorInvalidChannelDescriptor:
-			return "cudaErrorInvalidChannelDescriptor";
-
-		case cudaErrorInvalidMemcpyDirection:
-			return "cudaErrorInvalidMemcpyDirection";
-
-		case cudaErrorAddressOfConstant:
-			return "cudaErrorAddressOfConstant";
-
-		case cudaErrorTextureFetchFailed:
-			return "cudaErrorTextureFetchFailed";
-
-		case cudaErrorTextureNotBound:
-			return "cudaErrorTextureNotBound";
-
-		case cudaErrorSynchronizationError:
-			return "cudaErrorSynchronizationError";
-
-		case cudaErrorInvalidFilterSetting:
-			return "cudaErrorInvalidFilterSetting";
-
-		case cudaErrorInvalidNormSetting:
-			return "cudaErrorInvalidNormSetting";
-
-		case cudaErrorMixedDeviceExecution:
-			return "cudaErrorMixedDeviceExecution";
-
-		case cudaErrorCudartUnloading:
-			return "cudaErrorCudartUnloading";
-
-		case cudaErrorUnknown:
-			return "cudaErrorUnknown";
-
-		case cudaErrorNotYetImplemented:
-			return "cudaErrorNotYetImplemented";
-
-		case cudaErrorMemoryValueTooLarge:
-			return "cudaErrorMemoryValueTooLarge";
-
-		case cudaErrorInvalidResourceHandle:
-			return "cudaErrorInvalidResourceHandle";
-
-		case cudaErrorNotReady:
-			return "cudaErrorNotReady";
-
-		case cudaErrorInsufficientDriver:
-			return "cudaErrorInsufficientDriver";
-
-		case cudaErrorSetOnActiveProcess:
-			return "cudaErrorSetOnActiveProcess";
-
-		case cudaErrorInvalidSurface:
-			return "cudaErrorInvalidSurface";
-
-		case cudaErrorNoDevice:
-			return "cudaErrorNoDevice";
-
-		case cudaErrorECCUncorrectable:
-			return "cudaErrorECCUncorrectable";
-
-		case cudaErrorSharedObjectSymbolNotFound:
-			return "cudaErrorSharedObjectSymbolNotFound";
-
-		case cudaErrorSharedObjectInitFailed:
-			return "cudaErrorSharedObjectInitFailed";
-
-		case cudaErrorUnsupportedLimit:
-			return "cudaErrorUnsupportedLimit";
-
-		case cudaErrorDuplicateVariableName:
-			return "cudaErrorDuplicateVariableName";
-
-		case cudaErrorDuplicateTextureName:
-			return "cudaErrorDuplicateTextureName";
-
-		case cudaErrorDuplicateSurfaceName:
-			return "cudaErrorDuplicateSurfaceName";
-
-		case cudaErrorDevicesUnavailable:
-			return "cudaErrorDevicesUnavailable";
-
-		case cudaErrorInvalidKernelImage:
-			return "cudaErrorInvalidKernelImage";
-
-		case cudaErrorNoKernelImageForDevice:
-			return "cudaErrorNoKernelImageForDevice";
-
-		case cudaErrorIncompatibleDriverContext:
-			return "cudaErrorIncompatibleDriverContext";
-
-		case cudaErrorPeerAccessAlreadyEnabled:
-			return "cudaErrorPeerAccessAlreadyEnabled";
-
-		case cudaErrorPeerAccessNotEnabled:
-			return "cudaErrorPeerAccessNotEnabled";
-
-		case cudaErrorDeviceAlreadyInUse:
-			return "cudaErrorDeviceAlreadyInUse";
-
-		case cudaErrorProfilerDisabled:
-			return "cudaErrorProfilerDisabled";
-
-		case cudaErrorProfilerNotInitialized:
-			return "cudaErrorProfilerNotInitialized";
-
-		case cudaErrorProfilerAlreadyStarted:
-			return "cudaErrorProfilerAlreadyStarted";
-
-		case cudaErrorProfilerAlreadyStopped:
-			return "cudaErrorProfilerAlreadyStopped";
-
-		
-		case cudaErrorAssert:
-			return "cudaErrorAssert";
-
-		case cudaErrorTooManyPeers:
-			return "cudaErrorTooManyPeers";
-
-		case cudaErrorHostMemoryAlreadyRegistered:
-			return "cudaErrorHostMemoryAlreadyRegistered";
-
-		case cudaErrorHostMemoryNotRegistered:
-			return "cudaErrorHostMemoryNotRegistered";
-
-	
-		case cudaErrorOperatingSystem:
-			return "cudaErrorOperatingSystem";
-
-		case cudaErrorPeerAccessUnsupported:
-			return "cudaErrorPeerAccessUnsupported";
-
-		case cudaErrorLaunchMaxDepthExceeded:
-			return "cudaErrorLaunchMaxDepthExceeded";
-
-		case cudaErrorLaunchFileScopedTex:
-			return "cudaErrorLaunchFileScopedTex";
-
-		case cudaErrorLaunchFileScopedSurf:
-			return "cudaErrorLaunchFileScopedSurf";
-
-		case cudaErrorSyncDepthExceeded:
-			return "cudaErrorSyncDepthExceeded";
-
-		case cudaErrorLaunchPendingCountExceeded:
-			return "cudaErrorLaunchPendingCountExceeded";
-
-		case cudaErrorNotPermitted:
-			return "cudaErrorNotPermitted";
-
-		case cudaErrorNotSupported:
-			return "cudaErrorNotSupported";
-
-		
-		case cudaErrorHardwareStackError:
-			return "cudaErrorHardwareStackError";
-
-		case cudaErrorIllegalInstruction:
-			return "cudaErrorIllegalInstruction";
-
-		case cudaErrorMisalignedAddress:
-			return "cudaErrorMisalignedAddress";
-
-		case cudaErrorInvalidAddressSpace:
-			return "cudaErrorInvalidAddressSpace";
-
-		case cudaErrorInvalidPc:
-			return "cudaErrorInvalidPc";
-
-		case cudaErrorIllegalAddress:
-			return "cudaErrorIllegalAddress";
-
-		case cudaErrorInvalidPtx:
-			return "cudaErrorInvalidPtx";
-
-		case cudaErrorInvalidGraphicsContext:
-			return "cudaErrorInvalidGraphicsContext";
-
-		case cudaErrorStartupFailure:
-			return "cudaErrorStartupFailure";
-
-		case cudaErrorApiFailureBase:
-			return "cudaErrorApiFailureBase";
-
-		
-		case cudaErrorNvlinkUncorrectable:
-			return "cudaErrorNvlinkUncorrectable";
-	}
-
-	return "<unknown>";
-}
-*/
-template< typename T >
-__device__
-void dev_check(T result, char const *const func, const char *const file, int const line)
-{
-	if (result)
-	{
-		printf("CUDA error at %s:%d code=%d\"%s\" \n",
-			file, line, static_cast<unsigned int>(result),  func);
-			// Make sure we call CUDA Device Reset before exiting
-	}
-}
-#define dev_checkCudaErrors(val)           dev_check ( (val), #val, __FILE__, __LINE__ )
-#include <thrust/system_error.h>
-#include <thrust/system/cuda/error.h>
-#include <sstream>
-
-
 
 
 template <bool gather_states>
 static void copy_states(
-	const cudaStream_t &stream, const std::size_t &batch_size, const std::size_t &t, const std::size_t &ts,
+	const cudaStream_t *streams, const std::size_t &batch_size, const std::size_t &t, const std::size_t &ts,
 	const std::size_t &stimulus_size,
 	const std::size_t &reservoir_size,
 	const std::size_t &prediction_size,
@@ -817,7 +962,7 @@ static void copy_states(
 {}
 
 template <>
-static void copy_states<true>(const cudaStream_t &stream, const std::size_t &batch_size, const std::size_t &t, const std::size_t &ts,
+static void copy_states<true>(const cudaStream_t *streams, const std::size_t &batch_size, const std::size_t &t, const std::size_t &ts,
 	const std::size_t &stimulus_size,
 	const std::size_t &reservoir_size,
 	const std::size_t &prediction_size,
@@ -840,10 +985,10 @@ static void copy_states<true>(const cudaStream_t &stream, const std::size_t &bat
 	checkCudaErrors(cudaStreamCreateWithFlags(&expected, cudaStreamNonBlocking));
 	checkCudaErrors(cudaStreamCreateWithFlags(&x_ro, cudaStreamNonBlocking));
 	checkCudaErrors(cudaStreamCreateWithFlags(&x_res, cudaStreamNonBlocking));*/
-	checkCudaErrors(cudaMemcpyAsync(incoming_ptr.data(), batched_incoming, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, stream));
-	checkCudaErrors(cudaMemcpyAsync(expected_ptr.data(), batched_expected, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, stream));
-	checkCudaErrors(cudaMemcpyAsync(x_ro_ptr.data(), batched_x_ro, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, stream));
-	checkCudaErrors(cudaMemcpyAsync(x_res_ptr.data(), batched_x_res, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, stream));
+	checkCudaErrors(cudaMemcpyAsync(incoming_ptr.data(), batched_incoming, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, *streams));
+	checkCudaErrors(cudaMemcpyAsync(expected_ptr.data(), batched_expected, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, *streams));
+	checkCudaErrors(cudaMemcpyAsync(x_ro_ptr.data(), batched_x_ro, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, *streams));
+	checkCudaErrors(cudaMemcpyAsync(x_res_ptr.data(), batched_x_res, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, *streams));
 
 	/*checkCudaErrors(cudaEventCreate(&incoming_terminated));
 	checkCudaErrors(cudaEventCreate(&expected_terminated));
@@ -853,7 +998,7 @@ static void copy_states<true>(const cudaStream_t &stream, const std::size_t &bat
 	checkCudaErrors(cudaStreamSynchronize(incoming));
 	checkCudaErrors(cudaStreamSynchronize(expected));
 	checkCudaErrors(cudaStreamSynchronize(x_ro));*/
-	checkCudaErrors(cudaStreamSynchronize(stream));
+	checkCudaErrors(cudaStreamSynchronize(*streams));
 
 //	std::size_t offset = 0;
 	float *states_ts = &states[ts * states_stride];
@@ -865,28 +1010,28 @@ static void copy_states<true>(const cudaStream_t &stream, const std::size_t &bat
 		checkCudaErrors(cudaMemcpyAsync(
 			states_ts + stimulus_col,
 			&incoming_ptr[batch][t * batched_incoming_strides],
-			sizeof(float) * stimulus_size, cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
+			sizeof(float) * stimulus_size, cudaMemcpyKind::cudaMemcpyDeviceToDevice, *streams));
 		offset += stimulus_stride;
 
 		std::size_t  desired_col = batch * prediction_stride + batch_size * offset;
 		checkCudaErrors(cudaMemcpyAsync(
 			states_ts + desired_col,
 			&expected_ptr[batch][t * batched_expected_strides],
-			sizeof(float) * prediction_size, cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
+			sizeof(float) * prediction_size, cudaMemcpyKind::cudaMemcpyDeviceToDevice, *streams));
 		offset += prediction_stride;
 
 		std::size_t  reservoir_col = batch * reservoir_stride + batch_size * offset;
 		checkCudaErrors(cudaMemcpyAsync(
 			states_ts + reservoir_col,
 			x_res_ptr[batch],
-			sizeof(float) * reservoir_size, cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
+			sizeof(float) * reservoir_size, cudaMemcpyKind::cudaMemcpyDeviceToDevice, *streams));
 		offset += reservoir_stride;
 
 		std::size_t  predicted_col = batch * prediction_stride + batch_size * offset;
 		checkCudaErrors(cudaMemcpyAsync(
 			states_ts + predicted_col,
 			x_ro_ptr[batch],
-			sizeof(float) * prediction_size, cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
+			sizeof(float) * prediction_size, cudaMemcpyKind::cudaMemcpyDeviceToDevice, *streams));
 		offset += prediction_stride;
 	}
 	
@@ -894,348 +1039,228 @@ static void copy_states<true>(const cudaStream_t &stream, const std::size_t &bat
 
 
 template <bool overwrite_states>
-static inline void initialize_states(const cudaStream_t &stream,  unsigned long &seed,
+static inline void initialize_states(const cudaStream_t *streams,  unsigned long &seed,
 	const std::size_t &batch_size,
 	float **batched_ptr, const std::size_t &batched_ptr_rows, const std::size_t &batched_ptr_cols, const std::size_t &batched_ptr_stride,
 	const float &initial_state_scale)
 {
 }
 template <>
-static inline void initialize_states<true>(const cudaStream_t &stream, unsigned long &seed,
+static inline void initialize_states<true>(const cudaStream_t *streams, unsigned long &seed,
 	const std::size_t &batch_size,
 	float **batched_ptr, const std::size_t &batched_ptr_rows, const std::size_t &batched_ptr_cols, const std::size_t &batched_ptr_stride,
 	const float &initial_state_scale)
 {
-	random_uniform(stream, seed, -initial_state_scale, initial_state_scale, 0.0f, batch_size, batched_ptr_rows, batched_ptr_cols, batched_ptr, batched_ptr_stride, false);
+	random_uniform(*streams, seed, -initial_state_scale, initial_state_scale, 0.0f, batch_size, batched_ptr_rows, batched_ptr_cols, batched_ptr, batched_ptr_stride, false);
 	seed += batch_size * batched_ptr_rows * batched_ptr_cols;
 }
 
-static inline void sgemm_nt(
-	const cublasHandle_t handle, const int batch_size,
-	const float alpha, const float beta,
-	const float **a, const int a_rows, const int a_cols, const int a_stride,
-	const float **b, const int b_rows, const int b_cols, const int b_stride,
-	float **c, const int c_rows, const int c_cols, const int c_stride
-)
-{
-	auto op_a_rows = a_rows;
-	auto op_a_cols = a_cols;
-#ifdef _DEBUG
-	auto op_b_rows = b_cols;
-#endif
-	auto op_b_cols = b_rows;
 
-	assert(op_a_rows == c_rows);
-	auto m = op_a_rows;
-	assert(op_b_cols == c_cols);
-	auto n = op_b_cols;
-	assert(op_a_cols == op_b_rows);
-	auto k = op_a_cols;
 
-	checkCudaErrors(cublasSgemmBatched(handle,
-		cublasOperation_t::CUBLAS_OP_N, cublasOperation_t::CUBLAS_OP_T,
-		m, n, k,
-		&alpha,
-		a, a_stride,
-		b, b_stride,
-		&beta,
-		c, c_stride,
-		batch_size
-	));
-}
-
-static inline void sgemm_tn(
-	const cublasHandle_t handle, const int batch_size,
-	const float alpha, const float beta,
-	const float **a, const int a_rows, const int a_cols, const int a_stride,
-	const float **b, const int b_rows, const int b_cols, const int b_stride,
-	float **c, const int c_rows, const int c_cols, const int c_stride
-)
-{
-	auto op_a_rows = a_cols;
-	auto op_a_cols = a_rows;
-#ifdef _DEBUG
-	auto op_b_rows = b_rows;
-#endif
-	auto op_b_cols = b_cols;
-
-	assert(op_a_rows == c_rows);
-	auto m = op_a_rows;
-	assert(op_b_cols == c_cols);
-	auto n = op_b_cols;
-	assert(op_a_cols == op_b_rows);
-	auto k = op_a_cols;
-
-	checkCudaErrors(cublasSgemmBatched(handle,
-		cublasOperation_t::CUBLAS_OP_T, cublasOperation_t::CUBLAS_OP_N,
-		m, n, k,
-		&alpha,
-		a, a_stride,
-		b, b_stride,
-		&beta,
-		c, c_stride,
-		batch_size
-	));
-}
-static inline void sgemm_nn(
-	const cublasHandle_t handle, const int batch_size,
-	const float alpha, const float beta,
-	const float **a, const int a_rows, const int a_cols, const int a_stride,
-	const float **b, const int b_rows, const int b_cols, const int b_stride,
-	float **c, const int c_rows, const int c_cols, const int c_stride
-)
-{
-	auto op_a_rows = a_rows;
-	auto op_a_cols = a_cols;
-#ifdef _DEBUG
-	auto op_b_rows = b_rows;
-#endif
-	auto op_b_cols = b_cols;
-
-	assert(op_a_rows == c_rows);
-	auto m = op_a_rows;
-	assert(op_b_cols == c_cols);
-	auto n = op_b_cols;
-	assert(op_a_cols == op_b_rows);
-	auto k = op_a_cols;
-
-	checkCudaErrors(cublasSgemmBatched(handle,
-		cublasOperation_t::CUBLAS_OP_N, cublasOperation_t::CUBLAS_OP_N,
-		m, n, k,
-		&alpha,
-		a, a_stride,
-		b, b_stride,
-		&beta,
-		c, c_stride,
-		batch_size
-	));
-}
-
-__global__
-static void update_readout_error_kernel(
-	const int batch_size,
-	const int t, 
-	const float learning_rate,
-	 float ** __restrict__ batched_x_ro, const int batched_x_ro_rows, const int batched_x_ro_cols, const int batched_x_ro_stride,
-	 float ** __restrict__ batched_expected, const int batched_expected_rows, const int batched_expected_cols, const int batched_expected_stride,
-	float ** __restrict__ batched_error, const int batched_error_rows, const int batched_error_cols, const int batched_error_stride
-)
-{
-	for (int batch = blockIdx.y * blockDim.y + threadIdx.y; batch < batch_size; batch += gridDim.y * blockDim.y)
-	{
-		float *E = batched_error[batch];
-		 float *D = batched_expected[batch];
-		 float *X = batched_x_ro[batch];
-
-		for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < batched_error_cols; col += gridDim.x * blockDim.x)
-		{
-			float4 d = reinterpret_cast<float4 *>(&D[t * batched_error_stride])[col];
-			float4 x = reinterpret_cast<float4 *>(X)[col];
-			float4 e = learning_rate * (d - x) * (make_float4(1.0f) - x*x);
-			/*assert(!isnan(d));
-			assert(!isnan(x));
-			assert(!isnan(e));*/
-			reinterpret_cast<float4 *>(E)[col] = e;
-		}
-	}
-}
-__global__
-static void update_readout_activation_kernel(
-	const int batch_size,
-	float ** __restrict__ batched_x_ro, const int batched_x_ro_rows, const int batched_x_ro_cols, const int batched_x_ro_stride
-)
-{
-	for (int batch = blockIdx.y * blockDim.y + threadIdx.y; batch < batch_size; batch += gridDim.y * blockDim.y)
-	{
-		float *X = batched_x_ro[batch];
-
-		for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < batched_x_ro_cols; col += gridDim.x * blockDim.x)
-		{
-			reinterpret_cast<float4 *>(X)[col] = tanhf(reinterpret_cast<float4 *>(X)[col]);
-		}
-	}
-}
-#define BLOCK_X 32
-#define BLOCK_Y 32
 
 
 __global__
-static void widrow_hoff_kernel(
+static void update_readout_activations_kernel(
 	const int batch_size, 
-	float **__restrict__  batched_w_ro, const int batched_w_ro_rows, const int batched_w_ro_cols, const int batched_w_ro_stride,
-	float **__restrict__  batched_x_res, const int batched_x_res_rows, const int batched_x_res_cols, const int batched_x_res_stride,
-	float **__restrict__  batched_error, const int batched_error_rows, const int batched_error_cols, const int batched_error_stride
+	float ** __restrict__ batched_x, const int batched_x_rows, const int batched_x_cols, const int batched_x_stride
+)
+{
+	for (int batch = blockIdx.y * blockDim.y + threadIdx.y; batch < batch_size; batch += gridDim.y * blockDim.y)
+	{
+		float *X = batched_x[batch];
+		for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < batched_x_cols; col += gridDim.x * blockDim.x)
+		{
+			X[col] = tanhf(X[col]);
+		}
+	}
+}
+
+__global__
+static void update_readout_activations_kernel(
+	const int batch_size,
+	const float ** __restrict__ batched_d, const int batched_d_rows, const int batched_d_cols, const int batched_d_stride,
+	float ** __restrict__ batched_x, const int batched_x_rows, const int batched_x_cols, const int batched_x_stride
 )
 {
 	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
 	{
-		float *W = batched_w_ro[batch];
-		float *E = batched_error[batch];
-		float *X = batched_x_res[batch];
-
-		for (int row = blockIdx.y * blockDim.y + threadIdx.y; row < batched_w_ro_rows; row += gridDim.y * blockDim.y)
+		const float *D = batched_d[batch];
+		float *X = batched_x[batch];
+		for (int row = blockIdx.y * blockDim.y + threadIdx.y; row < batched_x_rows; row += gridDim.y * blockDim.y)
 		{
-			for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < batched_w_ro_cols; col += gridDim.x * blockDim.x)
+			for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < batched_x_cols; col += gridDim.x * blockDim.x)
 			{
-				reinterpret_cast<float4 *>(&W[row * batched_w_ro_stride])[col] += reinterpret_cast<float4 *>(E)[col] * X[row];
+				auto x = tanhf(X[row * batched_x_stride + col]);
+				X[row * batched_x_stride + col] = (x - D[row * batched_d_stride + col]) * (x * x - 1.0f);
 			}
 		}
 	}
-
 }
-template <typename Parameter>
-static inline void batched_update_readout(
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
-	const std::size_t &batch_size, const std::size_t & t, const Parameter &parameter,
-	 float **batched_x_res, const std::size_t &batched_x_res_rows, const std::size_t &batched_x_res_cols, const std::size_t & batched_x_res_stride,
-	 float **batched_x_ro, const std::size_t & batched_x_ro_rows, const std::size_t & batched_x_ro_cols, const std::size_t & batched_x_ro_stride,
-	 float **batched_expected, const std::size_t & batched_expected_rows, const std::size_t & batched_expected_cols, const std::size_t &batched_expected_stride,
-	float **batched_error, const std::size_t &batched_error_rows, const std::size_t &batched_error_cols, const std::size_t & batched_error_stride,
-	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t & batched_w_ro_stride)
-{
-	dim3 block;
-	dim3 grid;
-
-	block.x = warpSize * 4;
-	grid.x = (batched_x_ro_cols / 4 + block.x - 1) / block.x;
-
-	update_readout_activation_kernel << <grid, block, 0, stream >> >
-		(
-			batch_size, 
-			batched_x_ro, batched_x_ro_rows, batched_x_ro_cols/4, batched_x_ro_stride
-		);
-
-	checkCudaErrors(cudaGetLastError());
-}
-
-
-
-template <>
-static inline void batched_update_readout(
-	const cudaStream_t &stream, 
-	const cublasHandle_t &handle, 
-	const std::size_t &batch_size, const std::size_t & t, const Widrow_Hoff &parameter,
-	 float **batched_x_res, const std::size_t &batched_x_res_rows, const std::size_t &batched_x_res_cols, const std::size_t & batched_x_res_stride,
-	 float **batched_x_ro, const std::size_t & batched_x_ro_rows, const std::size_t & batched_x_ro_cols, const std::size_t & batched_x_ro_stride,
-	 float **batched_expected, const std::size_t & batched_expected_rows, const std::size_t & batched_expected_cols, const std::size_t &batched_expected_stride,
-	float **batched_error, const std::size_t &batched_error_rows, const std::size_t &batched_error_cols, const std::size_t & batched_error_stride,
-	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t & batched_w_ro_stride)
-{
-	assert(batched_x_res_rows == 1);
-	assert(batched_x_ro_rows == 1);
-	assert(t < batched_expected_rows);
-	assert(batched_w_ro_cols == batched_x_ro_cols);
-	assert(batched_w_ro_rows == batched_x_res_cols);
-
-	{
-		dim3 block;
-		dim3 grid;
-
-		block.x = warpSize * 4;
-		grid.x = (batched_x_ro_cols / 4 + block.x - 1) / block.x;
-
-		update_readout_activation_kernel << <grid, block, 0, stream >> >
-			(
-				batch_size,
-				batched_x_ro, batched_x_ro_rows, batched_x_ro_cols/4, batched_x_ro_stride
-				);
-
-		checkCudaErrors(cudaGetLastError());
-	}
-
-		{
-			dim3 block;
-			dim3 grid;
-
-			block.x = warpSize * 4;
-			grid.x = (batched_error_cols / 4 + block.x - 1) / block.x;
-
-			block.y = 1;
-			grid.y = (batch_size + block.y - 1) / block.y;
-
-			update_readout_error_kernel << <grid, block, 0, stream >> >
-				(
-					batch_size, t, parameter.get_learning_rate(),
-					batched_x_ro, batched_x_ro_rows, batched_x_ro_cols/4, batched_x_ro_stride,
-					batched_expected, batched_expected_rows, batched_expected_cols/4, batched_expected_stride,
-					batched_error, batched_error_rows, batched_error_cols/4, batched_error_stride
-					);
-
-			checkCudaErrors(cudaGetLastError());
-		}
-
-
-		{
-			dim3 block;
-			dim3 grid;
-
-			block.x = BLOCK_X;
-			block.y = BLOCK_Y;
-			block.z = 1;
-			grid.x = (batched_w_ro_cols / 4 + block.x - 1) / block.x;
-			grid.y = (batched_w_ro_rows + block.y - 1) / block.y;
-			grid.z = (batch_size + block.z - 1) / block.z;
-			widrow_hoff_kernel << <grid, block, 0, stream >> >
-				(
-					batch_size,
-					batched_w_ro, batched_w_ro_rows, batched_w_ro_cols/4, batched_w_ro_stride,
-					batched_x_res, batched_x_res_rows, batched_x_res_cols/4, batched_x_res_stride,
-					batched_error, batched_error_rows, batched_error_cols/4, batched_error_stride
-					);
-
-			checkCudaErrors(cudaGetLastError());
-		}
-}
-static const float one = 1.0f;
-static const float zero = 0.0f;
-
-struct isnan_test {
-	__host__ __device__ bool operator()(const float a) const {
-		return isnan(a);
-	}
-};
-
 
 __global__
-static void isnan_kernel(
-	const int batch_size,
-	float **__restrict__  batched_x, const int batched_x_rows, const int batched_x_cols, const int batched_x_stride,
-	bool *result
+static void update_readout_desired_kernel(
+	const int batch_size, const int t, const int mini_batch,
+	const float ** __restrict__ batched_expected, const int batched_expected_rows, const int batched_expected_cols, const int batched_expected_stride,
+	float ** __restrict__ batched_desired, const int batched_desired_rows, const int batched_desired_cols, const int batched_desired_stride
 )
 {
-	*result = false;
-	for (int batch = 0; batch < batch_size; batch++)
+	for (int batch = blockIdx.y * blockDim.y + threadIdx.y; batch < batch_size; batch += gridDim.y * blockDim.y)
 	{
-		float *x = batched_x[batch];
-		auto r = thrust::transform_reduce(thrust::seq, x, x + batched_x_rows * batched_x_stride, isnan_test(), false, thrust::plus<bool>());
-		*result |= r;
-
+		const float *E = &batched_expected[batch][t * batched_expected_stride];
+		float *D = &batched_desired[batch][mini_batch * batched_desired_stride];
+		for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < batched_desired_cols; col += gridDim.x * blockDim.x)
+		{
+			D[col] = E[col];
+		}
 	}
 }
-
-void isnan(
-	const cudaStream_t &stream, 
-	const int batch_size,
-	float **__restrict__  batched_x, const int batched_x_rows, const int batched_x_cols, const int batched_x_stride)
+/*template<class T>
+__global__ void Global_write(T* out, T value, size_t N)
 {
-	bool *dev_result = NULL;
-	bool result = false;
-	checkCudaErrors(cudaMalloc((void **)&dev_result, sizeof(bool)));
-	isnan_kernel << <1, 1, 0, stream >> > (batch_size, batched_x, batched_x_rows, batched_x_cols, batched_x_stride, dev_result);
+	size_t i;
+	for (i = 4 * blockDim.x*blockIdx.x + threadIdx.x;
+		i < N - 4 * blockDim.x*blockIdx.x;
+		i += 4 * gridDim.x*blockDim.x;) {
+		out[i + 0 * blockDim.x] = value;
+		out[i + 1 * blockDim.x] = value;
+		out[i + 2 * blockDim.x] = value;
+		out[i + 3 * blockDim.x] = value;
+	}
+	if (i + 0 * blockDim.x < N) out[i + 0 * blockDim.x] = value;
+	if (i + 1 * blockDim.x < N) out[i + 1 * blockDim.x] = value;
+	if (i + 2 * blockDim.x < N) out[i + 2 * blockDim.x] = value;
+	if (i + 3 * blockDim.x < N) out[i + 3 * blockDim.x] = value;
+}*/
+
+
+static inline void update_readout(
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
+	const std::size_t &batch_size, const std::size_t &mini_batch_size, std::size_t &mini_batch, std::size_t &bundle,
+	const int *offsets, const std::size_t &ts, const std::size_t &total_duration,
+	const Nothing &parameter,
+	 float **batched_x_res, const std::size_t &batched_x_res_rows, const std::size_t &batched_x_res_cols, const std::size_t &batched_x_res_strides,
+	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
+	 float **batched_expected, const std::size_t &batched_expected_rows, const std::size_t &batched_expected_cols, const std::size_t &batched_expected_strides,
+	 float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const std::size_t &bundled_pre_strides,
+	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
+	float ***bundled_desired, const std::size_t &bundled_desired_rows, const std::size_t &bundled_desired_cols, const std::size_t &bundled_desired_strides,
+	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
+	const float *one, const float *zero)
+{
+	sgemm(
+		handles[0],
+		cublasOperation_t::CUBLAS_OP_N, cublasOperation_t::CUBLAS_OP_N,
+		batch_size,
+		(const float **)batched_w_ro, batched_w_ro_cols, batched_w_ro_rows, batched_w_ro_strides,
+		(const float **)batched_x_res, batched_x_res_cols, batched_x_res_rows, batched_x_res_strides,
+		batched_x_ro, batched_x_ro_cols, batched_x_ro_rows, batched_x_ro_strides, one, zero
+	);
+
+	dim3 grid, block;
+
+	block.x = warpSize * 4;
+	block.y = 1;
+
+	grid.x = (batched_x_ro_cols + block.x - 1) / block.x;
+	grid.y = (batch_size + block.z - 1) / block.z;
+
+	update_readout_activations_kernel << <grid, block, 0, streams[0] >> > (
+		batch_size,
+		batched_x_ro, batched_x_ro_cols, batched_x_ro_rows, batched_x_ro_strides
+		);
 	checkCudaErrors(cudaGetLastError());
-	checkCudaErrors(cudaMemcpyAsync(&result, dev_result, sizeof(bool), cudaMemcpyKind::cudaMemcpyDeviceToHost, stream));
-	checkCudaErrors(cudaStreamSynchronize(stream));
-	if (result)
-		throw std::runtime_error("NAN");
+}
+static inline void update_readout(
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
+	const std::size_t &batch_size, const std::size_t &mini_batch_size, std::size_t &mini_batch, std::size_t &bundle,
+	const int *offsets, const std::size_t &ts, const std::size_t &total_duration,
+	const Widrow_Hoff &parameter,
+	float **batched_x_res, const std::size_t &batched_x_res_rows, const std::size_t &batched_x_res_cols, const std::size_t &batched_x_res_strides,
+	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
+	float **batched_expected, const std::size_t &batched_expected_rows, const std::size_t &batched_expected_cols, const std::size_t &batched_expected_strides,
+	float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const std::size_t &bundled_pre_strides,
+	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
+	float ***bundled_desired, const std::size_t &bundled_desired_rows, const std::size_t &bundled_desired_cols, const std::size_t &bundled_desired_strides,
+	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
+	const float *one, const float *zero)
+{
+	const int stream_number = 1;
+	if (ts < total_duration - 1)
+	{
+		const auto t = offsets[ts + 1];
+
+		dim3 grid, block;
+
+		block.x = warpSize * 4;
+		block.y = 1;
+
+
+		grid.x = (batched_expected_cols + block.x - 1) / block.x;
+		grid.y = (batch_size + block.y - 1) / block.y;
+
+		update_readout_desired_kernel << <grid, block, 0, streams[0] >> > (
+			batch_size, t, mini_batch,
+			(const float **)batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_strides,
+			bundled_desired[bundle], bundled_desired_rows, bundled_desired_cols, bundled_desired_strides
+			);
+		checkCudaErrors(cudaGetLastError());
+	}
+	mini_batch++;
+	if (mini_batch == mini_batch_size || ts == total_duration - 1)
+	{
+		sgemm(
+			handles[stream_number],
+			cublasOperation_t::CUBLAS_OP_N, cublasOperation_t::CUBLAS_OP_N,
+			batch_size,
+			(const float **)batched_w_ro, batched_w_ro_cols, batched_w_ro_rows, batched_w_ro_strides,
+			(const float **)bundled_pre[bundle], bundled_pre_cols, mini_batch, bundled_pre_strides,
+			batched_post, batched_post_cols, mini_batch, batched_post_strides, one, zero);
+
+		dim3 block, grid;
+
+		block.x = warpSize * 4;
+		block.y = 1;
+		block.z = 1;
+
+		grid.x = (bundled_desired_cols + block.x - 1) / block.x;
+		grid.y = (mini_batch + block.y - 1) / block.y;
+		grid.z = (batch_size + block.z - 1) / block.z;
+
+		update_readout_activations_kernel << <grid, block, 0, streams[stream_number] >> > (
+			batch_size,
+			(const float **)bundled_desired[bundle], mini_batch, bundled_desired_cols, bundled_desired_strides,
+			batched_post, mini_batch, batched_post_cols, batched_post_strides
+			);
+		checkCudaErrors(cudaGetLastError());
+
+		sgemm(
+			handles[stream_number],
+			cublasOperation_t::CUBLAS_OP_N, cublasOperation_t::CUBLAS_OP_T,
+
+			batch_size,
+			(const float **)batched_post, batched_post_cols, mini_batch, batched_post_strides,
+			(const float **)bundled_pre[bundle], bundled_pre_cols, mini_batch, bundled_pre_strides,
+
+			batched_w_ro, batched_w_ro_cols, batched_w_ro_rows, batched_w_ro_strides,
+			 parameter.get_learning_rate(), one);
+
+		mini_batch = 0;
+		bundle = 1 - bundle;
+	}
 }
 
 template<bool gather_states, bool overwrite_states, typename Parameter>
 void update_model(
 	const std::size_t &batch_size,
+	const std::size_t &mini_batch_size,
 	unsigned long &seed,
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
 	const Parameter &parameter,
 	const std::size_t &stimulus_stride, const std::size_t &reservoir_stride, const std::size_t &prediction_stride,
 	const std::size_t &stimulus_size, const std::size_t &reservoir_size, const std::size_t &prediction_size,
@@ -1250,264 +1275,72 @@ void update_model(
 	float **batched_p, const std::size_t &batched_p_rows, const std::size_t &batched_p_cols, const std::size_t &batched_p_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	float **batched_pre, const std::size_t &batched_pre_rows, const std::size_t &batched_pre_cols, const std::size_t &batched_pre_strides,
+	float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const std::size_t &bundled_pre_strides,
 	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
+	float ***bundled_desired, const std::size_t &bundled_desired_rows, const std::size_t &bundled_desired_cols, const std::size_t &bundled_desired_strides,
 	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
+	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+	const float *one, const float *zero
 	)
 {
-	/*isnan(stream, batch_size, batched_w_ffwd, batched_w_ffwd_rows, batched_w_ffwd_cols, batched_w_ffwd_strides);
-	isnan(stream, batch_size, batched_incoming, batched_incoming_rows, batched_incoming_cols, batched_incoming_strides);*/
-	sgemm_nn(
-		handle, batch_size,
-		one, zero,
+	sgemm(
+		handles[0],
+		cublasOperation_t::CUBLAS_OP_N, cublasOperation_t::CUBLAS_OP_N,
+		 batch_size,
 		(const float **)batched_w_ffwd, batched_w_ffwd_cols, batched_w_ffwd_rows, batched_w_ffwd_strides,
 		(const float **)batched_incoming, batched_incoming_cols, batched_incoming_rows, batched_incoming_strides,
+		batched_u_ffwd, batched_u_ffwd_cols, batched_u_ffwd_rows, batched_u_ffwd_strides, one, zero
+	);
 	
 
-		batched_u_ffwd, batched_u_ffwd_cols, batched_u_ffwd_rows, batched_u_ffwd_strides
-	);
-
-
-
-
+	std::size_t mini_batch = 0;
+	std::size_t bundle = 0;
 	std::size_t ts = 0;
+
 	for (std::size_t repetition = 0; repetition < repetitions; repetition++)
 	{
-		initialize_states<overwrite_states>(stream,  seed, batch_size,
+		initialize_states<overwrite_states>(streams,  seed, batch_size,
 			batched_p, batched_p_rows, batched_p_cols, batched_p_strides, initial_state_scale);
-		initialize_states<overwrite_states>(stream, seed, batch_size,
+		initialize_states<overwrite_states>(streams, seed, batch_size,
 			(float **)batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides, initial_state_scale);
 
 		for (std::size_t k = 0; k < durations[repetition]; k++, ts++)
 		{
-			int t0 = offsets[ts];
-			assert(0 <= t0 && t0 < batched_expected_rows);
-			//INFORMATION_LOGGER <<   "t = " << t ;
-
-			//isnan(stream, batch_size, batched_u, batched_u_rows, batched_u_cols, batched_u_strides);
-
-			sgemm_nn(handle, batch_size, one, zero,
-				(const float **)batched_w_rec, batched_w_rec_cols, batched_w_rec_rows, batched_w_rec_strides,
-				(const float **)batched_x_res,  batched_x_res_cols, batched_x_res_rows, batched_x_res_strides,
-			
-
-				batched_u, batched_u_cols, batched_u_rows, batched_u_strides);
-			/*batched_sgemv(stream, batch_size,
-				batched_w_in, batched_w_in_rows, batched_w_in_cols, batched_w_in_strides,
-				batched_x_in, batched_x_in_rows, batched_x_in_cols, batched_x_in_strides,
-				batched_u, batched_u_rows, batched_u_cols, batched_u_strides
-			);*/
-		
-
-			batched_update_reservoir(
-				stream,
-				batch_size, t0, leak_rate,
-				batched_u_ffwd, batched_u_ffwd_rows, batched_u_ffwd_cols, batched_u_ffwd_strides,
+			update_reservoir
+			(
+				streams, handles, events,
+				batch_size, mini_batch_size, mini_batch, bundle,
+				offsets, ts, total_duration,
+				(const float **)batched_w_rec, batched_w_rec_rows, batched_w_rec_cols, batched_w_rec_strides,
+				batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
 				batched_u, batched_u_rows, batched_u_cols, batched_u_strides,
+				(const float **)batched_u_ffwd, batched_u_ffwd_rows, batched_u_ffwd_cols, batched_u_ffwd_strides,
 				batched_p, batched_p_rows, batched_p_cols, batched_p_strides,
-				batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides);
-
-			/*if (ts % 32 == 0)
-			{*/
-
-				sgemm_nn(handle, batch_size, one, zero,
-					(const float **)batched_w_ro, batched_w_ro_cols, batched_w_ro_rows, batched_w_ro_strides,
-					(const float **)batched_x_res, batched_x_res_cols, batched_x_res_rows, batched_x_res_strides,
-
-
-					batched_x_ro, batched_x_ro_cols, batched_x_ro_rows, batched_x_ro_strides);
-				/*batched_sgemv(stream, batch_size,
-					batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides,
+				bundled_pre, bundled_pre_rows, bundled_pre_cols, bundled_pre_strides,
+				leak_rate, one, zero);
+			update_readout
+				(
+					streams, handles, events,
+					batch_size, mini_batch_size, mini_batch, bundle,
+					offsets, ts, total_duration,
+					parameter,
 					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
-					batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides
-				);*/
+					batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,
+					batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_strides,
+					bundled_pre, bundled_pre_rows, bundled_pre_cols, bundled_pre_strides,
+					batched_post, batched_post_rows, batched_post_cols, batched_post_strides,
+					bundled_desired, bundled_desired_rows, bundled_desired_cols, bundled_desired_strides,
+					batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides,one, zero
 
-				/*if (ts < total_duration - 1)
-				{
-					int t1 = offsets[ts + 1];
-					assert(0 <= t1 && t1 < batched_expected_rows);
-					batched_update_readout<Parameter>(
-						stream, handle, batch_size, t1, parameter,
-						batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
-						batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,
-						batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_strides,
-						batched_error, batched_error_rows, batched_error_cols, batched_error_strides,
-						batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides);
-				}*/
-			/*}*/
-			copy_states<gather_states>(stream, batch_size, t0, ts,
-				stimulus_size, reservoir_size, prediction_size,
-				stimulus_stride, reservoir_stride, prediction_stride,
-				(const float **)batched_incoming, batched_incoming_rows, batched_incoming_cols, batched_incoming_strides,
-				(const float **)batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_strides,
-				(const float **)batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,
-				(const float **)batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
-				states_samples, states_rows, states_cols, states_stride
-				);
-		}
-	}
-}
-__global__
-static void sum_inplace_kernel(
-	const int batch_size, const int place_cells_number, 
-	const int rows_offset, const int rows_span,
-	const int cols_offset, const int cols_span,
-	float   *** __restrict__ batched_hypothesis, const int hypothesis_stride)
-{
-	for (int idx = blockIdx.z * blockDim.z + threadIdx.z; idx < batch_size * place_cells_number; idx += gridDim.z * blockDim.z)
-	{
-		auto place_cell = idx % place_cells_number;
-		auto batch = idx / place_cells_number;
-		const int place_cell_a = place_cell;
-		const int place_cell_b = place_cell + place_cells_number;
-		float *hypothesis_a = batched_hypothesis[batch][place_cell_a];
-		float *hypothesis_b = batched_hypothesis[batch][place_cell_b];
-
-		for (int roi_row = blockIdx.y * blockDim.y + threadIdx.y; roi_row < rows_span; roi_row += gridDim.y * blockDim.y)
-		{
-			auto row = roi_row + rows_offset;
-			for (int roi_col = blockIdx.x * blockDim.x + threadIdx.x; roi_col < cols_span; roi_col += gridDim.x * blockDim.x)
-			{
-				auto col = roi_col + cols_offset;
-				reinterpret_cast<float4 *>(&hypothesis_a[row * hypothesis_stride])[col] += reinterpret_cast<float4 *>(&hypothesis_b[row * hypothesis_stride])[col];
-			}
-		}
-	}
-}
-
-__global__
-static void weighted_acc_inplace_kernel(
-	const int batch_size, const int place_cells_number, const int size,
-	float *** __restrict__ batched_hypothesis,
-	float ** __restrict__ batched_scale,
-	float ** __restrict__ batched_location_probability)
-{
-	assert(place_cells_number == 1);
-	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
-	{
-		float *location_probability = batched_location_probability[batch];
-		for (int place_cell = blockIdx.y * blockDim.y + threadIdx.y; place_cell < place_cells_number; place_cell += gridDim.y * blockDim.y)
-		{
-			const float scale = batched_scale[batch][place_cell];
-			float *hypothesis = batched_hypothesis[batch][place_cell];
-			for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < size; idx += gridDim.x * blockDim.x)
-			{
-		
-				reinterpret_cast<float4 *>(location_probability)[idx] += reinterpret_cast<float4 *>(hypothesis)[idx] / scale;
-					
-			}
-		}
-	}
-}
-
-__global__
-static void sum_kernel(
-	const int batch_size, 
-	const int rows_offset, const int rows_span,
-	const int cols_offset, const int cols_span,
-	float   *** __restrict__ batched_hypothesis, const int hypothesis_stride,
-	float   ** __restrict__ batched_location, const int location_stride)
-{
-	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
-	{
-		const int place_cell_a = 0;
-		const int place_cell_b = 1;
-		float *hypothesis_a = batched_hypothesis[batch][place_cell_a];
-		float *hypothesis_b = batched_hypothesis[batch][place_cell_b];
-	
-		for (int roi_row = blockIdx.y * blockDim.y + threadIdx.y; roi_row < rows_span; roi_row += gridDim.y * blockDim.y)
-		{
-			auto row = roi_row + rows_offset;
-	
-			for (int roi_col = blockIdx.x * blockDim.x + threadIdx.x; roi_col < cols_span; roi_col += gridDim.x * blockDim.x)
-			{
-				auto col = roi_col + cols_offset;
-				
-				reinterpret_cast<float4 *>(&batched_location[batch][row * location_stride])[col] = reinterpret_cast<float4 *>(&hypothesis_a[row * hypothesis_stride])[col] + reinterpret_cast<float4 *>(&hypothesis_b[row * hypothesis_stride])[col];
-				auto v = reinterpret_cast<float4 *>(&batched_location[row * location_stride])[col];
+					);
 			
-			}
 		}
 	}
+	checkCudaErrors(cudaEventRecord(events[0], streams[1]));
+	checkCudaErrors(cudaStreamWaitEvent(streams[0], events[0], 0));
 }
 
-__global__
-static void weighted_sum_inplace_kernel( 
-	const int batch_size,
-	const int place_cells_number, 
-	const int rows_offset, const int rows_span,
-	const int cols_offset, const int cols_span,
-	float   ** __restrict__ scale, const int scale_stride,
-	float   ***__restrict__ batched_hypothesis, const int hypothesis_stride
-	)
-{
-	for (int idx = blockIdx.z * blockDim.z + threadIdx.z; idx < batch_size * place_cells_number; idx += gridDim.z * blockDim.z)
-	{
-		auto place_cell = idx % place_cells_number;
-		auto batch = idx / place_cells_number;
-		const int place_cell_a = place_cell;
-		const int place_cell_b = place_cell + place_cells_number;
-		float *hypothesis_a = batched_hypothesis[batch][place_cell_a];
-		float *hypothesis_b = batched_hypothesis[batch][place_cell_b];
-		const float4 inv_scale_a = make_float4(1.0f/scale[batch][place_cell_a]);
-		const float4 inv_scale_b = make_float4(1.0f/scale[batch][place_cell_b]);
-		for (int roi_row = blockIdx.y * blockDim.y + threadIdx.y; roi_row < rows_span; roi_row += gridDim.y * blockDim.y)
-		{
-			auto row = roi_row + rows_offset;
-			for (int roi_col = blockIdx.x * blockDim.x + threadIdx.x; roi_col < cols_span; roi_col += gridDim.x * blockDim.x)
-			{
-				auto col = roi_col + cols_offset;
-				
-				reinterpret_cast<float4 *>(&hypothesis_a[row * hypothesis_stride])[col] = 
-					reinterpret_cast<float4 *>(&hypothesis_a[row * hypothesis_stride])[col] * inv_scale_a +
-					reinterpret_cast<float4 *>(&hypothesis_b[row * hypothesis_stride])[col] * inv_scale_b;
-			}
-		}
-	}
-}
-
-#ifdef PROTO
-__global__
-static void location_hypothesis_kernel(
-	const int batch_size,
-	const int place_cells_number, const int rows, const int cols,
-	const float minus_inv_sigma2,
-
-	const float   ** __restrict__ batched_firing_rate_map, const int firing_rate_stride,
-	const float  ** __restrict__ batched_prediction, const int prediction_stride,
-	float  ** __restrict__ batched_location_map, const int location_stride)
-{
-	__shared__ float firing_rate_map[256]; // per place_cell
-	__shared__ float prediction[10];
-
-
-	for (int row = blockIdx.y * blockDim.y + threadIdx.y; row < rows; row += gridDim.y * blockDim.y)
-	{
-		for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < cols; col += gridDim.x * blockDim.x)
-		{
-			float hypothesis = 0.0f;
-			for (int place_cell = 0; place_cell < place_cells_number; place_cell++)
-			{
-				if (blockIdx.x == 0 && blockIdx.y == 0)
-				{
-					if (batch == 0)
-						firing_rate_map[threadIdx.y][threadIdx.x] = batched_firing_rate_map[row * firing_rate_stride + col][place_cell];
-					if (blockIdx.z == 0)
-						prediction[threadIdx.z] = batched_prediction[batch][place_cell];
-				}
-				__syncthreads();
-
-				float value = firing_rate_map[threadIdx.y][threadIdx.x] - prediction[threadIdx.z];
-				hypothesis += expf(value * value * minus_inv_sigma2);
-			}
-			batched_location_map[batch][row * location_stride + col] = hypothesis;
-		}
-	}
-}
-}
-#else
-__global__
+/*__global__
 static void location_hypothesis_kernel(
 	const int batch_size,
 	const int place_cells_number, 
@@ -1549,163 +1382,7 @@ static void location_hypothesis_kernel(
 		}
 
 	}
-}
-#endif
-
-
-void compute_place_cell_location_probability(
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
-	const std::size_t &batch_size, const std::size_t &place_cells_number, 
-		const std::size_t &rows_begin, const std::size_t &rows_end,
-	const std::size_t &cols_begin, const std::size_t &cols_end,
-	const float &sigma,
-	const float ** firing_rate_map, const std::size_t &firing_rate_map_rows, const std::size_t &firing_rate_map_cols, const std::size_t &firing_rate_map_stride,
-	float **scale, const std::size_t &scale_rows, const std::size_t &scale_cols, const std::size_t &scale_stride,
-	const float **prediction, const std::size_t &prediction_rows, const std::size_t &prediction_cols, const std::size_t &prediction_stride,
-	float *** hypothesis_map, const std::size_t &hypothesis_map_rows, const std::size_t &hypothesis_map_cols, const std::size_t &hypothesis_map_stride,
-	float ** location_probability, const std::size_t &location_probability_rows, const std::size_t &location_probability_cols, const std::size_t &location_probability_stride)
-{
-	auto cols_offset = round_down(cols_begin);
-	auto cols_span = (round_up(cols_end, location_probability_cols) - cols_offset);
-	auto rows_span = (rows_end - rows_begin);
-	const auto minus_sigma2_inv = -1.0 / (sigma * sigma);
-
-#ifndef PROTO
-	dim3 block, grid;
-	block.x = BLOCK_X;
-	block.y = BLOCK_Y;
-	block.z = 1;
-	batched_reset(stream, batch_size, location_probability_rows, location_probability_cols, location_probability, location_probability_stride);
-	batched_reset(stream, batch_size, scale_rows, scale_cols, scale, scale_stride);
-	grid.x = (cols_span / 4 + block.x - 1) / block.x;
-	grid.y = (rows_span + block.y - 1) / block.y;
-	grid.z = (batch_size * place_cells_number + block.z - 1) / block.z;
-	{
-		// reset location hyppothesis
-		location_hypothesis_kernel << <grid, block, 0, stream >> > (
-				batch_size, place_cells_number, 
-				rows_begin, rows_span,
-				cols_offset, cols_span /4, 
-			minus_sigma2_inv,
-				firing_rate_map, firing_rate_map_stride,
-				prediction, prediction_stride,
-				hypothesis_map, hypothesis_map_stride,
-				scale, scale_stride);
-		checkCudaErrors(cudaGetLastError());
-	}
-
-	std::size_t place_cells_number_range = place_cells_number / 2;
-	const std::size_t place_cells_number_remaining = place_cells_number - place_cells_number_range * 2;
-
-	{
-		grid.z = (batch_size * place_cells_number_range + block.z - 1) / block.z;
-
-
-		weighted_sum_inplace_kernel << <grid, block, 0, stream >> > (
-			batch_size, place_cells_number_range, 
-			rows_begin, rows_span,
-			cols_offset, cols_span / 4,
-			scale, scale_stride,
-			hypothesis_map, hypothesis_map_stride);
-		checkCudaErrors(cudaGetLastError());
-	}
-
-	while (place_cells_number_range >= 2)
-	{
-		place_cells_number_range /= 2;
-
-		grid.z = (batch_size * place_cells_number_range + block.z - 1) / block.z;
-
-		sum_inplace_kernel << <grid, block, 0, stream >> > (
-			batch_size, place_cells_number_range, 
-					rows_begin, rows_span,
-			cols_offset, cols_span / 4,
-			hypothesis_map, hypothesis_map_stride);
-		checkCudaErrors(cudaGetLastError());
-	}
-
-	assert(place_cells_number_range == 1);
-	{
-		grid.z = (batch_size + block.z - 1) / block.z;
-
-		sum_kernel << <grid, block, 0, stream >> > (
-			batch_size,
-			rows_begin, rows_span,
-			cols_offset, cols_span / 4,
-			hypothesis_map, hypothesis_map_stride,
-			location_probability, location_probability_stride);
-		checkCudaErrors(cudaGetLastError());
-	}
-
-
-	{
-		if (place_cells_number_remaining > 0)
-		{
-			grid.z = (batch_size * place_cells_number_range + block.z - 1) / block.z;
-
-			/*weighted_acc_inplace_kernel << <grid, block, 0, stream >> > (
-				batch_size, place_cells_number_range, size/4,
-				hypothesis_map,
-				scale,
-				location_probability);
-			checkCudaErrors(cudaGetLastError());*/
-		}
-	}
-#else
-
-	struct Handle
-	{
-		cudaStream_t stream;
-		cublasHandle_t handle;
-		cudaEvent_t event;
-	};
-
-
-	dim3 block, grid;
-	block.x = 32;
-	block.y = 32;
-	block.z = 1;
-	grid.x = (cols / 4 + block.x - 1) / block.x;
-	grid.y = (rows / 4 + block.y - 1) / block.y;
-	grid.z = (place_cells_number + block.z - 1) / block.z;
-	/*std::size_t handle_number = 0;
-	for (std::size_t batch = 0; batch < batch_size; batch++)
-	{
-
-			auto &h = handles[handle_number];
-			cudaStreamWaitEvent(h.stream, parent_event, 0);
-			*/
-			location_hypothesis_kernel2 << <grid, block, 0, stream>> > (
-				batch_size, place_cells_number, rows, cols, minus_sigma2_inv,
-				
-				firing_rate_map, firing_rate_map_stride,
-				prediction, prediction_stride,
-				hypothesis_map, hypothesis_map_stride);
-			checkCudaErrors(cudaGetLastError());
-
-
-	
-		/*	cudaEventRecord(h.event, h.stream);
-			cudaStreamWaitEvent(stream, h.event, 0);
-
-
-			handle_number++;
-
-	}*/
-	
-
-	/*cudaStreamSynchronize(stream);
-	for (auto &h : handles)
-	{
-		checkCudaErrors(cudaEventDestroy(h.event));
-		checkCudaErrors(cublasDestroy(h.handle));
-		checkCudaErrors(cudaStreamDestroy(h.stream));
-	}*/
-#endif
-}
-
-
+}*/
 
 __global__
 static void direction_kernel(const int batch_size,
@@ -1729,99 +1406,8 @@ static void direction_kernel(const int batch_size,
 	}
 }
 
-__global__
-static void inside_circle_sector_kernel(
-	const int batch_size,
-	const int rows_offset, const int rows_span,
-	const int cols_offset, const int cols_span,
-	const int location_probability_stride,
-	const float radius2,
-	const float cos_half_angle,
-	const float scale,
-	const unsigned long seed,
-	const float   ** __restrict__ batched_x_grid_centered,
-	const float   ** __restrict__ batched_y_grid_centered,
-	const float ** __restrict__ batched_current_location,
-	const float ** __restrict__ batched_direction,
-	float   ** __restrict__ batched_location_probability)
-
-{
-	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
-	{
-		float *location_probability = batched_location_probability[batch];
-
-		auto a = reinterpret_cast<float2 *>(const_cast<float *>(batched_direction[batch]))[0];
-		auto da = dot(a, a);
-
-
-		for (int roi_row = blockIdx.y * blockDim.y + threadIdx.y; roi_row < rows_span; roi_row += gridDim.y * blockDim.y)
-		{
-			auto row = rows_offset + roi_row;
-			const float by = batched_y_grid_centered[batch][row];
-			const float b2y = by * by;
-			const float aby = a.y * by;
-
-			for (int roi_col = blockIdx.x * blockDim.x + threadIdx.x; roi_col < cols_span; roi_col += gridDim.x * blockDim.x)
-			{
-				auto col = cols_offset + roi_col;
-				float4 p = reinterpret_cast<float4 *>(&location_probability[row * location_probability_stride])[col];
-
-				const float4 bx = reinterpret_cast<float4 *>(const_cast<float *>(batched_x_grid_centered[batch]))[col];
-				const float4 dp_b2 = bx * bx + b2y;
-		
-
-
-
-				curandStatePhilox4_32_10_t state;
-
-				// seed a random number generator
-				curand_init(seed + col * rows_span + row + batch * rows_span * cols_span*4, 0, 0, &state);
-
-				auto r = curand_uniform4(&state);
-				int4 in;
-				
-				in.x = dp_b2.x < radius2;
-				in.y = dp_b2.y < radius2;
-				in.z = dp_b2.z < radius2;
-				in.w = dp_b2.w < radius2;
-
-			
-				if (/*dp_b2.x > 0.0f && dp_b2.y > 0.0f && dp_b2.z > 0.0f && dp_b2.w > 0.0f &&*/ da > 0.0f && cos_half_angle < 1.0f)
-				{
-					float4 dp_ab = (a.x * bx + aby);
-					if (dp_b2.x > 0.0f)
-					{
-						in.x &= cos_half_angle < dp_ab.x * rsqrtf(dp_b2.x);
-					}
-					if (dp_b2.y > 0.0f)
-					{
-						in.y &= cos_half_angle < dp_ab.y * rsqrtf(dp_b2.y);
-					}
-					if (dp_b2.z > 0.0f)
-					{
-						in.z &= cos_half_angle < dp_ab.z * rsqrtf(dp_b2.z);
-					}
-					if (dp_b2.w > 0.0f)
-					{
-						in.w &= cos_half_angle < dp_ab.w * rsqrtf(dp_b2.w);
-					}
-				}
-
-				float4 s;
-				s.x = in.x ? p.x + r.x * scale + FLT_EPSILON : 0.0f;
-				s.y = in.y ? p.y + r.y * scale + FLT_EPSILON : 0.0f;
-				s.z = in.z ? p.z + r.z * scale + FLT_EPSILON : 0.0f;
-				s.w = in.w ? p.w + r.w * scale + FLT_EPSILON : 0.0f;
-
-				reinterpret_cast<float4 *>(&location_probability[row * location_probability_stride])[col] = s;
-			}
-		}
-
-	}
-}
 template <int coordinate>
 __global__
-
 static void range_centered_kernel(
 	const int batch_size,
 	const int cols,
@@ -1838,14 +1424,12 @@ static void range_centered_kernel(
 		{
 			range_centered[col] = reinterpret_cast<float4 *>(const_cast<float *>(range))[col] - c;
 		}
-
 	}
-
 }
 
 void compute_direction(
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
 	const std::size_t &batch_size,
 	const float **batched_previous_location, const std::size_t &batched_previous_location_rows, const std::size_t &batched_previous_location_cols, const std::size_t &batched_previous_location_stride,
 	const float **batched_current_location, const std::size_t &batched_current_location_rows, const std::size_t &batched_current_location_cols, const std::size_t &batched_current_location_stride,
@@ -1857,7 +1441,7 @@ void compute_direction(
 	block.z = 1;
 
 	grid.x = (batch_size + block.x - 1) / block.x;
-	direction_kernel << <grid, block, 0, stream >> > (batch_size,
+	direction_kernel << <grid, block, 0, *streams>> > (batch_size,
 		batched_previous_location,
 		batched_current_location,
 		batched_direction);
@@ -1865,8 +1449,8 @@ void compute_direction(
 }
 
 void compute_reachable_locations(
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
 	const std::size_t &batch_size, const std::size_t &place_cells_number, 
 	const std::size_t &rows_begin, const std::size_t &rows_end,
 	const std::size_t &cols_begin, const std::size_t &cols_end,
@@ -1881,7 +1465,7 @@ void compute_reachable_locations(
 {
 
 
-	{
+	/*{
 		dim3 grid, block;
 		block.x = 128;
 		block.y = 1;
@@ -1890,11 +1474,11 @@ void compute_reachable_locations(
 		grid.y = (batch_size + block.y - 1) / block.y;
 
 		grid.x = (x_grid_cols / 4 + block.x - 1) / block.x;
-		range_centered_kernel  <0> << <grid, block, 0, stream >> > (batch_size, x_grid_cols / 4, batched_current_location, x_grid, batched_x_grid_centered);
+		range_centered_kernel  <0> << <grid, block, 0, *streams>> > (batch_size, x_grid_cols / 4, batched_current_location, x_grid, batched_x_grid_centered);
 		checkCudaErrors(cudaGetLastError());
 
 		grid.x = (y_grid_cols / 4 + block.x - 1) / block.x;
-		range_centered_kernel <1> << <grid, block, 0, stream >> > (batch_size, y_grid_cols / 4, batched_current_location, y_grid, batched_y_grid_centered);
+		range_centered_kernel <1> << <grid, block, 0, *streams>> > (batch_size, y_grid_cols / 4, batched_current_location, y_grid, batched_y_grid_centered);
 		checkCudaErrors(cudaGetLastError());
 	}
 
@@ -1910,432 +1494,157 @@ void compute_reachable_locations(
 	grid.y = (rows_span + block.y - 1) / block.y;
 	grid.z = (batch_size + block.z - 1) / block.z;
 
-		inside_circle_sector_kernel << <grid, block, 0, stream >> > (batch_size, 
+		inside_circle_sector_kernel << <grid, block, 0, *streams>> > (batch_size, 
 			rows_begin, rows_span,
 			cols_offset, cols_span / 4,
 			batched_location_probability_strides, radius * radius, cos_half_angle, scale, seed,
 			(const float **)batched_x_grid_centered, (const float **)batched_y_grid_centered,
 			batched_current_location, batched_direction, batched_location_probability);
 		checkCudaErrors(cudaGetLastError());
-
-}
-
-
-#define BLOCK (BLOCK_X*4)
-template <int order>
-__global__
-static void hypothesis_scale_kernel(const int batch_size, 
-	const int place_cells, 
-	const float **__restrict__ batched_activation, const int batched_activation_stride,
-	const float *__restrict__ coefficients, const int coeffcients_stride,
-	float *__restrict__ hypothesis_scale, const int hypothesis_scale_stride)
-{
-	for (int batch = blockIdx.y * blockDim.y + threadIdx.y; batch < batch_size; batch += gridDim.y * blockDim.y)
-	{
-		for (int place_cell = blockIdx.x * blockDim.x + threadIdx.x; place_cell < place_cells; place_cell += gridDim.x * blockDim.x)
-		{
-
-			float __shared__ c[BLOCK][order];
-			if (threadIdx.y == 0)
-			{
-				for (int k = 0; k < order; k++)
-					c[threadIdx.x][k] = coefficients[place_cell * coeffcients_stride + k];
-			}
-			__syncthreads();
-
-			float s = c[threadIdx.x][0];
-			const float a = batched_activation[batch][place_cell];
-			float ak = 1.0f;
-			for (int k = 0; k < order; k++)
-			{
-				s += ak *  c[threadIdx.x][k];
-				ak *= a;
-			}
-/*#pragma unroll order
-			for (int k = 1; k < order; k++)
-			{
-				s = s * a + c[threadIdx.x][k];
-			}*/
-			__syncthreads();
-			hypothesis_scale[batch * hypothesis_scale_stride + place_cell] = (s);
-		}
-	}
+		*/
 }
 
 #define BLOCK_BATCH 16
 #define BLOCK_PLACE_CELLS 256
 
+
 __global__
-static void bayesian_decoding_kernel(const int batch_size,
-	const int roi_row_begin, const int roi_row_end,
-	const int roi_col_begin, const int roi_col_end,
-	const int place_cells,
-	const float inv_sigma2, 
-	const float * __restrict__ firing_rate_map, const int firing_rate_map_stride,
-	const float * __restrict__ hypothesis_scale, const int hypothesis_scale_stride,
-	const float ** __restrict__ batched_prediction, const int batched_prediction_stride,
-	float ** __restrict__ batched_location_probability, const int batched_location_probability_stride
-	)
-{
-	const int COLS = 512;
-	for (int batch = 0; batch < batch_size; batch++)
-	{
-		const float *prediction = batched_prediction[batch];
-
-		for (int row = roi_row_begin + blockIdx.z * blockDim.z + threadIdx.z; row < roi_row_end; row += gridDim.z * blockDim.z)
-		{
-			for (int col = roi_col_begin + blockIdx.y * blockDim.y + threadIdx.y; col < roi_col_end; col += gridDim.y * blockDim.y)
-			{
-				for (int place_cell = blockIdx.x * blockDim.x + threadIdx.x; place_cell < place_cells; place_cell += gridDim.x * blockDim.x)
-				{
-					/*float __shared__ s_firing_rate_map[BLOCK_PLACE_CELLS];
-					float __shared__ s_predictions[BLOCK_PLACE_CELLS];
-				
-					float __shared__ s_scale[BLOCK_PLACE_CELLS];
-
-					*/
-					typedef cub::BlockReduce<float, BLOCK_PLACE_CELLS, cub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING_COMMUTATIVE_ONLY> BlockReduceT;
-					// Shared memory
-					__shared__ typename BlockReduceT::TempStorage temp_storage;
-
-					/*if (batch == 0)
-					{
-						s_firing_rate_map[threadIdx.x] = firing_rate_map[row * firing_rate_map_stride + col * place_cells + place_cell];
-					}
-					if (threadIdx.z == 0 && threadIdx.y == 0)
-					{
-						s_scale[threadIdx.x] = hypothesis_scale[batch * hypothesis_scale_stride + place_cell];
-						s_predictions[threadIdx.x] = prediction[place_cell];
-					}
-					__syncthreads();*/
-
-
-					auto value = firing_rate_map[(row * COLS + col) * firing_rate_map_stride + place_cell] - prediction[place_cell];
-					auto hypothesis = expf(-value * value * inv_sigma2) /*/ hypothesis_scale[batch * hypothesis_scale_stride + place_cell]*/;
-					/*auto value = s_firing_rate_map[threadIdx.x] - s_predictions[threadIdx.x];
-					auto hypothesis = expf(-value * value * inv_sigma) * s_scale[threadIdx.x];
-					*/
-					auto location_probability = BlockReduceT(temp_storage).Sum(hypothesis);
-		 
-					if (threadIdx.x == 0)
-					{
-						batched_location_probability[batch][row * batched_location_probability_stride + col] = location_probability / place_cells;
-					}
-			
-				}
-		
-
-
-			}
-		}
-	}
-}
-
-
-void compute_decode_most_probable_location(
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
-	const std::size_t &batch_size, const std::size_t &stimulus_size,
-	const std::size_t &roi_row_begin, const std::size_t &roi_row_end,
-	const std::size_t &roi_col_begin, const std::size_t &roi_col_end,
-	const std::size_t &order,
-	const unsigned long &seed, const float &sigma, const float &scale, const float &radius, const float &cos_half_angle,
-	const float *firing_rate_map, const std::size_t &firing_rate_map_stride,
-	const float *coefficients, const std::size_t &coefficients_stride,
-	const float *x_grid, const std::size_t &x_grid_stride,
-	const float *y_grid, const std::size_t &y_grid_stride,
-	const float **batched_previous_position, const std::size_t &batched_previous_position_stride,
-	const float **batched_current_position, const std::size_t &batched_current_position_stride,
-	const float **batched_prediction, const std::size_t &batched_prediction_stride,
-	float *hypothesis_scale, const std::size_t &hypothesis_scale_stride,
-	float **batched_x_grid_centered, const std::size_t &batched_x_grid_centered_stride,
-	float **batched_y_grid_centered, const std::size_t &batched_y_grid_centered_stride,
-	float **batched_direction, const std::size_t &batched_direction_stride,
-	float **batched_decoded_position, const std::size_t &batched_decoded_position_stride
+static void assign_location_kernel(
+	const int batch_size,
+	const std::size_t *__restrict__ roi_row_begin, 
+	const std::size_t *__restrict__ roi_col_begin,
+	const int rows, const int cols,
+	const int roi_stride,
+	const float x_min, const float x_range, const float y_min, const float y_range,
+	const int **__restrict__ batched_argmax,
+	float **__restrict__ batched_predicted_location
 )
 {
-	dim3 grid, block;
-	block.x = BLOCK;
-	block.y = 8;
-	block.z = 1;
-
-	grid.x = (stimulus_size + block.x - 1) / block.x;
-	grid.y = (batch_size + block.y - 1) / block.y;
-	grid.z = 1;
-	switch (order)
+	for (int batch = blockIdx.x * blockDim.x + threadIdx.x; batch < batch_size; batch += gridDim.x * blockDim.x)
 	{
-	case 15 :
-		hypothesis_scale_kernel <15> << <grid, block, 0, stream >> > (batch_size, stimulus_size, batched_prediction, batched_prediction_stride, coefficients, coefficients_stride, hypothesis_scale, hypothesis_scale_stride);
-		break;
-	case 13:
-		hypothesis_scale_kernel <13> << <grid, block, 0, stream >> > (batch_size, stimulus_size, batched_prediction, batched_prediction_stride, coefficients, coefficients_stride, hypothesis_scale, hypothesis_scale_stride);
-		break;
-	case 11:
-		hypothesis_scale_kernel <11> << <grid, block, 0, stream >> > (batch_size, stimulus_size, batched_prediction, batched_prediction_stride, coefficients, coefficients_stride, hypothesis_scale, hypothesis_scale_stride);
-		break;
-	case 9:
-		hypothesis_scale_kernel <9> << <grid, block, 0, stream >> > (batch_size, stimulus_size, batched_prediction, batched_prediction_stride, coefficients, coefficients_stride, hypothesis_scale, hypothesis_scale_stride);
-		break;
-	case 7:
-		hypothesis_scale_kernel <7> << <grid, block, 0, stream >> > (batch_size, stimulus_size, batched_prediction, batched_prediction_stride, coefficients, coefficients_stride, hypothesis_scale, hypothesis_scale_stride);
-		break;
-	case 5:
-		hypothesis_scale_kernel <5> << <grid, block, 0, stream >> > (batch_size, stimulus_size, batched_prediction, batched_prediction_stride, coefficients, coefficients_stride, hypothesis_scale, hypothesis_scale_stride);
-		break;
-	case 3:
-		hypothesis_scale_kernel <3> << <grid, block, 0, stream >> > (batch_size, stimulus_size, batched_prediction, batched_prediction_stride, coefficients, coefficients_stride, hypothesis_scale, hypothesis_scale_stride);
-		break;
-	case 1:
-		hypothesis_scale_kernel <1> << <grid, block, 0, stream >> > (batch_size, stimulus_size, batched_prediction, batched_prediction_stride, coefficients, coefficients_stride, hypothesis_scale, hypothesis_scale_stride);
-		break;
-	default:
-		throw std::runtime_error("Unsupported order for tayler series expansion");
+		auto predicted_location = batched_predicted_location[batch];
+		auto idx = *batched_argmax[batch];
+		float2 l;
+		if (idx == 0)
+		{
+			l = make_float2(0.0f);
+		}
+		else
+		{
+			idx--;
+			auto roi_col = idx % roi_stride;
+			auto roi_row = idx / roi_stride;
+			auto col = roi_col_begin[batch] + roi_col;
+			auto row = roi_row_begin[batch] + roi_row;
+			l.x = col_to_x(col, cols, x_min, x_range);
+			l.y = row_to_y(row, rows, y_min, y_range);
+		}
 
+		*reinterpret_cast<float2 *>(predicted_location) = l;
 	}
-	checkCudaErrors(cudaGetLastError());
+}
+void compute_assign_most_probable_location(
+	const cudaStream_t *streams, const cublasHandle_t *handles, const cudaEvent_t *events,
+	const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+	const float &x_min, const float &x_range, const float &y_min, const float &y_range,
+	const int **batched_argmax, const std::size_t &batched_location_probability_strides,
+	float **batched_predicted_location)
+{
+	dim3 grid, block;
 
-	block.x = stimulus_size;
-	block.y = 2;
-	block.z = 2;
+	block.x = warpSize * 4;
+	grid.x = (batch_size + block.x - 1) / block.x;
 
-	grid.x = (stimulus_size + block.x - 1) / block.x;
-	grid.y = ((roi_col_end - roi_col_begin) + block.y - 1) / block.y;
-	grid.z = ((roi_row_end - roi_row_begin) + block.z - 1) / block.z;
-
-	bayesian_decoding_kernel << <grid, block, 0, stream >> > (batch_size,
-		roi_row_begin, roi_row_end,
-		roi_col_begin, roi_col_end,
-		stimulus_size,
-		1.0f / (sigma * sigma),
-		firing_rate_map, firing_rate_map_stride, hypothesis_scale, hypothesis_scale_stride, batched_prediction, batched_prediction_stride, batched_decoded_position, batched_decoded_position_stride);
+	assign_location_kernel << <grid, block, 0, streams[0] >> > 
+		(
+			batch_size, roi_row_begin, roi_col_begin, rows, cols, batched_location_probability_strides, x_min, x_range, y_min, y_range, batched_argmax, batched_predicted_location
+		);
 
 	checkCudaErrors(cudaGetLastError());
 }
+	
 
 
-struct normalize_functor
-{
-	const float scale;
-	const float offset;
-	__device__
-	normalize_functor(float a, float b) : scale(1.0f/ (b - a)) , offset(-a)
-	{}
-	__device__
-	float operator()(const float& x) const
-	{ 
-		return (x + offset ) * scale; 
-	} 
-};
-
-
-
-
-
-void compute_select_most_probable_location(const cudaStream_t &stream, const cublasHandle_t &handle, 
+void compute_select_most_probable_location(const cudaStream_t *streams, const cublasHandle_t *handles, const cudaEvent_t *events,
 	const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,	
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 	const float  **batched_location_probability, const std::size_t &batched_location_probability_rows, const std::size_t &batched_location_probability_cols, const std::size_t &batched_location_probability_strides,
-	float **batched_predicted_location, const std::size_t &batched_predicted_location_rows, const std::size_t &batched_predicted_location_cols, const std::size_t &batched_predicted_location_strides
+	int **batched_argmax
 )
 {
-
-	std::vector<int> idx(batch_size);
-	for (int batch = 0; batch < batch_size; batch++)
+	/*if (batched_temp_storage_bytes.empty())
 	{
-		checkCudaErrors(cublasIsamax(handle, batched_location_probability_strides * batched_location_probability_rows, batched_location_probability [ batch], 1, &idx[batch]));
-	}
-
-	checkCudaErrors(cudaStreamSynchronize(stream));
-	for (int batch = 0; batch < batch_size; batch++)
-	{
-		auto k = idx[batch] - 1;
-		if (k < 0)
-			throw std::runtime_error("Argmax index was not found");
-		auto row = k / batched_location_probability_strides;
-		auto col = k % batched_location_probability_strides;
-		if (col < 0 || col >= cols)
-			throw std::domain_error("argmax col overflow");
-		if (row < 0 || row>= rows)
-			throw std::domain_error("argmax row overflow");
-		checkCudaErrors(cudaMemcpyAsync(batched_predicted_location[batch] + 0, &x_grid[col], sizeof(float), cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
-		checkCudaErrors(cudaMemcpyAsync(batched_predicted_location[batch] + 1, &y_grid[row], sizeof(float), cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
-	}
-
-	checkCudaErrors(cudaStreamSynchronize(stream));
-	/*for (int batch = 0; batch < batch_size; batch++)
-	{
-		
-		float *d_in = batched_location_probability_ptr[batch];
-		cublasIsamax(handle, batched_location_probability_strides * batched_location_probability_rows, d_in, 1, &idx)
-		checkCudaErrors(cudaMalloc(&argmax_ptr[batch], sizeof(cub::KeyValuePair <int, float>)));
-		cub::DeviceReduce::ArgMax(temp_storage_ptr[batch], temp_storage_bytes[batch], d_in, argmax_ptr[batch], batched_location_probability_strides * batched_location_probability_rows, stream);
-		// Allocate temporary storage
-		checkCudaErrors(cudaMalloc(&temp_storage_ptr[batch], temp_storage_bytes[batch]));
-		cub::DeviceReduce::ArgMax(temp_storage_ptr[batch], temp_storage_bytes[batch], d_in, argmax_ptr[batch], batched_location_probability_strides * batched_location_probability_rows, stream);
-		checkCudaErrors(cudaMemcpyAsync(&argmax_host[batch], argmax_ptr[batch], sizeof(cub::KeyValuePair <int, float>), cudaMemcpyKind::cudaMemcpyDeviceToHost, stream));
-	}
-	checkCudaErrors(cudaStreamSynchronize(stream));
-
-	for (int batch = 0; batch < batch_size; batch++)
-	{
-		checkCudaErrors(cudaFree(temp_storage_ptr[batch]));
-		checkCudaErrors(cudaFree(argmax_ptr[batch]));
-
-		auto idx = argmax_host[batch].key;
-		auto row = idx / batched_location_probability_strides;
-		auto col = idx % batched_location_probability_strides;
-		checkCudaErrors(cudaMemcpyAsync(batched_predicted_location_ptr[batch] + 0, &x_grid[col], sizeof(float), cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
-		checkCudaErrors(cudaMemcpyAsync(batched_predicted_location_ptr[batch] + 1, &y_grid[row], sizeof(float), cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
-		
-	}*/
-}
-
-
-__global__
-void reduce_cols_kernel(const int batch_size,
-	float **__restrict__ batched_location_probability, const int batched_location_probability_rows, const int batched_location_probability_cols, const int batched_location_probability_stride,
-	float **__restrict__ batched_reduced_location_probability, const int batched_reduced_location_probability_rows, const int batched_reduced_location_probability_cols, const int batched_reduced_location_probability_stride
-)
-{
-	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
-	{
-		float *location_proabability = batched_location_probability[batch];
-		float *reduced_location_probability = batched_reduced_location_probability[batch];
-
-		for (int row = blockIdx.y * blockDim.y + threadIdx.y; row < batched_location_probability_rows; row += gridDim.y * blockDim.y)
+		batched_temp_storage_bytes.resize(batch_size);
+		batched_temp_storage.resize(batch_size);
+		batched_argmax.resize(batch_size);
+		for (std::size_t batch = 0; batch < batch_size; batch++)
 		{
-			float sum = 0.0f;
-			for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < batched_location_probability_cols >> 2; col += gridDim.x * blockDim.x)
+			if (batched_temp_storage_bytes[batch] == 0)
 			{
-				float4 x = reinterpret_cast<float4 *>(&location_proabability[row * batched_location_probability_stride])[col];
-				sum += x.x + x.y + x.z + x.w;
-			}
-			sum = warpReduceSum(sum);
-			if ((threadIdx.x & 31) == 0)
-			{
-				atomicAdd(&reduced_location_probability[row], sum);
+				checkCudaErrors(cudaMalloc(&batched_argmax[batch], sizeof(cub::KeyValuePair<int, float>)));
+				cub::DeviceReduce::ArgMax(
+					batched_temp_storage[batch], batched_temp_storage_bytes[batch],
+					batched_location_probability[batch],
+					(cub::KeyValuePair<int, float> *)batched_argmax[batch],
+					batched_location_probability_rows * batched_location_probability_strides,
+					streams[0]);
+				checkCudaErrors(cudaMalloc(&batched_temp_storage[batch], batched_temp_storage_bytes[batch]));
 			}
 		}
 	}
-}
-
-static inline void reduce_cols(const cudaStream_t &stream, const std::size_t &batch_size,
-	const float  **batched_location_probability, const std::size_t &batched_location_probability_rows, const std::size_t &batched_location_probability_cols, const std::size_t &batched_location_probability_strides,
-	float **batched_reduced_location_probability, const std::size_t &batched_reduced_location_probability_rows, const std::size_t &batched_reduced_location_probability_cols, const std::size_t &batched_reduced_location_probability_strides
-)
-{
-	dim3 grid, block;
-	block.x = BLOCK_X;
-	block.y = BLOCK_Y;
-	block.z = 1;
-
-	grid.x = (batched_location_probability_cols / 4 + block.x - 1) / block.x;
-	grid.y = (batched_location_probability_rows + block.y - 1) / block.y;
-	grid.z = (batch_size + block.z - 1) / block.z;
-	reduce_cols_kernel << <grid, block, 0, stream >> > (batch_size,
-		(float  **)batched_location_probability, batched_location_probability_rows, batched_location_probability_cols, batched_location_probability_strides,
-		batched_reduced_location_probability, batched_reduced_location_probability_rows, batched_reduced_location_probability_cols, batched_reduced_location_probability_strides);
-	checkCudaErrors(cudaGetLastError());
-}
-
-__global__
-void draw_location_kernel(const int batch_size, const unsigned long seed,
-	const float * __restrict__ x_grid, const int x_grid_rows, const int x_grid_cols, const int x_grid_stride,
-	const float *__restrict__ y_grid, const int y_grid_rows, const int y_grid_cols, const int y_grid_stride,
-	float **__restrict__ batched_location_probability, const int batched_location_probability_rows, const int batched_location_probability_cols, const int batched_location_probability_stride,
-	float **__restrict__ batched_reduced_location_probability, const int batched_reduced_location_probability_rows, const int batched_reduced_location_probability_cols, const int batched_reduced_location_probability_stride,
-	float **__restrict__ batched_row_cumsum, const int batched_row_cumsum_rows, const int batched_row_cumsum_cols, const int batched_row_cumsum_stride,
-	float **__restrict__ batched_col_cumsum, const int batched_col_cumsum_rows, const int batched_col_cumsum_cols, const int batched_col_cumsum_stride,
-	float ** __restrict__ batched_predicted_location, const int batched_predicted_location_rows, const int batched_predicted_location_cols, const int batched_predicted_location_stride
-
-)
-{
-#ifndef __DEBUG
-	curandState localState;
-	curand_init(seed, 0, 0, &localState);
-
+	for (std::size_t batch = 0; batch < batch_size; batch++)
+	{
+		cub::DeviceReduce::ArgMax(
+			batched_temp_storage[batch], batched_temp_storage_bytes[batch],
+			batched_location_probability[batch],
+			(cub::KeyValuePair<int, float> *)batched_argmax[batch],
+			batched_location_probability_rows * batched_location_probability_strides,
+			streams[0]);
+	}*/
+	
+	std::set<int> spawn;
 	for (int batch = 0; batch < batch_size; batch++)
 	{
-		float *location_probability = batched_location_probability[batch];
-		float *reduced_location_probability = batched_reduced_location_probability[batch];
-		float *row_cumsum = batched_row_cumsum[batch];
-		float *col_cumsum = batched_col_cumsum[batch];
-		float *predicted_position = batched_predicted_location[batch];
 
-		thrust::inclusive_scan(thrust::seq, reduced_location_probability, reduced_location_probability + batched_location_probability_rows, row_cumsum);
+		auto k = batch % TRN::GPU::Context::STREAM_NUMBER;
 
-		const float row_a = row_cumsum[0];
-		const float row_b = row_cumsum[batched_location_probability_rows - 1];
-		//printf("before %f %f\n", row_cumsum[0], row_cumsum[batched_location_probability_rows - 1]);
-		thrust::transform(thrust::seq, row_cumsum, row_cumsum + batched_location_probability_rows, row_cumsum, normalize_functor(row_a, row_b));
-		//printf("after %f %f\n", row_cumsum[0], row_cumsum[batched_location_probability_rows - 1]);
-		float ry = curand_uniform(&localState);
-
-		int row = thrust::distance(row_cumsum, thrust::lower_bound(thrust::seq, row_cumsum, row_cumsum + batched_location_probability_rows, ry));
-		//printf("ry = %f -> row =  %d\n", ry, row);
-		assert(0 <= row && row < batched_location_probability_rows);
-
-		float *location_probability_row = &location_probability[row * batched_location_probability_stride];
-		thrust::inclusive_scan(thrust::seq, location_probability_row, location_probability_row + batched_location_probability_cols, col_cumsum);
-		const float col_a = col_cumsum[0];
-		const float col_b = col_cumsum[batched_location_probability_cols - 1];
-		//printf("before %f %f\n", col_cumsum[0], col_cumsum[batched_location_probability_cols- 1]);
-		thrust::transform(thrust::seq, col_cumsum, col_cumsum + batched_location_probability_cols, col_cumsum, normalize_functor(col_a, col_b));
-		//printf("after %f %f\n", col_cumsum[0], col_cumsum[batched_location_probability_cols - 1]);
-		float rx = curand_uniform(&localState);
-
-		int col = thrust::distance(col_cumsum, thrust::lower_bound(thrust::seq, col_cumsum, col_cumsum + batched_location_probability_cols, rx));
-		// printf("rx = %f -> col = %d\n", rx, col);
-		assert(0 <= col && col < batched_location_probability_cols);
-
-		predicted_position[0] = x_grid[col];
-		predicted_position[1] = y_grid[row];
+		auto x = batched_location_probability[batch];
+		auto result = batched_argmax[batch];
+		auto h = handles[k];
+		auto n = batched_location_probability_rows *batched_location_probability_strides;
+		checkCudaErrors(cublasIsamax(h, n, x, 1, result));
+		spawn.insert(k);
 	}
-#endif
+
+	spawn.erase(0);
+
+	//checkCudaErrors(cudaDeviceSynchronize());
+
+	for (auto k : spawn)
+	{
+		//checkCudaErrors(cudaStreamSynchronize(streams[k]));
+		checkCudaErrors(cudaEventRecord(events[k], streams[k]));
+		checkCudaErrors(cudaStreamWaitEvent(streams[0], events[k], 0));
+
+	}
+
 }
 
-void compute_draw_probable_location(
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
-	const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
-	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
-	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
-	const float  **batched_location_probability, const std::size_t &batched_location_probability_rows, const std::size_t &batched_location_probability_cols, const std::size_t &batched_location_probability_strides,
-	float **batched_reduced_location_probability, const std::size_t &batched_reduced_location_probability_rows, const std::size_t &batched_reduced_location_probability_cols, const std::size_t &batched_reduced_location_probability_strides,
-	float **batched_row_cumsum, const std::size_t &batched_row_cumsum_rows, const std::size_t &batched_row_cumsum_cols, const std::size_t &batched_row_cumsum_strides,
-	float **batched_col_cumsum, const std::size_t &batched_col_cumsum_rows, const std::size_t &batched_col_cumsum_cols, const std::size_t &batched_col_cumsum_strides,
-	float **batched_predicted_location, const std::size_t &batched_predicted_location_rows, const std::size_t &batched_predicted_location_cols, const std::size_t &batched_predicted_location_stride
-)
-{
-	batched_reset(stream, batch_size, batched_reduced_location_probability_rows, batched_reduced_location_probability_cols,
-		batched_reduced_location_probability, batched_reduced_location_probability_strides);
 
-	reduce_cols(stream, batch_size,
-		batched_location_probability, batched_location_probability_rows, batched_location_probability_cols, batched_location_probability_strides,
-		batched_reduced_location_probability, batched_reduced_location_probability_rows, batched_reduced_location_probability_cols, batched_reduced_location_probability_strides);
-
-	static unsigned long seed = 0;
-	draw_location_kernel << <1, 1, 0, stream >> > (batch_size, seed,
-		x_grid, x_grid_rows, x_grid_cols, x_grid_stride,
-		y_grid, y_grid_rows, y_grid_cols, y_grid_stride,
-		(float  **)batched_location_probability, batched_location_probability_rows, batched_location_probability_cols, batched_location_probability_strides,
-		batched_reduced_location_probability, batched_reduced_location_probability_rows, batched_reduced_location_probability_cols, batched_reduced_location_probability_strides,
-		batched_row_cumsum, batched_row_cumsum_rows, batched_row_cumsum_cols, batched_row_cumsum_strides,
-		batched_col_cumsum, batched_col_cumsum_rows, batched_col_cumsum_cols, batched_col_cumsum_strides,
-		batched_predicted_location, batched_predicted_location_rows, batched_predicted_location_cols, batched_predicted_location_stride
-		);
-	checkCudaErrors(cudaGetLastError());
-	seed += batch_size * 2;
-}
 
 
 
 template  void update_model<true, true, Widrow_Hoff>(
 	const std::size_t &batch_size,
+	const std::size_t &mini_batch_size,
 	unsigned long &seed,
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
 	const Widrow_Hoff &parameter,
 	const std::size_t &stimulus_stride, const std::size_t &reservoir_stride, const std::size_t &prediction_stride,
 	const std::size_t &stimulus_size, const std::size_t &reservoir_size, const std::size_t &prediction_size,
@@ -2350,16 +1659,20 @@ template  void update_model<true, true, Widrow_Hoff>(
 	float **batched_p, const std::size_t &batched_p_rows, const std::size_t &batched_p_cols, const std::size_t &batched_p_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	float **batched_pre, const std::size_t &batched_pre_rows, const std::size_t &batched_pre_cols, const std::size_t &batched_pre_strides,
+	float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const std::size_t &bundled_pre_strides,
 	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
+	float ***bundled_post, const std::size_t &bundled_post_rows, const std::size_t &bundled_post_cols, const std::size_t &bundled_post_strides,
 	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
+	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+	const float *one, const float *zero
 	);
 template void update_model< true, false, Widrow_Hoff >(
 	const std::size_t &batch_size,
+	const std::size_t &mini_batch_size,
 	unsigned long &seed,
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
 	const Widrow_Hoff &parameter,
 	const std::size_t &stimulus_stride, const std::size_t &reservoir_stride, const std::size_t &prediction_stride,
 	const std::size_t &stimulus_size, const std::size_t &reservoir_size, const std::size_t &prediction_size,
@@ -2374,16 +1687,20 @@ template void update_model< true, false, Widrow_Hoff >(
 	float **batched_p, const std::size_t &batched_p_rows, const std::size_t &batched_p_cols, const std::size_t &batched_p_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	float **batched_pre, const std::size_t &batched_pre_rows, const std::size_t &batched_pre_cols, const std::size_t &batched_pre_strides,
+	float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const std::size_t &bundled_pre_strides,
 	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
+	float ***bundled_post, const std::size_t &bundled_post_rows, const std::size_t &bundled_post_cols, const std::size_t &bundled_post_strides,
 	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
+	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+	const float *one, const float *zero
 	);
 template void update_model< false, true, Widrow_Hoff>(
 	const std::size_t &batch_size,
+	const std::size_t &mini_batch_size,
 	unsigned long &seed,
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
 	const Widrow_Hoff &parameter,
 	const std::size_t &stimulus_stride, const std::size_t &reservoir_stride, const std::size_t &prediction_stride,
 	const std::size_t &stimulus_size, const std::size_t &reservoir_size, const std::size_t &prediction_size,
@@ -2398,16 +1715,20 @@ template void update_model< false, true, Widrow_Hoff>(
 	float **batched_p, const std::size_t &batched_p_rows, const std::size_t &batched_p_cols, const std::size_t &batched_p_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	float **batched_pre, const std::size_t &batched_pre_rows, const std::size_t &batched_pre_cols, const std::size_t &batched_pre_strides,
+	float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const std::size_t &bundled_pre_strides,
 	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
+	float ***bundled_post, const std::size_t &bundled_post_rows, const std::size_t &bundled_post_cols, const std::size_t &bundled_post_strides,
 	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
+	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+	const float *one, const float *zero
 	);
 template void update_model< false, false, Widrow_Hoff>(
 	const std::size_t &batch_size,
+	const std::size_t &mini_batch_size,
 	unsigned long &seed,
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
 	const Widrow_Hoff &parameter,
 	const std::size_t &stimulus_stride, const std::size_t &reservoir_stride, const std::size_t &prediction_stride,
 	const std::size_t &stimulus_size, const std::size_t &reservoir_size, const std::size_t &prediction_size,
@@ -2422,16 +1743,20 @@ template void update_model< false, false, Widrow_Hoff>(
 	float **batched_p, const std::size_t &batched_p_rows, const std::size_t &batched_p_cols, const std::size_t &batched_p_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	float **batched_pre, const std::size_t &batched_pre_rows, const std::size_t &batched_pre_cols, const std::size_t &batched_pre_strides,
+	float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const std::size_t &bundled_pre_strides,
 	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
+	float ***bundled_post, const std::size_t &bundled_post_rows, const std::size_t &bundled_post_cols, const std::size_t &bundled_post_strides,
 	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
+	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+	const float *one, const float *zero
 	);
 template void update_model<true, true, Nothing>(
 	const std::size_t &batch_size,
+	const std::size_t &mini_batch_size,
 	unsigned long &seed,
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
 	const Nothing &parameter,
 	const std::size_t &stimulus_stride, const std::size_t &reservoir_stride, const std::size_t &prediction_stride,
 	const std::size_t &stimulus_size, const std::size_t &reservoir_size, const std::size_t &prediction_size,
@@ -2446,16 +1771,20 @@ template void update_model<true, true, Nothing>(
 	float **batched_p, const std::size_t &batched_p_rows, const std::size_t &batched_p_cols, const std::size_t &batched_p_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	float **batched_pre, const std::size_t &batched_pre_rows, const std::size_t &batched_pre_cols, const std::size_t &batched_pre_strides,
+	float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const std::size_t &bundled_pre_strides,
 	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
+	float ***bundled_post, const std::size_t &bundled_post_rows, const std::size_t &bundled_post_cols, const std::size_t &bundled_post_strides,
 	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
+	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+	const float *one, const float *zero
 	);
 template void update_model< true, false, Nothing >(
 	const std::size_t &batch_size,
+	const std::size_t &mini_batch_size,
 	unsigned long &seed,
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
 	const Nothing &parameter,
 	const std::size_t &stimulus_stride, const std::size_t &reservoir_stride, const std::size_t &prediction_stride,
 	const std::size_t &stimulus_size, const std::size_t &reservoir_size, const std::size_t &prediction_size,
@@ -2470,16 +1799,20 @@ template void update_model< true, false, Nothing >(
 	float **batched_p, const std::size_t &batched_p_rows, const std::size_t &batched_p_cols, const std::size_t &batched_p_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	float **batched_pre, const std::size_t &batched_pre_rows, const std::size_t &batched_pre_cols, const std::size_t &batched_pre_strides,
+	float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const std::size_t &bundled_pre_strides,
 	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
+	float ***bundled_post, const std::size_t &bundled_post_rows, const std::size_t &bundled_post_cols, const std::size_t &bundled_post_strides,
 	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
+	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+	const float *one, const float *zero
 	);
 template void update_model< false, true, Nothing>(
 	const std::size_t &batch_size,
+	const std::size_t &mini_batch_size,
 	unsigned long &seed,
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
 	const Nothing &parameter,
 	const std::size_t &stimulus_stride, const std::size_t &reservoir_stride, const std::size_t &prediction_stride,
 	const std::size_t &stimulus_size, const std::size_t &reservoir_size, const std::size_t &prediction_size,
@@ -2494,16 +1827,20 @@ template void update_model< false, true, Nothing>(
 	float **batched_p, const std::size_t &batched_p_rows, const std::size_t &batched_p_cols, const std::size_t &batched_p_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	float **batched_pre, const std::size_t &batched_pre_rows, const std::size_t &batched_pre_cols, const std::size_t &batched_pre_strides,
+	float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const std::size_t &bundled_pre_strides,
 	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
+	float ***bundled_post, const std::size_t &bundled_post_rows, const std::size_t &bundled_post_cols, const std::size_t &bundled_post_strides,
 	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
+	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+	const float *one, const float *zero
 	);
 template void update_model< false, false, Nothing>(
 	const std::size_t &batch_size,
+	const std::size_t &mini_batch_size,
 	unsigned long &seed,
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
 	const Nothing &parameter,
 	const std::size_t &stimulus_stride, const std::size_t &reservoir_stride, const std::size_t &prediction_stride,
 	const std::size_t &stimulus_size, const std::size_t &reservoir_size, const std::size_t &prediction_size,
@@ -2518,9 +1855,11 @@ template void update_model< false, false, Nothing>(
 	float **batched_p, const std::size_t &batched_p_rows, const std::size_t &batched_p_cols, const std::size_t &batched_p_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	float **batched_pre, const std::size_t &batched_pre_rows, const std::size_t &batched_pre_cols, const std::size_t &batched_pre_strides,
+	float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const std::size_t &bundled_pre_strides,
 	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
+	float ***bundled_post, const std::size_t &bundled_post_rows, const std::size_t &bundled_post_cols, const std::size_t &bundled_post_strides,
 	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride
+	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+	const float *one, const float *zero
 	);
 

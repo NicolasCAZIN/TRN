@@ -6,7 +6,7 @@ void TRN::Helper::Parser::place_cells_model(const std::string &filename, const f
 {
 	std::ifstream stream(filename.c_str());
 	static const std::string separators = ";,\t ";
-	std::cout << stream.is_open() << std::endl;
+	//std::cout << stream.is_open() << std::endl;
 	strtk::for_each_line(stream, [&](const std::string& line)
 	{
 		float cx, cy, radius;

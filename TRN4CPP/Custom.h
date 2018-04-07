@@ -43,16 +43,12 @@ namespace TRN4CPP
 	{
 		namespace Loop
 		{
-			namespace Stimulus
+			namespace Custom
 			{
 				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
 					std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply);
 			};
-			namespace Position
-			{
-				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
-					std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply);
-			};
+		
 		};
 
 		namespace Scheduler
@@ -111,6 +107,15 @@ namespace TRN4CPP
 			};
 		};
 
+		namespace Encoder
+		{
+			namespace Custom // position
+			{
 
+				void TRN4CPP_EXPORT		install(const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &request,
+						std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &reply);
+			
+			};
+		};
 	};
 };

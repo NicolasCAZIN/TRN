@@ -67,7 +67,12 @@ namespace TRN
 			const float &initial_state_scale, const float &learning_rate) = 0;*/
 			/*	virtual void 	configure_reservoir_offline_svd(const unsigned long long &simulation_id, const std::size_t &stimulus_size, const std::size_t &prediction_size, const std::size_t &reservoir_size, const float &leak_rate,
 			const float &initial_state_scale, const float &learning_rate) = 0;*/
-
+			void	configure_encoder_model(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
+				const std::vector<float> &cx,
+				const std::vector<float> &cy,
+				const std::vector<float> &K
+			);
+			void	configure_encoder_custom(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size);
 			void	configure_decoder_linear(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, 
 				const std::vector<float> &cx, const std::vector<float> &cy);
 			void	configure_decoder_kernel_map(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, 
@@ -80,6 +85,7 @@ namespace TRN
 				const unsigned long &seed,
 				const std::vector<float> &response
 				);
+		
 			void	configure_decoder_kernel_model(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size, 
 				const std::size_t &rows, const std::size_t &cols,
 				const std::pair<float, float> &x, const std::pair<float, float> &y,

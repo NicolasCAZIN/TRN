@@ -9,13 +9,38 @@
 #define CUDA_CALLABLE_MEMBER
 #endif 
 
+struct Map
+{
+	Map(const float *data, const std::size_t &stride) : data(data), stride(stride)
+	{
+
+	}
+	const float *data;
+	const std::size_t stride;
+};
+
+struct Model
+{
+	Model(const float *cx, const float *cy, const float *width, float **gx2w, float **gy2w, const std::size_t &gx2w_strides, const std::size_t &gy2w_strides) :
+		cx(cx), cy(cy), width(width), gx2w(gx2w), gy2w(gy2w), gx2w_strides(gx2w_strides), gy2w_strides(gy2w_strides)
+	{
+
+	}
+	const float *cx;
+	const float *cy;
+	const float *width;
+	float **gx2w;
+	float **gy2w;
+	const std::size_t gx2w_strides;
+	const std::size_t gy2w_strides;
+};
 class Widrow_Hoff
 {
 private :
-	const float learning_rate;
+	const float *learning_rate;
 public:
-	CUDA_CALLABLE_MEMBER Widrow_Hoff(const float &learning_rate) : learning_rate(learning_rate) {}
-	CUDA_CALLABLE_MEMBER const float &get_learning_rate() const
+	CUDA_CALLABLE_MEMBER Widrow_Hoff(const float *learning_rate) : learning_rate(learning_rate) {}
+	CUDA_CALLABLE_MEMBER const float *get_learning_rate() const
 	{
 		return learning_rate;
 	}
@@ -23,25 +48,98 @@ public:
 class Nothing
 {
 };
+
+void compute_roi(
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
+	const std::size_t &batch_size,
+	const std::size_t &rows, const std::size_t &cols,
+	const float &x_min, const float &x_max, const float &y_min, const float &y_max,
+	const float &radius,
+	const float **current_position, const std::size_t &current_position_strides,
+	std::size_t *roi_row_begin, std::size_t *roi_row_end, std::size_t *roi_col_begin, std::size_t *roi_col_end);
+
+
+void decode_placecells_bayesian(
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
+	const std::size_t &batch_size, const std::size_t &place_cells_number,
+	const std::size_t &rows, const std::size_t &cols,
+	const std::size_t &roi_rows, const std::size_t &roi_cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+	const float &radius,
+	const float &cos_half_angle,
+	const float &scale,
+	const float &sigma,
+	const unsigned long &seed,
+	const Map &parameter,
+	const float &x_min, const float &x_max, const float &y_min, const float &y_max,
+	const float *x_grid, const std::size_t &x_grid_stride,
+	const float *y_grid, const std::size_t &y_grid_stride,
+	const float **batched_previous_position, const std::size_t &batched_previous_position_stride,
+	const float **batched_current_position, const std::size_t &batched_current_position_stride,
+	const float **batched_predicted_activations, const std::size_t &batched_predicted_activations_stride,
+	float **batched_direction, const std::size_t &batched_direction_stride,
+	float **batched_x_grid_centered, const std::size_t &batched_x_grid_centered_stride,
+	float **batched_y_grid_centered, const std::size_t &batched_y_grid_centered_stride,
+	float **batched_location_probability, const std::size_t &batched_location_probability_stride);
+void decode_placecells_bayesian(
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
+	const std::size_t &batch_size, const std::size_t &place_cells_number,
+	const std::size_t &rows, const std::size_t &cols,
+	const std::size_t &roi_rows, const std::size_t &roi_cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+	const float &radius,
+	const float &cos_half_angle,
+	const float &scale,
+	const float &sigma,
+	const unsigned long &seed,
+	const Model &parameter,
+	const float &x_min, const float &x_max, const float &y_min, const float &y_max,
+	const float *x_grid, const std::size_t &x_grid_stride,
+	const float *y_grid, const std::size_t &y_grid_stride,
+	const float **batched_previous_position, const std::size_t &batched_previous_position_stride,
+	const float **batched_current_position, const std::size_t &batched_current_position_stride,
+	const float **batched_predicted_activations, const std::size_t &batched_predicted_activations_stride,
+	float **batched_direction, const std::size_t &batched_direction_stride,
+	float **batched_x_grid_centered, const std::size_t &batched_x_grid_centered_stride,
+	float **batched_y_grid_centered, const std::size_t &batched_y_grid_centered_stride,
+	float **batched_location_probability, const std::size_t &batched_location_probability_stride);
  void compute_decode_placecells_linear(
-	 const cudaStream_t &stream,
-	 const cublasHandle_t &handle,
+	 const cudaStream_t *streams,
+	 const cublasHandle_t *handles,
 	const std::size_t &batch_size, const std::size_t &place_cells_number,
 	const float *cx,
 	const float *cy,
 	const float **batched_prediction, const std::size_t &batched_prediction_strides,
 	float **batched_decoded_position, const std::size_t &batched_decoded_position_strides);
+
+ void compute_encode_placecells_model(const cudaStream_t *streams,
+	 const cublasHandle_t *handles,
+	 const cudaEvent_t *events,
+	 const std::size_t &batch_size, const std::size_t &place_cells_number,
+	 const float *cx,
+	 const float *cy,
+	 const float *w,
+	 const float **batched_decoded_position, const std::size_t &batched_decoded_position_strides,
+	 float **batched_stimulus, const std::size_t &batched_stimulus_strides
+);
+
  void compute_mean_square_error(
-	 const cudaStream_t &stream,
-	 const cublasHandle_t &handle,
+	 const cudaStream_t *streams,
+	 const cublasHandle_t *handles,
 	 const std::size_t &batch_size,
 	 const float **batched_predicted, const std::size_t &batched_predicted_rows, const std::size_t &batched_predicted_cols, const std::size_t &batched_predicted_stride,
 	 const float *expected, const std::size_t &expected_rows, const std::size_t &expected_cols, const std::size_t &expected_stride,
 	 float *result, const std::size_t &result_rows, const std::size_t &result_cols, const std::size_t &result_stride);
 
  void compute_decode_most_probable_location(
-	 const cudaStream_t &stream,
-	 const cublasHandle_t &handle,
+	 const cudaStream_t *streams,
+	 const cublasHandle_t *handles,
 	 const std::size_t &batch_size, const std::size_t &stimulus_size,
 	 const std::size_t &roi_row_begin, const std::size_t &roi_row_end,
 	 const std::size_t &roi_col_begin, const std::size_t &roi_col_end,
@@ -62,8 +160,8 @@ class Nothing
  );
 
 void compute_place_cell_location_probability(
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
 	const std::size_t &batch_size, const std::size_t &place_cells_number, 
 	const std::size_t &rows_begin, const std::size_t &rows_end,
 	const std::size_t &cols_begin, const std::size_t &cols_end,
@@ -74,16 +172,16 @@ void compute_place_cell_location_probability(
 	float *** hypothesis_map, const std::size_t &hypothesis_map_rows, const std::size_t &hypothesis_map_cols, const std::size_t &hypothesis_map_stride,
 	float ** location_probability, const std::size_t &location_probability_rows, const std::size_t &location_probability_cols, const std::size_t &location_probability_stride
 );
-void compute_direction(const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+void compute_direction(const cudaStream_t *streams,
+	const cublasHandle_t *handles,
 	const std::size_t &batch_size,
 	const float **batched_previous_location, const std::size_t &batched_previous_location_rows, const std::size_t &batched_previous_location_cols, const std::size_t &batched_previous_location_stride,
 	const float **batched_current_location, const std::size_t &batched_current_location_rows, const std::size_t &batched_current_location_cols, const std::size_t &batched_current_location_stride,
 	float **batched_direction, const std::size_t &batched_direction_rows, const std::size_t &batched_direction_cols, const std::size_t &batched_direction_stride);
 
 void compute_reachable_locations(
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
 	const std::size_t &batch_size, const std::size_t &place_cells_number, 
 	const std::size_t &rows_begin, const std::size_t &rows_end,
 	const std::size_t &cols_begin, const std::size_t &cols_end,
@@ -95,17 +193,28 @@ void compute_reachable_locations(
 	float **batched_x_grid_centered, const std::size_t &batched_x_grid_centered_rows, const std::size_t &batched_x_grid_centered_cols, const std::size_t &batched_x_grid_centered_stride,
 	float **batched_y_grid_centered, const std::size_t &batched_y_grid_centered_rows, const std::size_t &batched_y_grid_centered_cols, const std::size_t &batched_y_grid_centered_stride,
 	float  **batched_location_probability, const std::size_t &batched_location_probability_rows, const std::size_t &batched_location_probability_cols, const std::size_t &batched_location_probability_strides);
+void compute_assign_most_probable_location(
+	const cudaStream_t *streams, const cublasHandle_t *handles, const cudaEvent_t *events,
+	const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+	const float &x_min, const float &x_range, const float &y_min, const float &y_range,
+	const int **batched_argmax, const std::size_t &batched_location_probability_strides,
+	float **batched_predicted_location);
 
-void compute_select_most_probable_location(const cudaStream_t &stream, const cublasHandle_t &handle, const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+void compute_select_most_probable_location(
+	const cudaStream_t *streams, const cublasHandle_t *handles, const cudaEvent_t *events,
+	const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
+	const std::size_t *roi_row_begin, const std::size_t *roi_row_end, const std::size_t *roi_col_begin, const std::size_t *roi_col_end,
+
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
 	const float  **batched_location_probability, const std::size_t &batched_location_probability_rows, const std::size_t &batched_location_probability_cols, const std::size_t &batched_location_probability_strides,
-	float **batched_predicted_location, const std::size_t &batched_predicted_location_rows, const std::size_t &batched_predicted_location_cols, const std::size_t &batched_predicted_location_strides
+	int **batched_argmax
 );
 
 void compute_draw_probable_location(
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
 	const std::size_t &batch_size, const std::size_t &rows, const std::size_t &cols,
 	const float *x_grid, const std::size_t &x_grid_rows, const std::size_t &x_grid_cols, const std::size_t &x_grid_stride,
 	const float *y_grid, const std::size_t &y_grid_rows, const std::size_t &y_grid_cols, const std::size_t &y_grid_stride,
@@ -118,9 +227,11 @@ void compute_draw_probable_location(
 template<bool gather_states, bool overwrite_states, typename Parameter>
 void update_model(
 	const std::size_t &batch_size,
+	const std::size_t &mini_batch_size,
 	unsigned long &seed,
-	const cudaStream_t &stream,
-	const cublasHandle_t &handle,
+	const cudaStream_t *streams,
+	const cublasHandle_t *handles,
+	const cudaEvent_t *events,
 	const Parameter &parameter,
 	const std::size_t &stimulus_stride, const std::size_t &reservoir_stride, const std::size_t &prediction_stride,
 	const std::size_t &stimulus_size, const std::size_t &reservoir_size, const std::size_t &prediction_size,
@@ -135,7 +246,9 @@ void update_model(
 	float **batched_p, const std::size_t &batched_p_rows, const std::size_t &batched_p_cols, const std::size_t &batched_p_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	float **batched_pre, const std::size_t &batched_pre_rows, const std::size_t &batched_pre_cols, const std::size_t &batched_pre_stride,
+	float ***bundled_pre, const std::size_t &bundled_pre_rows, const std::size_t &bundled_pre_cols, const std::size_t &bundled_pre_stride,
 	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_stride,
+	float ***bundled_post, const std::size_t &bundled_post_rows, const std::size_t &bundled_post_cols, const std::size_t &bundled_post_stride,
 	const int *offsets, const int *durations, const std::size_t &repetitions, const std::size_t &total_duration,
-	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride);
+	float *states_samples, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride,
+	const float *one, const float *zero);

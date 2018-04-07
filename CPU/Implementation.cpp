@@ -58,6 +58,15 @@ void TRN::CPU::query(std::string &brand, TRN::CPU::Implementation &implementatio
 
 	//int cpuInfo[4] = {-1};  
 	std::array<int, 4> cpui;
+	int cpu_cores = 0;
+#pragma omp parallel reduction(+:cpu_cores)
+	{
+		int regs[4];
+		__cpuid(regs, 11);
+		if (!(regs[3] & 1)) cpu_cores++;
+	}
+
+
 
 	// Calling __cpuid with 0x0 as the function_id argument  
 	// gets the number of the highest valid function ID.  
@@ -144,26 +153,61 @@ void TRN::CPU::query(std::string &brand, TRN::CPU::Implementation &implementatio
 		return TRN::CPU::Implementation::MMX_SSE;
 #endif
 #if !defined(_M_IX86) && defined(_M_X64)
+
+	std::size_t step;
 	if (fma3)
+	{
 		implementation = TRN::CPU::Implementation::FMA3;
+		step = TRN::CPU::Traits<TRN::CPU::Implementation::FMA3>::step;
+	}
 	else if (avx2)
+	{
 		implementation = TRN::CPU::Implementation::AVX2;
+		step = TRN::CPU::Traits<TRN::CPU::Implementation::AVX2>::step;
+	}
 	else if (avx)
+	{
 		implementation = TRN::CPU::Implementation::AVX;
+		step = TRN::CPU::Traits<TRN::CPU::Implementation::AVX>::step;
+	}
 	else if (sse41)
+	{
 		implementation = TRN::CPU::Implementation::SSE41;
+		step = TRN::CPU::Traits<TRN::CPU::Implementation::SSE41>::step;
+	}
 	else if (sse3)
+	{
 		implementation = TRN::CPU::Implementation::SSE3;
+		step = TRN::CPU::Traits<TRN::CPU::Implementation::SSE3>::step;
+	}
 	else if (sse2)
+	{
 		implementation = TRN::CPU::Implementation::SSE2;
+		step = TRN::CPU::Traits<TRN::CPU::Implementation::SSE2>::step;
+	}
 #endif
 	else
+	{
 		implementation = TRN::CPU::Implementation::SCALAR;
+		step = TRN::CPU::Traits<TRN::CPU::Implementation::SCALAR>::step;
+	}
 	brand = brand_buf;
 
 
 
 	std::string::iterator new_end = std::unique(brand.begin(), brand.end(), [](char lhs, char rhs) { return (lhs == rhs) && (lhs == ' '); });
 	brand.erase(new_end, brand.end());
+
+	auto idx = std::find(brand.begin(), brand.end(), '@');
+	auto freq_str = brand.substr(std::distance(brand.begin(), idx) + 1);
+	float freq_ghz;
+	std::stringstream(freq_str) >> freq_ghz;
+	
+	auto glfops = 2* freq_ghz * step * cpu_cores;
+
+	std::stringstream stream;
+	stream << brand << " (" << std::fixed << std::setprecision(2)<<  glfops << " GFLOPS/s)";
+	brand = stream.str();
+
 
 }

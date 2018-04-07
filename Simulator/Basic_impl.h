@@ -13,6 +13,7 @@ public:
 	std::shared_ptr<TRN::Core::Reservoir> reservoir;
 	std::shared_ptr<TRN::Core::Loop> loop;
 	std::shared_ptr<TRN::Core::Decoder> decoder;
+	std::shared_ptr<TRN::Core::Encoder> encoder;
 	std::shared_ptr<TRN::Core::Scheduler> scheduler;
 	std::queue<TRN::Core::Message::Payload<TRN::Core::Message::SET>> pending;
 	std::function<void()> trained;

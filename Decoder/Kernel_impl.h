@@ -14,6 +14,9 @@ struct TRN::Decoder::Kernel::Handle
 	std::size_t *roi_row_end;
 	std::size_t *roi_col_begin;
 	std::size_t *roi_col_end;
+	std::vector<int *>argmax;
+	int **host_argmax;
+	int **dev_argmax;
 	float sigma;
 	float radius;
 	//float angle;

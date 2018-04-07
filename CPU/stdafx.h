@@ -19,5 +19,9 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
+#include <future>
+#include <sstream>
+#include <iomanip>
+#include <regex>
 
 

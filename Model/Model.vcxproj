@@ -176,6 +176,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Decoder.cpp" />
+    <ClCompile Include="Encoder.cpp" />
     <ClCompile Include="Initializer.cpp" />
     <ClCompile Include="Driver.cpp" />
     <ClCompile Include="Loop.cpp" />
@@ -193,6 +194,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Decoder.h" />
+    <ClInclude Include="Encoder.h" />
     <ClInclude Include="Initializer.h" />
     <ClInclude Include="Driver.h" />
     <ClInclude Include="Loop.h" />
@@ -216,6 +218,9 @@
     </ProjectReference>
     <ProjectReference Include="..\Decoder\Decoder.vcxproj">
       <Project>{05e10f4f-ad35-4a9b-a0e4-39875ac8960d}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Encoder\Encoder.vcxproj">
+      <Project>{94d853d9-6dc0-4416-b60d-731731fa81e5}</Project>
     </ProjectReference>
     <ProjectReference Include="..\GPU\GPU.vcxproj">
       <Project>{e2e8fa63-5303-4f27-9a48-6d3d28172dcb}</Project>

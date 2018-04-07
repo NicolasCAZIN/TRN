@@ -47,6 +47,7 @@ namespace TRN4CPP
 		};
 
 	}
+
 	namespace Simulation
 	{
 		namespace Loop
@@ -59,15 +60,21 @@ namespace TRN4CPP
 				);
 		
 			};
-			namespace SpatialFilter
+	
+		};
+
+		namespace Encoder
+		{
+			namespace Custom
 			{
 				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size,
-					const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
-					std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
-					const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> &predicted_stimulus,
-					std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &perceived_stimulus, const std::string &tag);
+					const std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &prediction, const std::size_t &rows, const std::size_t &cols)> &predicted_position,
+					std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &estimated_position,
+					std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> &percieved_stimulus);
+
 			};
 		};
+
 		namespace Scheduler
 		{
 			namespace Custom
