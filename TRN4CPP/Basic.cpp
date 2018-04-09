@@ -212,16 +212,19 @@ void TRN4CPP::Engine::initialize()
 void TRN4CPP::Engine::uninitialize()
 {
 	TRACE_LOGGER;
-	TRN4CPP::Plugin::Sequences::uninitialize();
-	TRN4CPP::Plugin::Custom::uninitialize();
-	TRN4CPP::Plugin::Callbacks::uninitialize();
-	TRN4CPP::Plugin::Search::uninitialize();
 
 	if (frontend)
 	{
 		frontend->quit();
 		frontend.reset();
 	}
+
+
+	TRN4CPP::Plugin::Sequences::uninitialize();
+	TRN4CPP::Plugin::Custom::uninitialize();
+	TRN4CPP::Plugin::Callbacks::uninitialize();
+	TRN4CPP::Plugin::Search::uninitialize();
+
 
 	on_feedforward = NULL;
 	on_recurrent = NULL;

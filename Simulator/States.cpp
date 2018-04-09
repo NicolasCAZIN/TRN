@@ -137,6 +137,12 @@ void TRN::Simulator::States::to_host(const std::string &phase, const unsigned lo
 	std::size_t prediction_offset = 0;
 	std::size_t desired_offset = 0;
 	std::size_t reservoir_offset = 0;
+
+	std::vector<float> global_elements;
+	std::size_t global_rows, global_cols;
+	handle->states->get_global()->to(global_elements, global_rows, global_cols);
+	handle->functor(evaluation_id, phase, "global", 0, global_elements, global_rows, global_cols);
+	return;
 	for (std::size_t batch = 0; batch < get_reservoir()->get_batch_size(); batch++)
 	{
 		
@@ -148,13 +154,13 @@ void TRN::Simulator::States::to_host(const std::string &phase, const unsigned lo
 		stimulus->to(stimulus_data, stimulus_rows, stimulus_cols);
 		handle->functor(evaluation_id, phase, "stimulus", batch, stimulus_data, stimulus_rows, stimulus_cols);
 
-		std::vector<float> desired_data;
-		std::size_t desired_rows;
-		std::size_t desired_cols;
-		auto desired = TRN::Core::Matrix::create(driver, handle->states->get_desired(), 0, desired_offset, handle->states->get_desired()->get_rows(), prediction_size);
-		desired_offset += prediction_size;
-		desired->to(desired_data, desired_rows, desired_cols);
-		handle->functor(evaluation_id, phase, "desired", batch,  desired_data, desired_rows, desired_cols);
+		std::vector<float> reservoir_data;
+		std::size_t reservoir_rows;
+		std::size_t reservoir_cols;
+		auto reservoir = TRN::Core::Matrix::create(driver, handle->states->get_reservoir(), 0, reservoir_offset, handle->states->get_reservoir()->get_rows(), reservoir_size);
+		reservoir_offset += reservoir_size;
+		reservoir->to(reservoir_data, reservoir_rows, reservoir_cols);
+		handle->functor(evaluation_id, phase, "reservoir", batch, reservoir_data, reservoir_rows, reservoir_cols);
 
 		std::vector<float> prediction_data;
 		std::size_t prediction_rows;
@@ -164,13 +170,15 @@ void TRN::Simulator::States::to_host(const std::string &phase, const unsigned lo
 		prediction->to(prediction_data, prediction_rows, prediction_cols);
 		handle->functor(evaluation_id, phase, "prediction", batch, prediction_data, prediction_rows, prediction_cols);
 
-		std::vector<float> reservoir_data;
-		std::size_t reservoir_rows;
-		std::size_t reservoir_cols;
-		auto reservoir = TRN::Core::Matrix::create(driver, handle->states->get_reservoir(), 0, reservoir_offset, handle->states->get_reservoir()->get_rows(), reservoir_size);
-		reservoir_offset += reservoir_size;
-		reservoir->to(reservoir_data, reservoir_rows, reservoir_cols);
-		handle->functor(evaluation_id, phase, "reservoir", batch,  reservoir_data, reservoir_rows, reservoir_cols);
+	
+
+		std::vector<float> desired_data;
+		std::size_t desired_rows;
+		std::size_t desired_cols;
+		auto desired = TRN::Core::Matrix::create(driver, handle->states->get_desired(), 0, desired_offset, handle->states->get_desired()->get_rows(), prediction_size);
+		desired_offset += prediction_size;
+		desired->to(desired_data, desired_rows, desired_cols);
+		handle->functor(evaluation_id, phase, "desired", batch, desired_data, desired_rows, desired_cols);
 	}
 
 }

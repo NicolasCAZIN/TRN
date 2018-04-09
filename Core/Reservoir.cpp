@@ -232,6 +232,10 @@ void TRN::Core::Reservoir::test(const unsigned long long &evaluation_id, const s
 		handle->batched_u_ffwd->update(batch, sub_u_ffwd);
 	}
 
+	handle->target_expected = expected;
+	handle->cycle = preamble;
+	handle->autonomous_generation = autonomous_generation;
+	handle->max_cycle = expected->get_rows() + supplementary_generations - 1;
 	implementor->get_algorithm()->prime(
 			handle->batch_size, handle->mini_batch_size,
 			handle->seed,
@@ -253,22 +257,13 @@ void TRN::Core::Reservoir::test(const unsigned long long &evaluation_id, const s
 		handle->bundled_pre->get_elements(true), handle->bundled_pre->get_rows(), handle->bundled_pre->get_cols(), handle->bundled_pre->get_strides(),
 		handle->batched_post->get_elements(), handle->batched_post->get_rows(), handle->batched_post->get_cols(), handle->batched_post->get_strides(),
 		handle->bundled_desired->get_elements(true), handle->bundled_desired->get_rows(), handle->bundled_desired->get_cols(), handle->bundled_desired->get_strides(),
-			sub_scheduling->get_offsets().data(), sub_scheduling->get_durations().data(), sub_scheduling->get_durations().size(), sub_scheduling->get_total_duration(),
+			sub_scheduling->get_offsets().data(), sub_scheduling->get_durations().data(), sub_scheduling->get_durations().size(), handle->target_expected->get_rows(),
 			sub_states->get_elements(), sub_states->get_rows(), sub_states->get_cols(), sub_states->get_stride(), 
 		handle->one->get_elements(), handle->zero->get_elements());
 	
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>>::notify(TRN::Core::Message::Payload<TRN::Core::Message::PRIMED>(evaluation_id));
 
-	handle->target_expected = expected;
-	handle->cycle = preamble;
-	handle->autonomous_generation = autonomous_generation;
-	handle->max_cycle = expected->get_rows() + supplementary_generations-1;
 
-#ifdef PROTO
-	auto dummy = TRN::Core::Matrix::create(implementor, expected, preamble, 0, 1, expected->get_cols());
-	for (int batch = 0; batch < handle->batched_X_ro->get_size(); batch++)
-		handle->batched_X_ro->get_matrices(batch)->from(*dummy);
-#endif
 	handle->prediction.enqueue(std::make_tuple(handle->batched_X_ro, evaluation_id));
 }
 #include <iostream>
@@ -293,7 +288,7 @@ void TRN::Core::Reservoir::update(const TRN::Core::Message::Payload<TRN::Core::M
 			if (handle->autonomous_generation)
 				handle->batched_incoming->update(batch, incoming.get_stimulus()->get_matrices(batch));
 			else
-				handle->batched_incoming->update(batch, TRN::Core::Matrix::create(implementor, handle->target_expected, handle->cycle - 1, 0, 1, handle->target_expected->get_cols()));
+				handle->batched_incoming->update(batch, TRN::Core::Matrix::create(implementor, handle->target_expected, handle->cycle, 0, 1, handle->target_expected->get_cols()));
 			handle->batched_expected->update(batch, sub_expected);
 			handle->batched_u_ffwd->update(batch, sub_u_ffwd);
 		}
@@ -319,7 +314,7 @@ void TRN::Core::Reservoir::update(const TRN::Core::Message::Payload<TRN::Core::M
 			handle->bundled_pre->get_elements(true), handle->bundled_pre->get_rows(), handle->bundled_pre->get_cols(), handle->bundled_pre->get_strides(),
 			handle->batched_post->get_elements(), handle->batched_post->get_rows(), handle->batched_post->get_cols(), handle->batched_post->get_strides(),
 			handle->bundled_desired->get_elements(true), handle->bundled_desired->get_rows(), handle->bundled_desired->get_cols(), handle->bundled_desired->get_strides(),
-			sub_scheduling->get_offsets().data(), sub_scheduling->get_durations().data(), sub_scheduling->get_durations().size(), sub_scheduling->get_total_duration(),
+			sub_scheduling->get_offsets().data(), sub_scheduling->get_durations().data(), sub_scheduling->get_durations().size(), handle->target_expected->get_rows(),
 			sub_states->get_elements(), sub_states->get_rows(), sub_states->get_cols(), sub_states->get_stride(),
 			handle->one->get_elements(), handle->zero->get_elements());
 		handle->cycle++;
@@ -381,10 +376,9 @@ void TRN::Core::Reservoir::visit(std::shared_ptr<TRN::Core::Message::Payload<TRN
 	auto global = TRN::Core::Matrix::create(implementor, duration, size, true);
 	std::size_t offset = 0;
 	auto stimulus = TRN::Core::Matrix::create(implementor, global, 0, offset, duration, handle->batch_size * handle->stimulus_size); offset += handle->batch_size * handle->stimulus_stride;
-	auto desired = TRN::Core::Matrix::create(implementor, global, 0, offset, duration, handle->batch_size * handle->prediction_size); offset += handle->batch_size * handle->prediction_stride;
 	auto reservoir = TRN::Core::Matrix::create(implementor, global, 0, offset, duration, handle->batch_size * handle->reservoir_size); offset += handle->batch_size * handle->reservoir_stride;
-
 	auto prediction = TRN::Core::Matrix::create(implementor, global, 0, offset, duration, handle->batch_size * handle->prediction_size); offset += handle->batch_size * handle->prediction_stride;
+	auto desired = TRN::Core::Matrix::create(implementor, global, 0, offset, duration, handle->batch_size * handle->prediction_size); offset += handle->batch_size * handle->prediction_stride;
 
 
 

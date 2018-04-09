@@ -229,36 +229,6 @@ static inline void prepare(
 	}
 }
 
-__device__
-struct float44
-{
-	float4 a, b, c, d;
-};
-
-__device__ __forceinline__
-float44 inline operator * (const float44 &a, const float44 &b)
-{
-	float44 c;
-
-	c.a = a.a * b.a;
-	c.b = a.b * b.b;
-	c.c = a.c * b.c;
-	c.d = a.d * b.d;
-
-	return c;
-}
-__device__ __forceinline__
-float44 inline operator + (const float44 &a, const float44 &b)
-{
-	float44 c;
-
-	c.a = a.a + b.a;
-	c.b = a.b + b.b;
-	c.c = a.c + b.c;
-	c.d = a.d + b.d;
-
-	return c;
-}
 
 __device__ __forceinline__
 static inline float4 tanhf(const float4 a)
@@ -587,7 +557,7 @@ static void decode_placecells_bayesian_kernel(
 {
 	const int roi_row = blockIdx.z * blockDim.z + threadIdx.z;
 	const int roi_col = blockIdx.y * blockDim.y + threadIdx.y;
-	const int pc = blockIdx.x * blockDim.x + threadIdx.x;
+	//const int pc = blockIdx.x * blockDim.x + threadIdx.x;
 
 	float *location_probability = batched_location_probability[batch];
 	const float *previous_position = batched_previous_position[batch];
@@ -944,8 +914,80 @@ static inline void update_reservoir
 	checkCudaErrors(cudaGetLastError());
 }
 
-
 template <bool gather_states>
+static void copy_states(
+	const cudaStream_t &stream, const std::size_t &batch_size, const std::size_t &ts, 
+	const std::size_t &t, std::size_t &offset,
+	const float **batched_x, const std::size_t &x_rows, const std::size_t &x_cols, const std::size_t &x_stride,
+	float *states, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride)
+{}
+
+
+__global__
+static void copy_states_kernel
+(
+	const int batch_size, const int t,
+	const float **x, const int x_rows, const int x_cols, const int x_stride,
+	float *states, const int states_stride
+
+)
+{
+	for (int batch = blockIdx.z * blockDim.z + threadIdx.z; batch < batch_size; batch += gridDim.z * blockDim.z)
+	{
+		for (int row = blockIdx.y * blockDim.y + threadIdx.y; row < x_rows; row += gridDim.y * blockDim.y)
+		{
+			for (int col = blockIdx.x * blockDim.x + threadIdx.x; col < x_cols; col += gridDim.x * blockDim.x)
+			{
+				states[row * states_stride + col + batch * x_stride] = x[batch][(row + t) * x_stride + col];
+			}
+		}
+	}
+}
+
+template <>
+static void copy_states<true>(
+	const cudaStream_t &stream, const std::size_t &batch_size, const std::size_t &ts, 
+	const std::size_t &t, std::size_t &offset,
+	const float **batched_x, const std::size_t &x_rows, const std::size_t &x_cols, const std::size_t &x_stride,
+	float *states, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride)
+{
+	dim3 grid, block;
+
+	block.x = BLOCK_X;
+	block.x = BLOCK_Y;
+	block.y = 1;
+
+	grid.x = (x_cols  + block.x - 1) / block.x;
+	grid.y = (x_rows  + block.y - 1) / block.y;
+	grid.z = (batch_size + block.z - 1) / block.z;
+
+	copy_states_kernel << <grid, block, 0, stream >> > 
+		(
+			batch_size, t, 
+			batched_x, x_rows, x_cols, x_stride,
+			states, states_stride
+			);
+	checkCudaErrors(cudaGetLastError());
+
+	/*checkCudaErrors(cudaMemcpyAsync(x_ptr.data(), batched_x, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost));
+	//checkCudaErrors(cudaStreamSynchronize(stream));
+	std::cout << "ts = " << ts << ", offset = " << offset << std::endl;
+	float *states_ts = &states[ts * states_stride + offset];
+	for (std::size_t batch = 0; batch < batch_size; batch++)
+	{
+		std::size_t  col = batch * x_stride;
+		assert(col < states_cols);
+		checkCudaErrors(cudaMemcpy2DAsync(
+			&states_ts[col], states_stride * sizeof(float),
+			&x_ptr[batch][t * x_stride], x_stride * sizeof(float),
+			x_cols * sizeof(float), x_rows,
+
+			cudaMemcpyKind::cudaMemcpyDeviceToDevice, stream));
+
+	}*/
+	offset += x_stride * batch_size;
+}
+/*template <bool gather_states>
 static void copy_states(
 	const cudaStream_t *streams, const std::size_t &batch_size, const std::size_t &t, const std::size_t &ts,
 	const std::size_t &stimulus_size,
@@ -979,25 +1021,13 @@ static void copy_states<true>(const cudaStream_t *streams, const std::size_t &ba
 	std::vector<float *> expected_ptr(batch_size);
 	std::vector<float *> x_ro_ptr(batch_size);
 	std::vector<float *> x_res_ptr(batch_size);
-	/*cudaStream_t incoming, expected, x_ro, x_res;*/
-	/*cudaEvent_t incoming_terminated, expected_terminated, x_ro_terminated, x_res_terminated;
-	checkCudaErrors(cudaStreamCreateWithFlags(&incoming, cudaStreamNonBlocking));
-	checkCudaErrors(cudaStreamCreateWithFlags(&expected, cudaStreamNonBlocking));
-	checkCudaErrors(cudaStreamCreateWithFlags(&x_ro, cudaStreamNonBlocking));
-	checkCudaErrors(cudaStreamCreateWithFlags(&x_res, cudaStreamNonBlocking));*/
+	
+	
 	checkCudaErrors(cudaMemcpyAsync(incoming_ptr.data(), batched_incoming, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, *streams));
 	checkCudaErrors(cudaMemcpyAsync(expected_ptr.data(), batched_expected, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, *streams));
 	checkCudaErrors(cudaMemcpyAsync(x_ro_ptr.data(), batched_x_ro, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, *streams));
 	checkCudaErrors(cudaMemcpyAsync(x_res_ptr.data(), batched_x_res, batch_size * sizeof(float *), cudaMemcpyKind::cudaMemcpyDeviceToHost, *streams));
 
-	/*checkCudaErrors(cudaEventCreate(&incoming_terminated));
-	checkCudaErrors(cudaEventCreate(&expected_terminated));
-	checkCudaErrors(cudaEventCreate(&x_ro_terminated));
-	checkCudaErrors(cudaEventCreate(&x_res_terminated));
-
-	checkCudaErrors(cudaStreamSynchronize(incoming));
-	checkCudaErrors(cudaStreamSynchronize(expected));
-	checkCudaErrors(cudaStreamSynchronize(x_ro));*/
 	checkCudaErrors(cudaStreamSynchronize(*streams));
 
 //	std::size_t offset = 0;
@@ -1036,7 +1066,7 @@ static void copy_states<true>(const cudaStream_t *streams, const std::size_t &ba
 	}
 	
 }
-
+*/
 
 template <bool overwrite_states>
 static inline void initialize_states(const cudaStream_t *streams,  unsigned long &seed,
@@ -1132,13 +1162,13 @@ __global__ void Global_write(T* out, T value, size_t N)
 	if (i + 3 * blockDim.x < N) out[i + 3 * blockDim.x] = value;
 }*/
 
-
+template <bool gather_states>
 static inline void update_readout(
 	const cudaStream_t *streams,
 	const cublasHandle_t *handles,
 	const cudaEvent_t *events,
 	const std::size_t &batch_size, const std::size_t &mini_batch_size, std::size_t &mini_batch, std::size_t &bundle,
-	const int *offsets, const std::size_t &ts, const std::size_t &total_duration,
+	const int *offsets, const std::size_t &ts, const std::size_t &total_duration, std::size_t &offset,
 	const Nothing &parameter,
 	 float **batched_x_res, const std::size_t &batched_x_res_rows, const std::size_t &batched_x_res_cols, const std::size_t &batched_x_res_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
@@ -1147,7 +1177,8 @@ static inline void update_readout(
 	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
 	float ***bundled_desired, const std::size_t &bundled_desired_rows, const std::size_t &bundled_desired_cols, const std::size_t &bundled_desired_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	const float *one, const float *zero)
+	const float *one, const float *zero,
+	float *states, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride)
 {
 	sgemm(
 		handles[0],
@@ -1171,13 +1202,35 @@ static inline void update_readout(
 		batched_x_ro, batched_x_ro_cols, batched_x_ro_rows, batched_x_ro_strides
 		);
 	checkCudaErrors(cudaGetLastError());
+	/*copy_states<gather_states>(
+		streams[0],
+		batch_size, ts, 0, offset,
+		(const float **)batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
+		states, states_rows, states_cols, states_stride);
+	copy_states<gather_states>(
+		streams[0],
+		batch_size, ts, 0, offset,
+		(const float **)batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,
+		states, states_rows, states_cols, states_stride);
+	if (ts < total_duration - 1)
+	{
+		const auto t = ts + 1;
+		copy_states<gather_states>(
+			streams[0],
+			batch_size, ts, ts + 1, offset,
+			(const float **)batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_strides,
+			states, states_rows, states_cols, states_stride);
+
+
+	}*/
 }
+template <bool gather_states>
 static inline void update_readout(
 	const cudaStream_t *streams,
 	const cublasHandle_t *handles,
 	const cudaEvent_t *events,
 	const std::size_t &batch_size, const std::size_t &mini_batch_size, std::size_t &mini_batch, std::size_t &bundle,
-	const int *offsets, const std::size_t &ts, const std::size_t &total_duration,
+	const int *offsets, const std::size_t &ts, const std::size_t &total_duration, std::size_t &offset,
 	const Widrow_Hoff &parameter,
 	float **batched_x_res, const std::size_t &batched_x_res_rows, const std::size_t &batched_x_res_cols, const std::size_t &batched_x_res_strides,
 	float **batched_x_ro, const std::size_t &batched_x_ro_rows, const std::size_t &batched_x_ro_cols, const std::size_t &batched_x_ro_strides,
@@ -1186,9 +1239,10 @@ static inline void update_readout(
 	float **batched_post, const std::size_t &batched_post_rows, const std::size_t &batched_post_cols, const std::size_t &batched_post_strides,
 	float ***bundled_desired, const std::size_t &bundled_desired_rows, const std::size_t &bundled_desired_cols, const std::size_t &bundled_desired_strides,
 	float **batched_w_ro, const std::size_t &batched_w_ro_rows, const std::size_t &batched_w_ro_cols, const std::size_t &batched_w_ro_strides,
-	const float *one, const float *zero)
+	const float *one, const float *zero,
+	float *states, const std::size_t &states_rows, const std::size_t &states_cols, const std::size_t &states_stride)
 {
-	const int stream_number = 1;
+	
 	if (ts < total_duration - 1)
 	{
 		const auto t = offsets[ts + 1];
@@ -1197,7 +1251,6 @@ static inline void update_readout(
 
 		block.x = warpSize * 4;
 		block.y = 1;
-
 
 		grid.x = (batched_expected_cols + block.x - 1) / block.x;
 		grid.y = (batch_size + block.y - 1) / block.y;
@@ -1208,12 +1261,14 @@ static inline void update_readout(
 			bundled_desired[bundle], bundled_desired_rows, bundled_desired_cols, bundled_desired_strides
 			);
 		checkCudaErrors(cudaGetLastError());
+		checkCudaErrors(cudaEventRecord(events[1], streams[0]));
 	}
 	mini_batch++;
 	if (mini_batch == mini_batch_size || ts == total_duration - 1)
 	{
+		checkCudaErrors(cudaStreamWaitEvent(streams[1], events[1], 0));
 		sgemm(
-			handles[stream_number],
+			handles[0],
 			cublasOperation_t::CUBLAS_OP_N, cublasOperation_t::CUBLAS_OP_N,
 			batch_size,
 			(const float **)batched_w_ro, batched_w_ro_cols, batched_w_ro_rows, batched_w_ro_strides,
@@ -1230,15 +1285,37 @@ static inline void update_readout(
 		grid.y = (mini_batch + block.y - 1) / block.y;
 		grid.z = (batch_size + block.z - 1) / block.z;
 
-		update_readout_activations_kernel << <grid, block, 0, streams[stream_number] >> > (
+	
+
+		update_readout_activations_kernel << <grid, block, 0, streams[0] >> > (
 			batch_size,
 			(const float **)bundled_desired[bundle], mini_batch, bundled_desired_cols, bundled_desired_strides,
 			batched_post, mini_batch, batched_post_cols, batched_post_strides
 			);
 		checkCudaErrors(cudaGetLastError());
+		auto copy_ts = ts - mini_batch + 1;
 
+
+		/*copy_states<gather_states>(
+			streams[1],
+			batch_size, copy_ts,0, offset,
+			(const float **)bundled_pre[bundle], mini_batch, bundled_pre_cols, bundled_pre_strides,
+			states, states_rows, states_cols, states_stride);
+	
+		copy_states<gather_states>(
+			streams[1],
+			batch_size, copy_ts, 0, offset,
+			(const float **)batched_post, mini_batch, batched_post_cols, batched_post_strides,
+			states, states_rows, states_cols, states_stride);
+
+		copy_states<gather_states>(
+			streams[1],
+			batch_size, copy_ts, 0, offset,
+			(const float **)bundled_desired[bundle], mini_batch, bundled_desired_cols, bundled_desired_strides,
+			states, states_rows, states_cols, states_stride);
+			*/
 		sgemm(
-			handles[stream_number],
+			handles[0],
 			cublasOperation_t::CUBLAS_OP_N, cublasOperation_t::CUBLAS_OP_T,
 
 			batch_size,
@@ -1318,22 +1395,30 @@ void update_model(
 				batched_p, batched_p_rows, batched_p_cols, batched_p_strides,
 				bundled_pre, bundled_pre_rows, bundled_pre_cols, bundled_pre_strides,
 				leak_rate, one, zero);
-			update_readout
+			std::size_t offset = 0;
+			// stimulus
+			copy_states<gather_states>(
+				streams[0],
+				batch_size, ts, (std::size_t) offsets[ts], offset,
+				(const float **)batched_incoming, 1, batched_incoming_cols, batched_incoming_strides,
+				states_samples, states_rows, states_cols, states_stride);
+			update_readout<gather_states>
 				(
 					streams, handles, events,
 					batch_size, mini_batch_size, mini_batch, bundle,
-					offsets, ts, total_duration,
+					offsets, ts, total_duration, offset,
 					parameter,
 					batched_x_res, batched_x_res_rows, batched_x_res_cols, batched_x_res_strides,
 					batched_x_ro, batched_x_ro_rows, batched_x_ro_cols, batched_x_ro_strides,
+					
 					batched_expected, batched_expected_rows, batched_expected_cols, batched_expected_strides,
 					bundled_pre, bundled_pre_rows, bundled_pre_cols, bundled_pre_strides,
 					batched_post, batched_post_rows, batched_post_cols, batched_post_strides,
 					bundled_desired, bundled_desired_rows, bundled_desired_cols, bundled_desired_strides,
-					batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides,one, zero
-
+					batched_w_ro, batched_w_ro_rows, batched_w_ro_cols, batched_w_ro_strides,one, zero,
+					states_samples, states_rows, states_cols, states_stride
 					);
-			
+	
 		}
 	}
 	checkCudaErrors(cudaEventRecord(events[0], streams[1]));
@@ -1606,31 +1691,31 @@ void compute_select_most_probable_location(const cudaStream_t *streams, const cu
 			streams[0]);
 	}*/
 	
-	std::set<int> spawn;
+	//std::set<int> spawn;
 	for (int batch = 0; batch < batch_size; batch++)
 	{
 
-		auto k = batch % TRN::GPU::Context::STREAM_NUMBER;
+		auto k = 0;// batch % TRN::GPU::Context::STREAM_NUMBER;
 
 		auto x = batched_location_probability[batch];
 		auto result = batched_argmax[batch];
 		auto h = handles[k];
 		auto n = batched_location_probability_rows *batched_location_probability_strides;
 		checkCudaErrors(cublasIsamax(h, n, x, 1, result));
-		spawn.insert(k);
+		//spawn.insert(k);
 	}
 
-	spawn.erase(0);
+	//spawn.erase(0);
 
 	//checkCudaErrors(cudaDeviceSynchronize());
 
-	for (auto k : spawn)
+	/*for (auto k : spawn)
 	{
 		//checkCudaErrors(cudaStreamSynchronize(streams[k]));
 		checkCudaErrors(cudaEventRecord(events[k], streams[k]));
 		checkCudaErrors(cudaStreamWaitEvent(streams[0], events[k], 0));
 
-	}
+	}*/
 
 }
 

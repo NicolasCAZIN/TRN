@@ -384,7 +384,7 @@ void Callbacks::callback_states(const unsigned long long &simulation_id, const u
 	cv::Mat(rows, cols, CV_32FC1, (char *)samples.data()).copyTo(copy);
 	unsigned short trial, train, test, repeat;
 	TRN4CPP::Simulation::Evaluation::decode(evaluation_id, trial, train, test, repeat);
-	handle->to_display.enqueue(std::make_pair(label + "@" + phase + " : condition #" + std::to_string(ID(simulation_id).condition_number) + ", trial #" + std::to_string(trial) + ", train #" + std::to_string(train) + ", test #" + std::to_string(test), copy));
+	handle->to_display.enqueue(std::make_pair(label + "@" + phase + " : condition #" + std::to_string(ID(simulation_id).condition_number) + ", batch #" + std::to_string(batch) + ", trial #" + std::to_string(trial) + ", train #" + std::to_string(train) + ", test #" + std::to_string(test), copy));
 }
 void Callbacks::callback_weights(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::string &phase, const std::string &label, const std::size_t &batch,const std::vector<float> &samples, const std::size_t &rows, const std::size_t &cols)
 {
