@@ -135,7 +135,10 @@ void TRN::Simulator::Basic::train(const unsigned long long &evaluation_id, const
 	
 	DEBUG_LOGGER << "Training simulator with set " << label << " and tags (" << incoming << ", " << expected << ")";
 	if (reset_readout)
+	{
 		handle->reservoir->reset_readout();
+		handle->scheduler->reset();
+	}
 	TRN::Core::Message::Payload<TRN::Core::Message::SET> sequence(label, incoming, expected, evaluation_id);
 	handle->pending.push(sequence);
 	TRN::Helper::Observable<TRN::Core::Message::Payload<TRN::Core::Message::SET>>::notify(sequence);

@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     TRN4JAVA_Extended_Simulation_Scheduler_Snippets
  * Method:    configure
- * Signature: (JJIILjava/lang/String;)V
+ * Signature: (JJIIFFFFLjava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Extended_00024Simulation_00024Scheduler_00024Snippets_configure
-  (JNIEnv *, jclass, jlong, jlong, jint, jint, jstring);
+  (JNIEnv *, jclass, jlong, jlong, jint, jint, jfloat, jfloat, jfloat, jfloat, jstring);
 
 #ifdef __cplusplus
 }

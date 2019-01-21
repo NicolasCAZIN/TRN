@@ -33,6 +33,25 @@ TRN::Engine::Worker::~Worker()
 {
 	TRACE_LOGGER;
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
+
+	auto device = TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->index();
+	std::unique_lock<std::mutex> guard(cache_mutex);
+	std::vector<std::pair<unsigned int, unsigned int>> to_remove;
+
+	for (auto p : cache)
+	{
+		if (p.first.first == device)
+		{
+			to_remove.push_back(p.first);
+		}
+	}
+
+	for (auto key : to_remove)
+	{
+		cache.erase(key);
+	}
+	to_remove.clear();
+
 	handle.reset();
 }
 
@@ -74,7 +93,6 @@ void TRN::Engine::Worker::uninitialize()
 	auto communicator = TRN::Engine::Node::implementor.lock();
 	if (communicator)
 		communicator->send(terminated, 0);
-	TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->dispose();
 
 }
 
@@ -122,9 +140,6 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::S
 	{
 		communicator->send(worker, 0);
 	}
-
-
-
 }
 
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::STOP> &message)
@@ -139,7 +154,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::S
 	if (handle->quit_not_required.empty() && handle->frontends.empty())
 	{
 		INFORMATION_LOGGER <<   "No more frontends. Stopping worker" ;
-		stop();
+		synchronized();
 	}
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::ALLOCATE> &message)
@@ -735,7 +750,7 @@ void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::C
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	if (handle->simulators.find(message.simulation_id) == handle->simulators.end())
 		throw std::invalid_argument("Simulator #" + std::to_string(message.simulation_id) + " does not exist");
-	handle->simulators[message.simulation_id]->set_scheduler(TRN::Model::Scheduler::Snippets::create(message.seed, message.snippets_size, message.time_budget, message.tag));
+	handle->simulators[message.simulation_id]->set_scheduler(TRN::Model::Scheduler::Snippets::create(message.seed, message.snippets_size, message.time_budget, message.learn_reverse_rate, message.generate_reverse_rate, message.learning_rate, message.discount, message.tag));
 
 }
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_CUSTOM> &message)

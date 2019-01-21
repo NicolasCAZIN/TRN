@@ -5,31 +5,44 @@
 TRN::Engine::Task::Task() :
 	handle(std::make_unique<Handle>())
 {
-	TRACE_LOGGER;
 	handle->running = false;
+
+	TRACE_LOGGER;
 }
 
-TRN::Engine::Task::~Task() noexcept(false)
+TRN::Engine::Task::~Task() 
 {
 	TRACE_LOGGER;
-	if (!handle)
-		throw std::runtime_error("Handle is already destroyed");
 	if (handle->running)
-		throw std::runtime_error("Thread is still running");
+	{
+		ERROR_LOGGER << "Task is not terminated while calling the destructor";
+		::terminate();
+	}
+	
 	handle.reset();
+}
+
+bool TRN::Engine::Task::stop_requested()
+{
+	if (handle->future_obj.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
+		return false;
+	return true;
 }
 
 void TRN::Engine::Task::start()
 {
+
 	TRACE_LOGGER;
-	if (handle->running)
-		throw std::runtime_error("Thread is already running");
-	handle->running = true;
-	handle->thread = std::thread([&]() 
+	if (handle->thread.get_id() == std::this_thread::get_id())
 	{
+		throw std::runtime_error("start() must be called from from a different thread");
+	}
 	
+	handle->thread = std::thread([&]()
+	{
+		handle->running = true;
 		initialize();
-		while (handle->running)
+		while (!stop_requested() && handle->running)
 		{
 			try
 			{
@@ -37,23 +50,15 @@ void TRN::Engine::Task::start()
 			}
 			catch (std::exception &e)
 			{
-				ERROR_LOGGER << e.what() ;
-				stop();
+				ERROR_LOGGER << e.what();
 			}
 		}
+
 		uninitialize();
 	});
-
-
+	
 }
 
-void TRN::Engine::Task::join()
-{
-	TRACE_LOGGER;
-	if (handle->thread.joinable())
-		handle->thread.join();
-
-}
 void TRN::Engine::Task::initialize()
 {
 	TRACE_LOGGER;
@@ -66,9 +71,37 @@ void TRN::Engine::Task::uninitialize()
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 }
 
+void TRN::Engine::Task::joined()
+{
+	TRACE_LOGGER;
+	// INFORMATION_LOGGER <<   __FUNCTION__ ;
+}
+void TRN::Engine::Task::cancel()
+{
+	handle->running = false;
+}
 
 void TRN::Engine::Task::stop()
 {
 	TRACE_LOGGER;
-	handle->running = false;
+	if (handle->thread.get_id() == std::this_thread::get_id())
+	{
+		throw std::runtime_error("stop() must be called from from a different thread");
+	}
+	else
+	{
+		if (handle->thread.joinable())
+		{
+			handle->exit_signal.set_value();
+			handle->thread.join();
+			
+			handle->running = false;
+
+			joined();	
+		}
+		else
+		{
+			throw std::runtime_error("Thread is not running nor joinable");
+		}
+	}
 }

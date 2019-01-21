@@ -20,7 +20,9 @@ namespace TRN
 			virtual ~Communicator();
 
 		public :
-			virtual void dispose() override;
+			virtual void start() override;
+			virtual void stop() override;
+			virtual void synchronize() override;
 
 		protected:
 			virtual int rank() override;

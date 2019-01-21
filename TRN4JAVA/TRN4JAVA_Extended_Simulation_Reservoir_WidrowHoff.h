@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     TRN4JAVA_Extended_Simulation_Reservoir_WidrowHoff
  * Method:    configure
- * Signature: (JJJJFFFJJ)V
+ * Signature: (JJJJFFFJJJ)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Extended_00024Simulation_00024Reservoir_00024WidrowHoff_configure
-  (JNIEnv *, jclass, jlong, jlong, jlong, jlong, jfloat, jfloat, jfloat, jlong, jlong);
+  (JNIEnv *, jclass, jlong, jlong, jlong, jlong, jfloat, jfloat, jfloat, jlong, jlong, jlong);
 
 #ifdef __cplusplus
 }

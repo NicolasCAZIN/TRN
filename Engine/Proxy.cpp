@@ -163,7 +163,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::ST
 			handle->to_frontend->send(terminated, 0);
 		}
 		DEBUG_LOGGER << "PROXY #" << std::to_string(handle->number) << " sent TERMINATED to workers";
-		handle->to_frontend->dispose();
+		handle->to_frontend->stop();
 		//handle->dispatcher->dispose();
 		stop();
 		DEBUG_LOGGER <<   "PROXY #"  << std::to_string(handle->number) << " JOINED" ;
@@ -315,7 +315,7 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CO
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_SNIPPETS> &message)
 {
 	TRACE_LOGGER;
-	handle->dispatcher->configure_scheduler_snippets(global_id(message.simulation_id), message.seed, message.snippets_size, message.time_budget, message.tag);
+	handle->dispatcher->configure_scheduler_snippets(global_id(message.simulation_id), message.seed, message.snippets_size, message.time_budget, message.learn_reverse_rate, message.generate_reverse_rate, message.learning_rate, message.discount, message.tag);
 }
 void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::CONFIGURE_SCHEDULER_CUSTOM> &message)
 {

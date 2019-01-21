@@ -11,17 +11,34 @@ TRN::Local::Communicator::Communicator(const int &max_rank) :
 
 TRN::Local::Communicator::~Communicator()
 {
-
-	handle->workers.clear();
 	handle.reset();
 }
-void TRN::Local::Communicator::dispose()
+void TRN::Local::Communicator::start()
+{
+	for (auto worker : handle->workers)
+	{
+		worker->start();
+	}
+}
+
+void TRN::Local::Communicator::stop()
 {
 	for (auto queue : handle->queues)
 		queue->invalidate();
 	for (auto worker : handle->workers)
-		worker->dispose();
+	{
+		worker->stop();
+	}
 }
+
+void TRN::Local::Communicator::synchronize()
+{
+	for (auto worker : handle->workers)
+	{
+		worker->synchronize();
+	}
+}
+
 
 int TRN::Local::Communicator::rank()
 {

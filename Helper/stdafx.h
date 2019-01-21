@@ -1,6 +1,6 @@
 #pragma once
 #ifdef USE_VLD
-#include <vld.h>
+//#include <vld.h>
 #endif 
 #include <boost/log/trivial.hpp>
 #include <boost/asio.hpp>
@@ -10,6 +10,8 @@
 #include <boost/log/utility/manipulators/add_value.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/interprocess/sync/file_lock.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/log/core.hpp>
 #include <boost/log/common.hpp>
 #include <boost/log/sinks.hpp>

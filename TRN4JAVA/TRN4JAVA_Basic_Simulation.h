@@ -10,7 +10,7 @@ extern "C" {
 /*
  * Class:     TRN4JAVA_Basic_Simulation
  * Method:    encode
- * Signature: (LTRN4JAVA/Basic/Simulationidentifier;)J
+ * Signature: (LTRN4JAVA/Basic/Simulation/Identifier;)J
  */
 JNIEXPORT jlong JNICALL Java_TRN4JAVA_Basic_00024Simulation_encode
   (JNIEnv *, jclass, jobject);
@@ -18,7 +18,7 @@ JNIEXPORT jlong JNICALL Java_TRN4JAVA_Basic_00024Simulation_encode
 /*
  * Class:     TRN4JAVA_Basic_Simulation
  * Method:    decode
- * Signature: (J)LTRN4JAVA/Basic/Simulationidentifier;
+ * Signature: (J)LTRN4JAVA/Basic/Simulation/Identifier;
  */
 JNIEXPORT jobject JNICALL Java_TRN4JAVA_Basic_00024Simulation_decode
   (JNIEnv *, jclass, jlong);

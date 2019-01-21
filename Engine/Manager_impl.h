@@ -11,6 +11,8 @@ public :
 	std::priority_queue<std::shared_ptr<TRN::Engine::Processor>> available;
 	std::condition_variable condition;
 	std::mutex mutex;
+	bool running;
+	//std::promise<void> exit_signal;
 
 	TRN::Helper::Queue<unsigned long long> to_deallocate;
 

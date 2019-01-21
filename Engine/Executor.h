@@ -20,7 +20,8 @@ namespace TRN
 			virtual void body() override;
 
 		public :
-			void terminate();
+			void stop() override;
+			void synchronize() override;
 			void post(const std::function<void(void)> &command);
 
 		public :

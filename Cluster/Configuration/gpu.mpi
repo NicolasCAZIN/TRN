@@ -1,0 +1,9 @@
+-host kamino -n 1 Worker -i 1
+-host alderaan -n 1 Worker -i 1
+-host alderaan -n 1 Worker -i 2
+-host dagobah -n 1 Worker -i 1
+-host dagobah -n 1 Worker -i 2
+-host deathstar -n 1 Worker -i 1
+-host deathstar -n 1 Worker -i 2
+-host deathstar -n 1 Worker -i 3
+-host deathstar -n 1 Worker -i 4

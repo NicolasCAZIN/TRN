@@ -18,6 +18,8 @@
 #include "TRN4JAVA_Basic_Logging_Severity_Error.h"
 
 #include "TRN4JAVA_Basic_Simulation.h"
+#include "TRN4JAVA_Basic_Simulation_Evaluation.h"
+#include "TRN4JAVA_Basic_Simulation_Evaluation_Identifier.h"
 #include "TRN4JAVA_Basic_Simulation_Identifier.h"
 
 #include "TRN4CPP/Basic.h"
@@ -164,7 +166,7 @@ jlong Java_TRN4JAVA_Basic_00024Simulation_encode(JNIEnv *env, jclass jclazz, job
 {
 	TRACE_LOGGER;
 
-	unsigned long long &simulation_id;
+	unsigned long long simulation_id;
 
 	try
 	{
@@ -174,24 +176,24 @@ jlong Java_TRN4JAVA_Basic_00024Simulation_encode(JNIEnv *env, jclass jclazz, job
 		auto frontend_number_field = env->GetFieldID(env->GetObjectClass(identifier), "frontend_number", "S");
 		if (frontend_number_field == 0)
 			throw std::invalid_argument("Can't find field frontend_number");
-		auto bundle_size_field = env->GetFieldID(env->GetObjectClass(identifier), "bundle_size", "I");
+		auto bundle_size_field = env->GetFieldID(env->GetObjectClass(identifier), "batch_number", "I");
 		if (bundle_size_field == 0)
-			throw std::invalid_argument("Can't find field bundle_size");
+			throw std::invalid_argument("Can't find field batch_number");
 
 		unsigned short condition_number = (unsigned short)env->GetShortField(identifier, condition_number_field);
 		unsigned short frontend_number = (unsigned short)env->GetShortField(identifier, frontend_number_field);
 		unsigned int batch_number = (unsigned int)env->GetIntField(identifier, bundle_size_field);
 
-		TRN4CPP::Simulation::encode(frontend_number, condition_number, bundle_size, simulation_id);
+		TRN4CPP::Simulation::encode(frontend_number, condition_number, batch_number, simulation_id);
 	}
 	catch (std::exception &e)
 	{
 		ERROR_LOGGER << e.what(); env->ThrowNew(env->FindClass("java/lang/Exception"), e.what());
 	}
-	return (jlong)id;
-}
+	return (jlong)simulation_id;
+ }
 
-jobject Java_TRN4JAVA_Basic_00024Simulation_decode(JNIEnv *env, jclass _jclass, jlong id)
+jobject Java_TRN4JAVA_Basic_00024Simulation_decode(JNIEnv *env, jclass _jclass, jlong simulation_id)
 {
 	TRACE_LOGGER;
 	try
@@ -201,7 +203,7 @@ jobject Java_TRN4JAVA_Basic_00024Simulation_decode(JNIEnv *env, jclass _jclass, 
 		unsigned int batch_number;
 
 
-		TRN4CPP::Simulation::decode((unsigned long long)id, frontend_number, condition_number, bundle_size);
+		TRN4CPP::Simulation::decode((unsigned long long)simulation_id, frontend_number, condition_number, batch_number);
 
 		jclass identifier_class = env->FindClass("TRN4JAVA/Simulation$Identifier");
 		jmethodID constructor = env->GetMethodID(identifier_class, "<init>", "void(V)");
@@ -214,13 +216,94 @@ jobject Java_TRN4JAVA_Basic_00024Simulation_decode(JNIEnv *env, jclass _jclass, 
 		auto frontend_number_field = env->GetFieldID(env->GetObjectClass(identifier), "frontend_number", "S");
 		if (frontend_number_field == 0)
 			throw std::invalid_argument("Can't find field frontend_number");
-		auto bundle_size_field = env->GetFieldID(env->GetObjectClass(identifier), "bundle_size", "I");
+		auto bundle_size_field = env->GetFieldID(env->GetObjectClass(identifier), "batch_number", "I");
 		if (bundle_size_field == 0)
-			throw std::invalid_argument("Can't find field bundle_size");
+			throw std::invalid_argument("Can't find field batch_number");
 
 		env->SetShortField(identifier, frontend_number_field, (jshort)frontend_number);
 		env->SetShortField(identifier, condition_number_field, (jshort)condition_number);
-		env->SetIntField(identifier, bundle_size_field, (jint)bundle_size);
+		env->SetIntField(identifier, bundle_size_field, (jint)batch_number);
+
+		return identifier;
+	}
+	catch (std::exception &e)
+	{
+		ERROR_LOGGER << e.what(); env->ThrowNew(env->FindClass("java/lang/Exception"), e.what());
+	}
+	return NULL;
+}
+
+jlong Java_TRN4JAVA_Basic_00024Simulation_00024Evaluation_encode(JNIEnv *env, jclass jclazz, jobject identifier)
+{
+	TRACE_LOGGER;
+
+	unsigned long long evaluation_id;
+
+	try
+	{
+		auto trial_number_field = env->GetFieldID(env->GetObjectClass(identifier), "trial_number", "S");
+		if (trial_number_field == 0)
+			throw std::invalid_argument("Can't find field trial_number");
+		auto train_number_field = env->GetFieldID(env->GetObjectClass(identifier), "train_number", "S");
+		if (train_number_field == 0)
+			throw std::invalid_argument("Can't find field train_number");
+		auto test_number_field = env->GetFieldID(env->GetObjectClass(identifier), "test_number", "S");
+		if (test_number_field == 0)
+			throw std::invalid_argument("Can't find field test_number");
+		auto repeat_number_field = env->GetFieldID(env->GetObjectClass(identifier), "repeat_number", "S");
+		if (repeat_number_field == 0)
+			throw std::invalid_argument("Can't find field repeat_number");
+
+		unsigned short trial_number = (unsigned short)env->GetShortField(identifier, trial_number_field);
+		unsigned short train_number = (unsigned short)env->GetShortField(identifier, train_number_field);
+		unsigned short test_number = (unsigned short)env->GetShortField(identifier, test_number_field);
+		unsigned short repeat_number = (unsigned short)env->GetShortField(identifier, repeat_number_field);
+
+
+		TRN4CPP::Simulation::Evaluation::encode(trial_number, train_number, test_number, repeat_number, evaluation_id);
+	}
+	catch (std::exception &e)
+	{
+		ERROR_LOGGER << e.what(); env->ThrowNew(env->FindClass("java/lang/Exception"), e.what());
+	}
+	return (jlong)evaluation_id;
+}
+
+jobject Java_TRN4JAVA_Basic_00024Simulation_00024Evaluation_decode(JNIEnv *env, jclass _jclass, jlong evaluation_id)
+{
+	TRACE_LOGGER;
+	try
+	{
+		unsigned short trial_number;
+		unsigned short train_number;
+		unsigned short test_number;
+		unsigned short repeat_number;
+
+
+		TRN4CPP::Simulation::Evaluation::decode((unsigned long long)evaluation_id, trial_number, train_number, test_number, repeat_number);
+
+		jclass identifier_class = env->FindClass("TRN4JAVA/Simulation$Evaluation$Identifier");
+		jmethodID constructor = env->GetMethodID(identifier_class, "<init>", "void(V)");
+		jobject identifier = env->NewObject(identifier_class, constructor);
+
+
+		auto trial_number_field = env->GetFieldID(env->GetObjectClass(identifier), "trial_number", "S");
+		if (trial_number_field == 0)
+			throw std::invalid_argument("Can't find field trial_number");
+		auto train_number_field = env->GetFieldID(env->GetObjectClass(identifier), "train_number", "S");
+		if (train_number_field == 0)
+			throw std::invalid_argument("Can't find field train_number");
+		auto test_number_field = env->GetFieldID(env->GetObjectClass(identifier), "test_number", "S");
+		if (test_number_field == 0)
+			throw std::invalid_argument("Can't find field test_number");
+		auto repeat_number_field = env->GetFieldID(env->GetObjectClass(identifier), "repeat_number", "S");
+		if (repeat_number_field == 0)
+			throw std::invalid_argument("Can't find field repeat_number");
+
+		env->SetShortField(identifier, trial_number_field, (jshort)trial_number);
+		env->SetShortField(identifier, train_number_field, (jshort)train_number);
+		env->SetIntField(identifier, test_number_field, (jint)test_number);
+		env->SetIntField(identifier, repeat_number_field, (jint)repeat_number);
 
 		return identifier;
 	}

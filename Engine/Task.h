@@ -1,12 +1,12 @@
 #pragma once
 
-#include "engine_global.h"
+#include "Component.h"
 
 namespace TRN
 {
 	namespace Engine
 	{
-		class ENGINE_EXPORT Task
+		class ENGINE_EXPORT Task : public TRN::Engine::Component
 		{
 		private :
 			class Handle;
@@ -14,20 +14,25 @@ namespace TRN
 
 		protected :
 			Task();
-		public :
-			virtual ~Task() noexcept(false);
 
 		public :
-			 void start();
+			virtual ~Task();
 
-		
-			 
+		public :
+			 virtual void start() override;
+			 virtual void stop() override;
+		protected:
+			void cancel();
+
 		protected :
 			virtual void initialize();
 			virtual void body() = 0;
 			virtual void uninitialize();
-			void join();
-			void stop();
+			virtual void joined();
+	
+		private:
+			bool stop_requested();
+			
 		};
 	}
 };

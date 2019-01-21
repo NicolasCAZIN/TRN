@@ -17,27 +17,30 @@ TRN::Engine::Broker::Broker(const std::shared_ptr<TRN::Engine::Communicator> &co
 	handle->to_caller = TRN::Engine::Executor::create();
 	
 }
-TRN::Engine::Broker::~Broker() noexcept(false)
+TRN::Engine::Broker::~Broker()
 {
 	TRACE_LOGGER;
 	handle.reset();
 }
 
-void TRN::Engine::Broker::dispose()
+
+void TRN::Engine::Broker::synchronize()
 {
 	TRACE_LOGGER;
-	handle->manager->dispose();
-	handle->communicator->dispose();
+	handle->manager->synchronize();
 }
+
+
 void TRN::Engine::Broker::quit()
 {
 	TRACE_LOGGER;
-	handle->manager->dispose();
+
 	TRN::Engine::Message<TRN::Engine::QUIT> message;
 	message.terminate = true;
+	message.number = 0;
 	handle->communicator->broadcast(message);
-	handle->communicator->dispose();
-	join();
+	handle->communicator->stop();
+	stop();
 }
 void TRN::Engine::Broker::initialize()
 {
@@ -49,14 +52,12 @@ void TRN::Engine::Broker::initialize()
 void TRN::Engine::Broker::uninitialize()
 {
 	TRACE_LOGGER;
-	handle->manager->terminate();
-	handle->to_caller->terminate();
+	handle->manager->stop();
+	handle->to_caller->stop();
 	for (auto from_caller : handle->from_caller)
 	{
-		from_caller.second->terminate();
+		from_caller.second->stop();
 	}
-
-
 }
 void TRN::Engine::Broker::body()
 {
@@ -65,7 +66,7 @@ void TRN::Engine::Broker::body()
 	if (!probed)
 	{
 		DEBUG_LOGGER << "BROKER encountered an invalid probe.Stopping RX task";
-		stop();
+		cancel();
 	}
 	else
 	{
@@ -97,7 +98,7 @@ void TRN::Engine::Broker::body()
 
 				if (handle->active == 0)
 				{
-					stop();
+					cancel();
 				}
 			}
 			break;
@@ -106,8 +107,6 @@ void TRN::Engine::Broker::body()
 				auto message = handle->communicator->receive<TRN::Engine::CACHED>(0);
 				if (!message.checksums.empty())
 				{
-
-
 					std::unique_lock<std::mutex> guard(handle->cache_mutex);
 					auto ranks = handle->host_ranks[handle->rank_host[message.rank]];
 					for (auto rank : ranks)
@@ -455,7 +454,8 @@ void TRN::Engine::Broker::remove_simulation(const unsigned long long &simulation
 	if (handle->simulations.find(simulation_id) == handle->simulations.end())
 		throw std::logic_error("Simulation #" + std::to_string(simulation_id) + " is not allocated");
 	handle->simulations.erase(simulation_id);
-	handle->from_caller[simulation_id]->terminate();
+	handle->from_caller[simulation_id]->stop();
+
 	handle->from_caller.erase(simulation_id);
 
 	//	INFORMATION_LOGGER <<   "id " << id << " deallocate DONE" ;
@@ -722,10 +722,10 @@ void TRN::Engine::Broker::configure_begin(const unsigned long long &simulation_i
 void TRN::Engine::Broker::configure_end(const unsigned long long &simulation_id)
 {
 	TRACE_LOGGER;
-	auto processor = handle->manager->retrieve(simulation_id);
+	
 	retrieve_simulation(simulation_id)->post([=]()
 	{
-		
+		auto processor = handle->manager->retrieve(simulation_id);
 		processor->configuring();
 		processor->post([=]()
 		{
@@ -1115,7 +1115,10 @@ void TRN::Engine::Broker::configure_scheduler_tiled(const unsigned long long &si
 		});
 	});
 }
-void TRN::Engine::Broker::configure_scheduler_snippets(const unsigned long long &simulation_id, const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget,  const std::string &tag)
+void TRN::Engine::Broker::configure_scheduler_snippets(const unsigned long long &simulation_id, const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget, 
+	const float &learn_reverse_rate, const float &generate_reverse_rate,
+	const float &learning_rate,
+	const float &discount, const std::string &tag)
 {
 	TRACE_LOGGER;
 	retrieve_simulation(simulation_id)->post([=]()
@@ -1129,6 +1132,10 @@ void TRN::Engine::Broker::configure_scheduler_snippets(const unsigned long long 
 			message.simulation_id = simulation_id;
 			message.snippets_size = snippets_size;
 			message.time_budget = time_budget;
+			message.learn_reverse_rate = learn_reverse_rate;
+			message.generate_reverse_rate = generate_reverse_rate;
+			message.learning_rate = learning_rate;
+			message.discount = discount;
 			message.tag = tag;
 			message.seed = seed;
 

@@ -1,0 +1,3 @@
+-host kashyyyk -n 1 C:\TRN\Simulator\Server.exe --host 0.0.0.0 --port 12345 --backend distributed --logging debug 
+-host alderaan -n 10 C:\TRN\Simulator\Worker.exe --index 1 
+-host alderaan -n 10 C:\TRN\Simulator\Worker.exe --index 2 

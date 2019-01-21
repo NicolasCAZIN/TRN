@@ -131,8 +131,7 @@ template TRN::CPU::Memory<TRN::CPU::Implementation::SSE2>;
 template TRN::CPU::Memory<TRN::CPU::Implementation::SSE3>;
 template TRN::CPU::Memory<TRN::CPU::Implementation::SSE41>;
 template TRN::CPU::Memory<TRN::CPU::Implementation::AVX>;
-template TRN::CPU::Memory<TRN::CPU::Implementation::AVX2>;
-template TRN::CPU::Memory<TRN::CPU::Implementation::FMA3>;
+template TRN::CPU::Memory<TRN::CPU::Implementation::AVX2_FMA3>;
 #endif
 #if defined(_M_IX86) && !defined(_M_X64)
 template TRN::CPU::Memory<TRN::CPU::Implementation::MMX_SSE>;

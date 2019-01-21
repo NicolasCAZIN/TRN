@@ -87,6 +87,7 @@ TRN::Core::Matrix::~Matrix()
 	if (handle->ownership && handle->rows > 0 &&  handle->cols > 0)
 	{
 		implementor->get_memory()->deallocate(handle->elements);
+		handle->elements = NULL;
 	}
 
 	handle.reset();

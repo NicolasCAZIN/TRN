@@ -20,11 +20,14 @@ namespace TRN
 			Node(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank);
 
 		public:
-			virtual ~Node() noexcept(false);
+			virtual ~Node();
 
-	
 		public :
-			void dispose();
+			void synchronize() override;
+
+		protected :
+			void synchronized();
+
 		private:
 			void body() override;
 			void erase_functors(const unsigned long long &simulation_id);

@@ -12,8 +12,9 @@ TRN::Backend::Driver::Driver(const std::shared_ptr<TRN::Backend::Memory> &memory
 }
 TRN::Backend::Driver::~Driver()
 {
-
-
+	handle->memory.reset();
+	handle->random.reset();
+	handle->algorithm.reset();
 	handle.reset();
 }
 

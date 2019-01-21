@@ -1,6 +1,6 @@
 #pragma once
 #ifdef USE_VLD
-#include <vld.h>
+//#include <vld.h>
 #endif 
 
 #include <boost/tuple/tuple.hpp>
@@ -31,9 +31,11 @@
 #include <sstream>
 #include <iostream>
 #include <mutex>
+
 #include <thread>
 #include <queue>
 #include <set>
+#include <future>
 #include <map>
 #include <ctime>
 #include <boost/optional.hpp>

@@ -224,7 +224,8 @@ int main(int argc, char *argv[])
 
 				void stop() override
 				{
-					adaptee->dispose();
+					adaptee->synchronize();
+					adaptee->stop();
 				}
 			};
 
@@ -262,7 +263,8 @@ int main(int argc, char *argv[])
 
 		acceptor->run();
 	
-		dispatcher->dispose();
+		dispatcher->synchronize();
+		dispatcher->stop();
 
 		return 0;
 	}

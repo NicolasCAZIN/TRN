@@ -20,10 +20,8 @@ std::shared_ptr<TRN::Backend::Driver> TRN::Model::Driver::create(const int &inde
 		switch (implementation)
 		{
 #if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
-			case TRN::CPU::FMA3 :
-				return TRN::CPU::Driver<TRN::CPU::FMA3>::create();
-			case TRN::CPU::AVX2:
-				return TRN::CPU::Driver<TRN::CPU::AVX2>::create();
+			case TRN::CPU::AVX2_FMA3:
+				return TRN::CPU::Driver<TRN::CPU::AVX2_FMA3>::create();
 			case TRN::CPU::AVX:
 				return TRN::CPU::Driver<TRN::CPU::AVX>::create();
 			case TRN::CPU::SSE41:

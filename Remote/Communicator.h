@@ -21,7 +21,10 @@ namespace TRN
 			virtual ~Communicator();
 
 		public :
-			virtual void dispose() override;
+			virtual void start() override;
+			virtual void stop() override;
+			virtual void synchronize() override;
+
 		public:
 			virtual int rank() override;
 			virtual std::size_t size() override;

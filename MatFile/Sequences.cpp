@@ -99,34 +99,41 @@ void Sequences::initialize(const std::map<std::string, std::string> &arguments)
 					auto mx_variable = variables[path[0]];
 					auto mx_field = mx_variable;
 					std::size_t depth = 1;
-					while (mxIsStruct(mx_field) && depth < path.size())
+					while (mx_field && mxIsStruct(mx_field) && depth < path.size())
 					{
 						mx_field = mxGetField(mx_field, 0, path[depth].c_str());
 						depth++;
 					}
-					if (mxIsNumeric(mx_field))
+					if (mx_field)
 					{
-						if (mxIsSingle(mx_field))
+						if (mxIsNumeric(mx_field))
 						{
-							auto dims = mxGetDimensions(mx_field);
-							if (mxGetNumberOfDimensions(mx_field) == 2)
+							if (mxIsSingle(mx_field))
 							{
-								handle->fields[key].rows = dims[1];
-								handle->fields[key].cols = dims[0];
-								auto size = dims[1] * dims[0];
-								float *ptr = (float *)mxGetData(mx_field);
-								handle->fields[key].elements.resize(size);
-								std::copy(ptr, ptr + size, handle->fields[key].elements.begin());
+								auto dims = mxGetDimensions(mx_field);
+								if (mxGetNumberOfDimensions(mx_field) == 2)
+								{
+									handle->fields[key].rows = dims[1];
+									handle->fields[key].cols = dims[0];
+									auto size = dims[1] * dims[0];
+									float *ptr = (float *)mxGetData(mx_field);
+									handle->fields[key].elements.resize(size);
+									std::copy(ptr, ptr + size, handle->fields[key].elements.begin());
+								}
+								else
+								{
+									throw std::runtime_error("variable " + label + " is not numeric");
+								}
 							}
 							else
 							{
-								throw std::runtime_error("variable " + label + " is not numeric");
+								throw std::runtime_error("variable " + label + " is not single precision");
 							}
 						}
-						else
-						{
-							throw std::runtime_error("variable " + label + " is not single precision");
-						}
+					}
+					else
+					{
+						throw std::runtime_error("variable " + label + " does not exist");
 					}
 				}
 			}

@@ -11,31 +11,31 @@ public class Custom
 	{
 		public static abstract class	Loop
 		{
-			public abstract void		callback(final longrid, final long trial, final long evaluation, final float prediction[], final long rows, final long cols);
-			public native void			notify(final longrid, final long trial, final long evaluation, final float perception[], final long rows, final long cols);
+			public abstract void		callback(final long simulation_id, final long evaluation_id, final float prediction[], final long rows, final long cols);
+			public native void			notify(final long simulation_id, final long evaluation_id, final float perception[], final long rows, final long cols);
 	
-			public static class				Stimulus
-			{
-				public static native void	install(final Loop loop);
-			}
-
-			public static class				Position
-			{
-				public static native void	install(final Loop loop);
-			}
+	
+			public static native void	install(final Loop loop);
+			
 		}
+		public static abstract class	Encoder
+		{
+			public abstract void		callback(final long simulation_id, final long evaluation_id, final float predicted_position[], final long rows, final long cols);
+			public native void			notify(final long simulation_id, final long evaluation_id, final float estimated_position[], final float perceived_stimulus[], final long rows, final long cols);
 
+			public static native void	install(final Encoder encoder);
+		}
 		public static abstract class	Scheduler
 		{
-			public abstract void		callback(final longrid, final long seed, final long trial, final float elements[], final long rows, final long cols, final int offsets[], final int durations[]);
-			public native void			notify(final longrid, final long trial, final int offsets[], final int durations[]);
+			public abstract void		callback(final long simulation_id, final long evaluation_id,final long seed, final float elements[], final long rows, final long cols, final int offsets[], final int durations[]);
+			public native void			notify(final long simulation_id, final long evaluation_id,final int offsets[], final int durations[]);
 
 			public static native void	install(Scheduler scheduler);
 
 			public static abstract class	Mutator
 			{
-				public abstract void		callback(final longrid, final long seed, final long trial, final int offsets[], final int durations[]);
-				public native void			notify(final longrid, final long trial, final int offsets[], final int durations[]);
+				public abstract void		callback(final long simulation_id,  final long evaluation_id, final long seed, final int offsets[], final int durations[]);
+				public native void			notify(final long simulation_id,  final long evaluation_id, final int offsets[], final int durations[]);
 
 				public static native void	install(final Mutator mutator);
 			}
@@ -45,20 +45,14 @@ public class Custom
 		{
 			public static abstract class	Weights
 			{
-				public abstract void		callback(final longrid, final long seed, final long batch_size, final long rows, final long cols);
-				public native void			notify(final longrid, final float weights[], final long batch_size, final long rows, final long cols);	
+				public abstract void		callback(final long simulation_id, final long seed, final long batch_size, final long rows, final long cols);
+				public native void			notify(final long simulation_id, final float weights[], final long batch_size, final long rows, final long cols);	
 			}
 
 			public static abstract class	Feedforward 
 			{
 				static native void			install(final Weights weights);		
 			}
-
-			public static abstract class	Feedback
-			{
-				static native void			install(final Weights weights);		
-			}
-
 			public static abstract class	Recurrent
 			{
 				static native void			install(final Weights weights);		

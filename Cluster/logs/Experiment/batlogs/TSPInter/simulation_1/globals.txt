@@ -1,0 +1,10 @@
+done false
+pause false
+logPath logs/Experiment/batlogs/TSPInter/simulation_1
+group Control
+subName 1
+RESULT_MAT Y:/SCS-TRN/ABCDE/results/result_1.mat
+startPosition -0.48223,-0.64841,0
+enabledFeeders 11,1,16,14,4
+condition_number 1
+simulation_number 1

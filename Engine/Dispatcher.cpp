@@ -3,9 +3,6 @@
 #include "Broker_impl.h"
 #include "Helper/Logger.h"
 
-
-
-
 TRN::Engine::Dispatcher::Dispatcher(const std::shared_ptr<TRN::Engine::Communicator> &to_workers) :
 	TRN::Engine::Broker(to_workers),
 	handle(std::make_unique<Handle>())

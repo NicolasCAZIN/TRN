@@ -1,13 +1,13 @@
 #pragma once
 
-#include "engine_global.h"
+#include "Component.h"
 #include "Processor.h"
 
 namespace TRN
 {
 	namespace Engine
 	{
-		class ENGINE_EXPORT Manager
+		class ENGINE_EXPORT Manager : public TRN::Engine::Component
 		{
 		private :
 			class Handle;
@@ -18,10 +18,12 @@ namespace TRN
 
 		public :
 			virtual ~Manager();
-			void start();
-			void dispose();
-			void terminate();
+
+			void start() override;
+			void stop() override;
+	
 		public:
+			void synchronize();
 			void update_processor(const int &rank, const std::string host, const unsigned int &index, const std::string name);
 			//void wait_not_allocated();
 			std::shared_ptr<TRN::Engine::Processor> allocate(const unsigned long long &simulation_id);

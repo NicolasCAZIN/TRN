@@ -17,6 +17,9 @@ static const float DEFAULT_A = -1.0f;
 static const float DEFAULT_B = 1.0f;
 static const float DEFAULT_SPARSITY = 0.0f;
 static const float DEFAULT_RADIUS_THRESHOLD = 0.2f;
+static const float DEFAULT_REVERSE_RATE = 0.0f;
+static const float DEFAULT_DECAY = 0.0f;
+static const float DEFAULT_DISCOUNT = 0.0f;
 static const std::string experiment_name = "EXPERIMENT";
 static const std::string declaration_name = "DECLARATION";
 static const std::string configuration_name = "CONFIGURATION";
@@ -131,7 +134,11 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 	else
 		throw std::invalid_argument("Unexpected file extension \"" + extension + "\"");
 
-
+	const std::string decay_attribute = prefix + "decay";
+	const std::string discount_attribute = prefix + "discount";
+	const std::string reverse_rate_attribute = prefix + "reverse_rate";
+	const std::string learn_reverse_rate_attribute = prefix + "learn_reverse_rate";
+	const std::string generate_reverse_rate_attribute = prefix + "generate_reverse_rate";
 	const std::string id_attribute = prefix + "id";
 	const std::string tests_attribute = prefix + "tests";
 	const std::string trials_attribute = prefix + "trials";
@@ -218,7 +225,7 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 						auto name = _plugin.get_child(name_attribute).get_value<std::string>();
 						std::vector<std::string> arguments_list;
 
-						boost::split(arguments_list, _plugin.get<std::string>(arguments_attribute, ""), boost::is_any_of(",; \t"));
+						boost::split(arguments_list, _plugin.get<std::string>(arguments_attribute, ""), boost::is_any_of(",;"));
 						std::map<std::string, std::string> arguments;
 						for (auto argument : arguments_list)
 						{
@@ -678,10 +685,14 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 														else if (boost::iequals(scheduler_type, snippets_type))
 														{
 															auto seed = batch_number % bundle_size +get_variable<unsigned long>(_scheduler, seed_attribute, condition_number, batch_number);
+															auto learn_reverse_rate = get_variable<float>(_scheduler, learn_reverse_rate_attribute, condition_number, batch_number, 1.0f);
+															auto generate_reverse_rate = get_variable<float>(_scheduler, generate_reverse_rate_attribute, condition_number, batch_number, 0.0f);
+															auto learning_rate = get_variable<float>(_scheduler, learning_rate_attribute, condition_number, batch_number);
+															auto discount = get_variable<float>(_scheduler, discount_attribute, condition_number, batch_number);
 															auto snippets_size = get_variable<std::size_t>(_scheduler, snippets_size_attribute, condition_number, batch_number);
 															auto time_budget = get_variable<std::size_t>(_scheduler, time_budget_attribute, condition_number, batch_number);
 															auto tag = _scheduler.get(tag_attribute, DEFAULT_TAG);
-															TRN4CPP::Simulation::Scheduler::Snippets::configure(simulation_id,seed, snippets_size, time_budget, tag);
+															TRN4CPP::Simulation::Scheduler::Snippets::configure(simulation_id,seed, snippets_size, time_budget, learn_reverse_rate, generate_reverse_rate, learning_rate, discount, tag);
 														}
 														else if (boost::iequals(scheduler_type, custom_type))
 														{

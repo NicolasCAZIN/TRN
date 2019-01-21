@@ -213,7 +213,7 @@
     <ClInclude Include="Cache_impl.h" />
     <ClInclude Include="Dispatcher.h" />
     <ClInclude Include="Dispatcher_impl.h" />
-    <ClInclude Include="Command.h" />
+    <ClInclude Include="Component.h" />
     <ClInclude Include="Executor.h" />
     <ClInclude Include="Executor_impl.h" />
     <ClInclude Include="Broker.h" />

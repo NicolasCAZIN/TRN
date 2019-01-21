@@ -46,6 +46,17 @@ namespace TRN
 				cond.notify_one();
 			}
 
+
+			void synchronize()
+			{
+				std::unique_lock<std::mutex> lock(mutex);
+
+				while (valid && !queue.empty())
+				{
+					cond.wait(lock);
+				}
+			}
+
 			bool front(Data &data)
 			{
 				std::unique_lock<std::mutex> lock(mutex);

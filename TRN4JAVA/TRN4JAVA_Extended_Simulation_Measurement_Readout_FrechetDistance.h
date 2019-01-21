@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     TRN4JAVA_Extended_Simulation_Measurement_Readout_FrechetDistance
  * Method:    configure
- * Signature: (JJ)V
+ * Signature: (JJLjava/lang/String;Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Extended_00024Simulation_00024Measurement_00024Readout_00024FrechetDistance_configure
-  (JNIEnv *, jclass, jlong, jlong);
+  (JNIEnv *, jclass, jlong, jlong, jstring, jstring);
 
 #ifdef __cplusplus
 }

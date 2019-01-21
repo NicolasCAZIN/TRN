@@ -50,7 +50,7 @@
 #define sqr_ps(__a) (mul_ps((__a), (__a)))
 #define mul_add_ps(__a, __b, __c) (add_ps(mul_ps((__a), (__b)), (__c)))
 //#define tanh_ps(__a) (tanhf(__a))
-#define exp_ps(__a) (expf(__a))
+
 #define dp_ps(__a, __b) 	(add_ps(mul_ps((__a), (__b))))
 #define hsum_ps(__a) ((__a))
 
@@ -63,7 +63,8 @@
 #define and_ps(__a, __b) ((__a) && (__b))
 #define or_ps(__a, __b) ((__a) || (__b))
 
-#define abs_ps(__a) (std::fabs(__a))
+#define abs_ps(__a) (std::fabs((__a)))
+#define exp_ps(__a) (std::expf((__a)))
 #include "Algorithm_template_method.h"
 
 template  TRN::CPU::Algorithm<TRN::CPU::Implementation::SCALAR>;

@@ -3,6 +3,7 @@
 
 std::ostream &operator << (std::ostream &stream, const TRN::CPU::Implementation &implementation)
 {
+	
 	switch (implementation)
 	{
 		case	TRN::CPU::Implementation::SCALAR :
@@ -26,11 +27,8 @@ std::ostream &operator << (std::ostream &stream, const TRN::CPU::Implementation 
 		case	TRN::CPU::Implementation::AVX : // 256_dp_ps, exp256_ps compiled with SSE2
 			stream << "AVX";
 			break;
-		case	TRN::CPU::Implementation::AVX2 : // exp256_ps compiled with avx2
-			stream << "AVX2";
-			break;
-		case TRN::CPU::Implementation::FMA3 ://256_fmadd 
-			stream << "FMA3";
+		case	TRN::CPU::Implementation::AVX2_FMA3 : // exp256_ps compiled with avx2
+			stream << "AVX2+FMA3";
 			break;
 		default :
 			throw std::runtime_error("Unexpected implementation type " + std::to_string(implementation));
@@ -58,15 +56,8 @@ void TRN::CPU::query(std::string &brand, TRN::CPU::Implementation &implementatio
 
 	//int cpuInfo[4] = {-1};  
 	std::array<int, 4> cpui;
-	int cpu_cores = 0;
-#pragma omp parallel reduction(+:cpu_cores)
-	{
-		int regs[4];
-		__cpuid(regs, 11);
-		if (!(regs[3] & 1)) cpu_cores++;
-	}
-
-
+	int cpu_cores = boost::thread::physical_concurrency();
+	
 
 	// Calling __cpuid with 0x0 as the function_id argument  
 	// gets the number of the highest valid function ID.  
@@ -155,15 +146,10 @@ void TRN::CPU::query(std::string &brand, TRN::CPU::Implementation &implementatio
 #if !defined(_M_IX86) && defined(_M_X64)
 
 	std::size_t step;
-	if (fma3)
+	if (fma3 && avx2)
 	{
-		implementation = TRN::CPU::Implementation::FMA3;
-		step = TRN::CPU::Traits<TRN::CPU::Implementation::FMA3>::step;
-	}
-	else if (avx2)
-	{
-		implementation = TRN::CPU::Implementation::AVX2;
-		step = TRN::CPU::Traits<TRN::CPU::Implementation::AVX2>::step;
+		implementation = TRN::CPU::Implementation::AVX2_FMA3;
+		step = TRN::CPU::Traits<TRN::CPU::Implementation::AVX2_FMA3>::step;
 	}
 	else if (avx)
 	{
@@ -203,10 +189,12 @@ void TRN::CPU::query(std::string &brand, TRN::CPU::Implementation &implementatio
 	float freq_ghz;
 	std::stringstream(freq_str) >> freq_ghz;
 	
-	auto glfops = 2* freq_ghz * step * cpu_cores;
+	auto simd_cores = step * cpu_cores;
+
+	auto glfops = 2* freq_ghz * simd_cores;
 
 	std::stringstream stream;
-	stream << brand << " (" << std::fixed << std::setprecision(2)<<  glfops << " GFLOPS/s)";
+	stream << brand << " / " << simd_cores << " simd cores (" << std::fixed << std::setprecision(2)<<  glfops << " GFLOPS/s)";
 	brand = stream.str();
 
 

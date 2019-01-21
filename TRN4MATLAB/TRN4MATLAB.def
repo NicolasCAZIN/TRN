@@ -1,0 +1,2 @@
+LIBRARY TRN4MATLAB.mexw64
+EXPORTS mexFunction

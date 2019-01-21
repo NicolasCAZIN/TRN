@@ -20,10 +20,10 @@ namespace TRN
 		public :
 			Broker(const std::shared_ptr<TRN::Engine::Communicator> &communicator);
 		public :
-			virtual ~Broker() noexcept(false);
+			virtual ~Broker();
 
 		public :
-			void dispose();
+			virtual void synchronize() override;
 			void quit();
 
 		protected :
@@ -107,7 +107,10 @@ namespace TRN
 			void 	configure_loop_custom(const unsigned long long &simulation_id, const std::size_t &batch_size, const std::size_t &stimulus_size);
 
 			void 	configure_scheduler_tiled(const unsigned long long &simulation_id ,const unsigned int &epochs);
-			void 	configure_scheduler_snippets(const unsigned long long &simulation_id, const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag);
+			void 	configure_scheduler_snippets(const unsigned long long &simulation_id, const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget, 
+				const float &learn_reverse_rate, const float &generate_reverse_rate,
+				const float &learning_rate,
+				const float &discount, const std::string &tag);
 	
 			void 	configure_scheduler_custom(const unsigned long long &simulation_id, const unsigned long &seed, const std::string &tag);
 

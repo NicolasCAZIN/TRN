@@ -9,14 +9,6 @@ extern "C" {
 #endif
 /*
  * Class:     TRN4JAVA_Simplified_Simulation
- * Method:    declare
- * Signature: (Ljava/lang/String;[FJJLjava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_TRN4JAVA_Simplified_00024Simulation_declare
-  (JNIEnv *, jclass, jstring, jfloatArray, jlong, jlong, jstring);
-
-/*
- * Class:     TRN4JAVA_Simplified_Simulation
  * Method:    compute
  * Signature: (Ljava/lang/String;)V
  */

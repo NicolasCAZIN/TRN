@@ -59,6 +59,9 @@
     <ClCompile Include="Functor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Sequences.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -112,13 +115,16 @@
     <ClInclude Include="TRN4JAVA_Advanced_Simulation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Encoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Encoder_Custom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="TRN4JAVA_Advanced_Simulation_Loop.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TRN4JAVA_Advanced_Simulation_Loop_Custom.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Advanced_Simulation_Loop_SpatialFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TRN4JAVA_Advanced_Simulation_Measurement.h">
@@ -223,7 +229,34 @@
     <ClInclude Include="TRN4JAVA_Basic_Engine_Backend_Remote.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TRN4JAVA_Basic_Logging.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Information.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Trace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Warning.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="TRN4JAVA_Basic_Simulation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Basic_Simulation_Evaluation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Basic_Simulation_Evaluation_Identifier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TRN4JAVA_Basic_Simulation_Identifier.h">
@@ -295,19 +328,13 @@
     <ClInclude Include="TRN4JAVA_Custom_Simulation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TRN4JAVA_Custom_Simulation_Encoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="TRN4JAVA_Custom_Simulation_Loop.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TRN4JAVA_Custom_Simulation_Loop_Position.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Custom_Simulation_Loop_Stimulus.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TRN4JAVA_Custom_Simulation_Reservoir.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Custom_Simulation_Reservoir_Feedback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TRN4JAVA_Custom_Simulation_Reservoir_Feedforward.h">
@@ -338,6 +365,30 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TRN4JAVA_Extended_Simulation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Decoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Decoder_Kernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Decoder_Kernel_Map.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Decoder_Kernel_Model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Decoder_Linear.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Encoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Encoder_Custom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Extended_Simulation_Encoder_Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TRN4JAVA_Extended_Simulation_Loop.h">
@@ -398,18 +449,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedback.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedback_Custom.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedback_Gaussian.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedback_Uniform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TRN4JAVA_Extended_Simulation_Reservoir_Weights_Feedforward.h">
@@ -475,34 +514,16 @@
     <ClInclude Include="TRN4JAVA_Extended_Simulation_Scheduler_Tiled.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TRN4JAVA_Sequences.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TRN4JAVA_Sequences_Plugin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="TRN4JAVA_Simplified.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TRN4JAVA_Simplified_Plugin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TRN4JAVA_Simplified_Simulation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Basic_Logging.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Debug.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Error.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Information.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Trace.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TRN4JAVA_Basic_Logging_Severity_Warning.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -528,6 +549,9 @@
       <Filter>Source Files\Java</Filter>
     </None>
     <None Include="TRN4JAVA\Basic.java">
+      <Filter>Source Files\Java</Filter>
+    </None>
+    <None Include="TRN4JAVA\Sequences.java">
       <Filter>Source Files\Java</Filter>
     </None>
   </ItemGroup>

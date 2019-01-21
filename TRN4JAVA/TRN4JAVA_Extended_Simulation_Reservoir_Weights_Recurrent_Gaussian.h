@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     TRN4JAVA_Extended_Simulation_Reservoir_Weights_Recurrent_Gaussian
  * Method:    configure
- * Signature: (JFF)V
+ * Signature: (JFFF)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Extended_00024Simulation_00024Reservoir_00024Weights_00024Recurrent_00024Gaussian_configure
-  (JNIEnv *, jclass, jlong, jfloat, jfloat);
+  (JNIEnv *, jclass, jlong, jfloat, jfloat, jfloat);
 
 #ifdef __cplusplus
 }

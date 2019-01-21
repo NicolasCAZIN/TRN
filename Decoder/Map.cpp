@@ -11,7 +11,6 @@ TRN::Decoder::Map::Map(const std::shared_ptr<TRN::Backend::Driver> &driver,
 	TRN::Decoder::Kernel(driver, batch_size, stimulus_size, rows, cols, arena_x, arena_y, sigma, radius, angle, scale, seed),
 	handle(std::make_unique<Handle>())
 {
-	
 	handle->firing_rate_map = firing_rate_map;
 }
 
@@ -74,7 +73,7 @@ void TRN::Decoder::Map::visit(std::shared_ptr<TRN::Core::Message::Payload<TRN::C
 	flops_per_cycle += place_cells * (roi_rows * roi_cols); // mul
 	flops_per_cycle += place_cells * (roi_rows * roi_cols); // add
 	flops_per_cycle += (roi_rows * roi_cols); // div
-	flops_per_cycle += (roi_rows * roi_cols) * 32; // exp
+	flops_per_cycle += (roi_rows * roi_cols) * 28; // exp
 	flops_per_cycle += (roi_rows * roi_cols);// noise
 	flops_per_cycle += 3; // <a,a>
 	flops_per_cycle += roi_rows * (1 + 1 + roi_cols* (3));

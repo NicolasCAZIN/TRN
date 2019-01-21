@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     TRN4JAVA_Advanced_Simulation_Measurement_Position_FrechetDistance
  * Method:    configure
- * Signature: (JJLTRN4JAVA/Callbacks/Simulation/Measurement/Processed;)V
+ * Signature: (JJLTRN4JAVA/Callbacks/Simulation/Measurement/Processed;Ljava/lang/String;Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Advanced_00024Simulation_00024Measurement_00024Position_00024FrechetDistance_configure
-  (JNIEnv *, jclass, jlong, jlong, jobject);
+  (JNIEnv *, jclass, jlong, jlong, jobject, jstring, jstring);
 
 #ifdef __cplusplus
 }

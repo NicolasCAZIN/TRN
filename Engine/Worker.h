@@ -21,6 +21,7 @@ namespace TRN
 			Worker(const std::shared_ptr<TRN::Engine::Communicator> &communicator, const int &rank, const std::shared_ptr<TRN::Backend::Driver> &driver);
 		public :
 			virtual ~Worker();
+		
 
 		public :
 			virtual void initialize() override;

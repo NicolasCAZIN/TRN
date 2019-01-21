@@ -10,23 +10,23 @@ namespace TRN4CPP
 		{
 			namespace Trace
 			{
-				void TRN4CPP_EXPORT setup();
+				void TRN4CPP_EXPORT setup(const bool &exit_on_error = true);
 			}
 			namespace Debug
 			{
-				void TRN4CPP_EXPORT setup();
+				void TRN4CPP_EXPORT setup(const bool &exit_on_error = true);
 			}
 			namespace Information
 			{
-				void TRN4CPP_EXPORT setup();
+				void TRN4CPP_EXPORT setup(const bool &exit_on_error = true);
 			}
 			namespace Warning
 			{
-				void TRN4CPP_EXPORT setup();
+				void TRN4CPP_EXPORT setup(const bool &exit_on_error = true);
 			}
 			namespace Error
 			{
-				void TRN4CPP_EXPORT setup();
+				void TRN4CPP_EXPORT setup(const bool &exit_on_error = true);
 			}
 		}
 	};

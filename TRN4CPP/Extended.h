@@ -91,7 +91,10 @@ namespace TRN4CPP
 			};
 			namespace Snippets
 			{
-				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag = DEFAULT_TAG);
+				void TRN4CPP_EXPORT  	configure(const unsigned long long &simulation_id, const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget, 
+					const float &learn_reverse_rate, const float &generate_reverse_rate,
+					const float &learning_rate,
+					const float &discount, const std::string &tag = DEFAULT_TAG);
 			};
 			namespace Custom
 			{

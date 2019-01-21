@@ -12,7 +12,10 @@ namespace TRN
 		template<TRN::CPU::Implementation Implementation>
 		class CPU_EXPORT Algorithm : public TRN::Backend::Algorithm
 		{
-	
+		private :
+			class Handle;
+			std::unique_ptr<Handle> handle;
+
 		public :
 			Algorithm();
 			virtual ~Algorithm();

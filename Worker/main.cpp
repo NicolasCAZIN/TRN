@@ -1,5 +1,5 @@
 #ifdef USE_VLD
-#include <vld.h>
+//#include <vld.h>
 #endif 
 #include <iostream>
 #include <functional>
@@ -49,7 +49,8 @@ int main(int argc, char *argv[])
 		
 		auto worker = TRN::ViewModel::Node::Backend::create(communicator, communicator->rank(), index);
 		worker->start();
-		worker->dispose();
+		worker->synchronize();
+		worker->stop();
 		TRACE_LOGGER <<   argv[0] << " EXITED" ;
 		return 0;
 	}

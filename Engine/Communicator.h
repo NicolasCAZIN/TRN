@@ -3,12 +3,13 @@
 #include "engine_global.h"
 #include "Messages.h"
 #include "Compressor.h"
+#include "Component.h"
 
 namespace TRN
 {
 	namespace Engine
 	{
-		class ENGINE_EXPORT Communicator
+		class ENGINE_EXPORT Communicator : public TRN::Engine::Component
 		{
 		private :
 			class Handle;
@@ -21,7 +22,7 @@ namespace TRN
 
 
 		public :
-			virtual void dispose() = 0;
+	
 			std::string host();
 			virtual std::size_t size() = 0;
 			virtual int rank() = 0;

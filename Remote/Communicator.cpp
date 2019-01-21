@@ -35,7 +35,17 @@ TRN::Remote::Communicator::~Communicator()
 	handle.reset();
 }
 
-void TRN::Remote::Communicator::dispose()
+
+void TRN::Remote::Communicator::synchronize()
+{
+}
+
+void TRN::Remote::Communicator::start()
+{
+	handle->manager->start(handle->connection);
+}
+
+void TRN::Remote::Communicator::stop()
 {
 	handle->manager->stop(handle->connection);
 }

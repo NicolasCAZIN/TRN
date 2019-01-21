@@ -28,7 +28,7 @@ static void decrease_reference(const std::size_t &index)
 	counter[index]--;
 	if (counter[index] == 0)
 	{
-		//cudaDevice
+	
 		checkCudaErrors(cudaDeviceReset());
 		INFORMATION_LOGGER <<   "device #" << index + 1 << " reset" ;
 	}
@@ -48,6 +48,8 @@ TRN::GPU::Driver::Driver(const std::shared_ptr<TRN::GPU::Context> context) :
 }
 TRN::GPU::Driver::~Driver()
 {
+	
+	handle->context.reset();
 	handle.reset();
 }
 

@@ -18,7 +18,7 @@ namespace TRN4CPP
 			};
 
 			void TRN4CPP_EXPORT		initialize(const std::string &library_path, const std::string &name, const std::map<std::string, std::string>  &arguments);
-			void uninitialize();
+			void TRN4CPP_EXPORT uninitialize();
 		};
 	};
 
@@ -27,6 +27,8 @@ namespace TRN4CPP
 		extern const std::string DEFAULT_TAG;
 
 		void TRN4CPP_EXPORT  	declare(const std::string &label, const std::string &tag, const std::vector<float> &elements, const std::size_t &rows, const std::size_t &cols);
+
+/* internal */
 		void TRN4CPP_EXPORT  	retrieve(const std::string &label, const std::string &tag, std::vector<float> &elements, std::size_t &rows, std::size_t &cols);
 		void TRN4CPP_EXPORT		fetch(const std::string &label, const std::string &tag);
 

@@ -2,7 +2,6 @@
 
 #if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
 #include "Algorithm.h"
-
 #include "sse_mathfun.h"
 #define _0 0
 #define _1 4
@@ -57,17 +56,18 @@ static inline __m128 sqr_ps(const __m128 &__a)
 {
 	return mul_ps(__a, __a);
 }
-#define mul_add_ps(__a, __b, __c) (add_ps(mul_ps((__a), (__b)), (__c)))
-
 static inline float hsum_ps(const __m128 &__a)
 {
 	__m128 t1 = _mm_hadd_ps(__a, __a);
 	return _mm_cvtss_f32(_mm_hadd_ps(t1, t1));
 }
 
+#define mul_add_ps(__a, __b, __c) (add_ps(mul_ps((__a), (__b)), (__c)))
+
 #define blendv_ps(__a, __b, __c) (_mm_blendv_ps((__a), (__b), (__c)))
 #define cmp_lt_ps(__a, __b) (_mm_cmplt_ps((__a), (__b)))
 #define cmp_eq_ps(__a, __b) (_mm_cmpeq_ps((__a), (__b)))
+#define exp_ps(__a) (::exp_ps((__a)))
 #include "Algorithm_template_method.h"
 
 template  TRN::CPU::Algorithm<TRN::CPU::Implementation::SSE3>;

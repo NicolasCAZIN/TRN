@@ -53,25 +53,25 @@ extern std::function<void(const unsigned long long &simulation_id, const unsigne
 extern std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &stimulus, const std::size_t &rows, const std::size_t &cols)> on_stimulus;
 
 
-void TRN4CPP::Logging::Severity::Trace::setup()
+void TRN4CPP::Logging::Severity::Trace::setup(const bool &exit_on_error)
 {
-	TRN::Helper::Logger::setup(TRN::Helper::Logger::TRACE_LEVEL);
+	TRN::Helper::Logger::setup(TRN::Helper::Logger::TRACE_LEVEL, exit_on_error);
 }
-void TRN4CPP::Logging::Severity::Debug::setup()
+void TRN4CPP::Logging::Severity::Debug::setup(const bool &exit_on_error)
 {
-	TRN::Helper::Logger::setup(TRN::Helper::Logger::DEBUG_LEVEL);
+	TRN::Helper::Logger::setup(TRN::Helper::Logger::DEBUG_LEVEL, exit_on_error);
 }
-void TRN4CPP::Logging::Severity::Information::setup()
+void TRN4CPP::Logging::Severity::Information::setup(const bool &exit_on_error)
 {
-	TRN::Helper::Logger::setup(TRN::Helper::Logger::INFORMATION_LEVEL);
+	TRN::Helper::Logger::setup(TRN::Helper::Logger::INFORMATION_LEVEL, exit_on_error);
 }
-void TRN4CPP::Logging::Severity::Warning::setup()
+void TRN4CPP::Logging::Severity::Warning::setup(const bool &exit_on_error)
 {
-	TRN::Helper::Logger::setup(TRN::Helper::Logger::WARNING_LEVEL);
+	TRN::Helper::Logger::setup(TRN::Helper::Logger::WARNING_LEVEL, exit_on_error);
 }
-void TRN4CPP::Logging::Severity::Error::setup()
+void TRN4CPP::Logging::Severity::Error::setup(const bool &exit_on_error)
 {
-	TRN::Helper::Logger::setup(TRN::Helper::Logger::ERROR_LEVEL);
+	TRN::Helper::Logger::setup(TRN::Helper::Logger::ERROR_LEVEL, exit_on_error);
 }
 
 void  TRN4CPP::Simulation::encode(const unsigned short &frontend, const unsigned short &condition_number, const unsigned int &batch_number, unsigned long long &simulation_id)

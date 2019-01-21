@@ -11,3 +11,7 @@ TRN::Core::Scheduler::~Scheduler()
 }
 
 
+void TRN::Core::Scheduler::reset()
+{
+
+}

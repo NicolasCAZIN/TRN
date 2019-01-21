@@ -20,6 +20,9 @@ namespace TRN
 			Scheduler();
 		public :
 			virtual ~Scheduler();
+		public :
+			virtual void reset();
+
 		};
 	};
 };

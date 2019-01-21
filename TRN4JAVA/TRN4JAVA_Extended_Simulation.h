@@ -26,18 +26,18 @@ JNIEXPORT void JNICALL Java_TRN4JAVA_Extended_00024Simulation_deallocate
 /*
  * Class:     TRN4JAVA_Extended_Simulation
  * Method:    train
- * Signature: (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+ * Signature: (JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Extended_00024Simulation_train
-  (JNIEnv *, jclass, jlong, jstring, jstring, jstring);
+  (JNIEnv *, jclass, jlong, jlong, jstring, jstring, jstring);
 
 /*
  * Class:     TRN4JAVA_Extended_Simulation
  * Method:    test
- * Signature: (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;IZI)V
+ * Signature: (JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;IZI)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Extended_00024Simulation_test
-  (JNIEnv *, jclass, jlong, jstring, jstring, jstring, jint, jboolean, jint);
+  (JNIEnv *, jclass, jlong, jlong, jstring, jstring, jstring, jint, jboolean, jint);
 
 /*
  * Class:     TRN4JAVA_Extended_Simulation

@@ -9,9 +9,12 @@ std::shared_ptr<TRN::Core::Scheduler> TRN::Model::Scheduler::Tiled::create(const
 	return TRN::Scheduler::Tiled::create(epochs);
 }
 
-std::shared_ptr<TRN::Core::Scheduler> TRN::Model::Scheduler::Snippets::create(const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag)
+std::shared_ptr<TRN::Core::Scheduler> TRN::Model::Scheduler::Snippets::create(const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget,
+	const float &learn_reverse_rate, const float &generate_reverse_rate,
+	const float &learning_rate,
+	const float &discount, const std::string &tag)
 {
-	return TRN::Scheduler::Snippets::create(seed, snippets_size, time_budget, tag);
+	return TRN::Scheduler::Snippets::create(seed, snippets_size, time_budget, learn_reverse_rate, generate_reverse_rate, learning_rate, discount, tag);
 }
 
 std::shared_ptr<TRN::Core::Scheduler> TRN::Model::Scheduler::Custom::create(const unsigned long &seed,

@@ -1,0 +1,720 @@
+﻿"DeployProject"
+{
+"VSVersion" = "3:800"
+"ProjectType" = "8:{06A35CCD-C46D-44D5-987B-CF40FF872267}"
+"IsWebType" = "8:FALSE"
+"ProjectName" = "8:Mkl"
+"LanguageId" = "3:1036"
+"CodePage" = "3:1252"
+"UILanguageId" = "3:1036"
+"SccProjectName" = "8:"
+"SccLocalPath" = "8:"
+"SccAuxPath" = "8:"
+"SccProvider" = "8:"
+    "Hierarchy"
+    {
+        "Entry"
+        {
+        "MsmKey" = "8:_06BBCEE5475642A98BEADD236F55618C"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_0EBA7A40F2774D5D9307495E9E3C9C72"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_1DE711D43E834066879B40AF1CE3DB02"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_2853946268D9479E9F16A5A69F683DF2"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_2BD26837BF3B4DF481F2F8116C3FF07B"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_2C718ADE093F4B89994B402FC57CF005"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_2CAC96C1107342BAB781B261CB67F66D"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_30BECAABBAC64B4FB0B94D91899EE727"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_337445F066654B65A24FCD6D1F0A7B3F"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_36F380B79BEC4CEF9CDE86031F4B2D75"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_52D845D4CAFE45E4BF984B897CD73CC6"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_54BD8DD4F1974A7B85BEE4CA69A7D745"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_8FBB81F18DCD4936AE9993D4EFF8CEDB"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_A9A417CAD3AC4BA491B48782D90C4D14"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_AAFDAF8479DA44EE83CA99EE430ADCE2"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_B7DEDF45130546FDA27E900AE5AA1D7B"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_BD31E4000DCF406997C06E7714E7445E"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D20C7BCDD2F7471F937FCC38F770C3D4"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_E4B0C316DB9B4118A52ACC8C058963A6"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_E905D7955B424469956C6E2310073F8B"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_EB7CCCDCAE094BA1BB423A2B2B79D520"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_EFDB4054F9154F9BB6AAA502B2EBBDF8"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+    }
+    "Configurations"
+    {
+        "Debug"
+        {
+        "DisplayName" = "8:Debug"
+        "IsDebugOnly" = "11:TRUE"
+        "IsReleaseOnly" = "11:FALSE"
+        "OutputFilename" = "8:Mkl.msm"
+        "PackageFilesAs" = "3:2"
+        "PackageFileSize" = "3:-2147483648"
+        "CabType" = "3:1"
+        "Compression" = "3:1"
+        "SignOutput" = "11:FALSE"
+        "CertificateFile" = "8:"
+        "PrivateKeyFile" = "8:"
+        "TimeStampServer" = "8:"
+        "InstallerBootstrapper" = "3:1"
+        }
+        "Release"
+        {
+        "DisplayName" = "8:Release"
+        "IsDebugOnly" = "11:FALSE"
+        "IsReleaseOnly" = "11:TRUE"
+        "OutputFilename" = "8:Mkl.msm"
+        "PackageFilesAs" = "3:2"
+        "PackageFileSize" = "3:-2147483648"
+        "CabType" = "3:1"
+        "Compression" = "3:1"
+        "SignOutput" = "11:FALSE"
+        "CertificateFile" = "8:"
+        "PrivateKeyFile" = "8:"
+        "TimeStampServer" = "8:"
+        "InstallerBootstrapper" = "3:1"
+        }
+    }
+    "Deployable"
+    {
+        "CustomAction"
+        {
+        }
+        "DefaultFeature"
+        {
+        "Name" = "8:DefaultFeature"
+        "Title" = "8:"
+        "Description" = "8:"
+        }
+        "File"
+        {
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_06BBCEE5475642A98BEADD236F55618C"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_mc.dll"
+            "TargetName" = "8:mkl_mc.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_0EBA7A40F2774D5D9307495E9E3C9C72"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_sequential.dll"
+            "TargetName" = "8:mkl_sequential.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_1DE711D43E834066879B40AF1CE3DB02"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_intel_thread.dll"
+            "TargetName" = "8:mkl_intel_thread.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_2853946268D9479E9F16A5A69F683DF2"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_vml_avx512_mic.dll"
+            "TargetName" = "8:mkl_vml_avx512_mic.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_2BD26837BF3B4DF481F2F8116C3FF07B"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_def.dll"
+            "TargetName" = "8:mkl_def.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_2C718ADE093F4B89994B402FC57CF005"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_vml_avx512.dll"
+            "TargetName" = "8:mkl_vml_avx512.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_2CAC96C1107342BAB781B261CB67F66D"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_avx2.dll"
+            "TargetName" = "8:mkl_avx2.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_30BECAABBAC64B4FB0B94D91899EE727"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_vml_def.dll"
+            "TargetName" = "8:mkl_vml_def.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_337445F066654B65A24FCD6D1F0A7B3F"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_vml_avx.dll"
+            "TargetName" = "8:mkl_vml_avx.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_36F380B79BEC4CEF9CDE86031F4B2D75"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\libimalloc.dll"
+            "TargetName" = "8:libimalloc.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_52D845D4CAFE45E4BF984B897CD73CC6"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_vml_avx2.dll"
+            "TargetName" = "8:mkl_vml_avx2.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_54BD8DD4F1974A7B85BEE4CA69A7D745"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_vml_mc.dll"
+            "TargetName" = "8:mkl_vml_mc.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_8FBB81F18DCD4936AE9993D4EFF8CEDB"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_mc3.dll"
+            "TargetName" = "8:mkl_mc3.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A9A417CAD3AC4BA491B48782D90C4D14"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_tbb_thread.dll"
+            "TargetName" = "8:mkl_tbb_thread.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_AAFDAF8479DA44EE83CA99EE430ADCE2"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_rt.dll"
+            "TargetName" = "8:mkl_rt.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B7DEDF45130546FDA27E900AE5AA1D7B"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_vml_cmpt.dll"
+            "TargetName" = "8:mkl_vml_cmpt.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_BD31E4000DCF406997C06E7714E7445E"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_core.dll"
+            "TargetName" = "8:mkl_core.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D20C7BCDD2F7471F937FCC38F770C3D4"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_avx.dll"
+            "TargetName" = "8:mkl_avx.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E4B0C316DB9B4118A52ACC8C058963A6"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_vml_mc2.dll"
+            "TargetName" = "8:mkl_vml_mc2.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E905D7955B424469956C6E2310073F8B"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_vml_mc3.dll"
+            "TargetName" = "8:mkl_vml_mc3.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_EB7CCCDCAE094BA1BB423A2B2B79D520"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_avx512.dll"
+            "TargetName" = "8:mkl_avx512.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_EFDB4054F9154F9BB6AAA502B2EBBDF8"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2017.4.210\\windows\\redist\\intel64_win\\mkl\\mkl_avx512_mic.dll"
+            "TargetName" = "8:mkl_avx512_mic.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+        }
+        "FileType"
+        {
+        }
+        "Folder"
+        {
+            "{F4FE1E22-A4D2-4EE8-9259-29A1CE8BB2FF}:_DBED425EE4CE4CFE9DFCE55FB13D2891"
+            {
+            "DefaultLocation" = "8:[TARGETDIR]"
+            "DisplayName" = "8:Module Retargetable Folder"
+            "Description" = "8:"
+            "Name" = "8:Module Retargetable Folder"
+            "AlwaysCreate" = "11:FALSE"
+            "Condition" = "8:"
+            "Transitive" = "11:TRUE"
+            "Property" = "8:NEWRETARGETABLEPROPERTY1"
+                "Folders"
+                {
+                }
+            }
+        }
+        "Sequences"
+        {
+        }
+        "MergeModule"
+        {
+        }
+        "Module"
+        {
+        "ModuleSignature" = "8:MergeModule.7C7E5BB684FB4B79BE41E043B76BBF8A"
+        "Version" = "8:1.0.0.0"
+        "Title" = "8:Mkl"
+        "Subject" = "8:"
+        "Author" = "8:Nicolas CAZIN"
+        "Keywords" = "8:"
+        "Comments" = "8:MKL runtime for TRN"
+        "SearchPath" = "8:"
+        "UseSystemSearchPath" = "11:TRUE"
+        "TargetPlatform" = "3:1"
+        "PreBuildEvent" = "8:"
+        "PostBuildEvent" = "8:"
+        "RunPostBuildEvent" = "3:0"
+        }
+        "ProjectOutput"
+        {
+        }
+        "Registry"
+        {
+            "HKLM"
+            {
+                "Keys"
+                {
+                }
+            }
+            "HKCU"
+            {
+                "Keys"
+                {
+                }
+            }
+            "HKCR"
+            {
+                "Keys"
+                {
+                }
+            }
+            "HKU"
+            {
+                "Keys"
+                {
+                }
+            }
+            "HKPU"
+            {
+                "Keys"
+                {
+                }
+            }
+        }
+        "Shortcut"
+        {
+        }
+    }
+}

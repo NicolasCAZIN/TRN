@@ -67,7 +67,7 @@ void TRN4CPP::Engine::Execution::run()
 	TRACE_LOGGER;
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
-	frontend->dispose();
+	frontend->synchronize();
 }
 
 
@@ -221,11 +221,11 @@ void   TRN4CPP::Simulation::Encoder::Custom::configure(const unsigned long long 
 	TRACE_LOGGER;
 	if (!on_position)
 		throw std::runtime_error("Position callback is not installed");
-	if (!reply_position)
+	/*if (!reply_position)
 		throw std::runtime_error("Position reply functor is not installed");
 	if (!reply_stimulus)
 		throw std::runtime_error("Stimulus reply functor is not installed");
-	auto old_reply_position = reply_position;
+	*/auto old_reply_position = reply_position;
 	auto old_reply_stimulus = reply_stimulus;
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
@@ -301,12 +301,15 @@ void TRN4CPP::Simulation::Scheduler::Tiled::configure(const unsigned long long &
 		throw std::runtime_error("Frontend is not initialized");
 	frontend->configure_scheduler_tiled(simulation_id,epochs);
 }
-void TRN4CPP::Simulation::Scheduler::Snippets::configure(const unsigned long long &simulation_id, const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag)
+void TRN4CPP::Simulation::Scheduler::Snippets::configure(const unsigned long long &simulation_id, const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget,
+	const float &learn_reverse_rate, const float &generate_reverse_rate,
+	const float &learning_rate,
+	const float &discount, const std::string &tag)
 {
 	TRACE_LOGGER;
 	if (!frontend)
 		throw std::runtime_error("Frontend is not initialized");
-	frontend->configure_scheduler_snippets(simulation_id,seed, snippets_size, time_budget, tag);
+	frontend->configure_scheduler_snippets(simulation_id,seed, snippets_size, time_budget, learn_reverse_rate, generate_reverse_rate, learning_rate, discount, tag);
 }
 void TRN4CPP::Simulation::Scheduler::Custom::configure(const unsigned long long &simulation_id, const unsigned long &seed,const std::string &tag)
 {

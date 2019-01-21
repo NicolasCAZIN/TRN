@@ -13,12 +13,20 @@ TRN::Engine::Executor::~Executor()
 	TRACE_LOGGER;
 	handle.reset();
 }
-void TRN::Engine::Executor::terminate()
+void TRN::Engine::Executor::stop()
 {
 	TRACE_LOGGER;
 	handle->commands.invalidate();
-	join();
+	TRN::Engine::Task::stop();
 }
+
+void TRN::Engine::Executor::synchronize()
+{
+	TRACE_LOGGER;
+	handle->commands.synchronize();
+}
+
+
 
 void TRN::Engine::Executor::body()
 {
@@ -30,7 +38,7 @@ void TRN::Engine::Executor::body()
 	}
 	else
 	{
-		stop();
+		cancel();
 	}
 }
 

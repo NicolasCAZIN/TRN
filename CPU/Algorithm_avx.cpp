@@ -5,8 +5,6 @@
 #include "Algorithm.h"
 #include "avx_mathfun.h"
 
-
-
 #define _0 0
 #define _1 8
 #define _2 16
@@ -67,13 +65,14 @@ static inline float hsum_ps(const __m256 &__a)
 {
 	__m256 t1 = _mm256_hadd_ps((__a), (__a));
 	__m256 t2 = _mm256_hadd_ps(t1, t1);
-	return _mm_cvtss_f32(_mm_add_ss(_mm256_extractf128_ps(t2, 0), _mm256_extractf128_ps(t2, 1)));
+	float s = _mm_cvtss_f32(_mm_add_ss(_mm256_extractf128_ps(t2, 0), _mm256_extractf128_ps(t2, 1)));
+	return s;
 }
-
 #define blendv_ps(__a, __b, __c) (_mm256_blendv_ps((__a), (__b), (__c)))
 #define cmp_lt_ps(__a, __b) (_mm256_cmp_ps((__a), (__b), _CMP_LT_OQ))
 #define cmp_eq_ps(__a, __b) (_mm256_cmp_ps((__a), (__b), _CMP_EQ_OQ))
-#define exp_ps(__a) exp256_ps((__a))
+#define exp_ps(__a) (::exp256_ps((__a)))
+
 #include "Algorithm_template_method.h"
 
 template  TRN::CPU::Algorithm<TRN::CPU::Implementation::AVX>;

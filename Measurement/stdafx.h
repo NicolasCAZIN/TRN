@@ -1,6 +1,6 @@
 #pragma once
 #ifdef USE_VLD
-#include <vld.h>
+//#include <vld.h>
 #endif 
 
 #include <boost/algorithm/string.hpp>

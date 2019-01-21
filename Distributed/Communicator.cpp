@@ -11,7 +11,14 @@ TRN::Distributed::Communicator::Communicator(int argc, char *argv[]) :
 
 
 }
-void TRN::Distributed::Communicator::dispose()
+
+void TRN::Distributed::Communicator::start()
+{
+}
+void TRN::Distributed::Communicator::synchronize()
+{
+}
+void TRN::Distributed::Communicator::stop()
 {
 	handle->world.abort(0);
 }

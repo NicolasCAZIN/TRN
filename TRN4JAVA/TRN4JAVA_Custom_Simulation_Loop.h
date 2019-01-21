@@ -10,10 +10,18 @@ extern "C" {
 /*
  * Class:     TRN4JAVA_Custom_Simulation_Loop
  * Method:    notify
- * Signature: (JJJ[FJJ)V
+ * Signature: (JJ[FJJ)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Custom_00024Simulation_00024Loop_notify
-  (JNIEnv *, jobject, jlong, jlong, jlong, jfloatArray, jlong, jlong);
+  (JNIEnv *, jobject, jlong, jlong, jfloatArray, jlong, jlong);
+
+/*
+ * Class:     TRN4JAVA_Custom_Simulation_Loop
+ * Method:    install
+ * Signature: (LTRN4JAVA/Custom/Simulation/Loop;)V
+ */
+JNIEXPORT void JNICALL Java_TRN4JAVA_Custom_00024Simulation_00024Loop_install
+  (JNIEnv *, jclass, jobject);
 
 #ifdef __cplusplus
 }

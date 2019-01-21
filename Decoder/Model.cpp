@@ -86,13 +86,13 @@ void TRN::Decoder::Model::visit(std::shared_ptr<TRN::Core::Message::Payload<TRN:
 
 	flops_per_cycle += place_cells * roi_rows * roi_cols * 2; // sub
 	flops_per_cycle += place_cells * roi_rows * roi_cols * 4; // mul sub
-	flops_per_cycle += place_cells * roi_rows * roi_cols * 32; // exp
+	flops_per_cycle += place_cells * roi_rows * roi_cols * 28; // exp
 	flops_per_cycle += roi_rows * roi_cols; // sub
 	
 	flops_per_cycle += place_cells * (roi_rows * roi_cols); // mul
 	flops_per_cycle += place_cells * (roi_rows * roi_cols); // add
 	flops_per_cycle += (roi_rows * roi_cols); // div
-	flops_per_cycle += (roi_rows * roi_cols) * 32; // exp
+	flops_per_cycle += (roi_rows * roi_cols) * 28; // exp
 	flops_per_cycle += (roi_rows * roi_cols);// noise
 	flops_per_cycle += 3; // <a,a>
 	flops_per_cycle += roi_rows * (1 + 1 + roi_cols* (3));

@@ -10,26 +10,35 @@ TRN::Engine::Node::Node(const std::shared_ptr<TRN::Engine::Communicator> &commun
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	handle->rank = rank;
 	handle->cache = TRN::Engine::Cache::create();
-	handle->disposed = false;
+	handle->synchronized = false;
 }
 
 
-TRN::Engine::Node::~Node() noexcept(false)
+TRN::Engine::Node::~Node()
 {
 	TRACE_LOGGER;
-	auto communicator = TRN::Engine::Node::implementor.lock();
-	if (communicator)
-	{
-		communicator->dispose();
-	}
+
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
 	handle.reset();
 }
 
-void TRN::Engine::Node::dispose()
+
+void TRN::Engine::Node::synchronized()
 {
-	TRACE_LOGGER;
-	join();
+	std::unique_lock<std::mutex> lock(handle->mutex);
+	handle->synchronized = true;
+	lock.unlock();
+	handle->cond.notify_one();
+}
+
+void TRN::Engine::Node::synchronize()
+{
+	std::unique_lock<std::mutex> lock(handle->mutex);
+
+	while (handle->synchronized)
+		handle->cond.wait(lock);
+	INFORMATION_LOGGER << __FUNCTION__ << "Node synchronized";
+	lock.unlock();
 }
 
 template <TRN::Engine::Tag tag>
@@ -67,8 +76,6 @@ void TRN::Engine::Node::erase_functors(const unsigned long long &simulation_id)
 }
 
 
-
-
 void TRN::Engine::Node::body()
 {
 	TRACE_LOGGER;
@@ -88,8 +95,8 @@ void TRN::Engine::Node::body()
 		auto probed = locked->probe(handle->rank);
 		if (!probed)
 		{
-			DEBUG_LOGGER << "Node " << handle->rank << " encountered an invalid probe. Stopping RX task";
-			stop();
+			DEBUG_LOGGER << "Node " << handle->rank << " encountered an invalid probe. Terminating RX task";
+			cancel();
 		}
 		else
 		{
@@ -112,8 +119,8 @@ void TRN::Engine::Node::body()
 				case TRN::Engine::STOP:
 				{
 					//ack_required = false;
-					auto message = locked->receive<TRN::Engine::STOP>(handle->rank);
-					process(message);
+			
+					process(locked->receive<TRN::Engine::STOP>(handle->rank));
 				}
 				break;
 				case TRN::Engine::QUIT:

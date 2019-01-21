@@ -17,7 +17,10 @@ namespace TRN
 
 			namespace Snippets
 			{
-				std::shared_ptr<TRN::Core::Scheduler> MODEL_EXPORT create(const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget, const std::string &tag);
+				std::shared_ptr<TRN::Core::Scheduler> MODEL_EXPORT create(const unsigned long &seed, const unsigned int &snippets_size, const unsigned int &time_budget,
+					const float &learn_reverse_rate, const float &generate_reverse_rate,
+					const float &learning_rate,
+					const float &discount, const std::string &tag);
 			};
 
 			namespace Custom

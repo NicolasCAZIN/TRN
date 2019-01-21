@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef USE_VLD
-#include <vld.h>
+//#include <vld.h>
 #endif 
 #include <omp.h>
 #include <mutex>
@@ -16,6 +16,7 @@
 #include <memory>
 #include <random>
 #include <functional>
+
 #include <iostream>
 #include <algorithm>
 #include <numeric>
@@ -24,4 +25,4 @@
 #include <iomanip>
 #include <regex>
 
-
+#include <boost/thread.hpp>

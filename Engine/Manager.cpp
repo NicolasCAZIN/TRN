@@ -15,10 +15,6 @@ TRN::Engine::Manager::Manager(const std::size_t &size):
 		handle->processors.push_back(processor);
 		handle->updated[k] = false;
 	}
-
-
-
-
 }
 
 void TRN::Engine::Manager::start()
@@ -28,6 +24,7 @@ void TRN::Engine::Manager::start()
 	{
 		processor->start();
 	}
+	handle->running = true;
 	handle->deallocator = std::thread([&]()
 	{
 		unsigned long long simulation_id;
@@ -42,23 +39,29 @@ void TRN::Engine::Manager::start()
 			lock.unlock();
 			handle->condition.notify_all();
 		}
+		std::unique_lock<std::mutex> lock(handle->mutex);
+		handle->running = false;
+
+		lock.unlock();
+		handle->condition.notify_one();
 	});
+	handle->deallocator.detach();
 }
 
-void TRN::Engine::Manager::terminate()
+void TRN::Engine::Manager::stop()
 {
 	TRACE_LOGGER;
-	dispose();
+
 	for (auto processor : handle->processors)
 	{
-		processor->terminate();
-	}
+		processor->stop();
 
+	}
 	handle->to_deallocate.invalidate();
 
-	if (handle->deallocator.joinable())
-		handle->deallocator.join();
-
+	std::unique_lock<std::mutex> lock(handle->mutex);
+	while (handle->running)
+		handle->condition.wait(lock);
 }
 
 TRN::Engine::Manager::~Manager()
@@ -127,7 +130,8 @@ std::shared_ptr<TRN::Engine::Processor> TRN::Engine::Manager::allocate(const uns
 	
 	return processor;
 }
-void TRN::Engine::Manager::dispose()
+
+void TRN::Engine::Manager::synchronize()
 {
 	TRACE_LOGGER;
 	std::unique_lock<std::mutex> lock(handle->mutex);

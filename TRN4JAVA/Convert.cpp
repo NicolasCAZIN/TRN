@@ -1,9 +1,6 @@
 #include "stdafx.h"
 #include "Convert.h"
 
-
-// jstring = convert(env)(string)
-
 jstring TRN4JAVA::Convert::to_jstring(::JNIEnv *env, const std::string &string)
 {
 	return env->NewStringUTF(string.c_str());
@@ -22,14 +19,14 @@ std::map<std::string, std::string> TRN4JAVA::Convert::to_map(::JNIEnv *env, jobj
 
 	if (!env->IsInstanceOf(object, env->FindClass("java/util/Map")))
 		throw std::invalid_argument("Object is not a Map");
-	jmethoid keySet = env->GetMethoid(
+	jmethodID keySet = env->GetMethodID(
 		env->GetObjectClass(object),
 		"keySet",
 		"()Ljava/util/Set;"
 	);
 	if (keySet == 0)
 		throw std::invalid_argument("object does not implement a keySet() method");
-	jmethoid get = env->GetMethoid(
+	jmethodID get = env->GetMethodID(
 		env->GetObjectClass(object),
 		"get",
 		"(Ljava/lang/Object;)Ljava/lang/Object;"
@@ -39,7 +36,7 @@ std::map<std::string, std::string> TRN4JAVA::Convert::to_map(::JNIEnv *env, jobj
 	jobject set = env->CallObjectMethod(object, keySet);
 	if (set == NULL)
 		throw std::invalid_argument("Can't get map keys");
-	jmethoid toArray = env->GetMethoid(
+	jmethodID toArray = env->GetMethodID(
 		env->GetObjectClass(set),
 		"toArray",
 		"()[Ljava/lang/Object;"

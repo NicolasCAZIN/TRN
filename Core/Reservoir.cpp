@@ -395,10 +395,10 @@ void TRN::Core::Reservoir::visit(std::shared_ptr<TRN::Core::Message::Payload<TRN
 	size_t flops_per_cycle = 0;
 	flops_per_cycle += handle->reservoir_size * handle->reservoir_size * 2; // w_in * x_in
 	flops_per_cycle += handle->reservoir_size * 4; // update euler
-	flops_per_cycle += handle->reservoir_size  * (3 + 32); // tanh
+	flops_per_cycle += handle->reservoir_size  * (3 + 28); // tanh
 
 	flops_per_cycle += handle->prediction_size * handle->reservoir_size * 2; //xro= W_ro * x_res
-	flops_per_cycle += handle->prediction_size * (3 + 32); // tanh
+	flops_per_cycle += handle->prediction_size * (3 + 28); // tanh
 	flops_per_cycle += handle->prediction_size * (3); // err
 	payload->set_flops_per_cycle(flops_per_cycle);
 

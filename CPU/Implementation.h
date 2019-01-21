@@ -13,12 +13,11 @@ namespace TRN
 			MMX_SSE, //exp_sp compiled with MMX
 #endif
 #if !defined(_M_IX86) && defined(_M_X64)
-			SSE2, //exp_sp compiled with SSE2
-			SSE3, //hadd, exp_sp compiled with SSE2
-			SSE41,// dp_ps, exp_ps compiled with SSE2
-			AVX, // 256_dp_ps, exp256_ps compiled with SSE2
-			AVX2, // exp256_ps compiled with avx2
-			FMA3 //256_fmadd 
+			SSE2,
+			SSE3, 
+			SSE41,
+			AVX, 
+			AVX2_FMA3
 #endif
 
 		};
@@ -72,13 +71,7 @@ namespace TRN
 			static const std::size_t step = 8;
 		};
 		template<>
-		struct CPU_EXPORT Traits<AVX2>
-		{
-			typedef __m256 type;
-			static const std::size_t step = 8;
-		};
-		template<>
-		struct CPU_EXPORT Traits<FMA3>
+		struct CPU_EXPORT Traits<AVX2_FMA3>
 		{
 			typedef __m256 type;
 			static const std::size_t step = 8;

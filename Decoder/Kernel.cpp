@@ -147,13 +147,6 @@ void TRN::Decoder::Kernel::decode(
 
 	location_probability(previous_position, current_position, predicted_activations, handle->batched_next_location_probability);
 	TRN::Decoder::Kernel::handle->seed += TRN::Decoder::Kernel::handle->roi_rows * TRN::Decoder::Kernel::handle->roi_cols;
-	/*std::vector<float> e;
-	std::size_t b;
-	std::vector<std::size_t> r, c;
-
-	handle->batched_next_location_probability->to(e, b, r, c);
-	cv::Mat m(r[0] * b, c[0], CV_32F, e.data());*/
-	
 	
 	implementor->get_algorithm()->select_most_probable_location(
 		TRN::Core::Decoder::handle->batch_size, handle->rows, handle->cols,

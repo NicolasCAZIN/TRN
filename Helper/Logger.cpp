@@ -2,7 +2,7 @@
 #include "Logger.h"
 #include <windows.h>
 
-static std::mutex mutex{};
+static std::recursive_mutex mutex{};
 
 #define BLACK			0
 #define BLUE			1
@@ -122,7 +122,7 @@ TRN::Helper::Logger::Logger(const TRN::Helper::Logger::Severity &severity, const
 
 TRN::Helper::Logger::~Logger()
 {
-	std::lock_guard<std::mutex> guard(mutex);
+	std::lock_guard<std::recursive_mutex> guard(mutex);
 	if (handle->severity >= level)
 	{
 		auto now = boost::posix_time::microsec_clock::universal_time();
@@ -134,18 +134,27 @@ TRN::Helper::Logger::~Logger()
 		stream(handle->severity) << NEUTRAL_COLOR << handle->severity << NEUTRAL_COLOR << " " << DATE_COLOR << "[" << now << "]" << NEUTRAL_COLOR << " " << MODULE_COLOR << handle->module << "@" << hostname << NEUTRAL_COLOR << " -> " << MESSAGE_COLOR << _str << NEUTRAL_COLOR << std::endl << std::flush;
 		try
 		{
-			std::ofstream fstream(filename, std::ofstream::out | std::ofstream::app);
-			
-			if (fstream.is_open())
+			int attempts = 0;
+			bool written = false;
+			do
 			{
-				fstream << handle->severity << " " << "[" << now << "]" << " " << handle->module << "@" << hostname << " -> " << _str << std::endl << std::flush;
+				std::ofstream fstream(filename, std::ofstream::out | std::ofstream::app);
 
-				fstream.close();
-			}
-			else
-			{
-				throw std::runtime_error("File " + filename + " could not be opened");
-			}
+				if (fstream.is_open())
+				{
+					//boost::interprocess::file_lock flock(filename.c_str());
+					//boost::interprocess::scoped_lock<boost::interprocess::file_lock> e_lock(flock);
+					fstream << handle->severity << " " << "[" << now << "]" << " " << handle->module << "@" << hostname << " -> " << _str << std::endl << std::flush;
+
+					fstream.close();
+					written = true;
+				}
+		
+				attempts++;
+			} while (!written && attempts <= 5);
+
+			if (!written)
+				throw std::runtime_error("Unable to write log file after 5 attempts");
 		}
 		catch (std::exception &e)
 		{
@@ -166,7 +175,7 @@ TRN::Helper::Logger::~Logger()
 
 void TRN::Helper::Logger::setup(const TRN::Helper::Logger::Severity &severity, const bool &exit_on_error)
 {
-	std::lock_guard<std::mutex> guard(mutex);
+	std::lock_guard<std::recursive_mutex> guard(mutex);
 	level = severity;
 	::exit_on_error = exit_on_error;
 }

@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     TRN4JAVA_Extended_Simulation_Loop_SpatialFilter
  * Method:    configure
- * Signature: (JJJJJJFFFF[FFFFLjava/lang/String;)V
+ * Signature: (JJJLjava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_TRN4JAVA_Extended_00024Simulation_00024Loop_00024SpatialFilter_configure
-  (JNIEnv *, jclass, jlong, jlong, jlong, jlong, jlong, jlong, jfloat, jfloat, jfloat, jfloat, jfloatArray, jfloat, jfloat, jfloat, jstring);
+  (JNIEnv *, jclass, jlong, jlong, jlong, jstring);
 
 #ifdef __cplusplus
 }

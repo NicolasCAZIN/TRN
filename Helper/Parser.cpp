@@ -14,7 +14,11 @@ void TRN::Helper::Parser::place_cells_model(const std::string &filename, const f
 		{
 			x.push_back(cx);
 			y.push_back(cy);
-			K.push_back(std::logf(radius_threshold) / (radius * radius));
+			auto width = std::logf(radius_threshold) / (radius * radius);
+			K.push_back(width);
+
+			//std::cout << cx << "\t" << cy << "\t" << width << std::endl;
 		}
 	});
+
 }

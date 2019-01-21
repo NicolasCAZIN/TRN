@@ -47,12 +47,16 @@ namespace TRN
 			TEST,
 			DECLARE_SEQUENCE,
 			DECLARE_SET,
+
 			SETUP_STATES,
 			SETUP_WEIGHTS,
 			SETUP_PERFORMANCES,
 			SETUP_SCHEDULING,
+
 			CONFIGURE_BEGIN,
 			CONFIGURE_END,
+
+
 			CONFIGURE_MEASUREMENT_READOUT_MEAN_SQUARE_ERROR,
 			CONFIGURE_MEASUREMENT_READOUT_FRECHET_DISTANCE,
 			CONFIGURE_MEASUREMENT_READOUT_CUSTOM,
@@ -96,6 +100,7 @@ namespace TRN
 			FEEDFORWARD_DIMENSIONS,
 			RECURRENT_DIMENSIONS,
 			READOUT_DIMENSIONS,
+
 			STATES,
 			WEIGHTS,
 			PERFORMANCES,
@@ -806,6 +811,10 @@ namespace TRN
 			unsigned long seed;
 			unsigned int snippets_size;
 			unsigned int time_budget;
+			float learn_reverse_rate;
+			float generate_reverse_rate;
+			float learning_rate;
+			float discount;
 			std::string tag;
 
 			template<class Archive>
@@ -815,6 +824,10 @@ namespace TRN
 				ar & snippets_size;
 				ar & time_budget;
 				ar & seed;
+				ar & learn_reverse_rate;
+				ar & generate_reverse_rate;
+				ar & learning_rate;
+				ar & discount;
 				ar & tag;
 			}
 			virtual ~Message() {}
