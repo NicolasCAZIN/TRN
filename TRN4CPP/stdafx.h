@@ -1,8 +1,11 @@
 #pragma once
 
 #ifdef USE_VLD
-//#include <vld.h>
+#include <vld.h>
 #endif 
+
+#include <SDKDDKVer.h>
+
 #include <cstdlib>
 #include <boost/tuple/tuple.hpp>
 #include <boost/asio.hpp>

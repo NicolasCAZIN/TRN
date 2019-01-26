@@ -114,7 +114,7 @@ void Callbacks::initialize(const std::map<std::string, std::string> &arguments)
 			{
 				if (handle->allocated.find(p.first) == handle->allocated.end())
 				{
-					cv::namedWindow(p.first, CV_WINDOW_AUTOSIZE);
+					cv::namedWindow(p.first, cv::WINDOW_AUTOSIZE);
 					handle->allocated.insert(p.first);
 				}
 				cv::imshow(p.first, p.second);

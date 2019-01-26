@@ -2,6 +2,9 @@
 
 #if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))
 #include "Algorithm.h"
+
+#define USE_SSE3
+#define SSE_MATHFUN_WITH_CODE
 #include "sse_mathfun.h"
 #define _0 0
 #define _1 4

@@ -3,8 +3,8 @@
 #include "Advanced.h"
 #include "Custom.h"
 
-#include "ViewModel/Communicator.h"
-#include "ViewModel/Frontend.h"
+#include "Presenter/Communicator.h"
+#include "Presenter/Frontend.h"
 #include "Helper/Logger.h"
 
 

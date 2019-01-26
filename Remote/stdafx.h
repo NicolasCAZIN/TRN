@@ -1,8 +1,10 @@
 #pragma once
 #ifdef USE_VLD
-//#include <vld.h>
+#include <vld.h>
 #endif 
-//#include <functional>
+
+#include <SDKDDKVer.h>
+
 #include <tuple>
 #include <string>
 #include <vector>

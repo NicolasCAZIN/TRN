@@ -140,8 +140,8 @@ namespace mexplus
 
 			int nrhs = 9;
 			mxArray* prhs[] = { functor_copy, mx_id, mx_seed, mx_trial, mx_elements, mx_rows, mx_cols, mx_offsets, mx_durations };
-			mexCallMATLABWithObject(0, NULL, nrhs, prhs, "feval");
-
+			mexCallMATLAB(0, NULL, nrhs, prhs, "feval");
+	
 			mxDestroyArray(mx_id);
 			mxDestroyArray(mx_seed);
 			mxDestroyArray(mx_trial);

@@ -1,10 +1,9 @@
 #pragma once
 #ifdef USE_VLD
-//#include <vld.h>
+#include <vld.h>
 #endif 
 
 #include <boost/algorithm/string.hpp>
-#include <opencv2/core.hpp>
 #include <numeric>
 #include <string>
 #include <cassert>

@@ -1,6 +1,6 @@
 #pragma once
 
-#ifndef TRN_STATIC
+#ifndef BUILD_STATIC
 # if defined(CORE_LIB)
 #  define CORE_EXPORT __declspec(dllexport)
 # else

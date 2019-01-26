@@ -1,9 +1,9 @@
 #pragma once
+
 #ifdef USE_VLD
-//#include <vld.h>
+#include <vld.h>
 #endif 
-#include <vector>
-#include <memory>
-#include <mutex>
+
+#include <SDKDDKVer.h>
+
 #include <sstream>
-#include <iostream>

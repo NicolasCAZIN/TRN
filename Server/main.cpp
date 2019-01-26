@@ -1,4 +1,8 @@
+#ifdef USE_VLD
+#include <vld.h>
+#endif 
 
+#include <SDKDDKVer.h>
 
 #include <memory>
 #include <condition_variable>
@@ -26,8 +30,8 @@
 #include <boost/program_options/errors.hpp>
 #include <boost/optional.hpp>
 
-#include "ViewModel/Communicator.h"
-#include "ViewModel/Node.h"
+#include "Presenter/Communicator.h"
+#include "Presenter/Node.h"
 #include "Remote/Communicator.h"
 #include "Network/Acceptor.h"
 #include "Network/Manager.h"

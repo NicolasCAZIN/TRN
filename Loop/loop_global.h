@@ -2,7 +2,7 @@
 
 
 
-#ifndef TRN_STATIC
+#ifndef BUILD_STATIC
 # if defined(LOOP_LIB)
 #  define LOOP_EXPORT __declspec(dllexport)
 # else

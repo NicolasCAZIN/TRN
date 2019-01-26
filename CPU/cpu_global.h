@@ -2,7 +2,7 @@
 
 
 
-#ifndef TRN_STATIC
+#ifndef BUILD_STATIC
 # if defined(CPU_LIB)
 #  define CPU_EXPORT __declspec(dllexport)
 # else

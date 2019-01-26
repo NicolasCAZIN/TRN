@@ -52,9 +52,7 @@
     <ClInclude Include="Frontend.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="viewmodel_global.h">
+    <ClInclude Include="presenter_global.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

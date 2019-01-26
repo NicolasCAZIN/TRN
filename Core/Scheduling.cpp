@@ -52,7 +52,7 @@ void TRN::Core::Scheduling::to(std::vector<std::vector<int>> &indices)
 }
 void TRN::Core::Scheduling::from(const std::vector<std::vector<int>> &indices)
 {
-	auto total_duration = std::accumulate(std::begin(indices), std::end(indices), (int)0, [](const int &accumulator, const std::vector<int> &v) { return accumulator + v.size(); });
+	auto total_duration = std::accumulate(std::begin(indices), std::end(indices), (std::size_t)0, [](const std::size_t &accumulator, const std::vector<int> &v) { return accumulator + v.size(); });
 	handle->durations.resize(indices.size());
 	handle->offsets.resize(total_duration);
 

@@ -2,7 +2,7 @@
 
 
 
-#ifndef TRN_STATIC
+#ifndef BUILD_STATIC
 # if defined(HELPER_LIB)
 #  define HELPER_EXPORT __declspec(dllexport)
 # else

@@ -2,7 +2,7 @@
 
 
 
-#ifndef TRN_STATIC
+#ifndef BUILD_STATIC
 # if defined(GPU_LIB)
 #  define GPU_EXPORT __declspec(dllexport)
 # else

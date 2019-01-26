@@ -1,12 +1,10 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
-
 #ifndef BUILD_STATIC
 # if defined(ENCODER_LIB)
-#  define ENCODER_EXPORT Q_DECL_EXPORT
+#  define ENCODER_EXPORT __declspec(dllexport)
 # else
-#  define ENCODER_EXPORT Q_DECL_IMPORT
+#  define ENCODER_EXPORT __declspec(dllimport)
 # endif
 #else
 # define ENCODER_EXPORT

@@ -2,7 +2,7 @@
 
 
 
-#ifndef TRN_STATIC
+#ifndef BUILD_STATIC
 # if defined(MODEL_LIB)
 #  define MODEL_EXPORT __declspec(dllexport)
 # else

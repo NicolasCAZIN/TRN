@@ -2,7 +2,7 @@
 
 
 
-#ifndef TRN_STATIC
+#ifndef BUILD_STATIC
 # if defined(LOCAL_LIB)
 #  define LOCAL_EXPORT __declspec(dllexport)
 # else

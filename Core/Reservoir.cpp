@@ -187,7 +187,8 @@ void TRN::Core::Reservoir::initialize(const std::shared_ptr<TRN::Core::Initializ
 void TRN::Core::Reservoir::reset_readout()
 {
 	handle->batched_W_ro->from(*handle->batched_W_ro_reset);
-}void operator << (cv::Mat &mat, const std::shared_ptr<TRN::Core::Matrix> &matrix)
+}
+/*void operator << (cv::Mat &mat, const std::shared_ptr<TRN::Core::Matrix> &matrix)
 {
 	std::vector<float> elements;
 	std::size_t rows, cols;
@@ -195,7 +196,7 @@ void TRN::Core::Reservoir::reset_readout()
 	matrix->to(elements, rows, cols);
 	cv::Mat tmp(rows, cols, CV_32F, elements.data());
 	tmp.copyTo(mat);
-}
+}*/
 
 
 void TRN::Core::Reservoir::test(const unsigned long long &evaluation_id, const std::shared_ptr<TRN::Core::Matrix> &incoming, const std::shared_ptr<TRN::Core::Matrix> &expected, const std::size_t &preamble, const bool &autonomous_generation, const std::size_t &supplementary_generations)

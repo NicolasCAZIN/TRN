@@ -1,18 +1,12 @@
 #pragma once
+
 #ifdef USE_VLD
-//#include <vld.h>
-#endif 
-#include <opencv2/core.hpp>
+#include <vld.h>
+#endif
+
+#include <list>
+#include <mutex>
+#include <queue>
 
 #include <boost/multi_array.hpp>
-#include <numeric>
-#include <string>
-#include <cassert>
-#include <functional>
-#include <map>
-#include <list>
-#include <vector>
-#include <memory>
-#include <mutex>
-#include <thread>
-#include <queue>
+

@@ -2,8 +2,8 @@
 #include "Advanced.h"
 
 
-#include "ViewModel/Communicator.h"
-#include "ViewModel/Frontend.h"
+#include "Presenter/Communicator.h"
+#include "Presenter/Frontend.h"
 #include "Helper/Logger.h"
 
 extern std::shared_ptr<TRN::Engine::Frontend> frontend;

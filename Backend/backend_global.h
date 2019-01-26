@@ -2,7 +2,7 @@
 
 
 
-#ifndef TRN_STATIC
+#ifndef BUILD_STATIC
 # if defined(BACKEND_LIB)
 #  define BACKEND_EXPORT __declspec(dllexport)
 # else

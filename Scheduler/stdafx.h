@@ -1,10 +1,8 @@
 #pragma once
-#ifdef USE_VLD
-//#include <vld.h>
-#endif 
 
-#include <opencv2\core.hpp>
-#include <opencv2\imgproc.hpp>
+#ifdef USE_VLD
+#include <vld.h>
+#endif 
 
 #include <boost/algorithm/clamp.hpp>
 #include <sstream>

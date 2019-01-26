@@ -2,7 +2,7 @@
 
 
 
-#ifndef TRN_STATIC
+#ifndef BUILD_STATIC
 # if defined(ENGINE_LIB)
 #  define ENGINE_EXPORT __declspec(dllexport)
 # else

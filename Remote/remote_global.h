@@ -1,8 +1,6 @@
 #pragma once
 
-
-
-#ifndef TRN_STATIC
+#ifndef BUILD_STATIC
 # if defined(REMOTE_LIB)
 #  define REMOTE_EXPORT __declspec(dllexport)
 # else

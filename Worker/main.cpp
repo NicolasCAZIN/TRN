@@ -1,6 +1,10 @@
 #ifdef USE_VLD
-//#include <vld.h>
+#include <vld.h>
 #endif 
+
+#include <SDKDDKVer.h>
+
+
 #include <iostream>
 #include <functional>
 #include <map>
@@ -16,8 +20,8 @@
 #include <boost/program_options.hpp>
 #include <boost/optional.hpp>
 
-#include "ViewModel/Communicator.h"
-#include "ViewModel/Node.h"
+#include "Presenter/Communicator.h"
+#include "Presenter/Node.h"
 #include "Helper/Logger.h"
 static int DEFAULT_INDEX = 0;
 

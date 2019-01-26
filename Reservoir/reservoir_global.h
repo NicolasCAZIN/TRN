@@ -2,7 +2,7 @@
 
 
 
-#ifndef TRN_STATIC
+#ifndef BUILD_STATIC
 # if defined(RESERVOIR_LIB)
 #  define RESERVOIR_EXPORT __declspec(dllexport)
 # else

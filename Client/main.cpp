@@ -1,3 +1,9 @@
+#ifdef USE_VLD
+#include <vld.h>
+#endif 
+
+#include <SDKDDKVer.h>
+
 #include <boost/asio.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -103,11 +109,12 @@ namespace std
 
 int main(int argc, char *argv[])
 {
+	boost::program_options::options_description desc("Allowed options");
 	try
 	{
-	//	Sleep(10000);
-		DEBUG_LOGGER <<   argv[0] << " INITIALIZE" ;
-		boost::program_options::options_description desc("Allowed options");
+		//	Sleep(10000);
+		DEBUG_LOGGER << argv[0] << " INITIALIZE";
+		
 		desc.add_options()
 			("help,h", "produce help message")
 			("exit_on_error,e", boost::program_options::value<bool>()->default_value(true), "Exit on error flag")
@@ -126,7 +133,7 @@ int main(int argc, char *argv[])
 
 		if (vm.count("help"))
 		{
-			std::cerr <<   desc << "\n";
+			std::cerr << desc << "\n";
 			return 1;
 		}
 
@@ -159,56 +166,60 @@ int main(int argc, char *argv[])
 			throw std::invalid_argument("Unexpected token " + severity);
 		}
 
-		
+
 
 		auto backend = vm["backend"].as<Backend>();
 		INFORMATION_LOGGER << "Backend " << backend << " selected";
 
 
-		auto filename = vm["filename"].as<std::string>();
-
-
-			INFORMATION_LOGGER << "Initializing engine";
-			switch (backend)
-			{
-				case Backend::Local:
-				{
-					auto index_list = vm["index"].as<std::vector<unsigned int>>();
-					TRN4CPP::Engine::Backend::Local::initialize(
-					{
-						index_list
-					});
-				}
-				break;
-				case Backend::Remote:
-				{
-					auto host = vm["host"].as<std::string>();
-					auto port = vm["port"].as<unsigned short>();
-					TRN4CPP::Engine::Backend::Remote::initialize(host, port);
-				}
-				break;
-				case Backend::Distributed:
-				{
-					TRN4CPP::Engine::Backend::Distributed::initialize(argc, argv);
-				}
-				break;
-			}
-			INFORMATION_LOGGER << "Computing scenario " << filename << " ...";
-			TRN4CPP::Simulation::compute(filename);
-			INFORMATION_LOGGER << "Scenario " << filename << " successfully computed";
-			TRN4CPP::Engine::uninitialize();
-			INFORMATION_LOGGER << "Engine uninitialized";
-
-
 	
-		
+
+		if (!vm.count("filename"))
+		{
+			throw std::invalid_argument("filename must be specified");
+		}
+		auto filename = vm["filename"].as<std::string>();
+		INFORMATION_LOGGER << "Initializing engine";
+		switch (backend)
+		{
+		case Backend::Local:
+		{
+			auto index_list = vm["index"].as<std::vector<unsigned int>>();
+			TRN4CPP::Engine::Backend::Local::initialize(
+				{
+					index_list
+				});
+		}
+		break;
+		case Backend::Remote:
+		{
+			auto host = vm["host"].as<std::string>();
+			auto port = vm["port"].as<unsigned short>();
+			TRN4CPP::Engine::Backend::Remote::initialize(host, port);
+		}
+		break;
+		case Backend::Distributed:
+		{
+			TRN4CPP::Engine::Backend::Distributed::initialize(argc, argv);
+		}
+		break;
+		}
+		INFORMATION_LOGGER << "Computing scenario " << filename << " ...";
+		TRN4CPP::Simulation::compute(filename);
+		INFORMATION_LOGGER << "Scenario " << filename << " successfully computed";
+		TRN4CPP::Engine::uninitialize();
+		INFORMATION_LOGGER << "Engine uninitialized";
+
+
+
+
 
 		INFORMATION_LOGGER << "Exiting";
 		return 0;
 	}
 	catch (std::exception &e)
 	{
-		ERROR_LOGGER << e.what() ;
+		ERROR_LOGGER << e.what() << std::endl << desc << std::endl;
 		return -1;
 	}
 

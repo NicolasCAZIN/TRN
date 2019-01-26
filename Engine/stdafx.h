@@ -1,7 +1,9 @@
 #pragma once
 #ifdef USE_VLD
-//#include <vld.h>
+#include <vld.h>
 #endif 
+
+#include <SDKDDKVer.h>
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/asio.hpp>
@@ -23,6 +25,7 @@
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/containers/map.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
+
 #include <vector>
 #include <memory>
 #include <functional>

@@ -1,4 +1,5 @@
 #include "stdafx.h"
+
 #include "Messages.h"
 
 std::ostream &operator << (std::ostream &os, const TRN::Engine::Tag &tag)
@@ -138,7 +139,7 @@ std::ostream &operator << (std::ostream &os, const TRN::Engine::Tag &tag)
 		case TRN::Engine::Tag::CONFIGURE_RECURRENT_CUSTOM:
 			os << "CONFIGURE_RECURRENT_CUSTOM";
 			break;
-	
+
 		case TRN::Engine::Tag::CONFIGURE_READOUT_UNIFORM:
 			os << "CONFIGURE_READOUT_UNIFORM";
 			break;
@@ -163,7 +164,7 @@ std::ostream &operator << (std::ostream &os, const TRN::Engine::Tag &tag)
 		case TRN::Engine::Tag::RECURRENT_WEIGHTS:
 			os << "RECURRENT_WEIGHTS";
 			break;
-		
+
 		case TRN::Engine::Tag::READOUT_WEIGHTS:
 			os << "READOUT_WEIGHTS";
 			break;
@@ -179,7 +180,7 @@ std::ostream &operator << (std::ostream &os, const TRN::Engine::Tag &tag)
 		case TRN::Engine::Tag::RECURRENT_DIMENSIONS:
 			os << "RECURRENT_DIMENSIONS";
 			break;
-	
+
 		case TRN::Engine::Tag::READOUT_DIMENSIONS:
 			os << "READOUT_DIMENSIONS";
 			break;
@@ -252,18 +253,21 @@ unsigned int TRN::Engine::checksum(const std::vector<float> &sequence)
 	return crc.checksum();
 }
 
-namespace TRN::Engine
+namespace TRN
 {
-	union Identifier
+	namespace Engine
 	{
-		struct
+		union Identifier
 		{
-			unsigned long long batch_number : 32;
-			unsigned long long condition_number : 16;
-			unsigned long long frontend_number : 16;
-		};
+			struct
+			{
+				unsigned long long batch_number : 32;
+				unsigned long long condition_number : 16;
+				unsigned long long frontend_number : 16;
+			};
 
-		unsigned long long id;
+			unsigned long long id;
+		};
 	};
 };
 
@@ -287,20 +291,26 @@ void TRN::Engine::decode(const unsigned long long &simulation_id, unsigned short
 	batch_number = identifier.batch_number;
 }
 
-namespace TRN::Engine::Evaluation
+namespace TRN
 {
-	union Identifier
+	namespace Engine
 	{
-		struct
+		namespace Evaluation
 		{
-			unsigned long long trial_number : 16;
-			unsigned long long train_number : 16;
-			unsigned long long test_number : 16;
-			unsigned long long repeat_number : 16;
-		};
+			union Identifier
+			{
+				struct
+				{
+					unsigned long long trial_number : 16;
+					unsigned long long train_number : 16;
+					unsigned long long test_number : 16;
+					unsigned long long repeat_number : 16;
+				};
 
-		unsigned long long id;
-	};
+				unsigned long long id;
+			};
+		}
+	}
 };
 
 void   TRN::Engine::Evaluation::encode(const unsigned short &trial_number, const unsigned short &train_number, const unsigned short &test_number, const unsigned short &repeat_number, unsigned long long &evaluation_id)

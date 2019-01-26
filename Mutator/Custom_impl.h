@@ -7,6 +7,6 @@ class TRN::Mutator::Custom::Handle
 {
 public :
 	unsigned long seed;
-	std::function<void(const unsigned long &seed, const std::size_t &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> functor;
+	std::function<void(const unsigned long &seed, const unsigned long &trial, const std::vector<int> &offsets, const std::vector<int> &durations)> functor;
 
 };

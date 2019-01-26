@@ -46,3 +46,25 @@ Network Trash Folder
 Temporary Items
 .apdisk
 *.log
+*.suo
+*.db
+*.opendb
+*.ipch
+*.db-shm
+*.db-wal
+*.obj
+*.pch
+*.lastbuildstate
+*.tlog
+*.pdb
+*.cache
+*.deps
+*.cache
+*.dll
+*.lib
+*.ilk
+*.exp
+*.exe
+*.mexw64
+*.htm
+*.jar

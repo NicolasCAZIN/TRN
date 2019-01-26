@@ -1,17 +1,21 @@
 #pragma once
+
 #ifdef USE_VLD
-//#include <vld.h>
+#include <vld.h>
 #endif 
-#include <boost/log/trivial.hpp>
+
+#include <SDKDDKVer.h>
+
+#include <fstream>
+#include <mutex>
+
 #include <boost/asio.hpp>
+
+#include <boost/log/trivial.hpp>
 #include <boost/log/sources/global_logger_storage.hpp>
 #include <boost/log/sources/severity_channel_logger.hpp>
 #include <boost/log/attributes/mutable_constant.hpp>
 #include <boost/log/utility/manipulators/add_value.hpp>
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/interprocess/sync/file_lock.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/log/core.hpp>
 #include <boost/log/common.hpp>
 #include <boost/log/sinks.hpp>
@@ -28,15 +32,5 @@
 #include <boost/log/sinks/sync_frontend.hpp>
 #include <boost/log/sinks/text_ostream_backend.hpp>
 #include <boost/log/support/date_time.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+
 #include <strtk.hpp>
-#include <queue>
-#include <functional>
-#include <mutex>
-#include <thread>
-#include <string>
-#include <fstream>
-#include <string>
-#include <memory>
-#include <stack>
