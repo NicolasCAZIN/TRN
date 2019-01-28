@@ -210,10 +210,6 @@ int main(int argc, char *argv[])
 		TRN4CPP::Engine::uninitialize();
 		INFORMATION_LOGGER << "Engine uninitialized";
 
-
-
-
-
 		INFORMATION_LOGGER << "Exiting";
 		return 0;
 	}

@@ -39,19 +39,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <CustomBuildBeforeTargets>
-    </CustomBuildBeforeTargets>
+    <CustomBuildBeforeTargets>Link</CustomBuildBeforeTargets>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Program Files (x86)\Visual Leak Detector\include</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;C:\Program Files (x86)\Visual Leak Detector\lib\Win64</LibraryPath>
     <ExecutablePath>$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);C:\Program Files (x86)\Visual Leak Detector\bin\Win64</ExecutablePath>
+    <ExtensionsToDeleteOnClean>*.class;*.cdf;*.cache;*.obj;*.obj.enc;*.ilk;*.ipdb;*.iobj;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml;*.metagen;*.bi</ExtensionsToDeleteOnClean>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <CustomBuildBeforeTargets>
-    </CustomBuildBeforeTargets>
+    <CustomBuildBeforeTargets>Link</CustomBuildBeforeTargets>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Program Files (x86)\Visual Leak Detector\include</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;C:\Program Files (x86)\Visual Leak Detector\lib\Win64</LibraryPath>
     <ExecutablePath>$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);C:\Program Files (x86)\Visual Leak Detector\bin\Win64</ExecutablePath>
+    <ExtensionsToDeleteOnClean>*.class;*.cdf;*.cache;*.obj;*.obj.enc;*.ilk;*.ipdb;*.iobj;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml;*.metagen;*.bi</ExtensionsToDeleteOnClean>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -82,7 +82,7 @@
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PreBuildEvent>
-      <Command>generate_jni.bat</Command>
+      <Command>javac -h . TRN4JAVA\Basic.java TRN4JAVA\Simplified.java TRN4JAVA\Sequences.java TRN4JAVA\Custom.java TRN4JAVA\Callbacks.java TRN4JAVA\Extended.java TRN4JAVA\Advanced.java </Command>
     </PreBuildEvent>
     <PreBuildEvent>
       <Message>Generating JNI interfaces</Message>
@@ -94,13 +94,21 @@
       </Message>
     </PostBuildEvent>
     <CustomBuildStep>
-      <Command>
-      </Command>
+      <Command>javac TRN4JAVA\*.java &amp;&amp; jar cvmf MANIFEST.MF  $(OutDir)\$(ProjectName).jar TRN4JAVA\*.class TRN4JAVA\*.java&amp;&amp;del TRN4JAVA\*.class</Command>
     </CustomBuildStep>
     <CustomBuildStep>
-      <TreatOutputAsContent>
-      </TreatOutputAsContent>
+      <TreatOutputAsContent>true</TreatOutputAsContent>
+      <Message>Generating $(OutDir)\$(ProjectName).jar file</Message>
+      <Outputs>$(OutDir)\$(ProjectName).jar</Outputs>
     </CustomBuildStep>
+    <PreLinkEvent>
+      <Command>
+      </Command>
+    </PreLinkEvent>
+    <PreLinkEvent>
+      <Message>
+      </Message>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -128,23 +136,33 @@
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PreBuildEvent>
-      <Command>generate_jni.bat</Command>
+      <Command>javac -h . TRN4JAVA\Basic.java TRN4JAVA\Simplified.java TRN4JAVA\Sequences.java TRN4JAVA\Custom.java TRN4JAVA\Callbacks.java TRN4JAVA\Extended.java TRN4JAVA\Advanced.java </Command>
     </PreBuildEvent>
     <PreBuildEvent>
       <Message>Generating JNI interfaces</Message>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>make_jar.bat</Command>
-      <Message>Generating JAR file</Message>
-    </PostBuildEvent>
-    <CustomBuildStep>
       <Command>
       </Command>
+      <Message>
+      </Message>
+    </PostBuildEvent>
+    <CustomBuildStep>
+      <Command>javac TRN4JAVA\*.java &amp;&amp; jar cvmf MANIFEST.MF  $(OutDir)\$(ProjectName).jar TRN4JAVA\*.class TRN4JAVA\*.java&amp;&amp;del TRN4JAVA\*.class</Command>
     </CustomBuildStep>
     <CustomBuildStep>
-      <TreatOutputAsContent>
-      </TreatOutputAsContent>
+      <TreatOutputAsContent>true</TreatOutputAsContent>
+      <Outputs>$(OutDir)\$(ProjectName).jar</Outputs>
+      <Message>Generating $(OutDir)\$(ProjectName).jar file</Message>
     </CustomBuildStep>
+    <PreLinkEvent>
+      <Command>
+      </Command>
+    </PreLinkEvent>
+    <PreLinkEvent>
+      <Message>
+      </Message>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Advanced.cpp" />

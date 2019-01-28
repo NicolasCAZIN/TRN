@@ -1,1 +1,0 @@
-javac -h . TRN4JAVA\Basic.java TRN4JAVA\Simplified.java TRN4JAVA\Sequences.java TRN4JAVA\Custom.java TRN4JAVA\Callbacks.java TRN4JAVA\Extended.java TRN4JAVA\Advanced.java 

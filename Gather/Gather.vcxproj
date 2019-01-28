@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{A61B76AE-DEC2-4A71-BB86-A2DA154AD390}</ProjectGuid>
+    <RootNamespace>Gather</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <PreBuildEvent>
+      <Command>ECHO Copying MATLAB runtime files
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmat.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmx.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwfl.dll" "$(OutDir)"
+CALL :copy_runtime  "$(MATLAB_PATH)\bin\win64\libmwi18n.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwfoundation_usm.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwresource_core.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_filesystem*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_system*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_thread*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_regex*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_chrono*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_serialization*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_signals*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_log*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_date_time*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libexpat.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libut.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\icuuc*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\icuin*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\icuio*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\icudt*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\tbb.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\tbbmalloc.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\msvcp*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\msvcr*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\vcomp*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\hdf5.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\zlib1.dll" "$(OutDir)"
+
+ECHO Copying Boost runtime files
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_chrono-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_thread-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_date_time-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_regex-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_log-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_log_setup-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_bzip2-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_zlib-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_iostreams-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_serialization-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_system-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_filesystem-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_mpi-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_program_options-vc$(PlatformToolsetVersion)-mt-$(Platform)*.dll" "$(OutDir)"
+
+ECHO Copying OpenCV runtime files
+CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_core401.dll" "$(OutDir)"
+CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_highgui401.dll" "$(OutDir)"
+CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_imgproc401.dll" "$(OutDir)"
+
+ECHO Copying Visual C++ runtime files
+CALL :copy_runtime "$(VCInstallDir)Redist\MSVC\$(VCToolsRedistVersion)\$(Platform)\Microsoft.VC$(PlatformToolsetVersion).CRT\*.dll" "$(OutDir)"
+CALL :copy_runtime "$(VCInstallDir)Redist\MSVC\$(VCToolsRedistVersion)\$(Platform)\Microsoft.VC$(PlatformToolsetVersion).OpenMP\*.dll" "$(OutDir)"
+
+ECHO Copying MKL runtime files
+CALL :copy_runtime "$(MKL_PATH)\..\redist\intel64_win\mkl\*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MKL_PATH)\..\redist\intel64_win\compiler\libiomp5md.dll" "$(OutDir)"
+
+ECHO Copying CUDA runtime files
+CALL :copy_runtime "$(CUDA_PATH)\bin\cudart64_*.dll" "$(OutDir)"
+CALL :copy_runtime "$(CUDA_PATH)\bin\curand64_*.dll" "$(OutDir)"
+CALL :copy_runtime "$(CUDA_PATH)\bin\cublas64_*.dll" "$(OutDir)"
+
+ECHO Required runtime files copied to $(OutDir)
+GOTO :eof
+:copy_runtime
+XCOPY /y %1 %2
+IF %ERRORLEVEL% NEQ 0 (
+  EXIT /b 1
+)
+GOTO :eof</Command>
+      <Message>Gathering runtime files to $(OutDir)</Message>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <PreBuildEvent>
+      <Command>ECHO Gather is not supported in Debug configuration</Command>
+      <Message>Gathering runtime files to $(OutDir)</Message>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
