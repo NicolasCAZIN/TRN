@@ -278,6 +278,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gather", "Gather\Gather.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Check", "Check\Check.vcxproj", "{A649F06F-400B-4593-ABE5-E14F36905F3B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Package", "Package\Package.vcxproj", "{05E33E70-4634-4D1B-B8CC-F1CCE7222103}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -514,6 +516,14 @@ Global
 		{A649F06F-400B-4593-ABE5-E14F36905F3B}.Release|x64.Build.0 = Release|x64
 		{A649F06F-400B-4593-ABE5-E14F36905F3B}.Release|x86.ActiveCfg = Release|Win32
 		{A649F06F-400B-4593-ABE5-E14F36905F3B}.Release|x86.Build.0 = Release|Win32
+		{05E33E70-4634-4D1B-B8CC-F1CCE7222103}.Debug|x64.ActiveCfg = Debug|x64
+		{05E33E70-4634-4D1B-B8CC-F1CCE7222103}.Debug|x64.Build.0 = Debug|x64
+		{05E33E70-4634-4D1B-B8CC-F1CCE7222103}.Debug|x86.ActiveCfg = Debug|Win32
+		{05E33E70-4634-4D1B-B8CC-F1CCE7222103}.Debug|x86.Build.0 = Debug|Win32
+		{05E33E70-4634-4D1B-B8CC-F1CCE7222103}.Release|x64.ActiveCfg = Release|x64
+		{05E33E70-4634-4D1B-B8CC-F1CCE7222103}.Release|x64.Build.0 = Release|x64
+		{05E33E70-4634-4D1B-B8CC-F1CCE7222103}.Release|x86.ActiveCfg = Release|Win32
+		{05E33E70-4634-4D1B-B8CC-F1CCE7222103}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -564,9 +574,10 @@ Global
 		{166CD4BF-2CCE-48FB-9C7B-841AEB856196} = {C6655A08-AE3B-4ABB-BB72-77BBFCE76DAE}
 		{A61B76AE-DEC2-4A71-BB86-A2DA154AD390} = {C6655A08-AE3B-4ABB-BB72-77BBFCE76DAE}
 		{A649F06F-400B-4593-ABE5-E14F36905F3B} = {C6655A08-AE3B-4ABB-BB72-77BBFCE76DAE}
+		{05E33E70-4634-4D1B-B8CC-F1CCE7222103} = {C6655A08-AE3B-4ABB-BB72-77BBFCE76DAE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		Qt5Version = $(DefaultQtVersion)
 		SolutionGuid = {EE213F4E-3171-41BF-A4B3-2533AB46A5B3}
+		Qt5Version = $(DefaultQtVersion)
 	EndGlobalSection
 EndGlobal

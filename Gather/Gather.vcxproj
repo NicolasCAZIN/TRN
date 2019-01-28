@@ -143,6 +143,11 @@ ECHO Copying MKL runtime files
 CALL :copy_runtime "$(MKL_PATH)\..\redist\intel64_win\mkl\*.dll" "$(OutDir)"
 CALL :copy_runtime "$(MKL_PATH)\..\redist\intel64_win\compiler\libiomp5md.dll" "$(OutDir)"
 
+ECHO Copying MPI runtime files
+CALL :copy_runtime "$(MPI_PATH)\bin\release\*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MPI_PATH)\libfabric\bin\*.dll" "$(OutDir)"
+
+
 ECHO Copying CUDA runtime files
 CALL :copy_runtime "$(CUDA_PATH)\bin\cudart64_*.dll" "$(OutDir)"
 CALL :copy_runtime "$(CUDA_PATH)\bin\curand64_*.dll" "$(OutDir)"
