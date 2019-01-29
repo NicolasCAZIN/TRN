@@ -100,7 +100,7 @@ void Callbacks::save(const std::size_t &version, mxArray *result)
 			auto extension = boost::filesystem::extension(path);
 			auto parent_directory = path.parent_path();
 
-			auto filename = basename + "_" + handle->identifier + "_" + std::to_string(version) + extension;
+			auto filename = basename +  "_id_" + handle->identifier + "_pid_" + std::to_string(getpid()) + "_ver_" + std::to_string(version) + extension;
 			auto absolute_filename = (parent_directory / filename).string();
 			INFORMATION_LOGGER <<   "saving to file " << absolute_filename ;
 

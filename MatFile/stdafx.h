@@ -1,5 +1,7 @@
 #pragma once
 
+#include <process.h>
+
 #include <boost/dll/import.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/property_tree/ptree.hpp>

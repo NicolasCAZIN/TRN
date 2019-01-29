@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Logger.h"
-#include <windows.h>
+
 
 static std::recursive_mutex mutex{};
 

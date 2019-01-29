@@ -3,8 +3,9 @@
 #ifdef USE_VLD
 #include <vld.h>
 #endif 
-
+#include <process.h>
 #include <SDKDDKVer.h>
+
 
 #include <string>
 #include <fstream>
