@@ -33,26 +33,8 @@ TRN::Engine::Worker::~Worker()
 {
 	TRACE_LOGGER;
 	// INFORMATION_LOGGER <<   __FUNCTION__ ;
-
-	auto device = TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->index();
-	std::unique_lock<std::mutex> guard(cache_mutex);
-	std::vector<std::pair<unsigned int, unsigned int>> to_remove;
-
-	for (auto p : cache)
-	{
-		if (p.first.first == device)
-		{
-			to_remove.push_back(p.first);
-		}
-	}
-
-	for (auto key : to_remove)
-	{
-		cache.erase(key);
-	}
-	to_remove.clear();
-
 	handle.reset();
+
 }
 
 void TRN::Engine::Worker::send_configured(const unsigned long long &simulation_id)
@@ -94,6 +76,25 @@ void TRN::Engine::Worker::uninitialize()
 	if (communicator)
 		communicator->send(terminated, 0);
 
+	auto device = TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->index();
+	std::unique_lock<std::mutex> guard(cache_mutex);
+	std::vector<std::pair<unsigned int, unsigned int>> to_remove;
+
+	for (auto p : cache)
+	{
+		if (p.first.first == device)
+		{
+			to_remove.push_back(p.first);
+		}
+	}
+
+	for (auto key : to_remove)
+	{
+		cache.erase(key);
+	}
+	to_remove.clear();
+
+	TRN::Helper::Bridge<TRN::Backend::Driver>::implementor->dispose();
 }
 
 void TRN::Engine::Worker::process(const TRN::Engine::Message<TRN::Engine::Tag::QUIT> &message)

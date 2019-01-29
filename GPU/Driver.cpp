@@ -7,37 +7,10 @@
 #include "Algorithm.h"
 #include "Helper/Logger.h"
 
-static std::mutex mutex;
-static std::map<std::size_t, int> counter;
-
-static void increase_reference(const std::size_t &index)
-{
-	std::unique_lock<std::mutex> lock(mutex);
-
-	counter[index]++;
-}
-
-static void decrease_reference(const std::size_t &index)
-{
-	std::unique_lock<std::mutex> lock(mutex);
-
-	if (counter.find(index) == counter.end() || counter[index] == 0)
-	{
-		throw std::runtime_error("device #" + std::to_string(index) + " have not been initialized before");
-	}
-	counter[index]--;
-	if (counter[index] == 0)
-	{
-	
-		checkCudaErrors(cudaDeviceReset());
-		INFORMATION_LOGGER <<   "device #" << index + 1 << " reset" ;
-	}
-}
 
 TRN::GPU::Driver::Driver(const int &device) :
 	TRN::GPU::Driver::Driver(TRN::GPU::Context::create(device))
 {
-	increase_reference(device);
 }
 
 TRN::GPU::Driver::Driver(const std::shared_ptr<TRN::GPU::Context> context) :
@@ -48,16 +21,13 @@ TRN::GPU::Driver::Driver(const std::shared_ptr<TRN::GPU::Context> context) :
 }
 TRN::GPU::Driver::~Driver()
 {
-	
 	handle->context.reset();
 	handle.reset();
 }
 
 void TRN::GPU::Driver::dispose()
 {
-	handle->context->toggle();
 	handle->context->dispose();
-	decrease_reference(handle->context->get_device());
 }
 
 void TRN::GPU::Driver::synchronize()

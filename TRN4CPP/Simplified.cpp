@@ -110,6 +110,19 @@ static Type get_attribute(const boost::property_tree::iptree &node, const std::s
 		return default;
 	return child->get_value<Type>(default);*/
 }
+static const std::string PLUGIN_PATH_TOKEN = "TRN_PLUGIN";
+static const std::string EXPERIMENT_PATH_TOKEN = "TRN_EXPERIMENT";
+
+static std::string get_path_from_environment(const std::string &key)
+{
+	auto value = std::getenv("TRN_PLUGIN");
+	if (!value)
+		throw std::runtime_error("Environment variable " + key + " was not found");
+
+	if (!boost::filesystem::exists(value))
+		throw std::runtime_error("Environment variable " + key + " does not point to a valid path");
+	return value;
+}
 
 void TRN4CPP::Simulation::compute(const std::string &filename)
 {
@@ -221,7 +234,8 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 					{
 						auto _plugin = experiment_element.second;
 						auto interface = _plugin.get_child(interface_attribute).get_value<std::string>();
-						auto path = _plugin.get_child(path_attribute).get_value<std::string>();
+						auto plugin_path = get_path_from_environment(PLUGIN_PATH_TOKEN);
+					
 						auto name = _plugin.get_child(name_attribute).get_value<std::string>();
 						std::vector<std::string> arguments_list;
 
@@ -243,19 +257,19 @@ void TRN4CPP::Simulation::compute(const std::string &filename)
 
 						if (boost::iequals(interface, "Sequences"))
 						{
-							TRN4CPP::Plugin::Sequences::initialize(path, name, arguments);
+							TRN4CPP::Plugin::Sequences::initialize(plugin_path, name, arguments);
 						}
 						else if (boost::iequals(interface, "Search"))
 						{
-							TRN4CPP::Plugin::Search::initialize(path, name, arguments);
+							TRN4CPP::Plugin::Search::initialize(plugin_path, name, arguments);
 						}
 						else if (boost::iequals(interface, "Custom"))
 						{
-							TRN4CPP::Plugin::Custom::initialize(path, name, arguments);
+							TRN4CPP::Plugin::Custom::initialize(plugin_path, name, arguments);
 						}
 						else if (boost::iequals(interface, "Callbacks"))
 						{
-							TRN4CPP::Plugin::Callbacks::initialize(path, name, arguments);
+							TRN4CPP::Plugin::Callbacks::initialize(plugin_path, name, arguments);
 						}
 						else
 							throw std::runtime_error("Unexpected plugin interface " + interface);

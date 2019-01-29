@@ -7,6 +7,39 @@ const std::size_t TRN::GPU::Context::DEFAULT_DIV = 1;
 const std::size_t TRN::GPU::Context::DEFAULT_DIMS = 1;
 const std::size_t TRN::GPU::Context::DEFAULT_DYNAMIC_MEMORY_SIZE = 0;
 
+static std::mutex mutex;
+static std::map<std::size_t, int> counter;
+
+static void increase_reference(const std::size_t &index)
+{
+	std::unique_lock<std::mutex> lock(mutex);
+
+	if (counter[index] == 0)
+	{
+		checkCudaErrors(cudaSetDevice(index));
+		checkCudaErrors(cudaSetDeviceFlags(cudaDeviceBlockingSync));
+	}
+
+	counter[index]++;
+}
+
+static void decrease_reference(const std::size_t &index)
+{
+	std::unique_lock<std::mutex> lock(mutex);
+
+	if (counter.find(index) == counter.end() || counter[index] == 0)
+	{
+		throw std::runtime_error("device #" + std::to_string(index) + " have not been initialized before");
+	}
+	counter[index]--;
+	if (counter[index] == 0)
+	{
+		checkCudaErrors(cudaSetDevice(index));
+		checkCudaErrors(cudaDeviceReset());
+		INFORMATION_LOGGER << "device #" << index + 1 << " reset";
+	}
+}
+
 
 TRN::GPU::Context::Context(const int &device) :
 	handle(std::make_unique<TRN::GPU::Context::Handle>())
@@ -20,9 +53,12 @@ TRN::GPU::Context::Context(const int &device) :
 
 	handle->device = device;
 	cudaDeviceProp prop;
-	
+
 	checkCudaErrors(cudaSetDevice(device));
-	checkCudaErrors(cudaSetDeviceFlags(cudaDeviceBlockingSync));
+
+	increase_reference(device);
+
+	
 	checkCudaErrors(cudaGetDeviceProperties(&prop, device));
 	auto freq_ghz = prop.clockRate *1e-6f;
 	/*if (prop.kernelExecTimeoutEnabled > 0)
@@ -75,12 +111,6 @@ TRN::GPU::Context::Context(const int &device) :
 
 void TRN::GPU::Context::dispose()
 {
-
-	//checkCudaErrors(curandDestroyGenerator(handle->generator));
-}
-
-TRN::GPU::Context::~Context()
-{
 	for (std::size_t k = 0; k < STREAM_NUMBER; k++)
 	{
 		checkCudaErrors(cudaStreamSynchronize(handle->streams[k]));
@@ -91,6 +121,13 @@ TRN::GPU::Context::~Context()
 	{
 		checkCudaErrors(cudaEventDestroy(handle->events[k]));
 	}
+	decrease_reference(handle->device);
+	//checkCudaErrors(curandDestroyGenerator(handle->generator));
+}
+
+TRN::GPU::Context::~Context()
+{
+
 	handle.reset();
 }
 

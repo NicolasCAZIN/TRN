@@ -105,17 +105,17 @@ set value=!%key%!
 
 IF NOT DEFINED %key% (
  ECHO Variable %key% is not defined
- EXIT /B 1
+ EXIT 1
 )
 
 IF "%value%" == "" (
  ECHO Variable %key% is empty
- EXIT /B 1
+ EXIT 1
 )
 
 IF NOT EXIST "%value%"  (
  ECHO Directory "%value%" does not exist
- EXIT /B 1
+ EXIT  1
 )
 
 ECHO %1 is pointing to %value%
@@ -123,7 +123,7 @@ GOTO :eof
 
 :install_ok
 ECHO All required paths have been found
-EXIT /B 0</Command>
+EXIT 0</Command>
       <Message>Checking required libraries installation</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -164,17 +164,17 @@ set value=!%key%!
 
 IF NOT DEFINED %key% (
  ECHO Variable %key% is not defined
- EXIT /B 1
+ EXIT 1
 )
 
 IF "%value%" == "" (
  ECHO Variable %key% is empty
- EXIT /B 1
+ EXIT 1
 )
 
 IF NOT EXIST "%value%"  (
  ECHO Directory "%value%" does not exist
- EXIT /B 1
+ EXIT  1
 )
 
 ECHO %1 is pointing to %value%
@@ -182,7 +182,7 @@ GOTO :eof
 
 :install_ok
 ECHO All required paths have been found
-EXIT /B 0</Command>
+EXIT 0</Command>
       <Message>Checking required libraries installation</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
