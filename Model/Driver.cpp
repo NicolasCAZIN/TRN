@@ -15,8 +15,12 @@ std::shared_ptr<TRN::Backend::Driver> TRN::Model::Driver::create(const int &inde
 		std::string brand;
 		TRN::CPU::Implementation implementation;
 		TRN::CPU::query(brand, implementation);
-
+				
 		INFORMATION_LOGGER <<   "CPU version selected : " << brand << " with instruction set " << implementation ;
+
+	//INFORMATION_LOGGER
+
+
 		switch (implementation)
 		{
 #if !defined(_M_IX86) && (defined(_M_AMD64) ||defined(_M_X64))

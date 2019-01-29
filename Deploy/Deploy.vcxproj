@@ -88,7 +88,7 @@
 SETLOCAL EnableExtensions
 SETLOCAL EnableDelayedExpansion
 
-FOR %%T IN ($(TRN_DEPLOY)) DO (
+FOR %%T IN ($(TRN_SIMULATOR)) DO (
    XCOPY /y $(OutDir)*.dll %%T
    XCOPY /y $(OutDir)*.exe %%T
    XCOPY /y $(OutDir)*.jar %%T

@@ -89,13 +89,18 @@ SETLOCAL EnableExtensions
 SETLOCAL EnableDelayedExpansion
 
 FOR %%h IN (BOOST, OPENCV,  CUDA, MKL, MPI, STRTK, MATLAB, MEXPLUS) DO (
+CALL :check_path %%h_PATH
+)
+
+FOR %%h IN (TRN_SIMULATOR, TRN_EXPERIMENT) DO (
 CALL :check_path %%h
 )
+
 GOTO:install_ok
 
 :check_path 
-echo Checking %1 library installation
-set key=%1_PATH
+echo Checking %1 path configuration
+set key=%1
 set value=!%key%!
 
 IF NOT DEFINED %key% (
@@ -113,11 +118,11 @@ IF NOT EXIST "%value%"  (
  EXIT /B 1
 )
 
-ECHO %1 is installed in %value%
+ECHO %1 is pointing to %value%
 GOTO :eof
 
 :install_ok
-ECHO All required libraries have been found
+ECHO All required paths have been found
 EXIT /B 0</Command>
       <Message>Checking required libraries installation</Message>
     </PreBuildEvent>
@@ -143,13 +148,18 @@ SETLOCAL EnableExtensions
 SETLOCAL EnableDelayedExpansion
 
 FOR %%h IN (BOOST, OPENCV,  CUDA, MKL, MPI, STRTK, MATLAB, MEXPLUS) DO (
+CALL :check_path %%h_PATH
+)
+
+FOR %%h IN (TRN_SIMULATOR, TRN_EXPERIMENT) DO (
 CALL :check_path %%h
 )
+
 GOTO:install_ok
 
 :check_path 
-echo Checking %1 library installation
-set key=%1_PATH
+echo Checking %1 path configuration
+set key=%1
 set value=!%key%!
 
 IF NOT DEFINED %key% (
@@ -167,11 +177,11 @@ IF NOT EXIST "%value%"  (
  EXIT /B 1
 )
 
-ECHO %1 is installed in %value%
+ECHO %1 is pointing to %value%
 GOTO :eof
 
 :install_ok
-ECHO All required libraries have been found
+ECHO All required paths have been found
 EXIT /B 0</Command>
       <Message>Checking required libraries installation</Message>
     </PreBuildEvent>

@@ -85,12 +85,16 @@
     </Link>
     <PreBuildEvent>
       <Command>ECHO Copying MATLAB runtime files
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwmfl_permute.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwfoundation_usm.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwresource_core.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwcpp11compat.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwindexingapimethods.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libexpat.dll" "$(OutDir)"
 CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmat.dll" "$(OutDir)"
 CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmx.dll" "$(OutDir)"
 CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwfl.dll" "$(OutDir)"
 CALL :copy_runtime  "$(MATLAB_PATH)\bin\win64\libmwi18n.dll" "$(OutDir)"
-CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwfoundation_usm.dll" "$(OutDir)"
-CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwresource_core.dll" "$(OutDir)"
 CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_filesystem*.dll" "$(OutDir)"
 CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_system*.dll" "$(OutDir)"
 CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_thread*.dll" "$(OutDir)"
@@ -100,7 +104,6 @@ CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_serialization*.dll" "$(OutDi
 CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_signals*.dll" "$(OutDir)"
 CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_log*.dll" "$(OutDir)"
 CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_date_time*.dll" "$(OutDir)"
-CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libexpat.dll" "$(OutDir)"
 CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libut.dll" "$(OutDir)"
 CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\icuuc*.dll" "$(OutDir)"
 CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\icuin*.dll" "$(OutDir)"
@@ -134,6 +137,8 @@ ECHO Copying OpenCV runtime files
 CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_core401.dll" "$(OutDir)"
 CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_highgui401.dll" "$(OutDir)"
 CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_imgproc401.dll" "$(OutDir)"
+CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_imgcodecs401.dll" "$(OutDir)"
+CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_videoio401.dll" "$(OutDir)"
 
 ECHO Copying Visual C++ runtime files
 CALL :copy_runtime "$(VCInstallDir)Redist\MSVC\$(VCToolsRedistVersion)\$(Platform)\Microsoft.VC$(PlatformToolsetVersion).CRT\*.dll" "$(OutDir)"
@@ -180,7 +185,87 @@ GOTO :eof</Command>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <PreBuildEvent>
-      <Command>ECHO Gather is not supported in Debug configuration</Command>
+      <Command>ECHO Copying MATLAB runtime files
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwmfl_permute.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwfoundation_usm.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwresource_core.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwcpp11compat.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwindexingapimethods.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libexpat.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmat.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmx.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libmwfl.dll" "$(OutDir)"
+CALL :copy_runtime  "$(MATLAB_PATH)\bin\win64\libmwi18n.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_filesystem*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_system*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_thread*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_regex*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_chrono*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_serialization*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_signals*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_log*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\*boost_date_time*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\libut.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\icuuc*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\icuin*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\icuio*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\icudt*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\tbb.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\tbbmalloc.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\msvcp*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\msvcr*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\vcomp*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\hdf5.dll" "$(OutDir)"
+CALL :copy_runtime "$(MATLAB_PATH)\bin\win64\zlib1.dll" "$(OutDir)"
+ECHO Copying Boost runtime files
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_chrono-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_thread-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_date_time-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_regex-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_log-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_log_setup-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_bzip2-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_zlib-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_iostreams-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_serialization-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_system-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_filesystem-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_mpi-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+CALL :copy_runtime "$(BOOST_PATH)\stage\x64\lib\boost_program_options-vc$(PlatformToolsetVersion)-mt-gd-$(Platform)*.dll" "$(OutDir)"
+
+ECHO Copying OpenCV runtime files
+CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_core401d.dll" "$(OutDir)"
+CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_highgui401d.dll" "$(OutDir)"
+CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_imgproc401d.dll" "$(OutDir)"
+CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_imgcodecs401d.dll" "$(OutDir)"
+CALL :copy_runtime "$(OPENCV_PATH)\x64\vc15\bin\opencv_videoio401d.dll" "$(OutDir)"
+
+ECHO Copying Visual C++ runtime files
+CALL :copy_runtime "$(VCInstallDir)Redist\MSVC\$(VCToolsRedistVersion)\$(Platform)\Microsoft.VC$(PlatformToolsetVersion).CRT\*.dll" "$(OutDir)"
+CALL :copy_runtime "$(VCInstallDir)Redist\MSVC\$(VCToolsRedistVersion)\$(Platform)\Microsoft.VC$(PlatformToolsetVersion).OpenMP\*.dll" "$(OutDir)"
+
+ECHO Copying MKL runtime files
+CALL :copy_runtime "$(MKL_PATH)\..\redist\intel64_win\mkl\*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MKL_PATH)\..\redist\intel64_win\compiler\libiomp5md.dll" "$(OutDir)"
+
+ECHO Copying MPI runtime files
+CALL :copy_runtime "$(MPI_PATH)\bin\release\*.dll" "$(OutDir)"
+CALL :copy_runtime "$(MPI_PATH)\libfabric\bin\*.dll" "$(OutDir)"
+
+
+ECHO Copying CUDA runtime files
+CALL :copy_runtime "$(CUDA_PATH)\bin\cudart64_*.dll" "$(OutDir)"
+CALL :copy_runtime "$(CUDA_PATH)\bin\curand64_*.dll" "$(OutDir)"
+CALL :copy_runtime "$(CUDA_PATH)\bin\cublas64_*.dll" "$(OutDir)"
+
+ECHO Required runtime files copied to $(OutDir)
+GOTO :eof
+:copy_runtime
+XCOPY /y %1 %2
+IF %ERRORLEVEL% NEQ 0 (
+  EXIT /b 1
+)
+GOTO :eof</Command>
       <Message>Gathering runtime files to $(OutDir)</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>

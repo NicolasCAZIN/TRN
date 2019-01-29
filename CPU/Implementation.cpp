@@ -1,9 +1,8 @@
 #include "stdafx.h"
 #include "Implementation.h"
 
-std::ostream &operator << (std::ostream &stream, const TRN::CPU::Implementation &implementation)
+std::ostream &operator << (std::ostream &stream,  const TRN::CPU::Implementation &implementation)
 {
-	
 	switch (implementation)
 	{
 		case	TRN::CPU::Implementation::SCALAR :

@@ -7,9 +7,7 @@ namespace TRN
 {
 	namespace Helper
 	{
-
-
-		class   Logger : public std::ostringstream
+		class  HELPER_EXPORT Logger
 		{
 		public:
 			enum  Severity
@@ -21,27 +19,27 @@ namespace TRN
 				ERROR_LEVEL
 			};
 		public:
-			HELPER_EXPORT Logger( const TRN::Helper::Logger::Severity  &severity, const std::string &module);
-			HELPER_EXPORT ~Logger();
+			 Logger( const TRN::Helper::Logger::Severity  &severity, const std::string &module);
+			 virtual ~Logger();
 
-		private :
+		public :
 			class Handle;
-
 			std::unique_ptr<Handle> handle;
 		
 		public :
-			static void HELPER_EXPORT setup(const TRN::Helper::Logger::Severity  &severity, const bool &exit_on_error = true);
+			std::ostream &ostream();
+			static void  setup(const TRN::Helper::Logger::Severity  &severity, const bool &exit_on_error = true);
 		};
 	}
 }
 
 #define LOCATION " (LOCATION Line : " << __LINE__ << ", File : " << __FILE__ <<  ", Function : " << __FUNCTION__  << ") "
 #define OMP "(OpenMP processors available : " << omp_get_num_procs() << ", thread " << omp_get_thread_num()  << "/" << omp_get_num_threads() <<"[" << omp_get_max_threads() << "]" << ") "
-#define TRACE_LOGGER TRN::Helper::Logger{TRN::Helper::Logger::TRACE_LEVEL, TRN_MODULE} << __FUNCTION__
-#define DEBUG_LOGGER  TRN::Helper::Logger{TRN::Helper::Logger::DEBUG_LEVEL, TRN_MODULE} << OMP
-#define INFORMATION_LOGGER  TRN::Helper::Logger{TRN::Helper::Logger::INFORMATION_LEVEL, TRN_MODULE}
-#define WARNING_LOGGER  TRN::Helper::Logger{TRN::Helper::Logger::WARNING_LEVEL, TRN_MODULE} << LOCATION
-#define ERROR_LOGGER  TRN::Helper::Logger{TRN::Helper::Logger::ERROR_LEVEL, TRN_MODULE} << LOCATION
+#define TRACE_LOGGER TRN::Helper::Logger{TRN::Helper::Logger::TRACE_LEVEL, TRN_MODULE}.ostream() << __FUNCTION__
+#define DEBUG_LOGGER  TRN::Helper::Logger{TRN::Helper::Logger::DEBUG_LEVEL, TRN_MODULE}.ostream() << OMP
+#define INFORMATION_LOGGER  TRN::Helper::Logger{TRN::Helper::Logger::INFORMATION_LEVEL, TRN_MODULE}.ostream()
+#define WARNING_LOGGER  TRN::Helper::Logger{TRN::Helper::Logger::WARNING_LEVEL, TRN_MODULE}.ostream() << LOCATION
+#define ERROR_LOGGER  TRN::Helper::Logger{TRN::Helper::Logger::ERROR_LEVEL, TRN_MODULE}.ostream() << LOCATION
 
 namespace std
 {

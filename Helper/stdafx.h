@@ -6,6 +6,7 @@
 
 #include <SDKDDKVer.h>
 
+#include <string>
 #include <fstream>
 #include <mutex>
 

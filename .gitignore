@@ -69,3 +69,5 @@ Temporary Items
 *.htm
 *.jar
 *.jar
+*.class
+*.cache
