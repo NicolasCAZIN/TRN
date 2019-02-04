@@ -272,7 +272,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Build", "Build\Build.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gather", "Gather\Gather.vcxproj", "{A61B76AE-DEC2-4A71-BB86-A2DA154AD390}"
 	ProjectSection(ProjectDependencies) = postProject
-		{A649F06F-400B-4593-ABE5-E14F36905F3B} = {A649F06F-400B-4593-ABE5-E14F36905F3B}
 		{166CD4BF-2CCE-48FB-9C7B-841AEB856196} = {166CD4BF-2CCE-48FB-9C7B-841AEB856196}
 	EndProjectSection
 EndProject
@@ -577,7 +576,7 @@ Global
 		{05E33E70-4634-4D1B-B8CC-F1CCE7222103} = {C6655A08-AE3B-4ABB-BB72-77BBFCE76DAE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {EE213F4E-3171-41BF-A4B3-2533AB46A5B3}
 		Qt5Version = $(DefaultQtVersion)
+		SolutionGuid = {EE213F4E-3171-41BF-A4B3-2533AB46A5B3}
 	EndGlobalSection
 EndGlobal

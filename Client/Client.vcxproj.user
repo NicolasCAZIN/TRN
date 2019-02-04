@@ -3,11 +3,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerEnvironment>TRN_PLUGIN=$(Outdir)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>--backend local --index 0 --filename $(TRN_EXPERIMENT)\scenario.xml</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>--backend remote --host deathstar --port 12345 --filename $(TRN_EXPERIMENT)\..\test\scenario.xml</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerEnvironment>TRN_PLUGIN=$(Outdir)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>--backend local --index 0 --filename $(TRN_EXPERIMENT)\scenario.xml</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>--backend remote --host deathstar --port 12345 --filename $(TRN_EXPERIMENT)\..\test\scenario.xml</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

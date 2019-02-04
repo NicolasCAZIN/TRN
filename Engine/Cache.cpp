@@ -3,6 +3,9 @@
 #include "Helper/Logger.h"
 
 /*#define SEGMENT_MUTEX "TRN_cache_mutex"*/
+
+#ifdef SHM_CACHE
+
 #define SEGMENT_IDENTIFIER "TRN_cache_segment"
 #define CHECKSUMS_IDENTIFIER "TRN_cache_map"
 #define COUNTER_IDENTIFIER "TRN_cache_counter"
@@ -25,77 +28,27 @@ typedef boost::interprocess::allocator<EntryType, boost::interprocess::managed_s
 typedef boost::interprocess::map<KeyType, MappedType, std::less<KeyType>, ShmEntryAllocator> Map;
 
  static boost::interprocess::managed_windows_shared_memory segment(boost::interprocess::open_or_create, SEGMENT_IDENTIFIER, GB(1) + MB(500));
-static unsigned int process_id()
-{
-#ifdef _WIN32
-	return GetCurrentProcessId();
-#else
-	return ::getpid();
-#endif
-}
+
 
 static const std::string compute_key(const unsigned int checksum)
 {
 	return "checksum_" + std::to_string(checksum);
 }
+
+#else
+		
+static std::mutex mutex;
+static std::map<unsigned int, std::vector<float>> cache;
+#endif
 void TRN::Engine::Cache::initialize()
 {
-	/*WARNING_LOGGER << "initializing cache";
-	if (boost::interprocess::shared_memory_object::remove(SEGMENT_IDENTIFIER))
-		WARNING_LOGGER << SEGMENT_IDENTIFIER << " shared memory object was removed";
-	else
-		WARNING_LOGGER << SEGMENT_IDENTIFIER << " shared memory object was not removed";*/
-
-	//auto pid = process_id();
-/*	boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> guard(*segment.find_or_construct<boost::interprocess::interprocess_mutex>(SEGMENT_MUTEX)());*/
-	/*auto counter = segment.find_or_construct<Set>(COUNTER_IDENTIFIER)(segment.get_segment_manager());
-	auto size = counter->size();
-	
-	counter->insert(pid);
-	DEBUG_LOGGER << "processes attached to shared memory cache : " << counter->size();*/
-/*	segment.atomic_func([&]() 
-	{
-
-	});*/
-	//boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> guard(*segment.find_or_construct<boost::interprocess::interprocess_mutex>(SEGMENT_MUTEX)());
-
-
-//	auto set = segment.find_or_construct<Set>(SET_IDENTIFIER)();
-	
-
-
 }
 void TRN::Engine::Cache::uninitialize()
 {
-
-
-
-	/*WARNING_LOGGER << "uninitializing cache";
-	if (boost::interprocess::shared_memory_object::remove(SEGMENT_IDENTIFIER))
-		WARNING_LOGGER << SEGMENT_IDENTIFIER << " shared memory object was removed";
-	else
-		WARNING_LOGGER << SEGMENT_IDENTIFIER << " shared memory object was not removed";*/
-	/*boost::interprocess::managed_shared_memory segment(boost::interprocess::open_or_create, SEGMENT_IDENTIFIER, GB(1));
-	boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> guard(*segment.find_or_construct<boost::interprocess::interprocess_mutex>(SEGMENT_MUTEX)());
-	auto &counter = *segment.find_or_construct<Set>(COUNTER_IDENTIFIER)(segment.get_segment_manager());
-	counter.erase(process_id());
-	DEBUG_LOGGER << "processes attached to shared memory cache : " << counter.size();
-
-	if (counter.empty())
-	{
-		DEBUG_LOGGER << "No more processes attached to shared memory cache. Destroying it";
-
-	}
-	else
-	{
-		DEBUG_LOGGER << counter.size() << " processes are still attached to shared memory cache. Won't do anything";
-	}*/
 }
 
 TRN::Engine::Cache::Cache() : handle(std::make_unique<Handle>())
 {
-
-	
 }
 
 TRN::Engine::Cache::~Cache()
@@ -104,22 +57,31 @@ TRN::Engine::Cache::~Cache()
 
 std::set<unsigned int> TRN::Engine::Cache::cached()
 {
-	std::set<unsigned int> result;
-	segment.atomic_func([&]()
+#ifdef SHM_CACHE
+	segment.atomic_func([&]() -> std::set<unsigned int>
 	{
+		std::set<unsigned int> result;
 		auto map = segment.find_or_construct<Map>(CHECKSUMS_IDENTIFIER)(segment.get_segment_manager());
 		for (auto entry : *map)
 		{
 			result.insert(entry.first);
 		}
-
+		return result;
 	});
+#else
+	std::unique_lock<std::mutex> lock(mutex);
+	std::set<unsigned int> result;
+	for (auto entry : cache)
+	{
+		result.insert(entry.first);
+	}
 	return result;
+#endif
 }
 
 void TRN::Engine::Cache::store(const unsigned int &checksum, const std::vector<float> &sequence)
 {
-	
+#ifdef SHM_CACHE
 	segment.atomic_func([&]()
 	{
 	//	boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> guard(*segment.find_or_construct<boost::interprocess::interprocess_mutex>(SEGMENT_MUTEX)());
@@ -138,11 +100,16 @@ void TRN::Engine::Cache::store(const unsigned int &checksum, const std::vector<f
 			DEBUG_LOGGER << "Free shared memory " << free_memory;
 		}
 	});
+#else
+	std::unique_lock<std::mutex> lock(mutex);
 
+	cache[checksum] = sequence;
+#endif
 }
 
 bool	TRN::Engine::Cache::contains(const unsigned int &checksum)
 {
+#if SHM_CACHE
 	bool result = false;
 
 	segment.atomic_func([&]()
@@ -151,10 +118,16 @@ bool	TRN::Engine::Cache::contains(const unsigned int &checksum)
 		result = map->find(checksum) != map->end();
 	});
 	return result;
+#else
+	std::unique_lock<std::mutex> lock(mutex);
+
+	return cache.find(checksum) != cache.end();
+#endif
 }
 
 std::vector<float> TRN::Engine::Cache::retrieve(const unsigned int &checksum)
 {
+#if SHM_CACHE
 	std::vector<float> result;
 	
 	segment.atomic_func([&]()
@@ -170,6 +143,11 @@ std::vector<float> TRN::Engine::Cache::retrieve(const unsigned int &checksum)
 	
 
 	return result;
+#else
+	std::unique_lock<std::mutex> lock(mutex);
+
+	return cache[checksum];
+#endif
 }
 
 std::shared_ptr<TRN::Engine::Cache> TRN::Engine::Cache::create()

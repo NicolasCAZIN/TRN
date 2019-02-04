@@ -22,7 +22,7 @@ namespace TRN
 			 Logger( const TRN::Helper::Logger::Severity  &severity, const std::string &module);
 			 virtual ~Logger();
 
-		public :
+		private :
 			class Handle;
 			std::unique_ptr<Handle> handle;
 		

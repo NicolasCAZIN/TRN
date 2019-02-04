@@ -96,7 +96,8 @@ boost::optional<TRN::Engine::Tag> TRN::Remote::Communicator::probe(const int &de
 	if (handle->received.tag == -1)
 	{
 
-		handle->connection->read(handle->received);
+		if (!handle->connection->read(handle->received))
+			return boost::optional<TRN::Engine::Tag>();
 
 	}
 	

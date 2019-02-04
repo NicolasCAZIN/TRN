@@ -10,8 +10,33 @@ const std::size_t TRN::GPU::Context::DEFAULT_DYNAMIC_MEMORY_SIZE = 0;
 static std::mutex mutex;
 static std::map<std::size_t, int> counter;
 
+/*#define MB(x) ((x) << 20)
+#define SEGMENT_IDENTIFIER "TRN_GPU_context_segment"
+#define COUNTER_IDENTIFIER "TRN_GPU_context_counter"
+typedef std::size_t    KeyType;
+typedef int MappedType;
+typedef std::pair<const KeyType, MappedType> EntryType;
+//allocator of for the map.
+typedef boost::interprocess::allocator<EntryType, boost::interprocess::managed_shared_memory::segment_manager> ShmEntryAllocator;
+typedef boost::interprocess::map<KeyType, MappedType, std::less<KeyType>, ShmEntryAllocator> Map;
+static boost::interprocess::managed_windows_shared_memory segment(boost::interprocess::open_or_create, SEGMENT_IDENTIFIER, MB(1));*/
+
+
 static void increase_reference(const std::size_t &index)
 {
+	/*segment.atomic_func([&]()
+		{
+			auto counter = segment.find_or_construct<Map>(COUNTER_IDENTIFIER)(segment.get_segment_manager());
+			if (counter[index] == 0)
+			{
+				checkCudaErrors(cudaSetDevice(index));
+				checkCudaErrors(cudaSetDeviceFlags(cudaDeviceBlockingSync));
+			}
+
+			counter[index]++;
+
+		});*/
+
 	std::unique_lock<std::mutex> lock(mutex);
 
 	if (counter[index] == 0)
@@ -25,6 +50,25 @@ static void increase_reference(const std::size_t &index)
 
 static void decrease_reference(const std::size_t &index)
 {
+	/*segment.atomic_func([&]()
+		{
+			auto counter = segment.find_or_construct<Map>(COUNTER_IDENTIFIER)(segment.get_segment_manager());
+			if (counter.find(index) == counter.end() || counter[index] == 0)
+			{
+				ERROR_LOGGER << "device #" << std::to_string(index) << " have not been initialized before");
+			}
+			else
+			{
+				counter[index]--;
+				if (counter[index] == 0)
+				{
+					checkCudaErrors(cudaSetDevice(index));
+					checkCudaErrors(cudaDeviceReset());
+					INFORMATION_LOGGER << "device #" << index + 1 << " reset";
+				}
+			}
+
+		});*/
 	std::unique_lock<std::mutex> lock(mutex);
 
 	if (counter.find(index) == counter.end() || counter[index] == 0)
@@ -39,6 +83,8 @@ static void decrease_reference(const std::size_t &index)
 		INFORMATION_LOGGER << "device #" << index + 1 << " reset";
 	}
 }
+
+
 
 
 TRN::GPU::Context::Context(const int &device) :

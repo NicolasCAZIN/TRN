@@ -466,8 +466,9 @@ void TRN::Engine::Node::body()
 	catch (std::exception &e)
 	{
 		TRN::Engine::Message<TRN::Engine::LOG_ERROR> error;
-		ERROR_LOGGER << e.what() ;
 		error.message = e.what();
+		ERROR_LOGGER << error.message;
+	
 		locked->send(error, 0);
 		stop();
 	}

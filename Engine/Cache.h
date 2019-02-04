@@ -15,8 +15,6 @@ namespace TRN
 		public :
 			static void initialize();
 			static void uninitialize();
-		private :
-			static std::mutex mutex;
 
 		public :
 			Cache();

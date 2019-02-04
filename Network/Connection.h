@@ -13,7 +13,7 @@ namespace TRN
 
 
 			/// Constructor.
-			Connection(boost::asio::io_service &io_service) : socket_(io_service),id(0)
+			Connection(boost::asio::io_service &io_service) : socket_(io_service),id(0), usable(true)
 			{
 			
 			}
@@ -47,33 +47,48 @@ namespace TRN
 			}
 
 			template <typename T>
-			void write(const T& t)
+			bool write(const T& t)
 			{
-			
-				std::ostringstream archive_stream;
-				boost::archive::binary_oarchive archive(archive_stream);
-				archive << t;
-				outbound_data_ = archive_stream.str();
-
-				// Format the header.
-				std::ostringstream header_stream;
-				header_stream << std::setw(header_length)
-					<< std::hex << outbound_data_.size();
-				if (!header_stream || header_stream.str().size() != header_length)
+				if (usable)
 				{
-					throw boost::system::system_error(boost::asio::error::invalid_argument);
-					// Something went wrong, inform the caller.
+					std::ostringstream archive_stream;
+					boost::archive::binary_oarchive archive(archive_stream);
+					archive << t;
+					outbound_data_ = archive_stream.str();
 
+					// Format the header.
+					std::ostringstream header_stream;
+					header_stream << std::setw(header_length)
+						<< std::hex << outbound_data_.size();
+					if (!header_stream || header_stream.str().size() != header_length)
+					{
+						throw boost::system::system_error(boost::asio::error::invalid_argument);
+						// Something went wrong, inform the caller.
+
+					}
+					outbound_header_ = header_stream.str();
+
+					// Write the serialized data to the socket. We use "gather-write" to send
+					// both the header and the data in a single write operation.
+					std::vector<boost::asio::const_buffer> buffers;
+					buffers.push_back(boost::asio::buffer(outbound_header_));
+					buffers.push_back(boost::asio::buffer(outbound_data_));
+
+					boost::system::error_code ec;
+					boost::asio::write(socket_, buffers, ec);
+					if (ec)
+					{
+						usable = false;
+						std::cout << ec << std::endl;
+						return false;
+					}
+					return true;
 				}
-				outbound_header_ = header_stream.str();
-
-				// Write the serialized data to the socket. We use "gather-write" to send
-				// both the header and the data in a single write operation.
-				std::vector<boost::asio::const_buffer> buffers;
-				buffers.push_back(boost::asio::buffer(outbound_header_));
-				buffers.push_back(boost::asio::buffer(outbound_data_));
-	
-				boost::asio::write(socket_, buffers);
+				else
+				{
+					std::cout << "connection is no longer usable" << std::endl;
+					return false;
+				}
 			}
 
 			/*/// Asynchronously write a data structure to the socket.
@@ -107,25 +122,41 @@ namespace TRN
 			}*/
 
 			template <typename T>
-			void read(T& t)
+			bool read(T& t)
 			{
-		
-				boost::asio::read(socket_, boost::asio::buffer(inbound_header_)/*, boost::asio::transfer_exactly(header_length)*/);
-				std::istringstream is(std::string(inbound_header_, header_length));
-				std::size_t inbound_data_size = 0;
-				if (!(is >> std::hex >> inbound_data_size))
+				if (usable)
 				{
-					// Header doesn't seem to be valid. Inform the caller.
-					throw boost::system::error_code(boost::asio::error::invalid_argument);
+					boost::system::error_code ec;
+
+					boost::asio::read(socket_, boost::asio::buffer(inbound_header_), ec);
+					if (ec)
+					{
+						usable = false;
+						return false;
+					}
+
+					std::istringstream is(std::string(inbound_header_, header_length));
+					std::size_t inbound_data_size = 0;
+					if (!(is >> std::hex >> inbound_data_size))
+					{
+						// Header doesn't seem to be valid. Inform the caller.
+						throw boost::system::error_code(boost::asio::error::invalid_argument);
+					}
+					inbound_data_.resize(inbound_data_size);
+					boost::asio::read(socket_, boost::asio::buffer(inbound_data_)/*, boost::asio::transfer_exactly(inbound_data_size)*/);
+					// Start an asynchronous call to receive the data.
+
+					std::string archive_data(&inbound_data_[0], inbound_data_.size());
+					std::istringstream archive_stream(archive_data);
+					boost::archive::binary_iarchive archive(archive_stream);
+					archive >> t;
+					return true;
 				}
-				inbound_data_.resize(inbound_data_size);
-				boost::asio::read(socket_, boost::asio::buffer(inbound_data_)/*, boost::asio::transfer_exactly(inbound_data_size)*/);
-				// Start an asynchronous call to receive the data.
-			
-				std::string archive_data(&inbound_data_[0], inbound_data_.size());
-				std::istringstream archive_stream(archive_data);
-				boost::archive::binary_iarchive archive(archive_stream);
-				archive >> t;
+				else
+				{
+					std::cout << "connection is no longer usable" << std::endl;
+					return false;
+				}
 			}
 
 			/*/// Asynchronously read a data structure from the socket.
@@ -232,6 +263,7 @@ namespace TRN
 			/// Holds the inbound data.
 			std::vector<char> inbound_data_;
 			std::mutex mutex;
+			bool usable;
 			public :
 
 
