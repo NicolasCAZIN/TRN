@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Helper/Logger.h"
-
+#include "JNIEnv.h"
 namespace TRN4JAVA
 {
 	namespace Functor
@@ -42,7 +42,7 @@ namespace TRN4JAVA
 
 		extern std::mutex functor_mutex;
 		template<typename Installer, typename ... CallbackArgs>
-		static void install(JNIEnv *env, const jobject object, const char *signature, std::vector<jobject> &global_ref,  Installer &installer, const std::function<void(jobject, jmethodID, CallbackArgs ...)> &callback)
+		static void install(::JNIEnv *env, const jobject object, const char *signature, std::vector<jobject> &global_ref,  Installer &installer, const std::function<void(jobject, jmethodID, CallbackArgs ...)> &callback)
 		{
 			try
 			{
@@ -76,7 +76,7 @@ namespace TRN4JAVA
 			}
 		}
 		template<typename Notify, typename Installer, typename ... CallbackArgs>
-		static void install(JNIEnv *env, const jobject object, const char *signature, std::vector<jobject> &global_ref,  Installer &installer, const std::function<void(jobject, jmethodID, CallbackArgs ...)> &callback, Notify &notify)
+		static void install(::JNIEnv *env, const jobject object, const char *signature, std::vector<jobject> &global_ref,  Installer &installer, const std::function<void(jobject, jmethodID, CallbackArgs ...)> &callback, Notify &notify)
 		{
 			try
 			{
@@ -112,10 +112,10 @@ namespace TRN4JAVA
 			}
 		}
 		template<typename Notify1, typename Notify2, typename Installer, typename ... CallbackArgs>
-		static void install(JNIEnv *env, const jobject object,const char *signature, std::vector<jobject> &global_ref, Installer &installer,
+		static void install(::JNIEnv *env, const jobject object,const char *signature, std::vector<jobject> &global_ref, Installer &installer,
 			const std::function<void(jobject, jmethodID, CallbackArgs ...)> &callback, Notify1 &notify1, Notify2 &notify2)
 		{
-			TRACE_LOGGER;
+			TRN4JAVA::JNIEnv::set(env);
 			try
 			{
 				jmethodID callback_id = env->GetMethodID(env->GetObjectClass(object), "callback", signature);
@@ -155,10 +155,10 @@ namespace TRN4JAVA
 			}
 		}
 		template<typename Notify, typename ... NotifyArgs>
-		static void notify(JNIEnv *env, jobject object, const unsigned long long &simulation_id, const std::vector<jobject> &global_ref, Notify &notify, NotifyArgs ... args)
+		static void notify(::JNIEnv *env, jobject object, const unsigned long long &simulation_id, const std::vector<jobject> &global_ref, Notify &notify, NotifyArgs ... args)
 		{
-			//env->MonitorEnter(object);
-			TRACE_LOGGER;
+			env->MonitorEnter(object);
+			TRN4JAVA::JNIEnv::set(env);
 			try
 			{
 				jobject target = NULL;
@@ -194,7 +194,7 @@ namespace TRN4JAVA
 			{
 				ERROR_LOGGER << e.what(); env->ThrowNew(env->FindClass("java/lang/Exception"), e.what());
 			}
-			//env->MonitorExit(object);
+			env->MonitorExit(object);
 		}
 
 		// For generic types that are functors, delegate to its 'operator()'

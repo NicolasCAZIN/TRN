@@ -94,7 +94,8 @@
       </Message>
     </PostBuildEvent>
     <CustomBuildStep>
-      <Command>javac TRN4JAVA\*.java &amp;&amp; jar cvmf MANIFEST.MF  $(OutDir)\$(ProjectName).jar TRN4JAVA\*.class TRN4JAVA\*.java&amp;&amp;del TRN4JAVA\*.class</Command>
+      <Command>javac TRN4JAVA\*.java
+jar cvmf MANIFEST.MF  $(OutDir)\$(ProjectName).jar TRN4JAVA\*.class TRN4JAVA\*.java</Command>
     </CustomBuildStep>
     <CustomBuildStep>
       <TreatOutputAsContent>true</TreatOutputAsContent>
@@ -148,7 +149,8 @@
       </Message>
     </PostBuildEvent>
     <CustomBuildStep>
-      <Command>javac TRN4JAVA\*.java &amp;&amp; jar cvmf MANIFEST.MF  $(OutDir)\$(ProjectName).jar TRN4JAVA\*.class TRN4JAVA\*.java&amp;&amp;del TRN4JAVA\*.class</Command>
+      <Command>javac TRN4JAVA\*.java
+jar cvmf MANIFEST.MF  $(OutDir)\$(ProjectName).jar TRN4JAVA\*.class TRN4JAVA\*.java</Command>
     </CustomBuildStep>
     <CustomBuildStep>
       <TreatOutputAsContent>true</TreatOutputAsContent>

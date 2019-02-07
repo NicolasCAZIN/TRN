@@ -165,7 +165,6 @@ void TRN::Engine::Proxy::process(const TRN::Engine::Message<TRN::Engine::Tag::ST
 		DEBUG_LOGGER << "PROXY #" << std::to_string(handle->number) << " sent TERMINATED to workers";
 		handle->to_frontend->stop();
 		//handle->dispatcher->dispose();
-		stop();
 		DEBUG_LOGGER <<   "PROXY #"  << std::to_string(handle->number) << " JOINED" ;
 
 	}

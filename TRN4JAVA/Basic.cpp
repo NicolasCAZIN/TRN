@@ -27,7 +27,7 @@
 
 void Java_TRN4JAVA_Basic_00024Engine_initialize(JNIEnv *env, jclass jclazz)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 	try
 	{
 		TRN4JAVA::JNIEnv::set(env);
@@ -40,7 +40,7 @@ void Java_TRN4JAVA_Basic_00024Engine_initialize(JNIEnv *env, jclass jclazz)
 }
 void Java_TRN4JAVA_Basic_00024Engine_uninitialize(JNIEnv *env, jclass jclazz)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 	try
 	{
 		TRN4CPP::Engine::uninitialize();
@@ -52,7 +52,7 @@ void Java_TRN4JAVA_Basic_00024Engine_uninitialize(JNIEnv *env, jclass jclazz)
 }
 void Java_TRN4JAVA_Basic_00024Engine_00024Backend_00024Local_initialize(JNIEnv *env, jclass jclazz, jintArray indices)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 	try
 	{
 		TRN4JAVA::JNIEnv::set(env);
@@ -65,7 +65,7 @@ void Java_TRN4JAVA_Basic_00024Engine_00024Backend_00024Local_initialize(JNIEnv *
 }
 void Java_TRN4JAVA_Basic_00024Engine_00024Backend_00024Remote_initialize(JNIEnv *env, jclass jclazz, jstring host, jint port)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 	try
 	{
 		TRN4JAVA::JNIEnv::set(env);
@@ -79,7 +79,7 @@ void Java_TRN4JAVA_Basic_00024Engine_00024Backend_00024Remote_initialize(JNIEnv 
 
 void Java_TRN4JAVA_Basic_00024Engine_00024Backend_00024Distributed_initialize(JNIEnv *env, jclass jclazz, jobjectArray args)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 	try
 	{
 		TRN4JAVA::JNIEnv::set(env);
@@ -102,7 +102,7 @@ void Java_TRN4JAVA_Basic_00024Engine_00024Backend_00024Distributed_initialize(JN
 }
 void Java_TRN4JAVA_Basic_00024Logging_00024Severity_00024Trace_setup(JNIEnv *env, jclass jclazz)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 	try
 	{
 		TRN4CPP::Logging::Severity::Trace::setup();
@@ -114,7 +114,7 @@ void Java_TRN4JAVA_Basic_00024Logging_00024Severity_00024Trace_setup(JNIEnv *env
 }
 void Java_TRN4JAVA_Basic_00024Logging_00024Severity_00024Debug_setup(JNIEnv *env, jclass jclazz)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 	try
 	{
 		TRN4CPP::Logging::Severity::Debug::setup();
@@ -127,7 +127,7 @@ void Java_TRN4JAVA_Basic_00024Logging_00024Severity_00024Debug_setup(JNIEnv *env
 
 void Java_TRN4JAVA_Basic_00024Logging_00024Severity_00024Information_setup(JNIEnv *env, jclass jclazz)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 	try
 	{
 		TRN4CPP::Logging::Severity::Information::setup();
@@ -139,7 +139,7 @@ void Java_TRN4JAVA_Basic_00024Logging_00024Severity_00024Information_setup(JNIEn
 }
 void Java_TRN4JAVA_Basic_00024Logging_00024Severity_00024Warning_setup(JNIEnv *env, jclass jclazz)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 	try
 	{
 		TRN4CPP::Logging::Severity::Warning::setup();
@@ -151,7 +151,7 @@ void Java_TRN4JAVA_Basic_00024Logging_00024Severity_00024Warning_setup(JNIEnv *e
 }
 void Java_TRN4JAVA_Basic_00024Logging_00024Severity_00024Error_setup(JNIEnv *env, jclass jclazz)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 	try
 	{
 		TRN4CPP::Logging::Severity::Error::setup();
@@ -164,7 +164,7 @@ void Java_TRN4JAVA_Basic_00024Logging_00024Severity_00024Error_setup(JNIEnv *env
 
 jlong Java_TRN4JAVA_Basic_00024Simulation_encode(JNIEnv *env, jclass jclazz, jobject identifier)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 
 	unsigned long long simulation_id;
 
@@ -195,7 +195,7 @@ jlong Java_TRN4JAVA_Basic_00024Simulation_encode(JNIEnv *env, jclass jclazz, job
 
 jobject Java_TRN4JAVA_Basic_00024Simulation_decode(JNIEnv *env, jclass _jclass, jlong simulation_id)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 	try
 	{
 		unsigned short condition_number;
@@ -235,7 +235,7 @@ jobject Java_TRN4JAVA_Basic_00024Simulation_decode(JNIEnv *env, jclass _jclass, 
 
 jlong Java_TRN4JAVA_Basic_00024Simulation_00024Evaluation_encode(JNIEnv *env, jclass jclazz, jobject identifier)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 
 	unsigned long long evaluation_id;
 
@@ -271,7 +271,7 @@ jlong Java_TRN4JAVA_Basic_00024Simulation_00024Evaluation_encode(JNIEnv *env, jc
 
 jobject Java_TRN4JAVA_Basic_00024Simulation_00024Evaluation_decode(JNIEnv *env, jclass _jclass, jlong evaluation_id)
 {
-	TRACE_LOGGER;
+	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
 	try
 	{
 		unsigned short trial_number;

@@ -470,6 +470,5 @@ void TRN::Engine::Node::body()
 		ERROR_LOGGER << error.message;
 	
 		locked->send(error, 0);
-		stop();
 	}
 }

@@ -71,3 +71,6 @@ Temporary Items
 *.jar
 *.class
 *.cache
+*.idb
+*.ipdb
+*.iobj

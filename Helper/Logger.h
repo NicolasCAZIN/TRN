@@ -7,7 +7,7 @@ namespace TRN
 {
 	namespace Helper
 	{
-		class  HELPER_EXPORT Logger
+		class   Logger
 		{
 		public:
 			enum  Severity
@@ -19,16 +19,16 @@ namespace TRN
 				ERROR_LEVEL
 			};
 		public:
-			 Logger( const TRN::Helper::Logger::Severity  &severity, const std::string &module);
-			 virtual ~Logger();
+			HELPER_EXPORT Logger( const TRN::Helper::Logger::Severity  &severity, const std::string &module);
+			HELPER_EXPORT virtual ~Logger();
 
 		private :
 			class Handle;
 			std::unique_ptr<Handle> handle;
 		
 		public :
-			std::ostream &ostream();
-			static void  setup(const TRN::Helper::Logger::Severity  &severity, const bool &exit_on_error = true);
+			std::ostream HELPER_EXPORT &ostream();
+			static void  HELPER_EXPORT setup(const TRN::Helper::Logger::Severity  &severity, const bool &exit_on_error = true);
 		};
 	}
 }
