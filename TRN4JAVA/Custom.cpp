@@ -13,8 +13,9 @@
 #include "TRN4JAVA_Custom_Simulation_Reservoir_Readout.h"
 #include "TRN4JAVA_Custom_Simulation_Reservoir_Recurrent.h"
 #include "TRN4JAVA_Custom_Simulation_Reservoir_Weights.h"
-#include "TRN4JAVA_Custom_Simulation_Scheduler.h"
+#include "TRN4JAVA_Custom_Simulation_Scheduler.h" 
 #include "TRN4JAVA_Custom_Simulation_Scheduler_Mutator.h"
+
 
 #include "TRN4CPP/Custom.h"
 #include "JNIEnv.h"
