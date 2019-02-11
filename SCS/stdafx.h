@@ -1,5 +1,7 @@
 #pragma once 
 
+#include <zmq.hpp>
+
 //#include <opencv2/video/tracking.hpp>
 #include <boost/dll/import.hpp>
 #include <boost/tokenizer.hpp>
@@ -20,4 +22,5 @@
 #include <set>
 #include <random>
 #include <queue>
+#include <memory>
 #include <jni.h>

@@ -49,6 +49,7 @@ void Java_TRN4SCS_Sequences_declare(JNIEnv *env, jclass klass, jstring label, js
 
 void  Sequences::callback_variable(const std::string &label, const std::string &tag)
 {
+	
 	auto key = std::make_pair(label, tag);
 	std::unique_lock<std::mutex> lock(mutex);
 	auto &matrix = storage[key];

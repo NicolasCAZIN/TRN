@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ZEROMQ_PATH)\include;$(CPPZMQ_PATH)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+	  <AdditionalLibraryDirectories>$(ZEROMQ_PATH)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+	 <!-- <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">opencv_core401d.lib;opencv_highgui401d.lib;opencv_imgproc401d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+	  <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">opencv_core401.lib;opencv_highgui401.lib;opencv_imgproc401.lib;%(AdditionalDependencies)</AdditionalDependencies>-->
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

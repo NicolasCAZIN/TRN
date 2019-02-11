@@ -187,8 +187,9 @@ namespace TRN4JAVA
 						target = *lookup_it;
 					}*/
 				}
-
+				env->MonitorEnter(target);
 				notify[target](args...);
+				env->MonitorExit(target);
 			}
 			catch (std::exception &e)
 			{

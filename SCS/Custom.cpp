@@ -6,7 +6,7 @@
 
 static const std::string FILENAME_TOKEN = "FILENAME";
 
-struct Custom::Handle
+class Custom::Handle
 {
 	/*std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> notify_position;
 	std::function<void(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)> notify_stimulus;
@@ -62,10 +62,12 @@ struct Position
 
 
 static TRN::Helper::Queue<Position> position;
-
+//REP
 void Custom::callback_position(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
 {
-	
+	send()
+
+	recv()
 	/*
 	handle->seed += rows;
 	handle->notify_position(simulation_id, evaluation_id, jittered_position, rows, cols);

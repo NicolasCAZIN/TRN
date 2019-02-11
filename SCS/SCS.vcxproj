@@ -15,7 +15,7 @@
     <ProjectGuid>{5305E02B-5F9A-4EFA-81ED-86F88AD7BE6F}</ProjectGuid>
     <RootNamespace>SCS</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
-    <ProjectName>TRN4SCS</ProjectName>
+    <ProjectName>SCS</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -41,20 +41,24 @@
     <Import Project="..\TRN.props" />
     <Import Project="..\Boost.props" />
     <Import Project="..\Java-JNI.props" />
+    <Import Project="..\ZeroMQ.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\TRN.props" />
     <Import Project="..\Boost.props" />
     <Import Project="..\Java-JNI.props" />
+    <Import Project="..\ZeroMQ.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <CustomBuildBeforeTargets>Link</CustomBuildBeforeTargets>
+    <CustomBuildBeforeTargets>
+    </CustomBuildBeforeTargets>
     <ExtensionsToDeleteOnClean>*.class;*.cdf;*.cache;*.obj;*.obj.enc;*.ilk;*.ipdb;*.iobj;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml;*.metagen;*.bi</ExtensionsToDeleteOnClean>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <CustomBuildBeforeTargets>Link</CustomBuildBeforeTargets>
+    <CustomBuildBeforeTargets>
+    </CustomBuildBeforeTargets>
     <ExtensionsToDeleteOnClean>*.class;*.cdf;*.cache;*.obj;*.obj.enc;*.ilk;*.ipdb;*.iobj;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml;*.metagen;*.bi</ExtensionsToDeleteOnClean>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -63,7 +67,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -73,49 +77,62 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>javac -h . TRN4SCS\Sequences.java  TRN4SCS\Custom.java</Command>
-      <Message>Generating JNI interfaces</Message>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>javac TRN4SCS\*.java
-jar cvmf MANIFEST.MF  $(OutDir)\$(ProjectName).jar TRN4SCS\*.class TRN4SCS\*.java</Command>
-      <Message>Generating $(OutDir)\$(ProjectName).jar file</Message>
-      <Outputs>$(OutDir)\$(ProjectName).jar</Outputs>
-      <TreatOutputAsContent>true</TreatOutputAsContent>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
+      <Outputs>
+      </Outputs>
+      <TreatOutputAsContent>
+      </TreatOutputAsContent>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <SupportJustMyCode>false</SupportJustMyCode>
     </ClCompile>
     <PreBuildEvent>
-      <Command>javac -h . TRN4SCS\Sequences.java  TRN4SCS\Custom.java</Command>
-      <Message>Generating JNI interfaces</Message>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>javac TRN4SCS\*.java
-jar cvmf MANIFEST.MF  $(OutDir)\$(ProjectName).jar TRN4SCS\*.class TRN4SCS\*.java</Command>
-      <Message>Generating $(OutDir)\$(ProjectName).jar file</Message>
-      <Outputs>$(OutDir)\$(ProjectName).jar</Outputs>
-      <TreatOutputAsContent>true</TreatOutputAsContent>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
+      <Outputs>
+      </Outputs>
+      <TreatOutputAsContent>
+      </TreatOutputAsContent>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Custom.h" />
     <ClInclude Include="scs_global.h" />
     <ClInclude Include="Sequences.h" />
+    <ClInclude Include="Server.h" />
+    <ClInclude Include="Server_impl.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TRN4SCS_Sequences.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Custom.cpp" />
     <ClCompile Include="Sequences.cpp" />
+    <ClCompile Include="Server.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
@@ -130,10 +147,6 @@ jar cvmf MANIFEST.MF  $(OutDir)\$(ProjectName).jar TRN4SCS\*.class TRN4SCS\*.jav
     <ProjectReference Include="..\TRN4JAVA\TRN4JAVA.vcxproj">
       <Project>{ee3598a2-0a17-4a3e-b168-17be77b1f2c2}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="TRN4SCS\Custom.java" />
-    <None Include="TRN4SCS\Sequences.java" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

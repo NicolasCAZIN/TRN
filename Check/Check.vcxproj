@@ -88,7 +88,7 @@
 SETLOCAL EnableExtensions
 SETLOCAL EnableDelayedExpansion
 
-FOR %%h IN (BOOST, OPENCV,  CUDA, MKL, MPI, STRTK, MATLAB, MEXPLUS) DO (
+FOR %%h IN (BOOST, OPENCV,  CUDA, MKL, MPI, STRTK, MATLAB, MEXPLUS, ZEROMQ) DO (
 CALL :check_path %%h_PATH
 )
 
@@ -147,7 +147,7 @@ EXIT 0</Command>
 SETLOCAL EnableExtensions
 SETLOCAL EnableDelayedExpansion
 
-FOR %%h IN (BOOST, OPENCV,  CUDA, MKL, MPI, STRTK, MATLAB, MEXPLUS) DO (
+FOR %%h IN (BOOST, OPENCV,  CUDA, MKL, MPI, STRTK, MATLAB, MEXPLUS, ZEROMQ) DO (
 CALL :check_path %%h_PATH
 )
 

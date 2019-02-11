@@ -13,8 +13,8 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Fichiers sources\Java">
-      <UniqueIdentifier>{b69f1f5f-af0e-462b-a1bb-5fe828165ae7}</UniqueIdentifier>
+    <Filter Include="Fichiers d%27en-tête\private">
+      <UniqueIdentifier>{1d2f2862-3486-467e-8662-abb69dfc78d0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -33,6 +33,12 @@
     <ClInclude Include="TRN4SCS_Sequences.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="Server_impl.h">
+      <Filter>Fichiers d%27en-tête\private</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>Fichiers d%27en-tête\private</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -44,13 +50,8 @@
     <ClCompile Include="Sequences.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="TRN4SCS\Custom.java">
-      <Filter>Fichiers sources\Java</Filter>
-    </None>
-    <None Include="TRN4SCS\Sequences.java">
-      <Filter>Fichiers sources\Java</Filter>
-    </None>
+    <ClCompile Include="Server.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
