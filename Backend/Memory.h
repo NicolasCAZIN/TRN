@@ -14,7 +14,7 @@ namespace TRN
 
 		public :
 			virtual ~Memory();
-
+			class Area;
 		public:
 			virtual void align(const std::size_t &unaligned, std::size_t &aligned) = 0;
 			virtual void allocate(void **block, const std::size_t &depth, const std::size_t &size) = 0;
