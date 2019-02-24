@@ -180,19 +180,19 @@ namespace TRN
 		template <enum TRN::Engine::Tag>
 		struct Message
 		{
-			virtual ~Message() {}
+			
 		};
 
 		template <>
 		struct Message<TRN::Engine::Tag::START> : public FromFrontend
 		{
-			virtual ~Message() {}
+			
 		};
 
 		template <>
 		struct Message<TRN::Engine::Tag::STOP> : public FromFrontend
 		{
-			virtual ~Message() {}
+			
 		};
 
 		template <>
@@ -205,7 +205,7 @@ namespace TRN
 				ar & boost::serialization::base_object<FromBackend>(*this);
 				ar & number;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template <>
@@ -216,7 +216,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<FromBackend>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template <>
 		struct Message<TRN::Engine::Tag::CACHED> : public FromBackend
@@ -229,7 +229,7 @@ namespace TRN
 				ar & boost::serialization::base_object<FromBackend>(*this);
 				ar & checksums;
 			}
-			virtual ~Message() {}
+			
 		};
 		template <>
 		struct Message<TRN::Engine::Tag::WORKER> : public FromBackend
@@ -246,7 +246,7 @@ namespace TRN
 				ar & name;
 				ar & index;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template <>
@@ -257,7 +257,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Simulation>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template <>
 		struct Message<TRN::Engine::Tag::ALLOCATED> : public Simulation
@@ -267,7 +267,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Simulation>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template <>
 		struct Message<TRN::Engine::Tag::DEALLOCATED> : public Simulation
@@ -277,7 +277,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Simulation>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		/*template <>
 		struct Message<TRN::Engine::Tag::READY> : public Header
@@ -298,7 +298,7 @@ namespace TRN
 				ar & boost::serialization::base_object<FromFrontend>(*this);
 				ar & terminate;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -309,7 +309,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Simulation>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -320,7 +320,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Simulation>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -340,7 +340,7 @@ namespace TRN
 				ar & expected;
 				ar & reset_readout;
 			}
-			virtual ~Message() {}
+			
 		};
 	
 		template<>
@@ -364,7 +364,7 @@ namespace TRN
 				ar & autonomous;
 				ar & supplementary_generations;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -385,7 +385,7 @@ namespace TRN
 				ar & tag;
 				ar & observations;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -403,7 +403,7 @@ namespace TRN
 				ar & tag;
 				ar & labels;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		struct Setup : public Simulation
@@ -431,7 +431,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Setup>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -447,7 +447,7 @@ namespace TRN
 				ar & train;
 				ar & initialization;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -458,7 +458,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Setup>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::SETUP_SCHEDULING> : public Simulation
@@ -468,7 +468,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Simulation>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -479,7 +479,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Simulation>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -490,7 +490,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Simulation>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		struct ConfigureMeasurement : public Simulation
@@ -527,7 +527,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<ConfigureMeasurement>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_FRECHET_DISTANCE> : public ConfigureFrechetDistance
@@ -537,7 +537,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<ConfigureFrechetDistance>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_READOUT_CUSTOM> : public ConfigureMeasurement
@@ -547,7 +547,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<ConfigureMeasurement>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> : public ConfigureMeasurement
@@ -557,7 +557,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<ConfigureMeasurement>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_FRECHET_DISTANCE> : public ConfigureFrechetDistance
@@ -567,7 +567,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<ConfigureFrechetDistance>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_MEASUREMENT_POSITION_CUSTOM> : public ConfigureMeasurement
@@ -577,7 +577,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<ConfigureMeasurement>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -607,7 +607,7 @@ namespace TRN
 				ar & mini_batch_size;
 				ar & seed;
 			}
-			virtual ~Message() {}
+			
 		};
 
 
@@ -683,7 +683,7 @@ namespace TRN
 				ar & cx;
 				ar & cy;
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_ENCODER_CUSTOM> : public Simulation
@@ -700,7 +700,7 @@ namespace TRN
 				ar & batch_size;
 
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -721,7 +721,7 @@ namespace TRN
 				ar & cy;
 				ar & K;
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MODEL> : public Kernel
@@ -738,7 +738,7 @@ namespace TRN
 				ar & cy;
 				ar & K;
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_DECODER_KERNEL_MAP> : public Kernel
@@ -752,7 +752,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Kernel>(*this);
 				ar & response;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -763,7 +763,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Loop>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -777,7 +777,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Loop>(*this);
 				ar & tag;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -788,7 +788,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Loop>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -802,7 +802,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & epochs;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -830,7 +830,7 @@ namespace TRN
 				ar & discount;
 				ar & tag;
 			}
-			virtual ~Message() {}
+			
 		};
 
 
@@ -847,7 +847,7 @@ namespace TRN
 				ar & tag;
 				ar & seed;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -860,7 +860,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & seed;
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE> : public Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE>
@@ -875,7 +875,7 @@ namespace TRN
 				ar & size;
 				ar & rate;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -889,7 +889,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_REVERSE>>(*this);
 				ar & repetition;
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_CUSTOM> : public Message<TRN::Engine::Tag::CONFIGURE_MUTATOR_SHUFFLE>
@@ -938,7 +938,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Uniform>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -949,7 +949,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Gaussian>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -960,7 +960,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Simulation>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -971,7 +971,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Uniform>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -982,7 +982,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Gaussian>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -993,7 +993,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Simulation>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		
@@ -1006,7 +1006,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Uniform>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1017,7 +1017,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Gaussian>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1028,7 +1028,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Simulation>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		struct Dimensions
@@ -1103,7 +1103,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Result>(*this);
 				ar & boost::serialization::base_object<Matrix>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1114,7 +1114,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Message<TRN::Engine::Tag::POSITION>>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1132,7 +1132,7 @@ namespace TRN
 				ar & durations;
 				ar & is_from_mutator;
 			}
-			virtual ~Message() {}
+			
 		};
 
 
@@ -1151,7 +1151,7 @@ namespace TRN
 				ar & durations;
 				ar & seed;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1170,7 +1170,7 @@ namespace TRN
 				ar & rows;
 				ar & cols;
 			}
-			virtual ~Message() {}
+			
 		};
 
 
@@ -1186,7 +1186,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & boost::serialization::base_object<Dimensions>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1198,7 +1198,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & boost::serialization::base_object<Dimensions>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1210,7 +1210,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & boost::serialization::base_object<Dimensions>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 
@@ -1223,7 +1223,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & boost::serialization::base_object<Matrix>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1235,7 +1235,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & boost::serialization::base_object<Matrix>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1247,7 +1247,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & boost::serialization::base_object<Matrix>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1267,7 +1267,7 @@ namespace TRN
 				ar & batch;
 		
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::STATES> : public Message<TRN::Engine::Tag::WEIGHTS>
@@ -1277,7 +1277,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Message<TRN::Engine::Tag::WEIGHTS>>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 	
@@ -1297,7 +1297,7 @@ namespace TRN
 				ar & gflops_per_second;
 				ar & phase;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1308,7 +1308,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Result>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::TESTED> : public Result
@@ -1318,7 +1318,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Result>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::PRIMED> : public Result
@@ -1328,7 +1328,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Result>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 	
 		
@@ -1341,7 +1341,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Result>(*this);
 				ar & boost::serialization::base_object<Matrix>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::MEASUREMENT_READOUT_FRECHET_DISTANCE> : public Result, public Matrix
@@ -1352,7 +1352,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Result>(*this);
 				ar & boost::serialization::base_object<Matrix>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::MEASUREMENT_READOUT_CUSTOM> :  public Result, public Measurement
@@ -1363,7 +1363,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Result>(*this);
 				ar & boost::serialization::base_object<Measurement>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::MEASUREMENT_POSITION_MEAN_SQUARE_ERROR> : public Result, public Matrix
@@ -1374,7 +1374,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Result>(*this);
 				ar & boost::serialization::base_object<Matrix>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::MEASUREMENT_POSITION_FRECHET_DISTANCE> : public Result, public Matrix
@@ -1385,7 +1385,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Result>(*this);
 				ar & boost::serialization::base_object<Matrix>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 		template<>
 		struct Message<TRN::Engine::Tag::MEASUREMENT_POSITION_CUSTOM> :public Result, public Measurement
@@ -1396,7 +1396,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Result>(*this);
 				ar & boost::serialization::base_object<Measurement>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 
@@ -1411,7 +1411,7 @@ namespace TRN
 				ar & boost::serialization::base_object<Simulation>(*this);
 				ar & message;
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1422,7 +1422,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Message<TRN::Engine::Tag::LOG_INFORMATION>>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 		template<>
@@ -1433,7 +1433,7 @@ namespace TRN
 			{
 				ar & boost::serialization::base_object<Message<TRN::Engine::Tag::LOG_INFORMATION>>(*this);
 			}
-			virtual ~Message() {}
+			
 		};
 
 

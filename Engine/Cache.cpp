@@ -58,16 +58,18 @@ TRN::Engine::Cache::~Cache()
 std::set<unsigned int> TRN::Engine::Cache::cached()
 {
 #ifdef SHM_CACHE
-	segment.atomic_func([&]() -> std::set<unsigned int>
-	{
-		std::set<unsigned int> result;
+	std::set<unsigned int> result;
+	segment.atomic_func([&]() 
+		{
+	
 		auto map = segment.find_or_construct<Map>(CHECKSUMS_IDENTIFIER)(segment.get_segment_manager());
 		for (auto entry : *map)
 		{
 			result.insert(entry.first);
 		}
-		return result;
+
 	});
+	return result;
 #else
 	std::unique_lock<std::mutex> lock(mutex);
 	std::set<unsigned int> result;

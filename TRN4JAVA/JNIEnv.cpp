@@ -1,54 +1,61 @@
 #include "stdafx.h"
 #include "JNIEnv.h"
+#include "Helper/Logger.h"
 
-static JavaVM *vm = NULL;
+static JavaVM *vm = nullptr;
+static std::mutex mutex;
 
-struct TLS_JNIEnv
+class TRN4JAVA::JNIEnv::Proxy::Handle
 {
-	bool _detach;
-	JNIEnv *env;
+public:
+	::JNIEnv *env;
+	std::unique_lock<std::mutex> lock;
 
-	TLS_JNIEnv()
+	Handle() : lock(mutex)
 	{
-		assert(vm != NULL);
-		//	INFORMATION_LOGGER <<   "Attaching " << boost::this_thread::getid() ;
 		vm->AttachCurrentThread((void **)&env, NULL);
-		assert(env != NULL);
-		_detach = true;
 	}
 
-	TLS_JNIEnv(JNIEnv *e)
+	~Handle()
 	{
-		env = e;
-		_detach = false;
-	}
-
-	~TLS_JNIEnv()
-	{
-		if (_detach)
-		{
-			assert(vm != NULL);
-			//	INFORMATION_LOGGER <<   "Detaching " << boost::this_thread::getid() ;
-			vm->DetachCurrentThread();
-		}
+		vm->DetachCurrentThread();
 	}
 };
 
-static boost::thread_specific_ptr<TLS_JNIEnv> envs;
 
-::JNIEnv * TRN4JAVA::JNIEnv::get()
+
+TRN4JAVA::JNIEnv::Proxy::Proxy() : 
+	handle(std::make_unique<Handle>())
 {
-	TLS_JNIEnv *tenv = envs.get();
-	if (tenv == NULL) {
-		tenv = new TLS_JNIEnv();
-		envs.reset(tenv);
-	}
-	return tenv->env;
 }
 
-void TRN4JAVA::JNIEnv::set(::JNIEnv *env)
+TRN4JAVA::JNIEnv::Proxy::~Proxy()
 {
-	if (env->GetJavaVM(&vm) < 0)
-		throw std::runtime_error("Unable to obtain JVM instance");
-	envs.reset(new TLS_JNIEnv(env));
+	handle.reset();
+}
+
+TRN4JAVA::JNIEnv::Proxy::operator ::JNIEnv *()
+{
+	return handle->env;
+}
+
+::JNIEnv * TRN4JAVA::JNIEnv::Proxy:: operator->()
+{
+	return handle->env;
+}
+
+
+void TRN4JAVA::JNIEnv::declare(::JNIEnv *env)
+{
+	std::unique_lock<std::mutex> lock(mutex);
+	if (vm == nullptr)
+	{
+		if (env->GetJavaVM(&vm) < 0)
+			throw std::runtime_error("Unable to obtain JVM instance");
+		INFORMATION_LOGGER << "JVM instance obtained";
+	}
+	/*else
+	{
+		WARNING_LOGGER << "JVM instance already obtained";
+	}*/
 }

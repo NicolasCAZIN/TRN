@@ -12,7 +12,7 @@
 
 void Java_TRN4JAVA_Simplified_00024Simulation_compute(JNIEnv *env, jclass jclazz, jstring scenario_filename)
 {
-	TRACE_LOGGER; TRN4JAVA::JNIEnv::set(env);
+	TRACE_LOGGER; 
 	try
 	{
 		TRN4CPP::Simulation::compute(TRN4JAVA::Convert::to_string(env, scenario_filename));

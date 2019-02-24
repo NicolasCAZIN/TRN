@@ -65,9 +65,9 @@ static TRN::Helper::Queue<Position> position;
 //REP
 void Custom::callback_position(const unsigned long long &simulation_id, const unsigned long long &evaluation_id, const std::vector<float> &position, const std::size_t &rows, const std::size_t &cols)
 {
-	send()
+/*	send()
 
-	recv()
+	recv()*/
 	/*
 	handle->seed += rows;
 	handle->notify_position(simulation_id, evaluation_id, jittered_position, rows, cols);

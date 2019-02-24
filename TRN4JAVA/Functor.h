@@ -47,7 +47,7 @@ namespace TRN4JAVA
 			try
 			{
 				jmethodID callback_id = env->GetMethodID(env->GetObjectClass(object), "callback", signature);
-				if (callback_id == 0)
+				if (callback_id == nullptr)
 				{
 					if (env->ExceptionCheck())
 					{
@@ -115,7 +115,7 @@ namespace TRN4JAVA
 		static void install(::JNIEnv *env, const jobject object,const char *signature, std::vector<jobject> &global_ref, Installer &installer,
 			const std::function<void(jobject, jmethodID, CallbackArgs ...)> &callback, Notify1 &notify1, Notify2 &notify2)
 		{
-			TRN4JAVA::JNIEnv::set(env);
+			
 			try
 			{
 				jmethodID callback_id = env->GetMethodID(env->GetObjectClass(object), "callback", signature);
@@ -158,7 +158,7 @@ namespace TRN4JAVA
 		static void notify(::JNIEnv *env, jobject object, const unsigned long long &simulation_id, const std::vector<jobject> &global_ref, Notify &notify, NotifyArgs ... args)
 		{
 			env->MonitorEnter(object);
-			TRN4JAVA::JNIEnv::set(env);
+			
 			try
 			{
 				jobject target = NULL;

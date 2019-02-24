@@ -6,7 +6,23 @@ namespace TRN4JAVA
 {
 	namespace JNIEnv
 	{
-		::JNIEnv *get();
-		void  set(::JNIEnv *env);
-	};
+		class Proxy
+		{
+		private :
+			class Handle;
+			std::unique_ptr<Handle> handle;
+
+		public :
+			Proxy();
+			~Proxy();
+
+		public:
+			 operator ::JNIEnv * ();
+			 ::JNIEnv * operator->();
+		};
+
+		void  declare(::JNIEnv *env);
+	}
+
+
 };
