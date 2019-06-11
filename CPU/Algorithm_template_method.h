@@ -484,7 +484,7 @@ void TRN::CPU::Algorithm<Implementation>::encode_placecells_model(
 	}
 }
 
-template <TRN::CPU::Implementation Implementation, typename Parameter>
+template <TRN::CPU::Implementation Implementation, bool use_noise, typename Parameter>
 static inline void decode_placecells_bayesian
 (const std::size_t &batch_size, const std::size_t &place_cells_number,
 	const std::size_t &rows, const std::size_t &cols,
@@ -585,27 +585,31 @@ static inline void decode_placecells_bayesian
 		{
 			vslNewStream(&streams[tid], VSL_BRNG_SFMT19937, seed);
 		}
+
+	
 #pragma omp parallel for 
-		for (int k = 0; k < K; k++)
-		{
-			const auto batch = k / roi_rows;
-			const auto roi_row = k % roi_rows;
-			const auto roi_row_offset = roi_row_begin[batch];
-			auto roi_valid_cols = roi_col_end[batch] - roi_col_begin[batch];
-			const auto stride = batched_location_probability_strides[batch];
-			const auto location_probability = &batched_location_probability[batch][roi_row * stride];
-			auto tid = omp_get_thread_num();
+			for (int k = 0; k < K; k++)
+			{
+				const auto batch = k / roi_rows;
+				const auto roi_row = k % roi_rows;
+				const auto roi_row_offset = roi_row_begin[batch];
+				auto roi_valid_cols = roi_col_end[batch] - roi_col_begin[batch];
+				const auto stride = batched_location_probability_strides[batch];
+				const auto location_probability = &batched_location_probability[batch][roi_row * stride];
+				auto tid = omp_get_thread_num();
 
-			auto by = batched_y_grid_centered[batch][roi_row];
+				auto by = batched_y_grid_centered[batch][roi_row];
 
-			auto ax = batched_direction[batch][0];
-			auto ay = batched_direction[batch][1];
+				auto ax = batched_direction[batch][0];
+				auto ay = batched_direction[batch][1];
 
-			if (cos_half_angle < 1.0f && ax * ax + ay * ay > 0.0f)
-				inside_circle_sector<Implementation>(streams[tid], scale, cos_half_angle, ax, ay, batched_x_grid_centered[batch], by, r2, roi_valid_cols, location_probability);
-			else
-				inside_circle<Implementation>(streams[tid], scale, batched_x_grid_centered[batch], by, r2, roi_valid_cols, location_probability);
-		}
+				if (cos_half_angle < 1.0f && ax * ax + ay * ay > 0.0f)
+					inside_circle_sector<Implementation, use_noise>(streams[tid], scale, cos_half_angle, ax, ay, batched_x_grid_centered[batch], by, r2, roi_valid_cols, location_probability);
+				else
+					inside_circle<Implementation, use_noise>(streams[tid], scale, batched_x_grid_centered[batch], by, r2, roi_valid_cols, location_probability);
+			}
+		
+
 #pragma omp parallel for
 		for (int tid = 0; tid < streams.size(); tid++)
 		{
@@ -639,28 +643,56 @@ void TRN::CPU::Algorithm<Implementation>::decode_placecells_kernel_map
 		float **batched_y_grid_centered, const std::size_t *batched_y_grid_centered_stride,
 		float **batched_location_probability, const std::size_t *batched_location_probability_strides)
 {
-	decode_placecells_bayesian<Implementation>(
-		batch_size, place_cells_number,
-		rows, cols,
-		roi_rows, roi_cols,
-		roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
-		radius,
-		cos_half_angle,
-		scale,
-		sigma,
-		seed,
-		Map(firing_rate_map, firing_rate_maps_stride),
-		x_min, x_max - x_min, y_min, y_max - y_min,
-		x_grid, x_grid_stride,
-		y_grid, y_grid_stride,
-		batched_previous_position, batched_previous_position_stride,
-		batched_current_position, batched_current_position_stride,
-		batched_predicted_activations, batched_predicted_activations_stride,
-		batched_direction, batched_direction_stride,
-		batched_x_grid_centered, batched_x_grid_centered_stride,
-		batched_y_grid_centered, batched_y_grid_centered_stride,
-		batched_location_probability, batched_location_probability_strides,
-		handle->temp.data());
+	if (scale > 0.0f)
+	{
+		decode_placecells_bayesian<Implementation, true>(
+			batch_size, place_cells_number,
+			rows, cols,
+			roi_rows, roi_cols,
+			roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
+			radius,
+			cos_half_angle,
+			scale,
+			sigma,
+			seed,
+			Map(firing_rate_map, firing_rate_maps_stride),
+			x_min, x_max - x_min, y_min, y_max - y_min,
+			x_grid, x_grid_stride,
+			y_grid, y_grid_stride,
+			batched_previous_position, batched_previous_position_stride,
+			batched_current_position, batched_current_position_stride,
+			batched_predicted_activations, batched_predicted_activations_stride,
+			batched_direction, batched_direction_stride,
+			batched_x_grid_centered, batched_x_grid_centered_stride,
+			batched_y_grid_centered, batched_y_grid_centered_stride,
+			batched_location_probability, batched_location_probability_strides,
+			handle->temp.data());
+	}
+	else
+	{
+		decode_placecells_bayesian<Implementation, false>(
+			batch_size, place_cells_number,
+			rows, cols,
+			roi_rows, roi_cols,
+			roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
+			radius,
+			cos_half_angle,
+			scale,
+			sigma,
+			seed,
+			Map(firing_rate_map, firing_rate_maps_stride),
+			x_min, x_max - x_min, y_min, y_max - y_min,
+			x_grid, x_grid_stride,
+			y_grid, y_grid_stride,
+			batched_previous_position, batched_previous_position_stride,
+			batched_current_position, batched_current_position_stride,
+			batched_predicted_activations, batched_predicted_activations_stride,
+			batched_direction, batched_direction_stride,
+			batched_x_grid_centered, batched_x_grid_centered_stride,
+			batched_y_grid_centered, batched_y_grid_centered_stride,
+			batched_location_probability, batched_location_probability_strides,
+			handle->temp.data());
+	}
 }
 
 template <TRN::CPU::Implementation Implementation>
@@ -690,28 +722,56 @@ void TRN::CPU::Algorithm<Implementation>::decode_placecells_kernel_model
 	float **batched_location_probability, const std::size_t *batched_location_probability_strides
 )
 {
-	decode_placecells_bayesian<Implementation>(
-		batch_size, place_cells_number,
-		rows, cols,
-		roi_rows, roi_cols,
-		roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
-		radius,
-		cos_half_angle,
-		scale,
-		sigma,
-		seed,
-		Model(cx, cy, width, gx2w, gy2w, gx2w_strides, gy2w_strides),
-		x_min, x_max - x_min, y_min, y_max - y_min,
-		x_grid, x_grid_stride,
-		y_grid, y_grid_stride,
-		batched_previous_position, batched_previous_position_stride,
-		batched_current_position, batched_current_position_stride,
-		batched_predicted_activations, batched_predicted_activations_stride,
-		batched_direction, batched_direction_stride,
-		batched_x_grid_centered, batched_x_grid_centered_stride,
-		batched_y_grid_centered, batched_y_grid_centered_stride,
-		batched_location_probability, batched_location_probability_strides,
-		handle->temp.data());
+	if (scale > 0.0f)
+	{
+		decode_placecells_bayesian<Implementation, true>(
+			batch_size, place_cells_number,
+			rows, cols,
+			roi_rows, roi_cols,
+			roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
+			radius,
+			cos_half_angle,
+			scale,
+			sigma,
+			seed,
+			Model(cx, cy, width, gx2w, gy2w, gx2w_strides, gy2w_strides),
+			x_min, x_max - x_min, y_min, y_max - y_min,
+			x_grid, x_grid_stride,
+			y_grid, y_grid_stride,
+			batched_previous_position, batched_previous_position_stride,
+			batched_current_position, batched_current_position_stride,
+			batched_predicted_activations, batched_predicted_activations_stride,
+			batched_direction, batched_direction_stride,
+			batched_x_grid_centered, batched_x_grid_centered_stride,
+			batched_y_grid_centered, batched_y_grid_centered_stride,
+			batched_location_probability, batched_location_probability_strides,
+			handle->temp.data());
+	}
+	else
+	{
+		decode_placecells_bayesian<Implementation, false>(
+			batch_size, place_cells_number,
+			rows, cols,
+			roi_rows, roi_cols,
+			roi_row_begin, roi_row_end, roi_col_begin, roi_col_end,
+			radius,
+			cos_half_angle,
+			scale,
+			sigma,
+			seed,
+			Model(cx, cy, width, gx2w, gy2w, gx2w_strides, gy2w_strides),
+			x_min, x_max - x_min, y_min, y_max - y_min,
+			x_grid, x_grid_stride,
+			y_grid, y_grid_stride,
+			batched_previous_position, batched_previous_position_stride,
+			batched_current_position, batched_current_position_stride,
+			batched_predicted_activations, batched_predicted_activations_stride,
+			batched_direction, batched_direction_stride,
+			batched_x_grid_centered, batched_x_grid_centered_stride,
+			batched_y_grid_centered, batched_y_grid_centered_stride,
+			batched_location_probability, batched_location_probability_strides,
+			handle->temp.data());
+	}
 }
 template <TRN::CPU::Implementation Implementation>
 static inline void 	weighted_sum(
@@ -1093,8 +1153,19 @@ static inline void 	diff2(const typename TRN::CPU::Traits<Implementation>::type 
 		}
 	}
 }
+template <bool use_noise>
+static void initialize(VSLStreamStatePtr& stream, int size, float* noise, float a, float b)
+{
+	vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, size, noise, a, b);
+}
 
-template <TRN::CPU::Implementation Implementation>
+template <>
+static void initialize<false>(VSLStreamStatePtr& stream, int size, float* noise, float a, float b)
+{
+	std::fill(noise, noise + size, 0.0f);
+}
+
+template <TRN::CPU::Implementation Implementation, bool use_noise>
 static inline void 	inside_circle(VSLStreamStatePtr &stream, const float &scale, const float *bx, const float &by, const float &_r2, const std::size_t &cols, float *location_probability_row)
 {
 	//	 vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 1000, r, 0.0, scale);
@@ -1113,8 +1184,8 @@ static inline void 	inside_circle(VSLStreamStatePtr &stream, const float &scale,
 
 		for (; col + _8 - 1 < cols; col += _8)
 		{
-			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, _8, noise, 0.0, scale);
-
+			initialize<use_noise>(stream, _8, noise, 0.0, scale);
+	
 			auto _b0_x = load_ps(&bx[col + _0]);
 			auto dp_b2_0 = mul_add_ps(_b0_x, _b0_x, _b2_y);
 			auto in_0 = cmp_lt_ps(dp_b2_0, r2);
@@ -1161,7 +1232,7 @@ static inline void 	inside_circle(VSLStreamStatePtr &stream, const float &scale,
 		float noise[_4];
 		for (; col + _4 - 1 < cols; col += _4)
 		{
-			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, _4, noise, 0.0, scale);
+			initialize<use_noise>(stream, _4, noise, 0.0, scale);
 			auto _b0_x = load_ps(&bx[col + _0]);
 			auto dp_b2_0 = mul_add_ps(_b0_x, _b0_x, _b2_y);
 			auto in_0 = cmp_lt_ps(dp_b2_0, r2);
@@ -1189,7 +1260,7 @@ static inline void 	inside_circle(VSLStreamStatePtr &stream, const float &scale,
 		float noise[_2];
 		for (; col + _2 - 1 < cols; col += _2)
 		{
-			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, _2, noise, 0.0, scale);
+			initialize<use_noise>(stream, _2, noise, 0.0, scale);
 			auto _b0_x = load_ps(&bx[col + _0]);
 			auto dp_b2_0 = mul_add_ps(_b0_x, _b0_x, _b2_y);
 			auto in_0 = cmp_lt_ps(dp_b2_0, r2);
@@ -1207,7 +1278,7 @@ static inline void 	inside_circle(VSLStreamStatePtr &stream, const float &scale,
 		float noise[_1];
 		for (; col < cols; col += _1)
 		{
-			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, _1, noise, 0.0, scale);
+			initialize<use_noise>(stream, _1, noise, 0.0, scale);
 			auto _b0_x = load_ps(&bx[col + _0]);
 			auto dp_b2_0 = mul_add_ps(_b0_x, _b0_x, _b2_y);
 			auto in_0 = cmp_lt_ps(dp_b2_0, r2);
@@ -1217,7 +1288,7 @@ static inline void 	inside_circle(VSLStreamStatePtr &stream, const float &scale,
 }
 
 
-template <TRN::CPU::Implementation Implementation>
+template <TRN::CPU::Implementation Implementation, bool use_noise>
 static inline void 	inside_circle_sector(VSLStreamStatePtr &stream, const float &scale, const float &cos_half_angle, const float &ax, const float &ay, const float *bx, const float &by, const float &_r2, const std::size_t &cols,  float *location_probability_row)
 {
 	//	 vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 1000, r, 0.0, scale);
@@ -1238,7 +1309,7 @@ static inline void 	inside_circle_sector(VSLStreamStatePtr &stream, const float 
 
 		for (; col + _8 - 1 < cols; col += _8)
 		{
-			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, _8, noise, 0.0, scale);
+			initialize<use_noise>(stream, _8, noise, 0.0, scale);
 
 			auto _b0_x = load_ps(&bx[col + _0]);
 			auto dp_b2_0 = mul_add_ps(_b0_x, _b0_x, _b2_y);
@@ -1294,7 +1365,7 @@ static inline void 	inside_circle_sector(VSLStreamStatePtr &stream, const float 
 		float noise[_4];
 		for (; col + _4 - 1 < cols; col += _4)
 		{
-			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, _4, noise, 0.0, scale);
+			initialize<use_noise>(stream, _4, noise, 0.0, scale);
 			auto _b0_x = load_ps(&bx[col + _0]);
 			auto dp_b2_0 = mul_add_ps(_b0_x, _b0_x, _b2_y);
 			auto dp_ab_0 = mul_ps(mul_add_ps(_a_x, _b0_x, _ab_y), rsqrt_ps(dp_b2_0));
@@ -1325,7 +1396,7 @@ static inline void 	inside_circle_sector(VSLStreamStatePtr &stream, const float 
 		float noise[_2];
 		for (; col + _2 - 1 < cols; col += _2)
 		{
-			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, _2, noise, 0.0, scale);
+			initialize<use_noise>(stream, _2, noise, 0.0, scale);
 			auto _b0_x = load_ps(&bx[col + _0]);
 			auto dp_b2_0 = mul_add_ps(_b0_x, _b0_x, _b2_y);
 			auto dp_ab_0 = mul_ps(mul_add_ps(_a_x, _b0_x, _ab_y), rsqrt_ps(dp_b2_0));
@@ -1344,7 +1415,7 @@ static inline void 	inside_circle_sector(VSLStreamStatePtr &stream, const float 
 		float noise[_1];
 		for (; col  < cols; col += _1)
 		{
-			vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, _1, noise, 0.0, scale);
+			initialize<use_noise>(stream, _1, noise, 0.0, scale);
 			auto _b0_x = load_ps(&bx[col + _0]);
 			auto dp_b2_0 = mul_add_ps(_b0_x, _b0_x, _b2_y);
 			auto dp_ab_0 = mul_ps(mul_add_ps(_a_x, _b0_x, _ab_y), rsqrt_ps(dp_b2_0));

@@ -7,6 +7,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(MKL_PATH)\lib\intel64;$(MKL_PATH)\..\compiler\lib\intel64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>mkl_intel_ilp64_dll.lib;mkl_intel_thread_dll.lib;mkl_core_dll.lib;libiomp5md.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup />
